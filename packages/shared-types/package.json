@@ -1,0 +1,22 @@
+{
+  "name": "@ordermyphones/shared-types",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Domain types shared between apps/web, services/ai-api and supplier adapters.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./pricing": "./src/pricing.ts",
+    "./catalog": "./src/catalog.ts",
+    "./supplier": "./src/supplier.ts",
+    "./order": "./src/order.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.2"
+  }
+}

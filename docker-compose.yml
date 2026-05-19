@@ -1,0 +1,43 @@
+# Development orchestration. For production, use docker-compose.prod.yml.
+# Supabase runs separately via `supabase start` (CLI) or the linked cloud project.
+
+services:
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    image: ordermyphones-web:dev
+    ports:
+      - "5173:8080"
+    env_file:
+      - ./apps/web/.env.example
+    restart: unless-stopped
+
+  ai-api:
+    build:
+      context: ./services/ai-api
+      dockerfile: Dockerfile
+    image: ordermyphones-ai-api:dev
+    ports:
+      - "8787:8787"
+    env_file:
+      - ./services/ai-api/.env.example
+    restart: unless-stopped
+
+  supplier-source-1:
+    build:
+      context: ./services/supplier-source-1
+      dockerfile: Dockerfile
+    image: ordermyphones-supplier-source-1:dev
+    env_file:
+      - ./services/supplier-source-1/.env.example
+    restart: unless-stopped
+
+  supplier-source-2:
+    build:
+      context: ./services/supplier-source-2
+      dockerfile: Dockerfile
+    image: ordermyphones-supplier-source-2:dev
+    env_file:
+      - ./services/supplier-source-2/.env.example
+    restart: unless-stopped

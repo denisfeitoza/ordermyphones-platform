@@ -1,0 +1,38 @@
+# Production-shaped compose for the VPS topology (docs/architecture/DEPLOYMENT.md).
+# Images are pulled from the registry by tag; build happens in CI.
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+  web:
+    image: ${REGISTRY}/ordermyphones-web:${RELEASE_TAG}
+    env_file: /etc/ordermyphones/env.d/web.env
+    restart: unless-stopped
+
+  ai-api:
+    image: ${REGISTRY}/ordermyphones-ai-api:${RELEASE_TAG}
+    env_file: /etc/ordermyphones/env.d/ai-api.env
+    restart: unless-stopped
+
+  supplier-source-1:
+    image: ${REGISTRY}/ordermyphones-supplier-source-1:${RELEASE_TAG}
+    env_file: /etc/ordermyphones/env.d/supplier-source-1.env
+    restart: unless-stopped
+
+  supplier-source-2:
+    image: ${REGISTRY}/ordermyphones-supplier-source-2:${RELEASE_TAG}
+    env_file: /etc/ordermyphones/env.d/supplier-source-2.env
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

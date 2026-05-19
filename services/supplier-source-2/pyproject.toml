@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "supplier-source-2"
+version = "0.1.0"
+description = "OrderMyPhones — adapter for Supplier API #2 (US dropship #2 + Dubai wholesale, consolidated)."
+readme = "README.md"
+license = { text = "Proprietary" }
+requires-python = ">=3.11"
+authors = [{ name = "VINDIAI" }]
+
+dependencies = [
+  "httpx>=0.27",
+  "pydantic>=2.7",
+  "supabase>=2.6",
+  "tenacity>=9.0",
+  "anyio>=4.4",
+  "structlog>=24.1",
+  "python-dotenv>=1.0",
+  "typer>=0.12",
+]
+
+[project.optional-dependencies]
+fetchers = ["scrapling[fetchers]>=0.2.9"]
+dev = [
+  "pytest>=8.3",
+  "pytest-asyncio>=0.23",
+  "respx>=0.21",
+  "ruff>=0.6",
+]
+
+[project.scripts]
+supplier-source-2 = "supplier_source_2.__main__:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

@@ -1,0 +1,23 @@
+# Production reverse proxy. Caddy handles automatic TLS via Let's Encrypt.
+# See docs/architecture/DEPLOYMENT.md §4.
+
+ordermyphones.com {
+  encode gzip zstd
+
+  header {
+    Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+    X-Content-Type-Options    "nosniff"
+    Referrer-Policy           "strict-origin-when-cross-origin"
+    Permissions-Policy        "interest-cohort=()"
+  }
+
+  # AI service mounted under /ai/* (admin/staff only — JWT auth enforced server-side).
+  reverse_proxy /ai/* ai-api:8787
+
+  # Storefront SPA.
+  reverse_proxy web:8080
+}
+
+www.ordermyphones.com {
+  redir https://ordermyphones.com{uri}
+}
