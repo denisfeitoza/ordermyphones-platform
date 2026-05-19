@@ -1,26 +1,25 @@
-# Supplier Source #2 — Integration Playbook (Consolidated US Dropship #2 + Dubai Wholesale)
+# Supplier Source #2 — Mannapov LLC (with reserved Dubai wholesale slot)
 
 > **Role in the contract:** Second of the two API integrations contemplated by Agreement §1.4 and Schedule A.2.
-> **Distinct from `source-1`:** this adapter is a single integration that talks to **two feeds** — a second U.S.-based dropship provider and a Dubai-based wholesale supplier — and presents them downstream as one logical source.
->
-> **Placeholder names:** `source-2-us`, `source-2-dxb`. The real supplier names are filled in during the Phase 1 supplier audit and used to rename the underlying feed identifiers and the migration enum values.
+> **Real supplier — primary feed:** **[Mannapov LLC](https://buy.mannapovllc.com/)** — U.S.-based wholesale / dropship B2B portal.
+> **Reserved second feed:** the Dubai wholesale supplier contemplated by Schedule A.2. **Name pending** — confirmed and wired during the Phase 1 supplier audit. Until then, the routing layer treats the Dubai slot as inactive and never routes orders to it.
+> **System code:** `source-2` — kept as a contract-level abstraction (see [`supabase/migrations/0001_initial_schema.sql`](../../supabase/migrations/0001_initial_schema.sql)). The two underlying feeds live as `source-2-us` (Mannapov) and `source-2-dxb` (reserved).
 
 ## 1. What this integration covers
 
-- Real-time **catalog and inventory** from two underlying feeds:
-  - **US dropship #2** — same shape as Source #1 (dropship fulfillment).
-  - **Dubai wholesale** — bulk orders, manual handshake, typically slower turn but cheaper unit cost at large quantities.
-- A **routing layer** that decides, per cart, which feed is fulfilling which line.
-- A **fulfillment dispatcher** that adapts to each underlying feed's protocol.
+- Real-time **catalog and inventory** from Mannapov LLC today, with a hot-pluggable second feed for the Dubai wholesale supplier when Phase 1 names it.
+- A **routing layer** that decides, per cart, which feed is fulfilling which line (today: only `source-2-us`; tomorrow: also `source-2-dxb`).
+- A **fulfillment dispatcher** that adapts to each underlying feed's protocol (REST for Mannapov; REST · CSV · manual upload for the Dubai slot, depending on what the partner offers).
 - **Order status updates** from each feed.
 
 ## 2. Why one adapter for two feeds
 
-The contract counts **two API integrations** (Agreement §1.4) for **three feeds**. Consolidating the US dropship #2 and the Dubai wholesale feed into a single Python service:
+The contract counts **two API integrations** (Agreement §1.4) for **up to three feeds**. Building `source-2` as a consolidating adapter from day 1:
 
-- Keeps the count honest (2 API integrations, 3 feeds — exactly Agreement §1.4).
+- Keeps the count honest — one API integration, multiple feeds behind it.
 - Shares a common adapter shell (config, observability, lock helpers, Supabase writer).
-- Hides the routing decision inside one service: downstream consumers see one supplier identity (`source-2`) with two **sub-feeds**.
+- Hides the routing decision inside one service: downstream consumers see a single supplier identity (`source-2`) regardless of which underlying feed actually fulfills a given line.
+- Makes adding the Dubai wholesale supplier in Phase 1 a configuration change, not a structural one.
 
 ## 3. Service location
 

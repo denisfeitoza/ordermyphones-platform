@@ -35,7 +35,7 @@ ordermyphones.com
 ## 2. Visitor journey
 
 1. **Landing** sets value prop, social proof, and dual CTA: "Shop devices" (catalog) + "Reseller? Apply for tier pricing" (sign-up).
-2. **Catalog** with filters (brand, model, color, storage, condition, price range, in-stock). Smart search box top-anchored.
+2. **Catalog** with filters (brand, model, color, storage, condition, price range, in-stock). Smart search box top-anchored. **Two presentation modes** share the same data: a consumer-style grid (default for first-time / non-authenticated visitors) and a **stock-list dense table** (default for authenticated Tier 2+ customers and inside admin) with keyboard filters, column sorting, and column hide/show. Same query under the hood — different rendering for different shoppers.
 3. **Product** with the 3D viewer slot (graceful 2D fallback), variant matrix, live stock, and tier-aware price overlay (sign-in CTA when anon).
 4. **Cart** with retail prices and a "Sign in to see tier pricing" prompt when anonymous.
 5. **Checkout** on Stripe.

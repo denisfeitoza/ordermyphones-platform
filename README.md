@@ -14,8 +14,8 @@ This monorepo is the deliverable surface for the engagement between **VINDIAI** 
 |---|---|
 | [`apps/web/`](apps/web/) | Customer-facing storefront + admin dashboard. **React 18 + Vite + TypeScript + Tailwind + Shadcn/UI.** Mobile-first, fully responsive. |
 | [`services/ai-api/`](services/ai-api/) | AI orchestrator + agent swarm. Native actions (pricing decisions, tier upgrades, inventory triage, customer-support drafts) executed on the user's behalf via Anthropic Agent SDK. |
-| [`services/supplier-source-1/`](services/supplier-source-1/) | Integration with **Supplier API #1** (U.S.-based dropship provider). Hybrid REST + Scrapling fallback. |
-| [`services/supplier-source-2/`](services/supplier-source-2/) | Integration with **Supplier API #2** (U.S.-based dropship + Dubai-based wholesale, consolidated). Hybrid REST + Scrapling fallback. |
+| [`services/supplier-source-1/`](services/supplier-source-1/) | Integration with **Supplier API #1 — [Assurant](https://www.assurant.com/)** (U.S.-based dropship / lifecycle services). Hybrid REST + Scrapling fallback. |
+| [`services/supplier-source-2/`](services/supplier-source-2/) | Integration with **Supplier API #2 — [Mannapov LLC](https://buy.mannapovllc.com/)** (U.S.-based wholesale/dropship portal). Adapter carries a reserved second-feed slot for the Dubai wholesale supplier contemplated by Agreement §1.4 / Schedule A.2 — to be named during the Phase 1 supplier audit. Hybrid REST + Scrapling fallback. |
 | [`packages/shared-types/`](packages/shared-types/) | Domain types shared between frontend, AI service, and adapters. Single source of truth for `PricingTier`, `Product`, `OrderStatus`, etc. |
 | [`supabase/`](supabase/) | Database migrations, RLS policies, edge functions (pricing engine, tier upgrade, Stripe webhook), seed data. **RLS enabled on every table.** |
 | [`docs/`](docs/) | Contract, phase-by-phase plan, architecture, integration playbooks, AI swarm design, security model, UX notes. |
@@ -26,7 +26,7 @@ This monorepo is the deliverable surface for the engagement between **VINDIAI** 
 
 - **Fee:** USD 12,000 total, four equal monthly installments of USD 3,000.
 - **Timeline:** ~120 days from the Effective Date, executed in 4 phases.
-- **Suppliers in scope:** 3 supplier feeds delivered through 2 API integrations (2 U.S.-based dropship + 1 Dubai-based wholesale).
+- **Suppliers in scope:** up to 3 feeds delivered through 2 API integrations. Currently confirmed: **Assurant** (US) and **Mannapov LLC** (US). The Dubai wholesale feed (Schedule A.2) is reserved in the adapter and is named during Phase 1.
 - **Tiers (auto-promoted by cumulative volume):**
   - Tier 1 Consumer — 1–10 units (retail)
   - Tier 2 Retailer — 10–50 units (reseller discount)

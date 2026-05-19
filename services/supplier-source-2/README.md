@@ -1,8 +1,8 @@
-# services/supplier-source-2 — Supplier API #2 Adapter (Consolidated US + Dubai)
+# services/supplier-source-2 — Mannapov LLC Adapter (with reserved DXB slot)
 
-Adapter for **Supplier API #2** (Agreement §1.4, Schedule A.2). Distinct from `source-1`: this single integration consolidates two underlying feeds — the second U.S.-based dropship provider and the Dubai-based wholesale supplier — behind one logical source. The contract counts **two API integrations** for **three feeds**; the consolidation is what keeps that promise honest.
+Adapter for **Supplier API #2 — [Mannapov LLC](https://buy.mannapovllc.com/)** (Agreement §1.4, Schedule A.2). Distinct from `source-1`: this single integration is built to host **two feeds** — Mannapov (US wholesale/dropship, active today) and the Dubai wholesale supplier contemplated by Schedule A.2 (reserved slot, name pending Phase 1 audit) — behind one logical source. The contract counts **two API integrations** for **up to three feeds**; the consolidation is what keeps that promise honest.
 
-> **Placeholder names:** `source-2-us`, `source-2-dxb`. Replaced with real supplier names after the Phase 1 audit.
+> **System codes:** `source-2-us` (Mannapov), `source-2-dxb` (reserved). Until the Dubai supplier is named in Phase 1, the routing layer treats the `source-2-dxb` slot as inactive.
 
 ## Why consolidate
 
@@ -22,12 +22,12 @@ python -m supplier_source_2.sync --kind inventory --dry-run
 
 ## Feeds
 
-| Feed | Class | Mode | Notes |
-|---|---|---|---|
-| `source-2-us` | `feeds.us_dropship.UsDropshipFeed` | REST + Scrapling fallback | Dropship dispatch supported |
-| `source-2-dxb` | `feeds.dubai_wholesale.DubaiWholesaleFeed` | REST · CSV · manual | Wholesale; may operate semi-manually at launch |
+| Feed | Maps to | Class | Mode | Notes |
+|---|---|---|---|---|
+| `source-2-us` | **Mannapov LLC** (active) | `feeds.us_dropship.UsDropshipFeed` | REST + Scrapling fallback | Dropship dispatch supported |
+| `source-2-dxb` | Dubai wholesale (**reserved — name pending Phase 1**) | `feeds.dubai_wholesale.DubaiWholesaleFeed` | REST · CSV · manual | Wholesale slot; routing treats it as inactive until enabled |
 
-The Dubai feed supports a **manual-upload** mode (CSV dropped into `SUPPLIER_DUBAI_MANUAL_DROPBOX`) for early-stage launches; the same idempotent ingest path is used.
+The Dubai slot supports a **manual-upload** mode (CSV dropped into `SUPPLIER_DUBAI_MANUAL_DROPBOX`) for early-stage launches; the same idempotent ingest path is used. The slot stays cold (no routing traffic, no sync cron) until Phase 1 names the supplier and provides credentials.
 
 ## Routing
 

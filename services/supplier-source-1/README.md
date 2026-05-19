@@ -1,8 +1,8 @@
-# services/supplier-source-1 — Supplier API #1 Adapter
+# services/supplier-source-1 — Assurant Adapter
 
-Adapter for **Supplier API #1** — the first U.S.-based dropship provider (Agreement §1.4, Schedule A.2). Implemented as a Python service that talks REST first and uses [Scrapling](https://github.com/D4Vinci/Scrapling) as an adaptive fallback when the supplier exposes only HTML or a field is missing from the REST response.
+Adapter for **Supplier API #1 — [Assurant](https://www.assurant.com/)** (Agreement §1.4, Schedule A.2). Implemented as a Python service that talks REST first and uses [Scrapling](https://github.com/D4Vinci/Scrapling) as an adaptive fallback when Assurant exposes only HTML or a field is missing from the REST response.
 
-> **Placeholder name:** `source-1`. The real supplier name is filled in during the Phase 1 supplier audit and used to rename this folder, the migration enum value, and the env variables.
+> **System code:** `source-1`. The folder name and code stay contract-abstract so swapping the supplier never requires a code-wide rename — the human-readable name lives in `suppliers.display_name` (currently `Assurant`).
 
 ## Why Scrapling
 

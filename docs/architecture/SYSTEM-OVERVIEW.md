@@ -37,12 +37,13 @@
    ┌────────────▼──────────────────────────▼─────────────────────────────────┐
    │ services/supplier-source-1   │ services/supplier-source-2               │
    │ (Python + Scrapling)         │ (Python + Scrapling)                     │
-   │ US Dropship Provider A       │ US Dropship Provider B + Dubai Wholesale │
-   │                              │ (consolidated)                           │
+   │ Assurant (US dropship /      │ Mannapov LLC (US wholesale/dropship)     │
+   │  lifecycle services)         │  + reserved DXB wholesale feed slot      │
    └────────────┬──────────────────────────────┬─────────────────────────────┘
                 │                              │
                 ▼                              ▼
-        Supplier API #1                Supplier API #2 (and DXB feed)
+        Supplier API #1 — Assurant      Supplier API #2 — Mannapov LLC
+        https://www.assurant.com         https://buy.mannapovllc.com
 
 Observability: Sentry (errors) + PostHog (product analytics)
 Hosting: Docker on dedicated VPS, Caddy/Traefik reverse proxy

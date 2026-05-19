@@ -46,6 +46,7 @@
 
 - Per-supplier health card (last sync, last error, row counts).
 - "Sync now" button per supplier (rate-limited).
+- **Stock-list dense view** as the default — a high-density table (model, grade/condition, color, storage, supplier, available qty, last cost, last sync) with keyboard-first filters, column sorting and column hide/show. Built for an operator who lives in this view all day, not a consumer-style grid. Renders virtual-scrolled, so 10k+ SKUs stay responsive.
 - Owned-stock list with CRUD (kept simple for v1; bulk import via CSV upload).
 - Per-SKU drill-down shows the cross-supplier snapshot history, recent orders, and a manual adjustment action that goes through an audit-logged endpoint.
 
@@ -53,6 +54,7 @@
 
 - Tier-by-tier rules with priority, scope (global / product / variant), kind (absolute, percentage off, margin floor), value.
 - Effective-price preview tool: pick a variant + customer + qty → see the computed price + which rule applied.
+- **Profitability preview** alongside the effective price: pulls `unit_cost_cents` from the latest `inventory_snapshots` row and shows margin in cents and bps. Lets the admin see "Tier 3 sells this at $X; our cost is $Y; margin is Z%" before saving a rule. No new schema — uses fields already in [`docs/architecture/DATA-MODEL.md`](../architecture/DATA-MODEL.md).
 - Margin-floor enforcement: when an admin sets a rule that would drop below a floor, the UI warns with a confirmation prompt.
 
 ## 7. API logs
