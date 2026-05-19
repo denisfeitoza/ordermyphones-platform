@@ -12,7 +12,7 @@
 | Tier dashboard (`/portal/tier`) | Current tier, units progress, history of promotions/demotions, "what unlocks at the next tier" |
 | Addresses (`/portal/addresses`) | CRUD + default-shipping / default-billing flags |
 | Payment methods (`/portal/payment-methods`) | Stripe-managed; add/remove/default |
-| Settings (`/portal/settings`) | Profile, email/password, notifications |
+| Settings (`/portal/settings`) | Profile, email/password, notifications (incl. **daily stock digest** opt-in) |
 
 ## 2. Tier-progress UX (signature feature)
 

@@ -37,12 +37,13 @@
    ┌────────────▼──────────────────────────▼─────────────────────────────────┐
    │ services/supplier-source-1   │ services/supplier-source-2               │
    │ (Python + Scrapling)         │ (Python + Scrapling)                     │
-   │ US Dropship Provider A       │ US Dropship Provider B + Dubai Wholesale │
-   │                              │ (consolidated)                           │
+   │ Source A (US dropship /      │ Source B (US wholesale/dropship)     │
+   │  lifecycle services)         │  + reserved DXB wholesale feed slot      │
    └────────────┬──────────────────────────────┬─────────────────────────────┘
                 │                              │
                 ▼                              ▼
-        Supplier API #1                Supplier API #2 (and DXB feed)
+        Supplier API #1 — Source A      Supplier API #2 — Source B
+        https://example.invalid/         https://example.invalid/
 
 Observability: Sentry (errors) + PostHog (product analytics)
 Hosting: Docker on dedicated VPS, Caddy/Traefik reverse proxy
