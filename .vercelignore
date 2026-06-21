@@ -1,0 +1,8 @@
+node_modules
+.preview
+services
+supabase
+infra
+tooling
+docs
+*.log
