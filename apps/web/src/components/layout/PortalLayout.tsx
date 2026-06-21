@@ -1,5 +1,6 @@
-import { NavLink, Outlet } from 'react-router-dom';
-import { useAccount } from '@/store';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
+import { useAccount, useAuth } from '@/store';
 import { TierBadge } from '@/components/store/TierBadge';
 import { cn } from '@/lib/utils';
 
@@ -23,6 +24,13 @@ function initials(name: string): string {
 
 export default function PortalLayout() {
   const { businessName, accountTier } = useAccount();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  function handleSignOut() {
+    signOut();
+    navigate('/');
+  }
 
   return (
     <div className="container py-8 md:py-10">
@@ -59,6 +67,18 @@ export default function PortalLayout() {
               </NavLink>
             ))}
           </nav>
+
+          <div className="mt-5 border-t border-border pt-4">
+            {user && <p className="truncate px-3 pb-1.5 text-xs text-muted-foreground">Signed in as {user.email}</p>}
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <LogOut className="h-4 w-4" strokeWidth={2} />
+              Sign out
+            </button>
+          </div>
         </aside>
 
         <div className="min-w-0">

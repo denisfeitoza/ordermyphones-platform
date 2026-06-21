@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Search, ShoppingBag, Menu, X, UserRound } from 'lucide-react';
-import { useCart } from '@/store';
+import { useAuth, useCart } from '@/store';
 import { Logo } from './Logo';
 import { TierSwitcher } from './TierSwitcher';
 import { cn } from '@/lib/utils';
@@ -15,6 +15,7 @@ const NAV = [
 
 export function Header() {
   const { unitCount, setOpen } = useCart();
+  const { signedIn } = useAuth();
   const navigate = useNavigate();
   const [q, setQ] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
@@ -70,13 +71,24 @@ export function Header() {
 
         <div className="ml-auto flex items-center gap-2 md:ml-0">
           <TierSwitcher />
-          <Link
-            to="/portal"
-            className="grid h-10 w-10 place-items-center rounded-full border border-border hover:bg-muted"
-            aria-label="Your account"
-          >
-            <UserRound className="h-[18px] w-[18px]" strokeWidth={2} />
-          </Link>
+          {signedIn ? (
+            <Link
+              to="/portal"
+              className="grid h-10 w-10 place-items-center rounded-full border border-border hover:bg-muted"
+              aria-label="Your account"
+            >
+              <UserRound className="h-[18px] w-[18px]" strokeWidth={2} />
+            </Link>
+          ) : (
+            <Link
+              to="/auth/sign-in"
+              aria-label="Sign in"
+              className="inline-flex h-10 items-center gap-1.5 rounded-full border border-border px-2.5 text-sm font-medium hover:bg-muted sm:px-4"
+            >
+              <UserRound className="h-[18px] w-[18px] sm:hidden" strokeWidth={2} />
+              <span className="hidden sm:inline">Sign in</span>
+            </Link>
+          )}
           <button
             type="button"
             onClick={() => setOpen(true)}
