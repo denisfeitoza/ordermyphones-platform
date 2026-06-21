@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Search, ShoppingBag, Menu, X } from 'lucide-react';
+import { Search, ShoppingBag, Menu, X, UserRound } from 'lucide-react';
 import { useCart } from '@/store';
 import { Logo } from './Logo';
 import { TierSwitcher } from './TierSwitcher';
@@ -70,6 +70,13 @@ export function Header() {
 
         <div className="ml-auto flex items-center gap-2 md:ml-0">
           <TierSwitcher />
+          <Link
+            to="/portal"
+            className="grid h-10 w-10 place-items-center rounded-full border border-border hover:bg-muted"
+            aria-label="Your account"
+          >
+            <UserRound className="h-[18px] w-[18px]" strokeWidth={2} />
+          </Link>
           <button
             type="button"
             onClick={() => setOpen(true)}
