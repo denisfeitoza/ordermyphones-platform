@@ -80,3 +80,4 @@ pids/
 .claude/session-notes/
 .claude/settings.local.json
 .preview/
+.vercel
