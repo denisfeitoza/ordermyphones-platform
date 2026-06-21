@@ -12,6 +12,11 @@ import ContactPage from '@/routes/ContactPage';
 import HelpPage from '@/routes/HelpPage';
 import NotFoundPage from '@/routes/NotFoundPage';
 import OpsPage from '@/routes/OpsPage';
+import SignInPage from '@/routes/auth/SignInPage';
+import SignUpPage from '@/routes/auth/SignUpPage';
+import ResetPage from '@/routes/auth/ResetPage';
+import CallbackPage from '@/routes/auth/CallbackPage';
+import { RequireAuth } from '@/components/auth/RequireAuth';
 import OverviewPage from '@/routes/portal/OverviewPage';
 import OrdersPage from '@/routes/portal/OrdersPage';
 import OrderDetailPage from '@/routes/portal/OrderDetailPage';
@@ -25,6 +30,14 @@ export default function App() {
     <AppProviders>
       <Routes>
         <Route path="ops" element={<OpsPage />} />
+
+        <Route path="auth">
+          <Route path="sign-in" element={<SignInPage />} />
+          <Route path="sign-up" element={<SignUpPage />} />
+          <Route path="reset" element={<ResetPage />} />
+          <Route path="callback" element={<CallbackPage />} />
+        </Route>
+
         <Route element={<RootLayout />}>
           <Route index element={<HomePage />} />
           <Route path="catalog" element={<CatalogPage />} />
@@ -34,7 +47,14 @@ export default function App() {
           <Route path="contact" element={<ContactPage />} />
           <Route path="help" element={<HelpPage />} />
 
-          <Route path="portal" element={<PortalLayout />}>
+          <Route
+            path="portal"
+            element={
+              <RequireAuth>
+                <PortalLayout />
+              </RequireAuth>
+            }
+          >
             <Route index element={<OverviewPage />} />
             <Route path="orders" element={<OrdersPage />} />
             <Route path="orders/:id" element={<OrderDetailPage />} />
