@@ -9,12 +9,12 @@ export default function SignUpPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
 
-  if (signedIn) return <Navigate to="/portal" replace />;
+  if (signedIn) return <Navigate to="/admin" replace />;
 
   function submit(e: FormEvent) {
     e.preventDefault();
     signIn(email);
-    navigate('/portal', { replace: true });
+    navigate('/admin', { replace: true });
   }
 
   return (

@@ -1,5 +1,5 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { ArrowUpRight, LogOut } from 'lucide-react';
 import { useAccount, useAuth } from '@/store';
 import { TierBadge } from '@/components/store/TierBadge';
 import { cn } from '@/lib/utils';
@@ -50,7 +50,15 @@ export default function PortalLayout() {
             <TierBadge tier={accountTier} showRange />
           </div>
 
-          <nav className="scrollbar-hide mt-5 flex gap-1 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible">
+          <Link
+            to="/admin"
+            className="mt-4 inline-flex w-full items-center justify-between rounded-xl border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            Admin console
+            <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2} />
+          </Link>
+
+          <nav className="scrollbar-hide mt-4 flex gap-1 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible">
             {portalNav.map((l) => (
               <NavLink
                 key={l.to}
