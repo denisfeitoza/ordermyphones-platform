@@ -67,7 +67,7 @@ export default function SignInPage() {
         variant="outline"
         size="lg"
         className="w-full"
-        onClick={() => navigate(`/auth/callback?email=${encodeURIComponent(email)}`)}
+        onClick={() => navigate(`/auth/callback?email=${encodeURIComponent(email)}&from=${encodeURIComponent(from)}`)}
       >
         <Mail className="h-4 w-4" strokeWidth={2} />
         Email me a magic link

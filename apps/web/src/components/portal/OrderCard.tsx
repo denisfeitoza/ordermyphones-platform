@@ -96,10 +96,12 @@ function Thumbs({ lines }: { lines: AccountOrder['lines'] }) {
 }
 
 export function OrderCard({ order, index = 0 }: { order: AccountOrder; index?: number }) {
-  const lineLabel =
-    order.lines.length === 1
-      ? order.lines[0].model
-      : `${order.lines[0].model} + ${order.lines.length - 1} more`;
+  const first = order.lines[0];
+  const lineLabel = !first
+    ? 'Order'
+    : order.lines.length === 1
+      ? first.model
+      : `${first.model} + ${order.lines.length - 1} more`;
 
   return (
     <MotionLink

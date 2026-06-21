@@ -99,7 +99,7 @@ export default function HelpPage() {
                 <details key={q} className="group rounded-2xl border border-border bg-card p-4 [&_summary]:cursor-pointer">
                   <summary className="flex items-center justify-between gap-3 text-sm font-medium marker:content-none">
                     {q}
-                    <span className="text-muted-foreground transition-transform group-open:rotate-45">＋</span>
+                    <span className="text-lg leading-none text-muted-foreground transition-transform group-open:rotate-45">+</span>
                   </summary>
                   <p className="mt-2.5 text-sm text-muted-foreground">{a}</p>
                 </details>

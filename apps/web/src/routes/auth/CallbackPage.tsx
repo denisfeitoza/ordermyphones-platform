@@ -10,14 +10,15 @@ export default function CallbackPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const email = params.get('email') ?? '';
+  const to = params.get('from') || '/admin';
 
   useEffect(() => {
     const t = setTimeout(() => {
       signIn(email);
-      navigate('/admin', { replace: true });
+      navigate(to, { replace: true });
     }, 1600);
     return () => clearTimeout(t);
-  }, [email, signIn, navigate]);
+  }, [email, to, signIn, navigate]);
 
   return (
     <div className="grid min-h-dvh place-items-center px-5">

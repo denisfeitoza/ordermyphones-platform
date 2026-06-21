@@ -63,6 +63,7 @@ export function Header() {
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
+              aria-label="Search products"
               placeholder="Search iPhone, Galaxy, SKU…"
               className="h-10 w-full rounded-full border border-border bg-muted/40 pl-9 pr-4 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-brand focus:bg-background"
             />
@@ -114,6 +115,7 @@ export function Header() {
                 <input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
+                  aria-label="Search products"
                   placeholder="Search iPhone, Galaxy, SKU…"
                   className="h-11 w-full rounded-full border border-border bg-muted/40 pl-9 pr-4 text-sm outline-none focus:border-brand focus:bg-background"
                 />

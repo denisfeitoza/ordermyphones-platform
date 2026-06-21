@@ -40,6 +40,7 @@ export default function AdminLayout() {
             {user && <span className="hidden font-mono text-xs text-background/50 md:inline">{user.email}</span>}
             <button
               type="button"
+              aria-label="Sign out"
               onClick={() => {
                 signOut();
                 navigate('/');
