@@ -79,3 +79,4 @@ pids/
 .claude/council-reports/
 .claude/session-notes/
 .claude/settings.local.json
+.preview/

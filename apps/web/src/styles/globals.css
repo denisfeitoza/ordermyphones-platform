@@ -8,14 +8,14 @@
     --foreground: 240 10% 4%;
 
     --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%;
+    --muted-foreground: 240 4% 42%;
 
     --card: 0 0% 100%;
     --card-foreground: 240 10% 4%;
 
     --border: 240 6% 90%;
     --input: 240 6% 90%;
-    --ring: 240 5% 65%;
+    --ring: 222 83% 53%;
 
     --primary: 240 10% 4%;
     --primary-foreground: 0 0% 100%;
@@ -26,15 +26,24 @@
     --accent: 240 5% 96%;
     --accent-foreground: 240 10% 4%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --tier-1: 217 91% 60%;
-    --tier-2: 142 71% 45%;
-    --tier-3: 33 96% 52%;
-    --tier-4: 270 70% 55%;
+    --success: 160 84% 39%;
+    --warning: 38 92% 50%;
 
-    --radius: 0.625rem;
+    /* Brand identity (client-defined): electric blue → violet. Controlled saturation,
+       used as pointed accents over neutral zinc — never as neon glows or text fills. */
+    --brand: 222 83% 53%;
+    --brand-2: 262 70% 58%;
+
+    /* Pricing tiers: blue → emerald → amber → violet (semantic differentiation). */
+    --tier-1: 217 91% 60%;
+    --tier-2: 160 84% 39%;
+    --tier-3: 38 92% 50%;
+    --tier-4: 262 70% 58%;
+
+    --radius: 0.75rem;
   }
 
   .dark {
@@ -42,14 +51,14 @@
     --foreground: 0 0% 98%;
 
     --muted: 240 6% 12%;
-    --muted-foreground: 240 5% 65%;
+    --muted-foreground: 240 5% 64%;
 
-    --card: 240 8% 6%;
+    --card: 240 8% 7%;
     --card-foreground: 0 0% 98%;
 
-    --border: 240 6% 18%;
+    --border: 240 6% 16%;
     --input: 240 6% 18%;
-    --ring: 240 5% 60%;
+    --ring: 222 83% 60%;
 
     --primary: 0 0% 98%;
     --primary-foreground: 240 10% 4%;
@@ -57,7 +66,7 @@
     --secondary: 240 6% 12%;
     --secondary-foreground: 0 0% 98%;
 
-    --accent: 240 6% 12%;
+    --accent: 240 6% 14%;
     --accent-foreground: 0 0% 98%;
 
     --destructive: 0 70% 50%;
@@ -71,17 +80,27 @@
   }
 
   html {
+    scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
   }
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: 'rlig' 1, 'calt' 1;
+    font-feature-settings: 'cv11' 1, 'ss01' 1, 'calt' 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: hsl(var(--brand) / 0.18);
   }
 
   /* Respect prefers-reduced-motion globally. */
   @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
     *,
     *::before,
     *::after {
@@ -89,5 +108,47 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.001ms !important;
     }
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+  /* 3D helpers for the hero phone + card tilt. */
+  .perspective {
+    perspective: 1400px;
+  }
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+  /* Edge fade for horizontal carousels (recommendations). */
+  .mask-fade-x {
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+  }
+  /* Faint technical grid for dark sections. */
+  .bg-grid-faint {
+    background-image:
+      linear-gradient(to right, hsl(0 0% 100% / 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(0 0% 100% / 0.04) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+  /* Used sparingly (a single inline word), never on large headers. */
+  .text-gradient-brand {
+    background: linear-gradient(135deg, hsl(var(--brand)) 0%, hsl(var(--brand-2)) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 }
