@@ -29,7 +29,8 @@ export default function CatalogPage() {
 
   const items = useMemo(() => {
     const list = CATALOG.filter((i) => {
-      if (q && !`${i.brand} ${i.model}`.toLowerCase().includes(q)) return false;
+      // Search by brand, model, and color name (Agreement §1.5: "search by brand, model, color…").
+      if (q && !`${i.brand} ${i.model} ${i.colors.map((c) => c.name).join(' ')}`.toLowerCase().includes(q)) return false;
       if (brand && i.brand !== brand) return false;
       if (category && i.category !== category) return false;
       if (condition && i.condition !== condition) return false;
