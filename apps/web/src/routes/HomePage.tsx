@@ -1,56 +1,40 @@
 import { Link } from 'react-router-dom';
-
-const tierHighlights = [
-  { code: 'tier_1', label: 'Consumer', range: '1–10 units', color: 'bg-tier-1' },
-  { code: 'tier_2', label: 'Retailer', range: '10–50 units', color: 'bg-tier-2' },
-  { code: 'tier_3', label: 'Multi-Store', range: '50–400 units', color: 'bg-tier-3' },
-  { code: 'tier_4', label: 'Wholesale', range: '401+ units', color: 'bg-tier-4' },
-];
+import { ArrowRight } from 'lucide-react';
+import { Hero } from '@/components/store/Hero';
+import { ProductGrid } from '@/components/store/ProductGrid';
+import { TierSection } from '@/components/store/TierSection';
+import { Recommendations } from '@/components/store/Recommendations';
+import { CATALOG } from '@/data/catalog';
 
 export default function HomePage() {
+  const featured = CATALOG.slice(0, 6);
+
   return (
-    <div className="space-y-12">
-      <section className="space-y-4">
-        <p className="text-xs uppercase tracking-widest text-muted-foreground">U.S. mobile devices · Tier-based pricing</p>
-        <h1 className="font-display text-3xl md:text-5xl tracking-tight leading-tight max-w-2xl">
-          Order phones the way your business actually buys them.
-        </h1>
-        <p className="text-muted-foreground max-w-xl">
-          From a single iPhone to a 500-unit wholesale shipment, OrderMyPhones aggregates real-time supplier
-          inventory and applies the right tier price automatically. No spreadsheets, no back-and-forth.
-        </p>
-        <div className="flex gap-3 pt-2">
+    <div>
+      <Hero />
+
+      <section className="container py-16 md:py-20">
+        <div className="mb-8 flex items-end justify-between gap-4">
+          <div>
+            <h2 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">Featured phones</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Best sellers across iPhone and Galaxy, priced for your tier.
+            </p>
+          </div>
           <Link
             to="/catalog"
-            className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium"
+            className="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-brand hover:gap-2.5"
           >
-            Shop the catalog
-          </Link>
-          <Link
-            to="/portal"
-            className="inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium"
-          >
-            Reseller? Apply for tier pricing
+            View all
+            <ArrowRight className="h-4 w-4" strokeWidth={2} />
           </Link>
         </div>
+        <ProductGrid items={featured} />
       </section>
 
-      <section className="space-y-3">
-        <h2 className="font-display text-xl tracking-tight">Four tiers, automatic promotion</h2>
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {tierHighlights.map((t) => (
-            <li key={t.code} className="rounded-lg border p-4 space-y-2">
-              <span className={`inline-block h-2 w-10 rounded-full ${t.color}`} />
-              <p className="font-medium">{t.label}</p>
-              <p className="text-sm text-muted-foreground">{t.range}</p>
-            </li>
-          ))}
-        </ul>
-        <p className="text-xs text-muted-foreground">
-          Tiers are computed automatically as your cumulative purchase volume grows. See{' '}
-          <code>docs/architecture/PRICING-ENGINE.md</code>.
-        </p>
-      </section>
+      <TierSection />
+
+      <Recommendations />
     </div>
   );
 }

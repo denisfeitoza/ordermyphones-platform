@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router-dom';
+import { AppProviders } from '@/store';
 import RootLayout from '@/components/layout/RootLayout';
 import PortalLayout from '@/components/layout/PortalLayout';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -11,8 +12,9 @@ import NotFoundPage from '@/routes/NotFoundPage';
 
 export default function App() {
   return (
-    <Routes>
-      <Route element={<RootLayout />}>
+    <AppProviders>
+      <Routes>
+        <Route element={<RootLayout />}>
         <Route index element={<HomePage />} />
         <Route path="catalog" element={<CatalogPage />} />
         <Route path="p/:slug" element={<ProductPage />} />
@@ -40,8 +42,9 @@ export default function App() {
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
-      </Route>
-    </Routes>
+        </Route>
+      </Routes>
+    </AppProviders>
   );
 }
 

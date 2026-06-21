@@ -20,7 +20,7 @@ export default function PortalLayout() {
             <NavLink
               key={l.to}
               to={l.to}
-              end={l.end}
+              end={l.end ?? false}
               className={({ isActive }) =>
                 cn(
                   'px-2 py-1 rounded-md',
