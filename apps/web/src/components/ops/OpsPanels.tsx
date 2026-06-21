@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CATALOG, SUPPLIER_NAMES, totalAvailable } from '@/data/catalog';
 import { useSync } from '@/store';
-import { formatInt } from '@/lib/format';
 import { PulseDot } from '@/components/store/SyncHeartbeat';
 import { ORDER_STAGES, type LiveOrder, type LogEvent, type LogKind } from './useOpsStream';
 import { cn } from '@/lib/utils';
@@ -233,14 +232,3 @@ export function AgentSwarm() {
     </Panel>
   );
 }
-
-export function MiniStat({ label, value }: { label: string; value: string }) {
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className="font-mono tabular-nums text-foreground">{value}</span>
-      <span className="text-muted-foreground">{label}</span>
-    </span>
-  );
-}
-
-export { formatInt };
