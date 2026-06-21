@@ -55,7 +55,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-export function CatalogFilters({ className }: { className?: string }) {
+export function CatalogFilters({ className, hideTitle = false }: { className?: string; hideTitle?: boolean }) {
   const [params, setParams] = useSearchParams();
 
   function toggle(key: string, value: string) {
@@ -76,26 +76,28 @@ export function CatalogFilters({ className }: { className?: string }) {
 
   return (
     <div className={cn('text-sm', className)}>
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-display text-base font-semibold tracking-tight">Filters</h2>
-        {hasFilters && (
-          <button
-            onClick={() =>
-              setParams(
-                (prev) => {
-                  const next = new URLSearchParams(prev);
-                  ['brand', 'category', 'condition', 'price'].forEach((k) => next.delete(k));
-                  return next;
-                },
-                { replace: true },
-              )
-            }
-            className="text-xs font-medium text-brand hover:underline"
-          >
-            Clear all
-          </button>
-        )}
-      </div>
+      {!hideTitle && (
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-display text-base font-semibold tracking-tight">Filters</h2>
+          {hasFilters && (
+            <button
+              onClick={() =>
+                setParams(
+                  (prev) => {
+                    const next = new URLSearchParams(prev);
+                    ['brand', 'category', 'condition', 'price'].forEach((k) => next.delete(k));
+                    return next;
+                  },
+                  { replace: true },
+                )
+              }
+              className="text-xs font-medium text-brand hover:underline"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
+      )}
 
       <Section title="Category">
         {CATEGORIES.map((c) => (

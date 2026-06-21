@@ -148,7 +148,7 @@ export default function CatalogPage() {
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              <CatalogFilters />
+              <CatalogFilters hideTitle />
               <Button className="mt-4 w-full" onClick={() => setMobileOpen(false)}>
                 Show {items.length} results
               </Button>
