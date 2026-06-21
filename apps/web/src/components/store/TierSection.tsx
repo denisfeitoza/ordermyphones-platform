@@ -49,7 +49,7 @@ export function TierSection() {
             ))}
           </ul>
 
-          <Link to="/catalog" className={cn(buttonVariants({ size: 'lg' }), 'mt-7')}>
+          <Link to="/contact" className={cn(buttonVariants({ size: 'lg' }), 'mt-7')}>
             Apply for tier pricing
             <ArrowRight className="h-4 w-4" strokeWidth={2} />
           </Link>

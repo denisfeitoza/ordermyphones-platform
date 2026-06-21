@@ -18,18 +18,18 @@ const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
     title: 'Business',
     links: [
       { label: 'Tier pricing', to: '/#tiers' },
-      { label: 'Become a reseller', to: '/catalog' },
-      { label: 'Suppliers', to: '/catalog' },
+      { label: 'Become a reseller', to: '/contact' },
+      { label: 'Your orders', to: '/portal/orders' },
       { label: 'Live operations', to: '/ops' },
     ],
   },
   {
     title: 'Support',
     links: [
-      { label: 'Contact', to: '/catalog' },
-      { label: 'Shipping', to: '/catalog' },
-      { label: 'Returns', to: '/catalog' },
-      { label: 'FAQ', to: '/catalog' },
+      { label: 'Contact', to: '/contact' },
+      { label: 'Shipping', to: '/help#shipping' },
+      { label: 'Returns', to: '/help#returns' },
+      { label: 'FAQ', to: '/help#faq' },
     ],
   },
 ];

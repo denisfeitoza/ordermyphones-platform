@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Check, Lock, PackageCheck, ShoppingBag } from 'lucide-react';
-import { useCart } from '@/store';
+import { useAccount, useCart } from '@/store';
+import type { AccountOrder } from '@/store';
 import { SUPPLIER_NAMES } from '@/data/catalog';
 import { Button } from '@/components/ui/Button';
 import { TierBadge } from '@/components/store/TierBadge';
@@ -29,9 +30,11 @@ function Field({ label, ...props }: { label: string } & React.InputHTMLAttribute
 
 export default function CheckoutPage() {
   const { lines, unitCount, effectiveTier, subtotalCents, retailSubtotalCents, savingsCents, clear } = useCart();
+  const { placeOrder } = useAccount();
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>('review');
   const [orderId] = useState(genOrderId);
+  const recorded = useRef(false);
 
   if (lines.length === 0 && phase !== 'done') {
     return (
@@ -48,9 +51,38 @@ export default function CheckoutPage() {
     );
   }
 
-  function placeOrder(e: FormEvent) {
+  function submitReview(e: FormEvent) {
     e.preventDefault();
     setPhase('reserving');
+  }
+
+  // Persist the order the moment the reserve flow settles, before the cart is
+  // cleared — this is what makes it survive into the portal. Guarded so the
+  // timer (and React's double-invoke in dev) can't record it twice.
+  function handleReserved() {
+    if (!recorded.current) {
+      recorded.current = true;
+      const order: AccountOrder = {
+        id: orderId,
+        placedAt: new Date().toISOString().slice(0, 10),
+        units: unitCount,
+        tierLabel: effectiveTier.label,
+        subtotalCents,
+        savingsCents,
+        status: 'reserved',
+        suppliers: [SUPPLIER_NAMES['source-1'], SUPPLIER_NAMES['source-2']],
+        lines: lines.map((l) => ({
+          model: l.item.model,
+          image: l.item.image,
+          color: l.color,
+          storage: l.storage,
+          qty: l.qty,
+          unitPriceCents: l.unitPriceCents,
+        })),
+      };
+      placeOrder(order);
+    }
+    setPhase('done');
   }
 
   return (
@@ -62,7 +94,7 @@ export default function CheckoutPage() {
       <div className="grid gap-8 lg:grid-cols-[1fr_380px] lg:gap-12">
         <div>
           {phase === 'review' && (
-            <form onSubmit={placeOrder} className="space-y-6">
+            <form onSubmit={submitReview} className="space-y-6">
               <section className="space-y-4 rounded-2xl border border-border p-5">
                 <h2 className="font-medium">Contact &amp; business</h2>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -98,7 +130,7 @@ export default function CheckoutPage() {
               <p className="mb-4 mt-1 text-sm text-muted-foreground">
                 We confirm live stock with each supplier and hold your units before charging.
               </p>
-              <ReserveFlow units={unitCount} onComplete={() => setPhase('done')} />
+              <ReserveFlow units={unitCount} onComplete={handleReserved} />
             </div>
           )}
 
@@ -145,7 +177,14 @@ export default function CheckoutPage() {
                 >
                   Continue shopping
                 </Button>
-                <Button variant="outline" className="flex-1" onClick={() => navigate('/portal/orders')}>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    clear();
+                    navigate('/portal/orders');
+                  }}
+                >
                   Track order
                 </Button>
               </div>
