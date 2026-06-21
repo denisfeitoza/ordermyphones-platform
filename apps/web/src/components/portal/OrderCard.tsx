@@ -1,9 +1,12 @@
 import { Fragment } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { PackageCheck } from 'lucide-react';
+import { ChevronRight, PackageCheck } from 'lucide-react';
 import type { AccountOrder, OrderStatus } from '@/store';
 import { formatUsd } from '@/lib/format';
 import { cn } from '@/lib/utils';
+
+const MotionLink = motion(Link);
 
 export const STATUS_META: Record<
   OrderStatus,
@@ -99,15 +102,19 @@ export function OrderCard({ order, index = 0 }: { order: AccountOrder; index?: n
       : `${order.lines[0].model} + ${order.lines.length - 1} more`;
 
   return (
-    <motion.article
+    <MotionLink
+      to={`/portal/orders/${order.id}`}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
-      className="rounded-2xl border border-border bg-card p-4 sm:p-5"
+      className="group block rounded-2xl border border-border bg-card p-4 transition-colors hover:border-foreground/20 sm:p-5"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-mono text-sm font-semibold">{order.id}</p>
+          <p className="flex items-center gap-1 font-mono text-sm font-semibold">
+            {order.id}
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5" strokeWidth={2} />
+          </p>
           <p className="text-xs text-muted-foreground">
             {/* Parse as local midnight (append time) — a bare 'YYYY-MM-DD' is UTC and drifts a day in negative offsets. */}
             {new Date(`${order.placedAt}T00:00:00`).toLocaleDateString('en-US', {
@@ -144,6 +151,6 @@ export function OrderCard({ order, index = 0 }: { order: AccountOrder; index?: n
         <PackageCheck className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
         <span className="truncate">Held at {order.suppliers.join(' · ')}</span>
       </div>
-    </motion.article>
+    </MotionLink>
   );
 }

@@ -14,6 +14,7 @@ import NotFoundPage from '@/routes/NotFoundPage';
 import OpsPage from '@/routes/OpsPage';
 import OverviewPage from '@/routes/portal/OverviewPage';
 import OrdersPage from '@/routes/portal/OrdersPage';
+import OrderDetailPage from '@/routes/portal/OrderDetailPage';
 import TierPage from '@/routes/portal/TierPage';
 import AddressesPage from '@/routes/portal/AddressesPage';
 import PaymentMethodsPage from '@/routes/portal/PaymentMethodsPage';
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="portal" element={<PortalLayout />}>
             <Route index element={<OverviewPage />} />
             <Route path="orders" element={<OrdersPage />} />
+            <Route path="orders/:id" element={<OrderDetailPage />} />
             <Route path="tier" element={<TierPage />} />
             <Route path="addresses" element={<AddressesPage />} />
             <Route path="payment-methods" element={<PaymentMethodsPage />} />
