@@ -20,7 +20,7 @@ const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
       { label: 'Tier pricing', to: '/#tiers' },
       { label: 'Become a reseller', to: '/catalog' },
       { label: 'Suppliers', to: '/catalog' },
-      { label: 'Bulk orders', to: '/catalog' },
+      { label: 'Live operations', to: '/ops' },
     ],
   },
   {

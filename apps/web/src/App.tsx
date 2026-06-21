@@ -9,11 +9,13 @@ import ProductPage from '@/routes/ProductPage';
 import CartPage from '@/routes/CartPage';
 import CheckoutPage from '@/routes/CheckoutPage';
 import NotFoundPage from '@/routes/NotFoundPage';
+import OpsPage from '@/routes/OpsPage';
 
 export default function App() {
   return (
     <AppProviders>
       <Routes>
+        <Route path="ops" element={<OpsPage />} />
         <Route element={<RootLayout />}>
         <Route index element={<HomePage />} />
         <Route path="catalog" element={<CatalogPage />} />
