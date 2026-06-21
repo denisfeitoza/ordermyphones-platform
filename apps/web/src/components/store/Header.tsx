@@ -73,9 +73,9 @@ export function Header() {
           <TierSwitcher />
           {signedIn ? (
             <Link
-              to="/portal"
+              to="/admin"
               className="grid h-10 w-10 place-items-center rounded-full border border-border hover:bg-muted"
-              aria-label="Your account"
+              aria-label="Admin console"
             >
               <UserRound className="h-[18px] w-[18px]" strokeWidth={2} />
             </Link>

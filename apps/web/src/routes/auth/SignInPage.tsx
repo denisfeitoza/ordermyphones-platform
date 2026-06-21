@@ -9,10 +9,10 @@ export default function SignInPage() {
   const { signedIn, signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: string } | null)?.from ?? '/portal';
+  const from = (location.state as { from?: string } | null)?.from ?? '/admin';
   const [email, setEmail] = useState('ops@downtownmobile.co');
 
-  if (signedIn) return <Navigate to="/portal" replace />;
+  if (signedIn) return <Navigate to="/admin" replace />;
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -23,7 +23,7 @@ export default function SignInPage() {
   return (
     <AuthLayout
       title="Sign in"
-      subtitle="Access your orders, tier, and saved details."
+      subtitle="One console for your orders, tiers, inventory, and the live bots."
       footer={
         <>
           New to OrderMyPhones?{' '}

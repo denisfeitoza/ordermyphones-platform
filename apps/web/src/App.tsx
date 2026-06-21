@@ -24,6 +24,14 @@ import TierPage from '@/routes/portal/TierPage';
 import AddressesPage from '@/routes/portal/AddressesPage';
 import PaymentMethodsPage from '@/routes/portal/PaymentMethodsPage';
 import SettingsPage from '@/routes/portal/SettingsPage';
+import DashboardPage from '@/routes/admin/DashboardPage';
+import AdminCustomersPage from '@/routes/admin/CustomersPage';
+import AdminOrdersPage from '@/routes/admin/OrdersPage';
+import InventoryPage from '@/routes/admin/InventoryPage';
+import PricesPage from '@/routes/admin/PricesPage';
+import ApiLogsPage from '@/routes/admin/ApiLogsPage';
+import AiBotsPage from '@/routes/admin/AiBotsPage';
+import ReportsPage from '@/routes/admin/ReportsPage';
 
 export default function App() {
   return (
@@ -36,6 +44,24 @@ export default function App() {
           <Route path="sign-up" element={<SignUpPage />} />
           <Route path="reset" element={<ResetPage />} />
           <Route path="callback" element={<CallbackPage />} />
+        </Route>
+
+        <Route
+          path="admin"
+          element={
+            <RequireAuth>
+              <AdminLayout />
+            </RequireAuth>
+          }
+        >
+          <Route index element={<DashboardPage />} />
+          <Route path="customers" element={<AdminCustomersPage />} />
+          <Route path="orders" element={<AdminOrdersPage />} />
+          <Route path="inventory" element={<InventoryPage />} />
+          <Route path="prices" element={<PricesPage />} />
+          <Route path="api-logs" element={<ApiLogsPage />} />
+          <Route path="ai" element={<AiBotsPage />} />
+          <Route path="reports" element={<ReportsPage />} />
         </Route>
 
         <Route element={<RootLayout />}>
@@ -64,32 +90,9 @@ export default function App() {
             <Route path="settings" element={<SettingsPage />} />
           </Route>
 
-          <Route path="admin" element={<AdminLayout />}>
-            <Route index element={<AdminPlaceholder section="Home" />} />
-            <Route path="customers" element={<AdminPlaceholder section="Customers" />} />
-            <Route path="orders" element={<AdminPlaceholder section="Orders" />} />
-            <Route path="inventory" element={<AdminPlaceholder section="Inventory" />} />
-            <Route path="prices" element={<AdminPlaceholder section="Prices" />} />
-            <Route path="api-logs" element={<AdminPlaceholder section="API logs" />} />
-            <Route path="ai" element={<AdminPlaceholder section="AI inbox" />} />
-            <Route path="reports" element={<AdminPlaceholder section="Reports" />} />
-          </Route>
-
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     </AppProviders>
-  );
-}
-
-function AdminPlaceholder({ section }: { section: string }) {
-  return (
-    <section className="space-y-2">
-      <h2 className="font-display text-xl tracking-tight">Admin · {section}</h2>
-      <p className="text-sm text-muted-foreground">
-        The operator console is out of scope for this storefront demo. The live bot view is the public{' '}
-        <code>/ops</code> dashboard.
-      </p>
-    </section>
   );
 }

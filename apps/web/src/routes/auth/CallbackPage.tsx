@@ -14,7 +14,7 @@ export default function CallbackPage() {
   useEffect(() => {
     const t = setTimeout(() => {
       signIn(email);
-      navigate('/portal', { replace: true });
+      navigate('/admin', { replace: true });
     }, 1600);
     return () => clearTimeout(t);
   }, [email, signIn, navigate]);
