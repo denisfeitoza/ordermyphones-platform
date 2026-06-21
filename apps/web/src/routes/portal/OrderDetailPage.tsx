@@ -134,7 +134,7 @@ export default function OrderDetailPage() {
         <StatusPill status={order.status} />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px] [&>*]:min-w-0">
         {/* Items + shipment */}
         <div className="space-y-6">
           <section className="rounded-2xl border border-border bg-card">

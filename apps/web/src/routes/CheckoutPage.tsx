@@ -96,7 +96,7 @@ export default function CheckoutPage() {
         {phase === 'done' ? 'Order confirmed' : 'Checkout'}
       </h1>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_380px] lg:gap-12">
+      <div className="grid gap-8 lg:grid-cols-[1fr_380px] lg:gap-12 [&>*]:min-w-0">
         <div>
           {phase === 'review' && (
             <form onSubmit={submitReview} className="space-y-6">
