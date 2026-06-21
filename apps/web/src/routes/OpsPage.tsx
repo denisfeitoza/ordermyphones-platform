@@ -69,7 +69,7 @@ export default function OpsPage() {
           <Kpi label="Open alerts" value={String(alertCount)} sub="stock & price" accent={alertCount > 0 ? 'text-destructive' : 'text-foreground'} />
         </div>
 
-        <div className="grid items-start gap-4 lg:grid-cols-3">
+        <div className="grid items-start gap-4 lg:grid-cols-3 [&>*]:min-w-0">
           <div className="lg:col-span-3">
             <OrderPipeline orders={orders} />
           </div>

@@ -34,7 +34,7 @@ export default function PortalLayout() {
 
   return (
     <div className="container py-8 md:py-10">
-      <div className="grid gap-8 lg:grid-cols-[248px_1fr]">
+      <div className="lg:grid lg:gap-8 lg:grid-cols-[248px_1fr]">
         <aside className="lg:sticky lg:top-28 lg:self-start">
           <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-foreground font-mono text-sm font-semibold text-background">
@@ -66,7 +66,7 @@ export default function PortalLayout() {
                 end={l.end ?? false}
                 className={({ isActive }) =>
                   cn(
-                    'whitespace-nowrap rounded-xl px-3 py-2 text-sm transition-colors',
+                    'inline-flex min-h-[42px] items-center whitespace-nowrap rounded-xl px-3 py-2 text-sm transition-colors',
                     isActive ? 'bg-secondary font-medium text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                   )
                 }
@@ -89,7 +89,7 @@ export default function PortalLayout() {
           </div>
         </aside>
 
-        <div className="min-w-0">
+        <div className="min-w-0 pt-6 lg:pt-0">
           <Outlet />
         </div>
       </div>

@@ -32,7 +32,7 @@ export default function DashboardPage() {
         <StatCard label="Tier savings passed" value={formatUsd(kpis.savingsCents, true)} accent="text-success" sub="to customers" />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-3 [&>*]:min-w-0">
         {/* Revenue trend */}
         <section className="rounded-2xl border border-border bg-card p-5 lg:col-span-2">
           <div className="flex items-center justify-between">
@@ -78,7 +78,7 @@ export default function DashboardPage() {
         </section>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-3 [&>*]:min-w-0">
         {/* Recent orders */}
         <section className="space-y-3 lg:col-span-2">
           <div className="flex items-center justify-between">

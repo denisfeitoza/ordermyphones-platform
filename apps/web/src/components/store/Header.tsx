@@ -71,7 +71,7 @@ export function Header() {
         </form>
 
         <div className="ml-auto flex items-center gap-2 md:ml-0">
-          <TierSwitcher />
+          <TierSwitcher className="hidden sm:block" />
           {signedIn ? (
             <Link
               to="/admin"
@@ -133,6 +133,10 @@ export function Header() {
                 </Link>
               ))}
             </nav>
+            <div className="border-t border-border pt-3 sm:hidden">
+              <p className="mb-2 px-1 text-xs font-medium text-muted-foreground">Preview pricing as</p>
+              <TierSwitcher />
+            </div>
           </div>
         </div>
       )}

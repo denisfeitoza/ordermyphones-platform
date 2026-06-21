@@ -84,7 +84,7 @@ export default function AiBotsPage() {
 
       <OrderPipeline orders={orders} />
 
-      <div className="grid items-start gap-6 lg:grid-cols-3">
+      <div className="grid items-start gap-6 lg:grid-cols-3 [&>*]:min-w-0">
         <div className="lg:col-span-2">
           <AgentSwarm />
         </div>

@@ -64,7 +64,7 @@ export default function AdminLayout() {
                 end={l.end ?? false}
                 className={({ isActive }) =>
                   cn(
-                    'inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm transition-colors',
+                    'inline-flex min-h-[42px] items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm transition-colors',
                     isActive ? 'bg-secondary font-medium text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                   )
                 }
