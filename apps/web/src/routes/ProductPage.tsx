@@ -3,13 +3,11 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Minus, Plus, ShieldCheck, Truck, RotateCcw, ChevronRight, ArrowUpRight } from 'lucide-react';
 import { CATALOG, getItemBySlug, totalAvailable, unitPriceCents } from '@/data/catalog';
-import { maxTier, resolveTierByUnits, tierByCode, unitsToNextTier } from '@/data/tiers';
 import { useCart, useTier } from '@/store';
 import { Button } from '@/components/ui/Button';
 import { Badge, badgeTone } from '@/components/ui/Badge';
 import { Stars } from '@/components/ui/Stars';
 import { TierBadge } from '@/components/store/TierBadge';
-import { TierLadder } from '@/components/store/TierLadder';
 import { PulseDot } from '@/components/store/SyncHeartbeat';
 import { ProductGrid } from '@/components/store/ProductGrid';
 import { formatInt, formatUsd } from '@/lib/format';
@@ -43,11 +41,10 @@ export default function ProductPage() {
     );
   }
 
-  const effectiveTier = tierByCode(maxTier(storedTier.code, resolveTierByUnits(qty).code));
+  const effectiveTier = storedTier;
   const unit = unitPriceCents(item, effectiveTier.code);
   const retail = unitPriceCents(item, 'tier_1');
   const lineTotal = unit * qty;
-  const next = unitsToNextTier(qty);
   const available = totalAvailable(item);
   const soldOut = available === 0;
 
@@ -180,12 +177,11 @@ export default function ProductPage() {
                 ))}
               </div>
             </div>
-            {next && (
-              <p className="mt-2.5 text-sm text-muted-foreground">
-                Add <span className="font-mono font-semibold text-foreground">{next.remaining}</span> more to unlock{' '}
-                <span className="font-medium text-foreground">{next.next.label}</span> pricing.
-              </p>
-            )}
+            <p className="mt-2.5 text-sm text-muted-foreground">
+              Need a larger quantity? Save it to your{' '}
+              <Link to="/portal/wishlist" className="font-medium text-brand hover:underline">wishlist</Link> to build a
+              bulk order in one go.
+            </p>
           </div>
 
           {/* Actions */}
@@ -196,15 +192,6 @@ export default function ProductPage() {
             <Button variant="primary" size="lg" className="flex-1" disabled={soldOut} onClick={buyNow}>
               {soldOut ? 'Sold out' : 'Reserve & buy'}
             </Button>
-          </div>
-
-          {/* Tier ladder */}
-          <div className="mt-8 rounded-2xl border border-border p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Volume pricing</h2>
-              <span className="text-xs text-muted-foreground">Auto-applied at checkout</span>
-            </div>
-            <TierLadder item={item} qty={qty} />
           </div>
 
           {/* Availability (sources kept private) */}

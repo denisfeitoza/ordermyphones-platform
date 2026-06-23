@@ -3,18 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Minus, Plus, Trash2, X, ArrowRight, ShoppingBag } from 'lucide-react';
 import { useCart } from '@/store';
-import { unitsToNextTier } from '@/data/tiers';
 import { Button } from '@/components/ui/Button';
 import { TierBadge } from './TierBadge';
 import { formatUsd } from '@/lib/format';
-import { tierBg } from '@/lib/tierStyles';
-import { cn } from '@/lib/utils';
 
 export function CartDrawer() {
   const { open, setOpen, lines, unitCount, effectiveTier, subtotalCents, savingsCents, setQty, remove } = useCart();
   const navigate = useNavigate();
-  const next = unitsToNextTier(unitCount);
-  const pct = next ? Math.min(100, Math.round((unitCount / next.next.minUnits) * 100)) : 100;
 
   useEffect(() => {
     if (!open) return;
@@ -75,30 +70,9 @@ export function CartDrawer() {
               </div>
             ) : (
               <>
-                <div className="border-b border-border bg-muted/40 px-5 py-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">Pricing at</span>
-                    <TierBadge tier={effectiveTier} showRange />
-                  </div>
-                  {next && (
-                    <div className="mt-3 space-y-1.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">
-                          <span className="font-mono font-semibold text-foreground">{next.remaining}</span> more units →{' '}
-                          <span className="font-medium text-foreground">{next.next.label}</span>
-                        </span>
-                        <span className="font-mono text-muted-foreground">{pct}%</span>
-                      </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-border">
-                        <motion.div
-                          className={cn('h-full rounded-full', tierBg[next.next.tone])}
-                          initial={false}
-                          animate={{ width: `${pct}%` }}
-                          transition={{ type: 'spring', stiffness: 200, damping: 28 }}
-                        />
-                      </div>
-                    </div>
-                  )}
+                <div className="flex items-center justify-between border-b border-border bg-muted/40 px-5 py-3">
+                  <span className="text-xs text-muted-foreground">Your price</span>
+                  <TierBadge tier={effectiveTier} />
                 </div>
 
                 <ul className="flex-1 divide-y divide-border overflow-y-auto px-5">

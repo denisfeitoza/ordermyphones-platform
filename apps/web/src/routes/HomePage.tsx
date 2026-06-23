@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Hero } from '@/components/store/Hero';
 import { ProductGrid } from '@/components/store/ProductGrid';
-import { TierSection } from '@/components/store/TierSection';
 import { Recommendations } from '@/components/store/Recommendations';
 import { CATALOG } from '@/data/catalog';
 
@@ -31,8 +30,6 @@ export default function HomePage() {
         </div>
         <ProductGrid items={featured} />
       </section>
-
-      <TierSection />
 
       <Recommendations />
     </div>
