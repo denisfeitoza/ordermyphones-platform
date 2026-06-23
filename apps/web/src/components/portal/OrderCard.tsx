@@ -151,7 +151,7 @@ export function OrderCard({ order, index = 0 }: { order: AccountOrder; index?: n
 
       <div className="mt-4 flex items-center gap-2 border-t border-border pt-3 text-xs text-muted-foreground">
         <PackageCheck className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-        <span className="truncate">Held at {order.suppliers.join(' · ')}</span>
+        <span className="truncate">Reserved at source · in fulfillment</span>
       </div>
     </MotionLink>
   );

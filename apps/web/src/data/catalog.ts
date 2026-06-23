@@ -42,7 +42,14 @@ const stk = (supplier: SupplierCode, availableQty: number, unitCostCents: number
   lead,
 });
 
+/** Real supplier names — ADMIN-ONLY. Never render these on customer-facing surfaces. */
 export const SUPPLIER_NAMES: Record<SupplierCode, string> = {
+  'source-1': 'Source A',
+  'source-2': 'Source B',
+};
+
+/** Anonymized source labels for any customer-visible surface (suppliers are a trade secret). */
+export const SOURCE_LABELS: Record<SupplierCode, string> = {
   'source-1': 'Source A',
   'source-2': 'Source B',
 };

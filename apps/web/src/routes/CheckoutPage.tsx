@@ -167,8 +167,8 @@ export default function CheckoutPage() {
                   {unitCount} {unitCount === 1 ? 'unit' : 'units'} reserved at source
                 </div>
                 <p className="text-muted-foreground">
-                  Held at {SUPPLIER_NAMES['source-1']} &amp; {SUPPLIER_NAMES['source-2']}, cross-checked against open
-                  orders. Tracking posts as each supplier dispatches.
+                  Reserved across our supplier network, cross-checked against open orders. Tracking posts as each
+                  shipment dispatches.
                 </p>
               </div>
 

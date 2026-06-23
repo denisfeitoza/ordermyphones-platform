@@ -2,13 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Minus, Plus, ShieldCheck, Truck, RotateCcw, ChevronRight, ArrowUpRight } from 'lucide-react';
-import {
-  CATALOG,
-  getItemBySlug,
-  totalAvailable,
-  unitPriceCents,
-  SUPPLIER_NAMES,
-} from '@/data/catalog';
+import { CATALOG, getItemBySlug, totalAvailable, unitPriceCents } from '@/data/catalog';
 import { maxTier, resolveTierByUnits, tierByCode, unitsToNextTier } from '@/data/tiers';
 import { useCart, useTier } from '@/store';
 import { Button } from '@/components/ui/Button';
@@ -213,27 +207,19 @@ export default function ProductPage() {
             <TierLadder item={item} qty={qty} />
           </div>
 
-          {/* Live supplier stock */}
+          {/* Availability (sources kept private) */}
           <div className="mt-6 rounded-2xl border border-border p-4">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Live supplier stock</h2>
-              <span className="font-mono text-xs text-muted-foreground">{formatInt(available)} total</span>
+              <h2 className="text-sm font-semibold">Availability</h2>
+              <span className="font-mono text-xs text-muted-foreground">{formatInt(available)} in stock</span>
             </div>
-            <div className="space-y-2">
-              {item.stock.map((s) => (
-                <div key={s.supplier} className="flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2">
-                    <PulseDot status={s.availableQty > 0 ? 'online' : 'degraded'} />
-                    {SUPPLIER_NAMES[s.supplier]}
-                  </span>
-                  <span className="flex items-center gap-3">
-                    <span className="text-muted-foreground">{s.lead}</span>
-                    <span className="w-16 text-right font-mono font-medium tabular-nums">
-                      {s.availableQty > 0 ? `${formatInt(s.availableQty)} units` : '—'}
-                    </span>
-                  </span>
-                </div>
-              ))}
+            <div className="flex items-center gap-2 text-sm">
+              <PulseDot status={available > 0 ? 'online' : 'degraded'} />
+              <span className="text-muted-foreground">
+                {available > 0
+                  ? 'Live stock confirmed and reserved at source — ships in 1–2 business days'
+                  : 'Out of stock — restock in progress'}
+              </span>
             </div>
           </div>
 
