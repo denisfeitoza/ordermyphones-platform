@@ -21,6 +21,7 @@ import { RequireAuth } from '@/components/auth/RequireAuth';
 import OverviewPage from '@/routes/portal/OverviewPage';
 import OrdersPage from '@/routes/portal/OrdersPage';
 import OrderDetailPage from '@/routes/portal/OrderDetailPage';
+import WishlistPage from '@/routes/portal/WishlistPage';
 import TierPage from '@/routes/portal/TierPage';
 import AddressesPage from '@/routes/portal/AddressesPage';
 import PaymentMethodsPage from '@/routes/portal/PaymentMethodsPage';
@@ -86,6 +87,7 @@ export default function App() {
             <Route index element={<OverviewPage />} />
             <Route path="orders" element={<OrdersPage />} />
             <Route path="orders/:id" element={<OrderDetailPage />} />
+            <Route path="wishlist" element={<WishlistPage />} />
             <Route path="tier" element={<TierPage />} />
             <Route path="addresses" element={<AddressesPage />} />
             <Route path="payment-methods" element={<PaymentMethodsPage />} />

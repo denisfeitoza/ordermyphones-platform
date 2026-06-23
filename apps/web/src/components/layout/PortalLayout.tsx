@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 const portalNav = [
   { to: '/portal', label: 'Overview', end: true },
   { to: '/portal/orders', label: 'Orders' },
+  { to: '/portal/wishlist', label: 'Wishlist' },
   { to: '/portal/tier', label: 'Tier' },
   { to: '/portal/addresses', label: 'Addresses' },
   { to: '/portal/payment-methods', label: 'Payment' },

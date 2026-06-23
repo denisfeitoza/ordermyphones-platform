@@ -1,17 +1,21 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { Heart } from 'lucide-react';
 import { totalAvailable, type CatalogItem } from '@/data/catalog';
-import { useCart, useTier } from '@/store';
+import { useCart, useTier, useWishlist } from '@/store';
 import { Button } from '@/components/ui/Button';
 import { Badge, badgeTone } from '@/components/ui/Badge';
 import { Stars } from '@/components/ui/Stars';
 import { TierPrice } from './TierPrice';
 import { StockBadge } from './StockBadge';
+import { cn } from '@/lib/utils';
 
 export function ProductCard({ item }: { item: CatalogItem }) {
   const { tier } = useTier();
   const { add, setOpen } = useCart();
+  const { has, toggleItem } = useWishlist();
   const navigate = useNavigate();
   const soldOut = totalAvailable(item) === 0;
+  const saved = has(item.id);
 
   const storageLabel =
     item.storage.length > 1
@@ -26,6 +30,15 @@ export function ProductCard({ item }: { item: CatalogItem }) {
 
   return (
     <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 ease-spring hover:-translate-y-1 hover:border-border/70 hover:shadow-card-hover">
+      <button
+        type="button"
+        onClick={() => toggleItem(item.id)}
+        aria-label={saved ? 'Remove from wishlist' : 'Save to wishlist'}
+        aria-pressed={saved}
+        className="absolute right-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-full border border-border bg-background/80 backdrop-blur transition-colors hover:bg-background"
+      >
+        <Heart className={cn('h-[18px] w-[18px] transition-colors', saved ? 'fill-brand text-brand' : 'text-muted-foreground')} strokeWidth={2} />
+      </button>
       <Link to={`/p/${item.slug}`} className="relative block aspect-[4/3] overflow-hidden bg-muted/30">
         <div className="absolute left-3 top-3 z-10 flex flex-col items-start gap-1.5">
           {item.badges.map((b) => (
@@ -33,10 +46,8 @@ export function ProductCard({ item }: { item: CatalogItem }) {
               {b}
             </Badge>
           ))}
+          <Badge tone="glass">{item.brand}</Badge>
         </div>
-        <Badge tone="glass" className="absolute right-3 top-3 z-10">
-          {item.brand}
-        </Badge>
         <img
           src={item.image}
           alt={item.model}
