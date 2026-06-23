@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { CATALOG, unitPriceCents } from '@/data/catalog';
-import { resolveTierByUnits, unitsToNextTier, type TierDef } from '@/data/tiers';
+import { resolveTierByUnits } from '@/data/tiers';
 import type { PricingTierCode } from '@shared/pricing';
 
 export type OrderStatus = 'reserved' | 'processing' | 'shipped' | 'delivered';
@@ -93,8 +93,6 @@ interface AccountContextValue {
   placeOrder: (order: AccountOrder) => void;
   lifetimeUnits: number;
   lifetimeSpentCents: number;
-  accountTier: TierDef;
-  toNext: { next: TierDef; remaining: number } | null;
 }
 
 const AccountContext = createContext<AccountContextValue | null>(null);
@@ -125,8 +123,6 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       placeOrder,
       lifetimeUnits,
       lifetimeSpentCents,
-      accountTier: resolveTierByUnits(lifetimeUnits || 1),
-      toNext: unitsToNextTier(lifetimeUnits || 1),
     };
   }, [orders, placeOrder]);
 

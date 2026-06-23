@@ -1,6 +1,6 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { ArrowUpRight, LogOut } from 'lucide-react';
-import { useAccount, useAuth } from '@/store';
+import { useAccount, useAuth, useTier } from '@/store';
 import { TierBadge } from '@/components/store/TierBadge';
 import { cn } from '@/lib/utils';
 
@@ -23,7 +23,8 @@ function initials(name: string): string {
 }
 
 export default function PortalLayout() {
-  const { businessName, accountTier } = useAccount();
+  const { businessName } = useAccount();
+  const { tier } = useTier();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -47,7 +48,7 @@ export default function PortalLayout() {
           </div>
 
           <div className="mt-3 px-1">
-            <TierBadge tier={accountTier} showRange />
+            <TierBadge tier={tier} />
           </div>
 
           <Link

@@ -1,9 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Search, ShoppingBag, Menu, X, UserRound } from 'lucide-react';
-import { useAuth, useCart } from '@/store';
+import { useAuth, useCart, useTier } from '@/store';
 import { Logo } from './Logo';
-import { TierSwitcher } from './TierSwitcher';
+import { TierBadge } from './TierBadge';
 import { cn } from '@/lib/utils';
 
 const NAV = [
@@ -16,6 +16,7 @@ const NAV = [
 export function Header() {
   const { unitCount, setOpen } = useCart();
   const { signedIn } = useAuth();
+  const { tier } = useTier();
   const navigate = useNavigate();
   const [q, setQ] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
@@ -71,7 +72,7 @@ export function Header() {
         </form>
 
         <div className="ml-auto flex items-center gap-2 md:ml-0">
-          <TierSwitcher className="hidden sm:block" />
+          {signedIn && <TierBadge tier={tier} className="hidden sm:inline-flex" />}
           {signedIn ? (
             <Link
               to="/admin"
@@ -133,10 +134,12 @@ export function Header() {
                 </Link>
               ))}
             </nav>
-            <div className="border-t border-border pt-3 sm:hidden">
-              <p className="mb-2 px-1 text-xs font-medium text-muted-foreground">Preview pricing as</p>
-              <TierSwitcher />
-            </div>
+            {signedIn && (
+              <div className="flex items-center justify-between border-t border-border pt-3 sm:hidden">
+                <span className="px-1 text-xs font-medium text-muted-foreground">Your pricing tier</span>
+                <TierBadge tier={tier} />
+              </div>
+            )}
           </div>
         </div>
       )}

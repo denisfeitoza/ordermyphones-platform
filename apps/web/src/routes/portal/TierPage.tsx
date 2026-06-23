@@ -1,87 +1,50 @@
 import { Link } from 'react-router-dom';
-import { Check, Lock, ArrowRight } from 'lucide-react';
-import { useAccount } from '@/store';
-import { TIERS } from '@/data/tiers';
+import { ArrowRight, Check } from 'lucide-react';
+import { useTier } from '@/store';
 import { PageHeading } from '@/components/portal/parts';
 import { TierBadge } from '@/components/store/TierBadge';
 import { buttonVariants } from '@/components/ui/Button';
-import { tierBg, tierBorder, tierText } from '@/lib/tierStyles';
-import { formatInt } from '@/lib/format';
+import { tierBg, tierText } from '@/lib/tierStyles';
 import { cn } from '@/lib/utils';
 
 export default function TierPage() {
-  const { lifetimeUnits, accountTier, toNext } = useAccount();
+  const { tier } = useTier();
+
+  const benefits = [
+    tier.discount > 0 ? `${Math.round(tier.discount * 100)}% off retail on every device` : 'Retail pricing on every device',
+    'Live stock confirmed and reserved at source before any charge',
+    'Per-shipment tracking from your portal',
+    'Priority fulfillment on bulk orders',
+  ];
 
   return (
     <div className="space-y-6">
-      <PageHeading
-        title="Tier & pricing"
-        subtitle="Your tier is derived from cumulative purchase volume — it never resets and only moves up."
-      />
+      <PageHeading title="Your tier" subtitle="The pricing your account receives — applied automatically on every order." />
 
-      <section className="rounded-2xl border border-border bg-card p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <span className="text-sm text-muted-foreground">Current tier</span>
-            <TierBadge tier={accountTier} showRange />
-          </div>
-          <span className="font-mono text-sm text-muted-foreground">
-            {formatInt(lifetimeUnits)} lifetime units
+      <section className="rounded-2xl border border-border bg-card p-6">
+        <div className="flex items-center justify-between gap-3">
+          <TierBadge tier={tier} />
+          <span className={cn('font-mono text-2xl font-semibold tabular-nums', tierText[tier.tone])}>
+            {tier.discount > 0 ? `−${Math.round(tier.discount * 100)}%` : 'Retail'}
           </span>
         </div>
-        {toNext && (
-          <p className="mt-3 text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">{formatInt(toNext.remaining)} more units</span> unlocks{' '}
-            {toNext.next.label} — {Math.round(toNext.next.discount * 100)}% off retail on every order.
-          </p>
-        )}
-      </section>
+        <p className="mt-2 text-sm text-muted-foreground">No codes, no quotes — your price is applied at checkout.</p>
 
-      {/* Tier roadmap — vertical ladder, reached steps checked, current highlighted. */}
-      <ol className="space-y-2.5">
-        {TIERS.map((t) => {
-          const reached = lifetimeUnits >= t.minUnits;
-          const current = t.code === accountTier.code;
-          return (
-            <li
-              key={t.code}
-              className={cn(
-                'flex items-center gap-4 rounded-2xl border bg-card p-4 transition-colors',
-                current ? cn('bg-muted/50', tierBorder[t.tone]) : 'border-border',
-              )}
-            >
-              <span
-                className={cn(
-                  'grid h-9 w-9 shrink-0 place-items-center rounded-full',
-                  reached ? cn(tierBg[t.tone], 'text-white') : 'bg-muted text-muted-foreground',
-                )}
-              >
-                {reached ? <Check className="h-4 w-4" strokeWidth={3} /> : <Lock className="h-3.5 w-3.5" strokeWidth={2} />}
+        <ul className="mt-5 space-y-2.5">
+          {benefits.map((b) => (
+            <li key={b} className="flex items-start gap-2.5 text-sm">
+              <span className={cn('mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full text-white', tierBg[tier.tone])}>
+                <Check className="h-3 w-3" strokeWidth={3} />
               </span>
-
-              <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-2 text-sm font-medium">
-                  {t.label}
-                  {current && (
-                    <span className={cn('rounded-full px-2 py-0.5 text-[0.65rem] font-semibold', tierText[t.tone])}>
-                      you are here
-                    </span>
-                  )}
-                </p>
-                <p className="font-mono text-xs text-muted-foreground">{t.rangeLabel}</p>
-              </div>
-
-              <span className={cn('shrink-0 font-mono text-sm font-semibold', reached ? tierText[t.tone] : 'text-muted-foreground')}>
-                {t.discount > 0 ? `−${Math.round(t.discount * 100)}%` : 'Retail'}
-              </span>
+              {b}
             </li>
-          );
-        })}
-      </ol>
+          ))}
+        </ul>
+      </section>
 
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-muted/30 p-5">
         <p className="flex-1 text-sm text-muted-foreground">
-          Need volume beyond Wholesale, net terms, or a dedicated rep? Talk to the team.
+          Buying at higher volume? Your account manager can review your pricing.
         </p>
         <Link to="/contact" className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}>
           Contact sales

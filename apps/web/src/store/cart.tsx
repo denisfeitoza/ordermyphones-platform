@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { CATALOG, unitPriceCents, type CatalogItem } from '@/data/catalog';
-import { maxTier, resolveTierByUnits, tierByCode, type TierDef } from '@/data/tiers';
+import { tierByCode, type TierDef } from '@/data/tiers';
 import { useTier } from './tier';
 
 export interface CartLine {
@@ -74,8 +74,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<CartContextValue>(() => {
     const unitCount = raw.reduce((s, l) => s + l.qty, 0);
-    const cartTier = resolveTierByUnits(unitCount || 1);
-    const effectiveTier = tierByCode(maxTier(storedCode, cartTier.code));
+    // Pricing is the customer's assigned tier only — no cart-quantity upgrade.
+    const effectiveTier = tierByCode(storedCode);
 
     const lines: PricedCartLine[] = raw.flatMap((l) => {
       const item = CATALOG.find((i) => i.id === l.itemId);
