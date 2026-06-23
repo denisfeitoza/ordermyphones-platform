@@ -15,7 +15,7 @@
 
     --border: 240 6% 90%;
     --input: 240 6% 90%;
-    --ring: 222 83% 53%;
+    --ring: 288 85% 55%;
 
     --primary: 240 10% 4%;
     --primary-foreground: 0 0% 100%;
@@ -32,10 +32,10 @@
     --success: 160 84% 39%;
     --warning: 38 92% 50%;
 
-    /* Brand identity (client-defined): electric blue → violet. Controlled saturation,
-       used as pointed accents over neutral zinc — never as neon glows or text fills. */
-    --brand: 222 83% 53%;
-    --brand-2: 262 70% 58%;
+    /* Brand identity (from the logo): magenta-purple → cyan. Used as pointed
+       accents over neutral zinc — never as neon glows or text fills. */
+    --brand: 288 85% 55%;
+    --brand-2: 199 90% 64%;
 
     /* Pricing tiers: blue → emerald → amber → violet (semantic differentiation). */
     --tier-1: 217 91% 60%;
@@ -58,7 +58,7 @@
 
     --border: 240 6% 16%;
     --input: 240 6% 18%;
-    --ring: 222 83% 60%;
+    --ring: 288 85% 62%;
 
     --primary: 0 0% 98%;
     --primary-foreground: 240 10% 4%;

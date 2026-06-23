@@ -56,7 +56,7 @@ export default function OpsPage() {
         <div>
           <h1 className="font-display text-xl font-semibold tracking-tight">Inventory bot · live operations</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Aggregating Assurant &amp; Mannapov LLC every 2 seconds, cross-checking open orders, and reserving stock at
+            Aggregating live sources every 2 seconds, cross-checking open orders, and reserving stock at
             source. Simulated for the mockup — no live supplier calls.
           </p>
         </div>

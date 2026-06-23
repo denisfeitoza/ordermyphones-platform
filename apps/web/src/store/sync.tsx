@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { SupplierCode } from '@shared/supplier';
-import { SUPPLIER_NAMES } from '@/data/catalog';
+import { SOURCE_LABELS } from '@/data/catalog';
 
 export interface SupplierPulse {
   code: SupplierCode;
@@ -27,8 +27,8 @@ const SKUS_TRACKED = 1284;
 
 /**
  * Simulates the inventory bot: a heartbeat that "re-syncs" every 2 seconds,
- * cross-checking supplier stock against open orders. No backend — this is the
- * UI feel of the real Assurant/Mannapov adapters (which poll on a sane cadence).
+ * cross-checking supplier stock against open orders. No backend. Sources are
+ * anonymized (Source A/B) — real supplier names never reach customer surfaces.
  */
 export function SyncProvider({ children }: { children: ReactNode }) {
   const [pulse, setPulse] = useState(0);
@@ -54,13 +54,13 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     const suppliers: SupplierPulse[] = [
       {
         code: 'source-1',
-        name: SUPPLIER_NAMES['source-1'],
+        name: SOURCE_LABELS['source-1'],
         status: 'online',
         latencyMs: jitter(pulse + 1, 180, 70),
       },
       {
         code: 'source-2',
-        name: SUPPLIER_NAMES['source-2'],
+        name: SOURCE_LABELS['source-2'],
         status: pulse % 17 === 0 ? 'degraded' : 'online',
         latencyMs: jitter(pulse + 5, 240, 110),
       },

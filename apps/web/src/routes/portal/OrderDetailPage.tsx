@@ -167,7 +167,7 @@ export default function OrderDetailPage() {
               <h2 className="text-sm font-medium">Shipment</h2>
               <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                 <MapPin className="h-3.5 w-3.5" strokeWidth={2} />
-                Held at {order.suppliers.join(' · ')}
+                Reserved at source
               </span>
             </header>
             <div className="px-5 py-5">

@@ -1,19 +1,18 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Loader2 } from 'lucide-react';
-import { SUPPLIER_NAMES } from '@/data/catalog';
 import { cn } from '@/lib/utils';
 
 /**
- * Simulates the reserve-at-source flow: confirm live stock with each supplier,
- * cross-check open orders, hold the units, then authorize. UI-only — the real
- * adapters do this server-side against the official supplier APIs.
+ * Simulates the reserve-at-source flow: confirm live stock, cross-check open
+ * orders, hold the units, then authorize. UI-only — the real adapters do this
+ * server-side against the supplier network (sources never exposed to the buyer).
  */
 export function ReserveFlow({ units, onComplete }: { units: number; onComplete: () => void }) {
   const u = `${units} ${units === 1 ? 'unit' : 'units'}`;
   const steps = [
-    `Querying ${SUPPLIER_NAMES['source-1']} live stock`,
-    `Querying ${SUPPLIER_NAMES['source-2']} live stock`,
+    'Querying live stock at source',
+    'Confirming availability across the network',
     `Cross-checking ${u} against open orders`,
     `Reserving ${u} at source`,
     'Authorizing payment',

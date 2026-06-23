@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CATALOG, SUPPLIER_NAMES, totalAvailable } from '@/data/catalog';
+import { CATALOG, SOURCE_LABELS, totalAvailable } from '@/data/catalog';
 import { useSync } from '@/store';
 import { PulseDot } from '@/components/store/SyncHeartbeat';
 import { ORDER_STAGES, type LiveOrder, type LogEvent, type LogKind } from './useOpsStream';
@@ -70,11 +70,11 @@ export function SupplierSyncPanel() {
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-2 text-sm font-medium">
               <span className="h-2 w-2 rounded-full bg-muted-foreground/40" />
-              Gold Prime · DXB
+              Source C · offshore
             </span>
             <span className="font-mono text-[0.65rem] text-muted-foreground">reserved</span>
           </div>
-          <p className="mt-1.5 text-xs text-muted-foreground">Dubai wholesale feed — named in Phase 1 supplier audit</p>
+          <p className="mt-1.5 text-xs text-muted-foreground">Offshore wholesale feed — reserved capacity</p>
         </div>
       </div>
     </Panel>
@@ -171,7 +171,7 @@ export function buildAlerts(): Alert[] {
     const total = totalAvailable(item);
     if (total === 0) return [{ id: item.id, model: item.model, sev: 'high', msg: 'Out of stock — all suppliers' }];
     const zero = item.stock.find((s) => s.availableQty === 0);
-    if (zero) return [{ id: item.id, model: item.model, sev: 'med', msg: `0 at ${SUPPLIER_NAMES[zero.supplier]} · rebalance` }];
+    if (zero) return [{ id: item.id, model: item.model, sev: 'med', msg: `0 at ${SOURCE_LABELS[zero.supplier]} · rebalance` }];
     if (total <= 20) return [{ id: item.id, model: item.model, sev: 'low', msg: `${total} units left · reorder soon` }];
     return [];
   });
@@ -200,7 +200,7 @@ export function StockAlerts() {
 
 const AGENTS = [
   { name: 'orchestrator', role: 'Routes each intent to the right agent', last: 'Dispatched 3 actions this minute' },
-  { name: 'inventory-triage', role: 'Flags stock discrepancies across feeds', last: 'Flagged 2 price gaps · Mannapov vs Assurant' },
+  { name: 'inventory-triage', role: 'Flags stock discrepancies across feeds', last: 'Flagged 2 price gaps · Source B vs Source A' },
   { name: 'pricing', role: 'Re-derives tier prices on cost change', last: 'Refreshed 4 tiers · iPhone 16 Pro' },
   { name: 'tier-classifier', role: 'Promotes accounts by cumulative volume', last: 'Promoted 1 account → Multi-Store' },
   { name: 'customer-support', role: 'Drafts replies for admin approval', last: 'Drafted 3 replies · awaiting approval' },
