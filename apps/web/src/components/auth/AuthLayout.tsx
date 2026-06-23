@@ -4,7 +4,7 @@ import { Logo } from '@/components/store/Logo';
 
 const POINTS = [
   { icon: Zap, title: 'Reserve at source', desc: 'Stock is confirmed and held at the supplier before you’re charged.' },
-  { icon: Layers, title: 'Tier pricing, automatic', desc: 'Your price drops as cumulative volume climbs — no quotes, no rep.' },
+  { icon: Layers, title: 'Tier pricing, automatic', desc: 'Your account price is applied at checkout — no codes, no quotes.' },
   { icon: ShieldCheck, title: 'Two live supplier feeds', desc: 'Anonymized sources, cross-checked every two seconds.' },
 ];
 

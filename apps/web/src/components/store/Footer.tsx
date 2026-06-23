@@ -17,7 +17,7 @@ const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
   {
     title: 'Business',
     links: [
-      { label: 'Tier pricing', to: '/#tiers' },
+      { label: 'Bulk orders', to: '/portal/wishlist' },
       { label: 'Become a reseller', to: '/contact' },
       { label: 'Your orders', to: '/portal/orders' },
       { label: 'Live operations', to: '/ops' },
