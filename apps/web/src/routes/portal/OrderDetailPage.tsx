@@ -1,12 +1,32 @@
 import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check, Loader2, MapPin, RotateCcw, Truck } from 'lucide-react';
+import { ArrowLeft, Check, FileDown, Loader2, MapPin, RotateCcw, Sheet, Truck } from 'lucide-react';
 import { useAccount, useCart, type AccountOrder } from '@/store';
 import { CATALOG } from '@/data/catalog';
 import { STATUS_META, StatusPill } from '@/components/portal/OrderCard';
 import { Button, buttonVariants } from '@/components/ui/Button';
+import { exportDocCsv, exportDocPdf, type ExportDoc } from '@/lib/export';
 import { formatUsd } from '@/lib/format';
 import { cn } from '@/lib/utils';
+
+function orderToDoc(order: AccountOrder, business: string): ExportDoc {
+  return {
+    title: 'Order summary',
+    reference: order.id,
+    business,
+    tierLabel: order.tierLabel,
+    dateLabel: new Date(`${order.placedAt}T00:00:00`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+    lines: order.lines.map((l) => ({
+      model: l.model,
+      variant: `${l.color} · ${l.storage}GB`,
+      qty: l.qty,
+      unitPriceCents: l.unitPriceCents,
+      lineTotalCents: l.unitPriceCents * l.qty,
+    })),
+    subtotalCents: order.subtotalCents,
+    savingsCents: order.savingsCents,
+  };
+}
 
 const STAGES = [
   { key: 'reserved', label: 'Reserved at source', offsetDays: 0 },
@@ -82,7 +102,7 @@ function Timeline({ order }: { order: AccountOrder }) {
 
 export default function OrderDetailPage() {
   const { id } = useParams();
-  const { orders } = useAccount();
+  const { orders, businessName } = useAccount();
   const { add, setOpen } = useCart();
   const order = orders.find((o) => o.id === id);
 
@@ -197,6 +217,16 @@ export default function OrderDetailPage() {
               <RotateCcw className="h-4 w-4" strokeWidth={2} />
               Reorder at current pricing
             </Button>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <Button variant="outline" size="md" onClick={() => order && void exportDocPdf(orderToDoc(order, businessName))}>
+                <FileDown className="h-4 w-4" strokeWidth={2} />
+                PDF
+              </Button>
+              <Button variant="outline" size="md" onClick={() => order && exportDocCsv(orderToDoc(order, businessName))}>
+                <Sheet className="h-4 w-4" strokeWidth={2} />
+                CSV
+              </Button>
+            </div>
             <Link
               to="/contact"
               className={cn(buttonVariants({ variant: 'outline', size: 'md' }), 'mt-2 w-full')}

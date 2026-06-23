@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Minus, Plus, ShieldCheck, Truck, RotateCcw, ChevronRight, ArrowUpRight } from 'lucide-react';
+import { Minus, Plus, ShieldCheck, Truck, RotateCcw, ChevronRight, ArrowUpRight, Heart } from 'lucide-react';
 import { CATALOG, getItemBySlug, totalAvailable, unitPriceCents } from '@/data/catalog';
-import { useCart, useTier } from '@/store';
+import { useCart, useTier, useWishlist } from '@/store';
 import { Button } from '@/components/ui/Button';
 import { Badge, badgeTone } from '@/components/ui/Badge';
 import { Stars } from '@/components/ui/Stars';
@@ -18,6 +18,7 @@ export default function ProductPage() {
   const item = slug ? getItemBySlug(slug) : undefined;
   const { tier: storedTier } = useTier();
   const { add, setOpen } = useCart();
+  const { add: addWish, has: hasWish } = useWishlist();
   const navigate = useNavigate();
 
   const [color, setColor] = useState(item?.colors[0].name ?? '');
@@ -191,6 +192,16 @@ export default function ProductPage() {
             </Button>
             <Button variant="primary" size="lg" className="flex-1" disabled={soldOut} onClick={buyNow}>
               {soldOut ? 'Sold out' : 'Reserve & buy'}
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="sm:w-12 sm:px-0"
+              aria-label={hasWish(item.id) ? 'Saved to wishlist' : 'Save to wishlist'}
+              onClick={() => addWish(item.id, { color, storage, qty })}
+            >
+              <Heart className={cn('h-5 w-5', hasWish(item.id) && 'fill-brand text-brand')} strokeWidth={2} />
+              <span className="sm:hidden">Save to wishlist</span>
             </Button>
           </div>
 
