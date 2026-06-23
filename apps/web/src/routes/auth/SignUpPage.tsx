@@ -20,7 +20,7 @@ export default function SignUpPage() {
   return (
     <AuthLayout
       title="Create your business account"
-      subtitle="Tier pricing applies automatically as your volume grows."
+      subtitle="Tier pricing is applied to your account automatically."
       footer={
         <>
           Already have an account?{' '}

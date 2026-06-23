@@ -89,15 +89,15 @@ export function Hero() {
               Shop the catalog
               <ArrowRight className="h-4 w-4" strokeWidth={2} />
             </Link>
-            <a
-              href="#tiers"
+            <Link
+              to="/contact"
               className={cn(
                 buttonVariants({ size: 'lg', variant: 'outline' }),
                 'border-white/25 bg-transparent text-background hover:bg-white/10',
               )}
             >
-              See wholesale tiers
-            </a>
+              Become a reseller
+            </Link>
           </motion.div>
 
           <motion.dl
