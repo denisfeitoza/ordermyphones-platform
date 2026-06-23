@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Hero } from '@/components/store/Hero';
 import { ProductGrid } from '@/components/store/ProductGrid';
+import { Testimonials } from '@/components/store/Testimonials';
 import { Recommendations } from '@/components/store/Recommendations';
 import { CATALOG } from '@/data/catalog';
 
@@ -30,6 +31,8 @@ export default function HomePage() {
         </div>
         <ProductGrid items={featured} />
       </section>
+
+      <Testimonials />
 
       <Recommendations />
     </div>

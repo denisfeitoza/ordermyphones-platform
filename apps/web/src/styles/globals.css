@@ -15,7 +15,7 @@
 
     --border: 240 6% 90%;
     --input: 240 6% 90%;
-    --ring: 288 85% 55%;
+    --ring: 285 92% 56%;
 
     --primary: 240 10% 4%;
     --primary-foreground: 0 0% 100%;
@@ -32,10 +32,10 @@
     --success: 160 84% 39%;
     --warning: 38 92% 50%;
 
-    /* Brand identity (from the logo): magenta-purple → cyan. Used as pointed
-       accents over neutral zinc — never as neon glows or text fills. */
-    --brand: 288 85% 55%;
-    --brand-2: 199 90% 64%;
+    /* Brand identity (exact logo hues): magenta #c22af6 → cyan #62d4f9. Used as
+       pointed accents over neutral zinc — never as neon glows or text fills. */
+    --brand: 285 92% 56%;
+    --brand-2: 195 93% 68%;
 
     /* Pricing tiers: blue → emerald → amber → violet (semantic differentiation). */
     --tier-1: 217 91% 60%;
@@ -58,7 +58,7 @@
 
     --border: 240 6% 16%;
     --input: 240 6% 18%;
-    --ring: 288 85% 62%;
+    --ring: 285 92% 62%;
 
     --primary: 0 0% 98%;
     --primary-foreground: 240 10% 4%;

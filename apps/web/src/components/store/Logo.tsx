@@ -1,17 +1,28 @@
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
+const MARK_MAGENTA =
+  'M77.9,7.1c-2.2-2.2-5.3-3.6-8.7-3.6l-53.5,0C9,3.5,3.5,9,3.5,15.8v27.4c0,8.3,8.6,13.9,16.1,10.3c2.8-1.3,5.1-3.3,6.6-4.9v0l0.7-0.7l-7.8-7.8c-2.3-2.3-1.3-6.3,1.9-7.1l35.3-9.5c3.2-0.8,6.1,2,5.2,5.2L52.1,64c-0.8,3.2-4.8,4.2-7.1,1.9l-7.8-7.8l-0.7,0.7c-1.5,1.5-3.5,3.8-4.9,6.6c-3.6,7.4,2,16.1,10.3,16.1l27.4,0c6.8,0,12.3-5.5,12.3-12.3l0-53.5C81.5,12.4,80.2,9.3,77.9,7.1z';
+const MARK_CYAN =
+  'M77.9,7.1c-2.2-2.2-5.3-3.6-8.7-3.6H40.2c18.1,3,25.1,11.1,21.4,25.2c0,0,0,0,0,0L52.1,64c-0.8,3.2-4.8,4.2-7.1,1.9l-7.8-7.8l-0.7,0.7c-1.5,1.5-3.5,3.8-4.8,6.6c-3.6,7.4,2,16.1,10.3,16.1h27.4c6.8,0,12.3-5.5,12.3-12.3V15.8C81.5,12.4,80.2,9.3,77.9,7.1z';
+
+/** The OrderMyPhones logo mark (cursor in a magenta/cyan tile) — no wordmark.
+ *  Decorative: the wrapping Link/context supplies the accessible name. */
+export function LogoMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 85 85" className={className} aria-hidden="true" focusable="false">
+      <path fill="#c22af6" d={MARK_MAGENTA} />
+      <path fill="#62d4f9" d={MARK_CYAN} />
+    </svg>
+  );
+}
+
 export function Logo({ className, invert = false }: { className?: string; invert?: boolean }) {
   return (
     <Link to="/" className={cn('inline-flex items-center gap-2', className)} aria-label="OrderMyPhones home">
-      <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-gradient text-white">
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
-          <rect x="6" y="2.5" width="12" height="19" rx="3" stroke="currentColor" strokeWidth="1.8" />
-          <path d="M10.5 18.5h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-        </svg>
-      </span>
+      <LogoMark className="h-7 w-7 shrink-0" />
       <span className={cn('text-base font-semibold tracking-tight', invert ? 'text-background' : 'text-foreground')}>
-        Order<span className="font-normal text-muted-foreground">MyPhones</span>
+        Order<span className={cn('font-normal', invert ? 'text-background/60' : 'text-muted-foreground')}>MyPhones</span>
       </span>
     </Link>
   );
