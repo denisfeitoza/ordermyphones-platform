@@ -13,7 +13,7 @@ export default function OrdersPage() {
     <div className="space-y-6">
       <PageHeading
         title="Orders"
-        subtitle={`${orders.length} ${orders.length === 1 ? 'order' : 'orders'} · newest first`}
+        subtitle={`${orders.length} ${orders.length === 1 ? 'order' : 'orders'} · tap any order for tracking, reorder & PDF/CSV export`}
       />
 
       {orders.length === 0 ? (

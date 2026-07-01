@@ -149,9 +149,15 @@ export function OrderCard({ order, index = 0 }: { order: AccountOrder; index?: n
         <OrderProgress status={order.status} />
       </div>
 
-      <div className="mt-4 flex items-center gap-2 border-t border-border pt-3 text-xs text-muted-foreground">
-        <PackageCheck className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-        <span className="truncate">Reserved at source · in fulfillment</span>
+      <div className="mt-4 flex items-center justify-between gap-2 border-t border-border pt-3 text-xs">
+        <span className="flex items-center gap-2 truncate text-muted-foreground">
+          <PackageCheck className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+          Reserved at source
+        </span>
+        <span className="inline-flex shrink-0 items-center gap-1 font-medium text-brand">
+          View details &amp; export
+          <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" strokeWidth={2} />
+        </span>
       </div>
     </MotionLink>
   );
