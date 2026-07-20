@@ -7,7 +7,7 @@
 | Class | Examples | Storage rules | Logging rules | Sharing rules |
 |---|---|---|---|---|
 | **Public** | Product catalog (published), tier definitions, marketing copy | Anywhere | Free | Public |
-| **Internal** | Order counts, supplier sync run summaries | Inside the Platform DB; can be exported to Sentry/PostHog with anonymization | Stripped of PII before logging | Internal to the Client + Developer; never shared with third parties |
+| **Internal** | Order counts, supplier sync run summaries, partner feed payloads | Inside the Platform DB; can be exported to Sentry/PostHog with anonymization | Stripped of PII before logging | Internal to the Client + Developer; never shared with third parties |
 | **Confidential** | Customer PII (name, email, phone, address), order line items, account preferences | Postgres only; encryption at rest (Supabase) | Redacted in logs and prompts; only opaque IDs cross service boundaries | Customer themselves + authorized staff/admin |
 | **Restricted** | Payment instruments, supplier API keys, Supabase service-role key, admin session tokens | Stripe vault (PCI-out-of-scope), VPS env, Supabase secrets, macOS Keychain (dev) | Never logged in any form | Strictly named individuals; rotated on suspicion or schedule |
 
@@ -27,6 +27,13 @@
 | Stripe `pm_*` / `pi_*` references | Internal | Pointers, not card data |
 | Raw card data | **Never stored** | Stripe Checkout only |
 | `SUPABASE_SERVICE_ROLE_KEY`, supplier keys, Stripe secret | Restricted | Per §1 storage rules |
+| `inventory_snapshots.unit_cost_cents` | Confidential | Our cost basis. **Never crosses the partner boundary in any form.** |
+| `inventory_locations.supplier_id` | Confidential | The masking key. `code`/`label` ("Texas Inventory") are partner-visible; the supplier it points at is not. |
+| `suppliers.display_name` / `code` | Confidential *at the partner boundary* | Internal and admin-visible; a contract test asserts it never appears in an outbound payload. |
+| `partner_margin_rules.margin_bps` | Confidential | Reveals cost basis by inversion; admin-only, never account-readable. |
+| `partner_api_keys.secret_hash`, `partner_feed_subscriptions.signing_secret` | Restricted | Hashed / secret material; shown in plaintext exactly once at creation; overlap rotation. |
+| `partner_inventory_projection.partner_price_cents` | Internal | The only price a partner may observe. |
+| `partner_webhook_deliveries.payload` | Internal | Exactly what we signed and sent; retained for delivery forensics and dispute resolution. |
 
 ## 3. Retention
 

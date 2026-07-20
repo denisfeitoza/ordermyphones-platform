@@ -11,6 +11,7 @@
 | **Admin** | Bootstrap on first deploy + invitation | `users` row, `role = 'admin'` | Full admin dashboard, AI action approval |
 | **Service** | Supabase `service_role` key | Server-only env var | Supplier adapters, edge functions, AI service |
 | **AI agent** | Application identity (never a JWT) | `actor_kind = 'ai_agent'` in `audit_log` | Cannot perform actions directly; submits proposals that admins approve |
+| **Partner (M2M)** | Admin-issued API key pair | `partner_api_keys` row scoped to one `account_id` | Read the outbound inventory feed only ([`PARTNER-INVENTORY-API.md`](PARTNER-INVENTORY-API.md)) |
 
 The `auth.users` row from Supabase Auth is mirrored into our `public.users` table by a trigger so that downstream tables can foreign-key to a single user identity.
 
@@ -85,6 +86,25 @@ $$;
 | `ticket_messages` | follows `tickets` | author writes own; admin moderates |
 | `ai_actions` | admin/staff | service_role (AI service inserts proposals); admin approves/rejects via app code |
 | `audit_log` | admin only | service_role only |
+| `inventory_locations` | admin/staff **only** | admin only — this is the supplier→"Texas Inventory" masking map; never account-readable |
+| `partner_api_keys` | account owners see own rows **minus `secret_hash`** (via a view); admin/staff full | service_role only (admin issues via app code) |
+| `partner_feed_subscriptions` | account owners see own rows minus `signing_secret*`; admin/staff full | service_role only |
+| `partner_margin_rules` | admin/staff **only** | admin only — our margin is never account-readable |
+| `partner_inventory_projection` | admin/staff; partners read **only via the API service**, never directly | service_role only |
+| `partner_webhook_deliveries` | admin/staff; account owners see status columns of own subscription (no `payload`) | service_role only |
+
+## 4.1 Partner (M2M) authentication
+
+Distinct from §6's human flows and deliberately narrower.
+
+1. `Authorization: Bearer <key_id>.<secret>`; the secret is verified against `secret_hash` (Argon2id, constant-time). Only `key_id` is ever logged.
+2. `services/partner-api` resolves the key to an `account_id`, checks `revoked_at is null` and `expires_at`, then queries with `service_role` while applying the partner scope **in application code**.
+3. **A partner key never becomes a session.** No customer JWT is minted, no cookie is set, no Supabase client is handed to the partner. There is no path from an API key to the storefront's authorization surface.
+4. **Scope is strictly smaller than the account's human session:** inventory feed read-only. No orders, no PII, no carts, no tickets, no other account — not even the partner's own order history.
+5. Revocation is immediate (`revoked_at`), checked on every request, no cache. Rotation is overlap-based: the new secret is issued while the old stays valid until `secret_rotated_until`, so partners rotate without downtime.
+6. Rate limits are per `key_id` (120/min, 1000/h), enforced at the edge before the hash comparison so a brute-force attempt cannot burn CPU on Argon2.
+
+**Blast radius of a leaked partner key:** that partner's own marked-up inventory feed. No PII, no orders, no cost data, no other tenant. The narrow scope *is* the control.
 
 ## 5. Cross-cutting policy invariants
 
@@ -93,6 +113,8 @@ $$;
 - **Customer isolation.** A `customer` can never read or write rows belonging to another account, no matter how the request is shaped.
 - **Staff vs admin.** `staff` can read all data and perform daily operations (order transitions, ticket replies) but cannot rotate roles, run financial reversals beyond a defined cap, or approve high-risk AI actions.
 - **No write through views.** All writes go through tables; views are read-only.
+- **Partner isolation.** An API key can only ever observe the projection computed for its own `account_id`. Cross-partner reads are blocked in the application scope *and* by RLS on `partner_inventory_projection`.
+- **Cost and supplier identity never reach a partner.** Enforced by an outbound serializer allow-list, not by redaction — see [`PARTNER-INVENTORY-API.md`](PARTNER-INVENTORY-API.md) §7.
 
 ## 6. Authentication flows
 

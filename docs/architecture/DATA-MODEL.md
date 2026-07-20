@@ -147,7 +147,93 @@ Each supplier sync writes a row per variant. The latest snapshot per (`variant_i
 | `status` | `enum('running','success','failed','partial')` ||
 | `error_summary` | `text` | nullable |
 
-## 6. Sales
+### `inventory_locations`
+**The masking map.** Projects an upstream supplier as an OMP-branded location. Admin-only; the `supplier_id` join key never crosses the partner boundary.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `uuid` ||
+| `supplier_id` | `uuid` | FK → `suppliers.id`; unique |
+| `code` | `text` | `'us-tx'`; unique; what partners see |
+| `label` | `text` | `'Texas Inventory'` |
+| `is_public` | `boolean` | false hides the location's stock from all feeds |
+
+## 6. Partner distribution (outbound feed)
+
+> Tables backing [`PARTNER-INVENTORY-API.md`](PARTNER-INVENTORY-API.md). Consumers are existing `accounts` — no separate tenant entity.
+
+### `partner_api_keys`
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `uuid` ||
+| `account_id` | `uuid` | FK → `accounts.id` |
+| `key_id` | `text` | public half, unique; the only half ever logged |
+| `secret_hash` | `text` | Argon2id; plaintext shown exactly once at creation |
+| `label` | `text` | human name, e.g. "prod integration" |
+| `scopes` | `text[]` | v1: `{'inventory:read'}` only |
+| `last_used_at` | `timestamptz` | nullable |
+| `expires_at` | `timestamptz` | nullable |
+| `revoked_at` | `timestamptz` | nullable; revocation is immediate, never soft-deferred |
+
+### `partner_feed_subscriptions`
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `uuid` ||
+| `account_id` | `uuid` | FK → `accounts.id` |
+| `endpoint_url` | `text` | HTTPS only; validated against an SSRF deny-list on write |
+| `signing_secret` | `text` | HMAC key; `Restricted` class; rotates with an overlap window |
+| `signing_secret_previous` | `text` | nullable; valid until `secret_rotated_until` |
+| `secret_rotated_until` | `timestamptz` | nullable |
+| `status` | `enum('active','paused','degraded')` ||
+| `last_sequence` | `bigint` | monotonic counter handed to each emitted event |
+| `filters` | `jsonb` | optional brand / condition / location subset |
+
+### `partner_margin_rules`
+Same composable shape as `price_rules`, deliberately a separate table — retail tier pricing and partner margin must not be conflated.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `uuid` ||
+| `account_id` | `uuid` | **nullable — null = platform default** |
+| `scope` | `enum('global','product','variant')` ||
+| `target_id` | `uuid` | nullable for `global` |
+| `margin_bps` | `int` | basis points over supplier cost; `check (margin_bps >= 0)` |
+| `min_margin_cents` | `bigint` | absolute floor; default `1` |
+| `priority` | `int` | higher wins on conflict |
+| `effective_from`, `effective_to` | `timestamptz` ||
+
+### `partner_inventory_projection`
+Materialized per-partner view of sellable stock. Always **recomputed**, never incremented in place.
+
+| Column | Type | Notes |
+|---|---|---|
+| `account_id` | `uuid` ||
+| `variant_id` | `uuid` ||
+| `available_qty` | `int` | net of reservations; `check (available_qty >= 0)` |
+| `partner_price_cents` | `bigint` | `ceil(unit_cost_cents * (10000 + margin_bps) / 10000)` |
+| `currency` | `text` | `'USD'` |
+| `location_id` | `uuid` | FK → `inventory_locations.id` |
+| `status` | `enum('available','out_of_stock','delisted')` ||
+| `content_hash` | `text` | hash of the partner-visible fields; drives no-op suppression |
+| `last_emitted_sequence` | `bigint` | nullable until first delivery |
+| `computed_at` | `timestamptz` ||
+| primary key | `(account_id, variant_id)` ||
+
+### `partner_webhook_deliveries`
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `uuid` ||
+| `subscription_id` | `uuid` | FK → `partner_feed_subscriptions.id` |
+| `event_id` | `text` | unique; partner-facing idempotency key |
+| `sequence` | `bigint` ||
+| `payload` | `jsonb` | exactly what was signed and sent |
+| `attempt` | `int` | 1-based |
+| `http_status` | `int` | nullable on timeout |
+| `error` | `text` | nullable |
+| `delivered_at` | `timestamptz` | nullable |
+| `next_retry_at` | `timestamptz` | nullable; null + no `delivered_at` = terminal failure |
+
+## 7. Sales
 
 ### `carts`
 | Column | Type | Notes |
@@ -211,7 +297,7 @@ Each supplier sync writes a row per variant. The latest snapshot per (`variant_i
 | `status` | `enum('pending','succeeded','refunded','failed','partial_refund')` ||
 | `raw_event` | `jsonb` | last received webhook payload |
 
-## 7. Engagement
+## 8. Engagement
 
 ### `tickets`
 | Column | Type | Notes |
@@ -232,7 +318,7 @@ Each supplier sync writes a row per variant. The latest snapshot per (`variant_i
 | `body` | `text` ||
 | `attachments` | `jsonb` ||
 
-## 8. AI & audit
+## 9. AI & audit
 
 ### `ai_actions`
 Every AI proposal lands here. The platform applies an action only after the admin approves it.
@@ -266,7 +352,7 @@ Every AI proposal lands here. The platform applies an action only after the admi
 | `user_agent` | `text` ||
 | `created_at` | `timestamptz` ||
 
-## 9. Indexes & invariants
+## 10. Indexes & invariants
 
 - `unique (slug)` on `products`, `unique (sku)` on `product_variants`.
 - `unique (stripe_payment_intent_id)` on `payments`.
@@ -275,8 +361,13 @@ Every AI proposal lands here. The platform applies an action only after the admi
 - `check (available_qty >= 0)` on `inventory_snapshots`.
 - Partial index `idx_orders_active on orders (account_id) where status not in ('canceled','refunded')`.
 - BRIN index on `audit_log.created_at` for time-window queries.
+- `unique (key_id)` on `partner_api_keys`; `unique (event_id)` on `partner_webhook_deliveries`; `unique (supplier_id)` and `unique (code)` on `inventory_locations`.
+- `check (margin_bps >= 0)` on `partner_margin_rules`; `check (min_margin_cents >= 1)`.
+- `check (available_qty >= 0)` and `check (partner_price_cents >= 1)` on `partner_inventory_projection`.
+- **Margin floor invariant:** `partner_price_cents >= unit_cost_cents + min_margin_cents`. Enforced when the rule is written, not when the event is emitted — a rule that would sell at or below cost is rejected at the source.
+- Partial index `idx_partner_deliveries_pending on partner_webhook_deliveries (next_retry_at) where delivered_at is null`.
 
-## 10. Migrations index
+## 11. Migrations index
 
 | # | File | Purpose |
 |---|---|---|
@@ -285,3 +376,4 @@ Every AI proposal lands here. The platform applies an action only after the admi
 | 0003 | `0003_pricing_tiers.sql` | `price_rules`, `prices`, materialization function. |
 | 0004 | `0004_supplier_sync.sql` | `inventory_snapshots`, `supplier_sync_runs`, advisory-lock helpers. |
 | 0005 | `0005_audit_log.sql` | `audit_log`, `ai_actions`, BRIN index. |
+| 0006 | `0006_partner_feed.sql` | `inventory_locations`, `partner_api_keys`, `partner_feed_subscriptions`, `partner_margin_rules`, `partner_inventory_projection`, `partner_webhook_deliveries`, projection recompute function, RLS policies for all six. |
