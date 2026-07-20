@@ -85,7 +85,7 @@ The Platform as a supplier. Full design contract: [`../architecture/PARTNER-INVE
 
 - Migration `0006_partner_feed.sql`: `inventory_locations` (supplier → *"Texas Inventory"* masking map), `partner_api_keys`, `partner_feed_subscriptions`, `partner_margin_rules`, `partner_inventory_projection`, `partner_webhook_deliveries` — RLS on all six.
 - `services/partner-api/` (Node + TS): API-key auth (Argon2id, per-key rate limits), `GET /v1/inventory` pull with cursor pagination, `GET /v1/inventory/{sku}`.
-- Projection recompute inside the same transaction as every stock movement (order `paid`/`canceled`, supplier sync delta), `pg_advisory_lock` per `variant_id`. Derived, never incremented in place.
+- Projection keyed `(account_id, variant_id, location_id)` — one masked OMP inventory per supplier, a SKU can sit in several, quantities never summed. Recomputed inside the same transaction as every stock movement (order `paid`/`canceled`, supplier sync delta), `pg_advisory_lock` per `(variant_id, location_id)`. Derived, never incremented in place.
 - **No-op suppression via `content_hash`** — the adapters re-upsert the full catalog every cron tick; without this, every partner gets a full-catalog storm every N minutes.
 - Outbound HMAC-SHA256 webhook delivery with monotonic `sequence`, exponential backoff + jitter (6 attempts), `degraded` status + admin alert on terminal failure.
 - Margin resolution: platform default + per-partner override in basis points, `ceil` rounding, floor invariant `partner_price_cents >= unit_cost_cents + min_margin_cents` validated at rule-write time.
@@ -150,6 +150,7 @@ The Platform as a supplier. Full design contract: [`../architecture/PARTNER-INVE
 - Partner feed: no-op suppression proven — two consecutive identical supplier syncs emit **zero** events; a one-unit change emits exactly one.
 - Partner feed: cross-partner read attempt with a valid key returns `403`, and a partner key is proven unable to reach orders, PII, or any other account.
 - Partner feed: margin floor holds — a rule that would price at or below `unit_cost_cents` is rejected at write time.
+- Partner feed: a SKU stocked in two locations yields two independent rows and two independent event streams; draining one location does not alter the other's `available_qty`.
 - No `--no-verify`, no skipped hooks, no `.env` committed; security checks pass.
 
 ---
