@@ -79,7 +79,20 @@ By end of Phase 2 the system supports — via API and/or admin scripts — the f
   - `customer-support-agent` (drafts replies; never sends without admin approval in v1).
 - Every native action goes through the **action log** with rollback metadata (Agreement §1.8 — Customer Support & Sales Management).
 
-### 2.9 Analytics & reporting baseline
+### 2.9 Partner Inventory API (outbound feed)
+
+The Platform as a supplier. Full design contract: [`../architecture/PARTNER-INVENTORY-API.md`](../architecture/PARTNER-INVENTORY-API.md).
+
+- Migration `0006_partner_feed.sql`: `inventory_locations` (supplier → *"Texas Inventory"* masking map), `partner_api_keys`, `partner_feed_subscriptions`, `partner_margin_rules`, `partner_inventory_projection`, `partner_webhook_deliveries` — RLS on all six.
+- `services/partner-api/` (Node + TS): API-key auth (Argon2id, per-key rate limits), `GET /v1/inventory` pull with cursor pagination, `GET /v1/inventory/{sku}`.
+- Projection recompute inside the same transaction as every stock movement (order `paid`/`canceled`, supplier sync delta), `pg_advisory_lock` per `variant_id`. Derived, never incremented in place.
+- **No-op suppression via `content_hash`** — the adapters re-upsert the full catalog every cron tick; without this, every partner gets a full-catalog storm every N minutes.
+- Outbound HMAC-SHA256 webhook delivery with monotonic `sequence`, exponential backoff + jitter (6 attempts), `degraded` status + admin alert on terminal failure.
+- Margin resolution: platform default + per-partner override in basis points, `ceil` rounding, floor invariant `partner_price_cents >= unit_cost_cents + min_margin_cents` validated at rule-write time.
+- Outbound serializer as an explicit **allow-list** so a new upstream column cannot leak by default.
+- Admin UI for issuing/revoking keys and editing margin rules lands in Phase 3.
+
+### 2.10 Analytics & reporting baseline
 
 - Sentry SDK installed in every service; release tags wired to CI.
 - PostHog SDK in `apps/web` (delivered in Phase 3); event taxonomy defined in Phase 2 docs.
@@ -116,6 +129,9 @@ By end of Phase 2 the system supports — via API and/or admin scripts — the f
 | Tier-upgrade edge function | [`supabase/functions/tier-upgrade/`](../../supabase/functions/tier-upgrade/) |
 | Stripe webhook handler | [`supabase/functions/stripe-webhook/`](../../supabase/functions/stripe-webhook/) |
 | AI service (orchestrator + v1 agents) | [`services/ai-api/`](../../services/ai-api/) |
+| Partner Inventory API (pull endpoints + webhook emitter) | `services/partner-api/` |
+| Partner feed migration + RLS | `supabase/migrations/0006_partner_feed.sql` |
+| Partner integration guide (published to partners) | `docs/integrations/PARTNER-ONBOARDING.md` |
 | Postman/Insomnia collection (or `.http` files) for QA | `docs/integrations/api-collections/` |
 | Backend test suite (unit + integration on a real ephemeral Postgres) | `*/tests/` per service |
 | Operational runbook v1 (sync failures, Stripe disputes, agent rollback) | `docs/architecture/OBSERVABILITY.md` |
@@ -130,6 +146,10 @@ By end of Phase 2 the system supports — via API and/or admin scripts — the f
 - Stripe webhook survives a replay attack drill and an idempotency drill.
 - AI agent swarm executes a scripted scenario (low-stock SKU → triage agent → admin-approval action) with full audit trail.
 - All endpoints have RLS coverage tests (a `customer` cannot read another customer's orders; a `staff` cannot bypass an `admin`-only action).
+- Partner feed: a contract test asserts the emitted JSON keys equal the allow-list **exactly**, and a second asserts no `suppliers.display_name` string appears in any generated payload.
+- Partner feed: no-op suppression proven — two consecutive identical supplier syncs emit **zero** events; a one-unit change emits exactly one.
+- Partner feed: cross-partner read attempt with a valid key returns `403`, and a partner key is proven unable to reach orders, PII, or any other account.
+- Partner feed: margin floor holds — a rule that would price at or below `unit_cost_cents` is rejected at write time.
 - No `--no-verify`, no skipped hooks, no `.env` committed; security checks pass.
 
 ---
@@ -157,13 +177,17 @@ Workstreams W1, W2, W3 start in parallel on Day 1 of Phase 2. W4 begins as soon 
 | Stripe Connect onboarding takes longer than 5 business days | Medium | Medium | Build the Stripe layer against `stripe-mock` first; integration test once the live account is live. |
 | Tier promotion off-by-one due to refunds | High | High | Returns reverse units only within a documented window; explicit audit-log entries; integration test for each edge. |
 | Race conditions on concurrent supplier syncs | Medium | High | Adapters acquire a `pg_advisory_lock` keyed by `(supplier_id, sync_kind)`; cron schedules are staggered. |
+| Feed emits a full-catalog storm on every cron tick | High | High | `content_hash` no-op suppression is a Phase 2 exit criterion, not an optimization; per-SKU emit-rate limit as a second line. |
+| Partner oversells on stale data after an outage | Medium | High | Availability published net of reservations; mandatory daily full-pull reconciliation written into the partner contract; `degraded` subscriptions raise an admin alert. |
+| Supplier name or cost leaks into a partner payload | Medium | High | Allow-list serializer + two contract tests (key equality, supplier-name absence). Reviewed again in the Phase 4 security pass. |
+| Supplier agreements do not permit white-label resale | Medium | **Critical** | **Legal, not technical.** Confirm resale / no-attribution / data-redistribution terms with Assurant and Mannapov LLC before exposing the feed to a real partner. Raised at the Phase 2 kickoff. |
 | AI agent issues unsafe action (e.g. price = 0) | Low | Critical | Server-side validation on every tool call; agents propose, server validates against business invariants. See [`docs/ai/EVAL-AND-GUARDRAILS.md`](../ai/EVAL-AND-GUARDRAILS.md). |
 
 ---
 
 ## 9. Client interaction points
 
-- **Start of Phase 2 — Kickoff (45 min).** Confirm supplier and Stripe credentials.
+- **Start of Phase 2 — Kickoff (45 min).** Confirm supplier and Stripe credentials. **Confirm that the supplier agreements permit masked white-label resale** — this gates the Partner Inventory API.
 - **Week 5 — Demo #1 (45 min).** Supabase explorer walkthrough of imported supplier data.
 - **Week 7 — Demo #2 (60 min).** Live API call exercising the pricing engine and Stripe sandbox checkout.
 - **End of Phase 2 — Review (90 min).** Sign-off on exit criteria; green light Phase 3.

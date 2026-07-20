@@ -4,6 +4,8 @@
 
 Custom e-commerce platform for the U.S. mobile devices market with built-in international expansion capacity. Tier-based pricing, real-time multi-supplier inventory aggregation, AI-assisted operations, branded customer portal, and a complete admin back-office.
 
+The Platform runs in **two commercial directions**: it sells to human buyers through the storefront, and it sells to machines through the **Partner Inventory API** — B2B partners integrate our feed and receive live, marked-up stock on every movement. Upstream suppliers are projected as OMP inventory locations (Mannapov LLC → *"Texas Inventory"*), so partners buy from Order My Phones, not from our sources.
+
 This monorepo is the deliverable surface for the engagement between **VINDIAI** (Developer) and **Order My Phones LLC** (Client). The full agreement lives in [`docs/contract/SOFTWARE_DEVELOPMENT_AGREEMENT.md`](docs/contract/SOFTWARE_DEVELOPMENT_AGREEMENT.md).
 
 ---
@@ -16,6 +18,7 @@ This monorepo is the deliverable surface for the engagement between **VINDIAI** 
 | [`services/ai-api/`](services/ai-api/) | AI orchestrator + agent swarm. Native actions (pricing decisions, tier upgrades, inventory triage, customer-support drafts) executed on the user's behalf via Anthropic Agent SDK. |
 | [`services/supplier-source-1/`](services/supplier-source-1/) | Integration with **Supplier API #1 — [Assurant](https://www.assurant.com/)** (U.S.-based dropship / lifecycle services). Hybrid REST + Scrapling fallback. |
 | [`services/supplier-source-2/`](services/supplier-source-2/) | Integration with **Supplier API #2 — [Mannapov LLC](https://buy.mannapovllc.com/)** (U.S.-based wholesale/dropship portal). Adapter carries a reserved second-feed slot for the Dubai wholesale supplier contemplated by Agreement §1.4 / Schedule A.2 — to be named during the Phase 1 supplier audit. Hybrid REST + Scrapling fallback. |
+| `services/partner-api/` *(scaffolded in Phase 2)* | **Outbound inventory feed.** The Platform acting as a *supplier*: B2B partners integrate our API and receive marked-up, live stock on every real movement — push (HMAC-signed webhooks) + pull (reconciliation). Supplier identity and our cost never cross this boundary. See [`docs/architecture/PARTNER-INVENTORY-API.md`](docs/architecture/PARTNER-INVENTORY-API.md). |
 | [`packages/shared-types/`](packages/shared-types/) | Domain types shared between frontend, AI service, and adapters. Single source of truth for `PricingTier`, `Product`, `OrderStatus`, etc. |
 | [`supabase/`](supabase/) | Database migrations, RLS policies, edge functions (pricing engine, tier upgrade, Stripe webhook), seed data. **RLS enabled on every table.** |
 | [`docs/`](docs/) | Contract, phase-by-phase plan, architecture, integration playbooks, AI swarm design, security model, UX notes. |
@@ -77,7 +80,8 @@ ordermyphones-platform/
 ├── services/
 │   ├── ai-api/                    AI orchestrator + agents (Node + Agent SDK)
 │   ├── supplier-source-1/         Source #1 adapter (Python + Scrapling)
-│   └── supplier-source-2/         Source #2 adapter (Python + Scrapling)
+│   ├── supplier-source-2/         Source #2 adapter (Python + Scrapling)
+│   └── partner-api/               Outbound inventory feed for B2B partners (Node + TS)
 ├── packages/
 │   └── shared-types/              TS types shared across apps and services
 ├── supabase/                      Migrations, RLS, edge functions, seed

@@ -131,6 +131,19 @@ Unit and integration tests live in [`supabase/functions/pricing-engine/tests/`](
 - Demotion grace period.
 - Manual tier override interaction with cart tier (override wins for downgrades, cart wins for upgrades).
 
+## 8.1 Not this engine: partner margin
+
+The outbound feed ([`PARTNER-INVENTORY-API.md`](PARTNER-INVENTORY-API.md)) prices in a **separate** layer, on purpose:
+
+| | This engine (retail) | Partner margin (wholesale) |
+|---|---|---|
+| Basis | Materialized `prices` per variant × tier | `inventory_snapshots.unit_cost_cents` + `margin_bps` |
+| Driver | Cumulative units → Tier 1–4 | Per-partner commercial agreement |
+| Rules table | `price_rules` | `partner_margin_rules` |
+| Consumer | Human at checkout | Machine reading a feed |
+
+**A partner's tier does not move their feed price, and a margin rule never affects a cart.** They share the integer-cents discipline and the "never invent a price" posture, and nothing else. Conflating them would make every tier promotion silently reprice a partner's whole catalog.
+
 ## 9. Out of scope (v1)
 
 - Coupon codes / discount codes.
