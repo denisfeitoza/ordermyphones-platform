@@ -118,7 +118,7 @@ Each supplier sync writes a row per variant. The latest snapshot per (`variant_i
 | `variant_id` | `uuid` ||
 | `supplier_id` | `uuid` ||
 | `available_qty` | `int` | clamped to ≥ 0 |
-| `unit_cost_cents` | `bigint` | what the supplier charges us |
+| `unit_cost_cents` | `bigint` | what the supplier charges us; per supplier, never blended across feeds |
 | `currency` | `text` ||
 | `as_of` | `timestamptz` ||
 | `raw` | `jsonb` | full supplier response for forensic use |
@@ -203,21 +203,21 @@ Same composable shape as `price_rules`, deliberately a separate table — retail
 | `effective_from`, `effective_to` | `timestamptz` ||
 
 ### `partner_inventory_projection`
-Materialized per-partner view of sellable stock. Always **recomputed**, never incremented in place.
+Materialized per-partner, **per-location** view of sellable stock. Always **recomputed**, never incremented in place. A SKU held by two suppliers is two rows — quantities are never summed across locations.
 
 | Column | Type | Notes |
 |---|---|---|
 | `account_id` | `uuid` ||
 | `variant_id` | `uuid` ||
-| `available_qty` | `int` | net of reservations; `check (available_qty >= 0)` |
-| `partner_price_cents` | `bigint` | `ceil(unit_cost_cents * (10000 + margin_bps) / 10000)` |
-| `currency` | `text` | `'USD'` |
 | `location_id` | `uuid` | FK → `inventory_locations.id` |
+| `available_qty` | `int` | that location's stock net of that location's reservations; `check (available_qty >= 0)` |
+| `partner_price_cents` | `bigint` | `ceil(unit_cost_cents * (10000 + margin_bps) / 10000)`, using **that location's** cost |
+| `currency` | `text` | `'USD'` |
 | `status` | `enum('available','out_of_stock','delisted')` ||
 | `content_hash` | `text` | hash of the partner-visible fields; drives no-op suppression |
 | `last_emitted_sequence` | `bigint` | nullable until first delivery |
 | `computed_at` | `timestamptz` ||
-| primary key | `(account_id, variant_id)` ||
+| primary key | `(account_id, variant_id, location_id)` ||
 
 ### `partner_webhook_deliveries`
 | Column | Type | Notes |

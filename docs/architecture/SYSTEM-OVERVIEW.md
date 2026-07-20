@@ -107,7 +107,7 @@ Authorization lives in the application layer (edge functions and service code) *
 ### 3.3 Partner inventory push (outbound)
 
 1. A movement lands: an order reaches `paid`/`canceled`, or a supplier sync writes a new `inventory_snapshots` row.
-2. In the **same transaction**, the `(account_id, variant_id)` rows of `partner_inventory_projection` are recomputed for every account with an active feed subscription — availability net of reservations, price at that partner's margin.
+2. In the **same transaction**, the `(account_id, variant_id, location_id)` rows of `partner_inventory_projection` are recomputed for every account with an active feed subscription — that location's availability net of that location's reservations, priced at that partner's margin over that location's cost. Quantities are **never summed across locations**: each supplier is one masked OMP inventory, and a SKU can sit in several at different quantities and prices.
 3. The new `content_hash` is compared against the last one delivered. **Identical → nothing is emitted.** The adapters re-upsert the full catalog on every `pg_cron` tick; without this check every partner would get a full-catalog storm every N minutes.
 4. On a real delta, `services/partner-api` enqueues an `inventory.updated` event with a per-subscription monotonic `sequence` and POSTs it to the partner endpoint, signed `X-OMP-Signature` (HMAC-SHA256, same construction as our Stripe ingress).
 5. Non-`2xx` or timeout → exponential backoff with jitter, 6 attempts, then `status='degraded'` + admin alert. Every attempt is a `partner_webhook_deliveries` row.

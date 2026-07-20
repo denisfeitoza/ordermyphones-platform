@@ -10,9 +10,11 @@
 
 Order My Phones aggregates several upstream feeds (Assurant, Mannapov LLC, the reserved DXB slot). Partners do not buy from those suppliers — they buy from **us**. Therefore:
 
-1. Upstream suppliers are **never named** in anything a partner can observe. Each supplier is projected as an **OMP inventory location** (e.g. Mannapov LLC → `us-tx` / *"Texas Inventory"*).
-2. Partners never see `unit_cost_cents`. They see **our sell price**, which is upstream cost plus **our margin**.
-3. The feed is a **projection**, not a mirror. What a partner receives is computed by us, per partner, from data they have no other route to.
+1. Upstream suppliers are **never named** in anything a partner can observe. Each supplier is projected as one **OMP inventory location** (e.g. Mannapov LLC → `us-tx` / *"Texas Inventory"*, Assurant → its own location, the reserved DXB feed → its own).
+2. **A SKU can live in several locations at once**, with a different quantity in each — 200 units total might be 140 in one inventory and 60 in another. The partner sees our warehouse network, not our supplier list.
+3. Partners never see `unit_cost_cents`. They see **our sell price**, which is upstream cost plus **our margin**.
+4. The feed is a **projection**, not a mirror. What a partner receives is computed by us, per partner, from data they have no other route to.
+5. **Every movement is presented as ours.** When a sync shows a location's quantity dropped, we publish it as our own stock movement — the partner has no way to tell an OMP order from an upstream sale, and does not need to. The feed is authoritative from where the partner stands.
 
 This is a data-governance requirement, not a display convention. See §7.
 
@@ -37,19 +39,22 @@ Existing **`accounts`** — no new tenant entity. A business account (typically 
 
 The feed is **state-based, not cause-based**. We do not publish "an order was paid" or "a supplier sync ran". We publish:
 
-> **The partner-visible availability or price of a variant changed.**
+> **The partner-visible availability or price of a variant _in one location_ changed.**
+
+The unit of the feed is `(variant, location)`, not `variant`. A SKU present in three locations is three independent rows and emits three independent event streams. We never sum across locations — the partner needs to know *where* the units are, and a summed number would make a location going to zero invisible.
 
 Everything the user asked for falls out of this one rule:
 
 | Real-world movement | Effect on the projection | Emits? |
 |---|---|---|
-| Order reaches `paid` | Units consumed → availability drops | ✅ |
-| Supplier sync reports a new quantity | Availability changes | ✅ |
-| Supplier sync reports a new cost | Marked-up price changes | ✅ |
+| Order reaches `paid` | Units consumed at the fulfilling location → availability drops there | ✅ |
+| Supplier sync reports a new quantity | That location's availability changes | ✅ |
+| Supplier sync reports a new cost | That location's marked-up price changes | ✅ |
 | Supplier sync reports **identical** data | Projection identical | ❌ (suppressed) |
 | Order canceled / refunded / returned | Units released → availability rises | ✅ |
 | Admin edits a margin rule | Price changes for the affected partners only | ✅ |
-| Product unpublished / variant archived | Availability → 0, `status: 'delisted'` | ✅ |
+| Product unpublished / variant archived | Availability → 0 in every location, `status: 'delisted'` | ✅ |
+| A location's feed goes inactive (`is_public = false`, supplier disabled) | That location's rows → 0 / `delisted`; other locations untouched | ✅ |
 
 **No-op suppression is a hard requirement.** The supplier adapters run on `pg_cron` every N minutes and re-upsert the full feed each time; without change detection, every partner would receive a full-catalog storm on every tick. The emitter compares the newly computed projection row against the last one **actually delivered to that partner** and emits only on a real delta.
 
@@ -60,8 +65,8 @@ inventory_snapshots (per supplier, raw cost)   orders (paid / canceled)
               │                                        │
               └──────────────┬─────────────────────────┘
                              ▼
-              partner_inventory_projection            ← per (account_id, variant_id)
-              available_qty · partner_price_cents      computed with that partner's margin
+              partner_inventory_projection      ← per (account_id, variant_id, location_id)
+              available_qty · partner_price_cents  computed with that partner's margin
                              │
                     delta vs last delivered?
                         │            │
@@ -72,7 +77,9 @@ inventory_snapshots (per supplier, raw cost)   orders (paid / canceled)
                                                         ↘ retry w/ backoff
 ```
 
-Availability published to partners is `sum(available_qty across active suppliers) − reserved_qty`, clamped to ≥ 0. `reserved_qty` covers orders that are `paid` or `fulfilling` but not yet dispatched, so we never publish stock we have already sold.
+Availability published for a `(variant, location)` is that location's `available_qty − reserved_qty`, clamped to ≥ 0. `reserved_qty` covers orders that are `paid` or `fulfilling` but not yet dispatched **at that location**, so we never publish stock we have already sold.
+
+**Upstream drift is published as our own movement.** In a dropship model the units belong to the supplier, who can sell them through other channels between two syncs. We do not model that as an exception: when the next sync shows a location down 12 units, the projection drops 12 and the partner receives an ordinary `inventory.updated`. From the partner's side there is no observable difference between an OMP order and an upstream sale — and there must not be, since the alternative would leak that the stock is not ours. The residual exposure is the sync interval itself: a partner acting on data older than one tick can order units that no longer exist. That is bounded by sync frequency and the daily full-pull obligation (§4.2), and the feed never promises a firm reservation.
 
 ---
 
@@ -119,7 +126,8 @@ Headers:
 - Verify the signature before parsing. Reject if `|now − t| > 5 min` (replay window).
 - Respond `2xx` within **5 s**. Anything else is a failure.
 - Deduplicate on `event_id` — we guarantee **at-least-once**, not exactly-once.
-- Discard any event whose `sequence` is lower than the highest already applied for that SKU. Retries can arrive out of order.
+- Discard any event whose `sequence` is lower than the highest already applied for that **`(sku, location.code)`** pair. Retries can arrive out of order, and the same SKU has an independent stream per location.
+- Key your local stock table on `(sku, location.code)`. A SKU can appear in several locations with different quantities and, if margin rules differ by location cost, different prices.
 
 **Retry:** exponential backoff `10s → 1m → 5m → 30m → 2h → 6h`, 6 attempts, full jitter. After the last failure the subscription is marked `degraded`, the admin dashboard raises an alert, and the partner must reconcile via §4.2. Deliveries are never silently dropped without a `partner_webhook_deliveries` row recording the terminal state.
 
@@ -127,10 +135,11 @@ Headers:
 
 ```
 GET /v1/inventory?updated_since=2026-07-20T00:00:00Z&cursor=...&limit=500
-GET /v1/inventory/{sku}
+GET /v1/inventory?location=us-tx
+GET /v1/inventory/{sku}          → returns one row per location holding that SKU
 ```
 
-Cursor-paginated, same payload shape as `data` above. This endpoint is **not optional**: webhook-only feeds drift the moment a partner has an outage, and drift on a stock feed means overselling. Partners are told to run a full pull at least daily.
+Cursor-paginated, same payload shape as `data` above — **one row per `(sku, location)`**, never a summed row. This endpoint is **not optional**: webhook-only feeds drift the moment a partner has an outage, and drift on a stock feed means overselling. Partners are told to run a full pull at least daily.
 
 Rate limits: `120 req/min` and `1000 req/hour` per API key, returned in `X-RateLimit-*` headers, `429` with `Retry-After` on breach.
 
@@ -162,7 +171,7 @@ partner_price_cents = ceil( unit_cost_cents × (10_000 + margin_bps) / 10_000 )
 variant rule (this partner) > product rule (this partner) > global rule (this partner) > platform default > error
 ```
 
-- `unit_cost_cents` is the **lowest active cost across suppliers** for that variant. If costs differ across feeds, the partner still sees one price; the cheaper feed is what fulfills.
+- `unit_cost_cents` is **that location's own cost**. Two locations holding the same SKU at different upstream costs produce two rows at two prices — which is honest, since they are genuinely different stock. The partner picks; we do not silently reroute a purchase to a cheaper location behind a single blended price.
 - **Floor invariant:** `partner_price_cents ≥ unit_cost_cents + min_margin_cents` (default `min_margin_cents = 1`). We never emit a price at or below cost, whatever the rules say. A rule that would violate this is rejected at write time, not at emit time.
 - **No price, no publish.** If a variant has no resolvable margin rule for a partner, it is **omitted from that partner's feed** and an admin alert is raised. We never invent a price — same posture as [`PRICING-ENGINE.md`](PRICING-ENGINE.md) §3.
 
@@ -179,9 +188,9 @@ Full field detail lands in [`DATA-MODEL.md`](DATA-MODEL.md); this is the shape.
 | `partner_api_keys` | `account_id`, `key_id` (public), `secret_hash` (Argon2 — plaintext shown exactly once at creation), `scopes`, `last_used_at`, `expires_at`, `revoked_at`. |
 | `partner_feed_subscriptions` | `account_id`, `endpoint_url`, `signing_secret`, `status` (`active`/`paused`/`degraded`), `last_sequence`, filter (brands / conditions / locations the partner subscribes to). |
 | `partner_margin_rules` | `account_id` (null = platform default), `scope` (`global`/`product`/`variant`), `target_id`, `margin_bps`, `min_margin_cents`, `priority`, `effective_from`/`effective_to`. |
-| `partner_inventory_projection` | Materialized `(account_id, variant_id)` → `available_qty`, `partner_price_cents`, `status`, `content_hash`, `last_emitted_sequence`. The `content_hash` is what makes no-op suppression cheap. |
+| `partner_inventory_projection` | Materialized `(account_id, variant_id, location_id)` → `available_qty`, `partner_price_cents`, `status`, `content_hash`, `last_emitted_sequence`. The `content_hash` is what makes no-op suppression cheap. |
 | `partner_webhook_deliveries` | `subscription_id`, `event_id`, `sequence`, `payload`, `attempt`, `http_status`, `error`, `delivered_at`, `next_retry_at`. Full delivery forensics. |
-| `inventory_locations` | `supplier_id` → `code` (`us-tx`), `label` (*Texas Inventory*). **The masking map.** Admin-only; the join key never leaves the server. |
+| `inventory_locations` | `supplier_id` → `code` (`us-tx`), `label` (*Texas Inventory*). One row per supplier. **The masking map.** Admin-only; the join key never leaves the server. |
 
 Rotation: keys and signing secrets support overlap — a new secret is issued while the old one stays valid for a grace window, so partners rotate without downtime. Both are `Restricted` class ([`../security/DATA-CLASSIFICATION.md`](../security/DATA-CLASSIFICATION.md)).
 
@@ -221,8 +230,10 @@ Detail in [`AUTH-AND-RLS.md`](AUTH-AND-RLS.md) §4.
 | Partner endpoint down | Feed drifts stale → partner oversells | Retry + backoff; `degraded` status; admin alert; daily full-pull obligation in the partner contract |
 | Retry storm after long outage | Thundering herd on partner recovery | Per-subscription delivery concurrency cap + jitter; coalesce queued events per SKU to the latest state before flushing |
 | Supplier sync flaps a value back and forth | Event churn | `content_hash` comparison suppresses no-ops; a flapping SKU trips a per-SKU emit-rate limit and an `inventory-triage-agent` review |
-| Two suppliers report the same SKU with different costs | Ambiguous partner price | Lowest active cost wins; discrepancy already routed to `inventory-triage-agent` (see [`SYSTEM-OVERVIEW.md`](SYSTEM-OVERVIEW.md) §3.2) |
-| Concurrent order paid + supplier sync | Lost update on `available_qty` | Projection recomputed inside the same transaction as the movement, `pg_advisory_lock` per `variant_id`; the projection is derived, never incremented in place |
+| Two suppliers report the same SKU with different costs | Two locations, two prices — by design, not a conflict | Each location prices from its own cost. A *large* spread still routes to `inventory-triage-agent` as a possible feed-parsing bug (see [`SYSTEM-OVERVIEW.md`](SYSTEM-OVERVIEW.md) §3.2) |
+| Partner sums our per-location rows and treats it as one pool | Oversell against a location that is empty | Payload has no total field; the integration guide states the `(sku, location)` key explicitly; `GET /v1/inventory/{sku}` returns rows, never a sum |
+| Upstream sells units through another channel between syncs | Partner ordered stock that is gone | Published as an ordinary movement on the next sync (§3.1); bounded by sync frequency; the feed never promises a firm reservation, and the partner contract says so in writing |
+| Concurrent order paid + supplier sync | Lost update on `available_qty` | Projection recomputed inside the same transaction as the movement, `pg_advisory_lock` per `(variant_id, location_id)`; the projection is derived, never incremented in place |
 | Margin rule deleted while feed is live | Variant silently vanishes from the feed | Deletion is soft + blocked when it would orphan an active subscription; admin must set a replacement first |
 | Partner replays an old captured payload | Stale state applied | `sequence` monotonicity + 5-min signature timestamp window; documented as the partner's obligation |
 | Overselling across partners | Same units promised twice | Availability is published **net of reservations**; a shared pool means partners see the same declining number — an optional per-partner `allocation_cap` is available where a hard reserve is commercially agreed |
@@ -236,6 +247,7 @@ Detail in [`AUTH-AND-RLS.md`](AUTH-AND-RLS.md) §4.
 - GraphQL / gRPC surfaces.
 - Partner-facing self-service key management UI (admin issues keys in v1).
 - Hard stock reservation per partner (`allocation_cap` is designed for but not shipped).
+- Cross-location routing ("give me 200 units, split them however"). v1 sells per location.
 
 ---
 
