@@ -89,8 +89,11 @@ Materialized effective prices per variant × tier, refreshed when `price_rules` 
 |---|---|---|
 | `id` | `uuid` ||
 | `slug` | `text` | unique, URL-safe |
-| `brand` | `text` | `'Apple'`, `'Samsung'`, … |
+| `brand` | `text` | = `make`: `'Apple'`, `'Samsung'`, … |
 | `model` | `text` | `'iPhone 15 Pro Max'` |
+| `model_number` | `text` | manufacturer part number (MPN): `A2161`, `SM-N986U`, `G011C` |
+| `product_family` | `text` | nullable; `'iPhone 11'`; phones only |
+| `category` | `enum('phones','accessories','wearables')` ||
 | `summary` | `text` ||
 | `description` | `text` | markdown |
 | `hero_image_path` | `text` | Supabase Storage path |
@@ -98,16 +101,27 @@ Materialized effective prices per variant × tier, refreshed when `price_rules` 
 | `status` | `enum('draft','published','archived')` ||
 | `created_at`, `updated_at`, `deleted_at` | timestamptz ||
 
+> Product natural key `(brand, model_number)`. Field standard: [`PRODUCT-CATALOG-STANDARD.md`](PRODUCT-CATALOG-STANDARD.md).
+
 ### `product_variants`
 | Column | Type | Notes |
 |---|---|---|
 | `id` | `uuid` ||
 | `product_id` | `uuid` ||
-| `sku` | `text` | unique |
-| `color` | `text` ||
+| `sku` | `text` | unique; deterministic, minted from the variant natural key |
+| `color` | `text` | nullable; `'*'` in a feed means unknown → `null` |
 | `storage_gb` | `int` | nullable |
-| `condition` | `enum('new','cpo','refurbished','used_a','used_b','used_c')` ||
-| `attributes` | `jsonb` | open bag for source-specific extras |
+| `capacity` | `text` | verbatim: `'64GB'`…`'1TB'`, `'1GB'` (non-storage placeholder) |
+| `carrier` | `enum('att','verizon','tmobile','sprint','boost','spectrum','xfinity','unlocked','wifi')` | normalized |
+| `carrier_raw` | `text` | original supplier string, kept for audit |
+| `lock_status` | `enum('locked','unlocked')` ||
+| `grade` | `text` | full grade incl. suffix: `'DLS B+'`, `'TPS A-'` |
+| `grade_scale` | `enum('DLS','TPS')` | derived from `grade` prefix |
+| `condition` | `enum('new','cpo','refurbished','used_a','used_b','used_c')` | coarse; derived from `grade` via `grade_condition_map` |
+| `protocol` | `text` | nullable; `'GSM'`; phones only |
+| `attributes` | `jsonb` | reserved / forward-compat: `screen_size`, `ram`, `launch_date`, … |
+
+> Variant natural key `(brand, model_number, capacity, color, carrier, lock_status, grade)` — proven 1:1 on 2,675 live SKUs. **`grade` carries the full suffix on purpose**: `DLS B` and `DLS B+` are different sellable units at different costs; collapsing them corrupts pricing. See [`PRODUCT-CATALOG-STANDARD.md`](PRODUCT-CATALOG-STANDARD.md) §3, §6.
 
 ### `inventory_snapshots`
 Each supplier sync writes a row per variant. The latest snapshot per (`variant_id`, `supplier_id`) is the source of truth for stock display.
@@ -117,11 +131,15 @@ Each supplier sync writes a row per variant. The latest snapshot per (`variant_i
 | `id` | `uuid` ||
 | `variant_id` | `uuid` ||
 | `supplier_id` | `uuid` ||
+| `warehouse` | `text` | supplier warehouse code (`'W23-ATT'`, `'TX1'`, `'TN1'`); maps to an `inventory_locations` row |
 | `available_qty` | `int` | clamped to ≥ 0 |
-| `unit_cost_cents` | `bigint` | what the supplier charges us; per supplier, never blended across feeds |
+| `qty_is_floor` | `boolean` | `true` when the supplier masked the exact count (`'200+'` → `200`, floor) |
+| `unit_cost_cents` | `bigint` | what the supplier charges us; per supplier + warehouse, never blended across feeds |
 | `currency` | `text` ||
 | `as_of` | `timestamptz` ||
 | `raw` | `jsonb` | full supplier response for forensic use |
+
+> Latest snapshot per `(variant_id, supplier_id, warehouse)` is the source of truth. One supplier can span several warehouses; the same variant in two warehouses is two rows, never summed. Import/normalization rules: [`PRODUCT-CATALOG-STANDARD.md`](PRODUCT-CATALOG-STANDARD.md) §7.
 
 ## 5. Suppliers
 
@@ -148,15 +166,18 @@ Each supplier sync writes a row per variant. The latest snapshot per (`variant_i
 | `error_summary` | `text` | nullable |
 
 ### `inventory_locations`
-**The masking map.** Projects an upstream supplier as an OMP-branded location. Admin-only; the `supplier_id` join key never crosses the partner boundary.
+**The masking map.** Projects an upstream supplier **warehouse** as an OMP-branded location. Admin-only; the `supplier_id`/`warehouse` join key never crosses the partner boundary.
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | `uuid` ||
-| `supplier_id` | `uuid` | FK → `suppliers.id`; unique |
+| `supplier_id` | `uuid` | FK → `suppliers.id` |
+| `warehouse` | `text` | supplier warehouse code (`'TX1'`, `'W23-ATT'`); the real stocking point |
 | `code` | `text` | `'us-tx'`; unique; what partners see |
 | `label` | `text` | `'Texas Inventory'` |
 | `is_public` | `boolean` | false hides the location's stock from all feeds |
+
+> Keyed `unique (supplier_id, warehouse)` — **one supplier can span several warehouses**, and each warehouse is its own masked OMP location. Real data: `supplier-source-1` alone ships `W23-ATT`, `TX1`, `TN1`. This refines the one-location-per-supplier assumption in [`PARTNER-INVENTORY-API.md`](PARTNER-INVENTORY-API.md) §1.
 
 ## 6. Partner distribution (outbound feed)
 
@@ -355,13 +376,17 @@ Every AI proposal lands here. The platform applies an action only after the admi
 ## 10. Indexes & invariants
 
 - `unique (slug)` on `products`, `unique (sku)` on `product_variants`.
+- `unique (brand, model_number)` on `products` (product natural key).
+- `unique (product_id, capacity, color, carrier, lock_status, grade)` on `product_variants` (variant natural key; proven 1:1 on 2,675 live SKUs).
+- `unique (variant_id, supplier_id, warehouse)` on the latest-snapshot view of `inventory_snapshots`.
+- `check (unit_cost_cents > 0)` on `inventory_snapshots` — never ingest zero/negative cost.
 - `unique (stripe_payment_intent_id)` on `payments`.
 - `check (qty >= 1)` on `cart_items` and `order_items`.
 - `check (price_cents >= 0)` on `prices`, `cart_items`, `order_items`.
 - `check (available_qty >= 0)` on `inventory_snapshots`.
 - Partial index `idx_orders_active on orders (account_id) where status not in ('canceled','refunded')`.
 - BRIN index on `audit_log.created_at` for time-window queries.
-- `unique (key_id)` on `partner_api_keys`; `unique (event_id)` on `partner_webhook_deliveries`; `unique (supplier_id)` and `unique (code)` on `inventory_locations`.
+- `unique (key_id)` on `partner_api_keys`; `unique (event_id)` on `partner_webhook_deliveries`; `unique (supplier_id, warehouse)` and `unique (code)` on `inventory_locations`.
 - `check (margin_bps >= 0)` on `partner_margin_rules`; `check (min_margin_cents >= 1)`.
 - `check (available_qty >= 0)` and `check (partner_price_cents >= 1)` on `partner_inventory_projection`.
 - **Margin floor invariant:** `partner_price_cents >= unit_cost_cents + min_margin_cents`. Enforced when the rule is written, not when the event is emitted — a rule that would sell at or below cost is rejected at the source.
@@ -376,4 +401,5 @@ Every AI proposal lands here. The platform applies an action only after the admi
 | 0003 | `0003_pricing_tiers.sql` | `price_rules`, `prices`, materialization function. |
 | 0004 | `0004_supplier_sync.sql` | `inventory_snapshots`, `supplier_sync_runs`, advisory-lock helpers. |
 | 0005 | `0005_audit_log.sql` | `audit_log`, `ai_actions`, BRIN index. |
-| 0006 | `0006_partner_feed.sql` | `inventory_locations`, `partner_api_keys`, `partner_feed_subscriptions`, `partner_margin_rules`, `partner_inventory_projection`, `partner_webhook_deliveries`, projection recompute function, RLS policies for all six. |
+| 0006 | `0006_partner_feed.sql` | `inventory_locations` (keyed `(supplier_id, warehouse)`), `partner_api_keys`, `partner_feed_subscriptions`, `partner_margin_rules`, `partner_inventory_projection`, `partner_webhook_deliveries`, projection recompute function, RLS policies for all six. |
+| 0007 | `0007_catalog_standard.sql` | `products.model_number`/`product_family`/`category`; variant columns (`capacity`, `carrier`, `carrier_raw`, `lock_status`, `grade`, `grade_scale`, `protocol`); `inventory_snapshots.warehouse`/`qty_is_floor`; `grade_condition_map` table; natural-key uniques. Implements [`PRODUCT-CATALOG-STANDARD.md`](PRODUCT-CATALOG-STANDARD.md). |
