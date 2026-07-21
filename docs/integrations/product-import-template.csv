@@ -1,0 +1,7 @@
+sku,make,model,model_number,product_family,category,capacity,color,carrier,carrier_raw,lock_status,grade,grade_scale,condition,protocol,warehouse,quantity,qty_is_floor,unit_cost_cents,currency
+APPLE-A2111-64GB-BLACK-ATT-UNLOCKED-DBP,Apple,iPhone 11,A2111,iPhone 11,phones,64GB,Black,att,ATT,unlocked,DLS B+,DLS,used_b,GSM,W23-ATT,120,false,13600,USD
+APPLE-A2111-128GB-BLACK-UNLOCKED-UNLOCKED-DBP,Apple,iPhone 11,A2111,iPhone 11,phones,128GB,Black,unlocked,UNL,unlocked,DLS B+,DLS,used_b,GSM,W23-ATT,200,true,15400,USD
+APPLE-A2160-64GB-GOLD-UNLOCKED-UNLOCKED-DAP,Apple,iPhone 11 Pro,A2160,iPhone 11 Pro,phones,64GB,Gold,unlocked,UNL,unlocked,DLS A+,DLS,used_a,GSM,W23-ATT,2,false,16200,USD
+APPLE-A3184-1GB-STARLIGHT-WIFI-LOCKED-DB,Apple,AirPods Max USB-C,A3184,,accessories,1GB,Starlight,wifi,Wi-Fi Only,locked,DLS B,DLS,used_b,,TN1,4,false,28600,USD
+APPLE-A3324-64GB-AL-STARLIGHT-WIFI-LOCKED-DB,Apple,WatchSE3 40 Starlight Band S,A3324,,wearables,64GB,Al Starlight,wifi,Wi-Fi Only,locked,DLS B,DLS,used_b,,TN1,15,false,10400,USD
+GOOGLE-G011C-128GB-NA-UNLOCKED-LOCKED-DC,Google,Pixel 2 XL,G011C,Pixel 2,phones,128GB,,unlocked,OTH,locked,DLS C,DLS,used_c,GSM,W23-ATT,1,false,2200,USD
