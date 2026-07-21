@@ -69,6 +69,10 @@ const config: Config = {
         marquee: { '0%': { transform: 'translateX(0)' }, '100%': { transform: 'translateX(-50%)' } },
         'ring-pulse': { '0%': { transform: 'scale(0.8)', opacity: '0.6' }, '100%': { transform: 'scale(2.4)', opacity: '0' } },
         'count-bump': { '0%,100%': { transform: 'translateY(0)' }, '30%': { transform: 'translateY(-3px)' } },
+        'feed-in': {
+          '0%': { opacity: '0', transform: 'translateY(-8px) scale(0.98)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -81,6 +85,9 @@ const config: Config = {
         marquee: 'marquee 34s linear infinite',
         'ring-pulse': 'ring-pulse 1.8s cubic-bezier(0,0,0.2,1) infinite',
         'count-bump': 'count-bump 0.4s ease',
+        // `both` fill is load-bearing: it pins the end state even if the frame
+        // budget is starved or the tab was backgrounded when the row arrived.
+        'feed-in': 'feed-in 0.22s cubic-bezier(0.16,1,0.3,1) both',
       },
     },
   },
