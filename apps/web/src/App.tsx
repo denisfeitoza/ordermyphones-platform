@@ -23,6 +23,7 @@ import OrdersPage from '@/routes/portal/OrdersPage';
 import OrderDetailPage from '@/routes/portal/OrderDetailPage';
 import WishlistPage from '@/routes/portal/WishlistPage';
 import TierPage from '@/routes/portal/TierPage';
+import InventoryApiPage from '@/routes/portal/InventoryApiPage';
 import AddressesPage from '@/routes/portal/AddressesPage';
 import PaymentMethodsPage from '@/routes/portal/PaymentMethodsPage';
 import SettingsPage from '@/routes/portal/SettingsPage';
@@ -89,6 +90,7 @@ export default function App() {
             <Route path="orders/:id" element={<OrderDetailPage />} />
             <Route path="wishlist" element={<WishlistPage />} />
             <Route path="tier" element={<TierPage />} />
+            <Route path="inventory-api" element={<InventoryApiPage />} />
             <Route path="addresses" element={<AddressesPage />} />
             <Route path="payment-methods" element={<PaymentMethodsPage />} />
             <Route path="settings" element={<SettingsPage />} />

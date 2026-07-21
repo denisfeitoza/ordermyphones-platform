@@ -1,7 +1,8 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { ArrowUpRight, LogOut } from 'lucide-react';
+import { ArrowUpRight, Lock, LogOut } from 'lucide-react';
 import { useAccount, useAuth, useTier } from '@/store';
 import { TierBadge } from '@/components/store/TierBadge';
+import { hasApiAccess } from '@/data/inventoryApi';
 import { cn } from '@/lib/utils';
 
 const portalNav = [
@@ -9,6 +10,7 @@ const portalNav = [
   { to: '/portal/orders', label: 'Orders' },
   { to: '/portal/wishlist', label: 'Wishlist' },
   { to: '/portal/tier', label: 'Tier' },
+  { to: '/portal/inventory-api', label: 'Inventory API', gated: true },
   { to: '/portal/addresses', label: 'Addresses' },
   { to: '/portal/payment-methods', label: 'Payment' },
   { to: '/portal/settings', label: 'Settings' },
@@ -25,7 +27,8 @@ function initials(name: string): string {
 
 export default function PortalLayout() {
   const { businessName } = useAccount();
-  const { tier } = useTier();
+  const { tier, code } = useTier();
+  const apiUnlocked = hasApiAccess(code);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -68,12 +71,13 @@ export default function PortalLayout() {
                 end={l.end ?? false}
                 className={({ isActive }) =>
                   cn(
-                    'inline-flex min-h-[42px] items-center whitespace-nowrap rounded-xl px-3 py-2 text-sm transition-colors',
+                    'inline-flex min-h-[42px] items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm transition-colors',
                     isActive ? 'bg-secondary font-medium text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                   )
                 }
               >
                 {l.label}
+                {l.gated && !apiUnlocked && <Lock className="h-3 w-3 opacity-60" strokeWidth={2} aria-label="Multi-Store and up" />}
               </NavLink>
             ))}
           </nav>
