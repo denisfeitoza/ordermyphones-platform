@@ -80,7 +80,8 @@ Hosting: Docker on dedicated VPS, Caddy/Traefik reverse proxy
 | **Identity & Access** | Users, accounts, roles, sessions | Supabase Auth + RLS |
 | **Customer Engagement** | Tickets, AI-assisted replies, notifications | AI service + admin UI |
 | **Analytics** | Sales reports, supplier health, tier distribution | Postgres views + PostHog + Sentry |
-| **Partner Distribution** | Outbound inventory feed: API keys, subscriptions, partner margin, masked locations, webhook deliveries | `services/partner-api/` + Postgres ([PARTNER-INVENTORY-API.md](PARTNER-INVENTORY-API.md)) |
+| **Partner Distribution** | Outbound inventory feed (read) + partner fulfillment (write): API keys, subscriptions, partner margin, masked locations, webhook deliveries, dropship orders | `services/partner-api/` + Postgres ([PARTNER-INVENTORY-API.md](PARTNER-INVENTORY-API.md), [SMARTPAY-INTEGRATION.md](../integrations/SMARTPAY-INTEGRATION.md)) |
+| **Pricing** | Nightly competitive-benchmark batch, CTIA grade gate, per-tier floors & flags → materialized `prices` | `services/pricing-batch/` + `pricing-engine` edge fn ([PRICING-ENGINE.md](PRICING-ENGINE.md)) |
 
 Authorization lives in the application layer (edge functions and service code) **and** in the database via RLS. Both must agree before any mutation succeeds.
 

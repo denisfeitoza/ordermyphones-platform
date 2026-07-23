@@ -74,27 +74,29 @@ The supplier ships these columns empty on every row. We **keep them in the stand
 
 ---
 
-## 3. Grade → condition mapping
+## 3. Grade → CTIA grade (the canonical condition axis)
 
-The feed uses two grading scales, both for **pre-owned / trade-in** stock (HYLA/Assurant is reverse-logistics — there is no factory-new inventory here):
+The feed uses two vendor grading scales for **pre-owned / trade-in** stock (HYLA/Assurant is reverse-logistics — no factory-new inventory here):
 
-- **DLS** — `DLS A+`, `DLS A`, `DLS B+`, `DLS B`, `DLS C`
-- **TPS** — `TPS A+`, `TPS A-`, `TPS B+`, `TPS B-`, `TPS C+`, `TPS C-`, `TPS D`
+- **DLS** — `DLS AA+`, `DLS A+`, `DLS A`, `DLS B+`, `DLS B`, `DLS C`
+- **TPS** — `TPS A+`, `TPS A`, `TPS B+`, `TPS B-`, `TPS C+`, `TPS C-`, `TPS D`
 
 `grade` (full, suffix included) lives on the **variant** because it moves the price: in the real file `DLS B` and `DLS B+` of the same phone are **different rows at different costs** ($127 vs $136). Collapsing them would merge two sellable units and corrupt pricing.
 
-The storefront and pricing engine use a coarse `condition` (the existing `VariantCondition` enum). Proposed default mapping:
+The canonical condition axis is the **CTIA grade**, not a letter guess. Each vendor label maps to a CTIA grade via a per-vendor table (`vendor_grade_map`); the storefront, pricing engine, and grade gate all run on the CTIA grade. This is the mapping the Pricing Engine v2 uses ([`PRICING-ENGINE.md`](PRICING-ENGINE.md) §2), grounded in OMP field experience — **not** in letter arithmetic:
 
-| Grade letter | → `condition` |
-|---|---|
-| `A+`, `A` | `used_a` |
-| `B+`, `B` | `used_b` |
-| `C+`, `C`, `C-`, `D` | `used_c` |
-| `A-`, `B-` | folded into the nearest letter (`A-`→`used_a`, `B-`→`used_b`) |
+| CTIA grade | HYLA vendor grades | Consumer/retailer eligible? |
+|---|---|---|
+| **A** · Like-New | `TPS A+`, `TPS A`, `DLS AA+` | ✅ yes |
+| **B** | `DLS A+`, `DLS A`, `DLS B+`, `DLS B`, `TPS B+` | ❌ wholesale/distributor only |
+| **C** | `TPS B-`, `TPS C+`, `TPS C-`, `DLS C` | ❌ wholesale/distributor only |
+| **D** | `TPS D` | ❌ wholesale/distributor only |
 
-Distribution on the real file after mapping: `used_b` 1,394 · `used_c` 704 · `used_a` 477. The enum values `new` / `cpo` / `refurbished` stay available for other feeds but are **unused by this supplier**.
+> **This corrects the earlier draft.** A prior version of this section mapped `DLS A+`/`DLS A` to a top "used_a" condition. That was wrong: DLS grades sit **one full notch below** their TPS letter, so `DLS A+`/`DLS A` are **CTIA B — not consumer-eligible**. Only `TPS A+`, `TPS A`, and `DLS AA+` clear the consumer bar. On the sample feed this reclassifies ~17% of units from "top used" to wholesale-only. The letter→`used_a/b/c` table has been removed; CTIA is the single taxonomy.
+>
+> **Orphan grade — confirm before go-live.** `TPS A-` appears in neither the vendor map nor the deck. `map_grade` defaults any unknown grade to **CTIA C** (safe: wholesale-only, logged). Decide whether `TPS A-` is A, B, or C rather than letting it silently default.
 
-> ⚠️ **Confirm this table.** The letter→condition split is a commercial call — it decides how a `DLS C` device is presented and priced to customers. The mapping is a single table (`grade_condition_map`), editable without code changes. Everything else in this standard is mechanical; this one is a judgment.
+The `VariantCondition` enum (`new` / `cpo` / `refurbished` / `used_a` / `used_b` / `used_c`) remains for coarse storefront display, derived from CTIA: `A → used_a`, `B → used_b`, `C/D → used_c`, with `new`/`cpo` set explicitly for factory-new and certified stock. CTIA is authoritative; `condition` is a derived label.
 
 ---
 

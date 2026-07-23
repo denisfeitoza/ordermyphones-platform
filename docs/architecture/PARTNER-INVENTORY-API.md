@@ -31,7 +31,9 @@ Existing **`accounts`** — no new tenant entity. A business account (typically 
 | Sees tier prices | ✅ | Only if margin rules are configured to mirror them (§5) |
 | Reads other accounts' data | ❌ | ❌ |
 
-**Invariant:** an API key grants **strictly less** than the account's human session. It is read-only over inventory, cannot place orders, cannot read PII, cannot read orders — not even its own account's. It is an inventory feed credential, nothing else.
+**Invariant:** the **`inventory:read`** key grants **strictly less** than the account's human session. It is read-only over inventory, cannot place orders, cannot read PII, cannot read orders — not even its own account's. It is an inventory feed credential, nothing else.
+
+> **Fulfillment is a separate scope.** A partner that also *places* orders (e.g. SmartPay dropship) holds a distinct **`fulfillment:write`** credential, defined in [`../integrations/SMARTPAY-INTEGRATION.md`](../integrations/SMARTPAY-INTEGRATION.md) §4. The read feed key still cannot write, and the write key cannot read the catalog beyond what an order echoes. Two scopes, two keys — a leak of one never becomes the other. The read-only invariant above is unchanged **for the read key**.
 
 ---
 
@@ -175,7 +177,14 @@ variant rule (this partner) > product rule (this partner) > global rule (this pa
 - **Floor invariant:** `partner_price_cents ≥ unit_cost_cents + min_margin_cents` (default `min_margin_cents = 1`). We never emit a price at or below cost, whatever the rules say. A rule that would violate this is rejected at write time, not at emit time.
 - **No price, no publish.** If a variant has no resolvable margin rule for a partner, it is **omitted from that partner's feed** and an admin alert is raised. We never invent a price — same posture as [`PRICING-ENGINE.md`](PRICING-ENGINE.md) §3.
 
-This layer is **independent of Tiers 1–4**. Tier pricing is a retail construct for humans checking out; partner margin is a wholesale construct for machines. They must not be conflated — a partner's tier does not move their feed price.
+### 5.1 Two pricing paths (cost-plus margin vs. tier)
+
+A subscription declares a `price_source`:
+
+- **`cost_plus_margin`** (default, wholesale reseller) — the `margin_bps` model above, over hidden cost. A wholesale construct for machines, deliberately **independent of Tiers 1–4**.
+- **`tier`** (a partner priced at a standard tier, e.g. **SmartPay at consumer**) — the partner receives the already-computed `prices` row for that tier, straight from the Pricing Engine v2 nightly batch. No `margin_bps`; the tier price already embeds OMP's margin (benchmark − cost). See [`PRICING-ENGINE.md`](PRICING-ENGINE.md) and [`../integrations/SMARTPAY-INTEGRATION.md`](../integrations/SMARTPAY-INTEGRATION.md).
+
+The two are **exclusive per subscription** — `price_source` decides which table is read. `partner_margin_rules` and the tier `prices` are never blended. This is the reconciliation of the original wholesale-margin model with v2's tier pricing.
 
 ---
 
@@ -242,7 +251,7 @@ Detail in [`AUTH-AND-RLS.md`](AUTH-AND-RLS.md) §4.
 
 ## 10. Out of scope (v1)
 
-- Partners **placing** orders through the API (feed is read-only; ordering stays on the portal). Natural v2.
+- ~~Partners placing orders through the API~~ — **now in scope** via the `fulfillment:write` surface for SmartPay ([`../integrations/SMARTPAY-INTEGRATION.md`](../integrations/SMARTPAY-INTEGRATION.md) §4). The *read feed* remains read-only.
 - Per-partner currency conversion — USD only, matching Schedule A.3.
 - GraphQL / gRPC surfaces.
 - Partner-facing self-service key management UI (admin issues keys in v1).
