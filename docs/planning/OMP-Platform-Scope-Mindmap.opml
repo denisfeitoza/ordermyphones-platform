@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <head>
+    <title>OMP Platform — Full Build Scope &amp; Estimate Map</title>
+  </head>
+  <body>
+    <outline text="OMP Platform — Full Build Scope &amp; Estimate Map">
+      <outline text="0 · How to read this map">
+        <outline text="Status tags: [DONE] built &amp; working · [SCAFFOLD] structure exists, logic pending · [TODO] build from scratch · [NEW] new scope, designed not built"/>
+        <outline text="Size hint = relative complexity, NOT hours: (S) small · (M) medium · (L) large · (XL) extra-large"/>
+        <outline text="Current reality: frontend is a complete working MOCKUP on mock data (deployed to Vercel); backend is scaffold; all data wiring + new scope is to build"/>
+        <outline text="Use per-leaf status + size to attach your hours/price for the OMP quote"/>
+      </outline>
+      <outline text="1 · Product &amp; Business Model">
+        <outline text="Two commercial directions">
+          <outline text="Storefront — sell to humans (tier-priced catalog, cart, checkout) [DONE mockup]"/>
+          <outline text="Partner Inventory API — sell to machines (outbound feed + fulfillment) [NEW]"/>
+        </outline>
+        <outline text="Customer tiers (Pricing v2)">
+          <outline text="T1 Consumer 1–9 · market-benchmark price"/>
+          <outline text="T2 Retailer 10–49 · consumer − $20"/>
+          <outline text="T3 Wholesale 50–399 · cost-plus band"/>
+          <outline text="T4 Distributor 400+ · cost-plus band"/>
+          <outline text="NOTE: docs adopt v2 names; live app still shows Multi-Store/Wholesale — rename pending"/>
+        </outline>
+        <outline text="Suppliers (inbound sources, masked from partners)">
+          <outline text="Source 1 — Assurant / HYLA (US dropship, reverse-logistics volume)"/>
+          <outline text="Source 2 — Mannapov LLC (US wholesale) + reserved Dubai (DXB) feed slot"/>
+          <outline text="Masking: each supplier warehouse → OMP location e.g. TX1 → 'Texas Inventory'"/>
+        </outline>
+        <outline text="Actors &amp; roles">
+          <outline text="Anonymous · Consumer · Retailer · Wholesale · Distributor"/>
+          <outline text="Feed partner (read) · Fulfillment partner (write, e.g. SmartPay)"/>
+          <outline text="Staff · Admin · Service (service_role) · AI agents (propose-only)"/>
+        </outline>
+        <outline text="Revenue mechanics">
+          <outline text="Tier pricing margin (benchmark − cost)"/>
+          <outline text="Partner cost-plus margin (margin_bps) for wholesale resellers"/>
+          <outline text="SmartPay fulfillment (consumer price + to-be-defined OMP↔SP margin)"/>
+        </outline>
+      </outline>
+      <outline text="2 · Frontend — Storefront (apps/web) [DONE mockup on mock data]">
+        <outline text="Pages">
+          <outline text="Home / landing (Hero, Testimonials, Recommendations) [DONE] (M)"/>
+          <outline text="Catalog + filters (brand, condition, storage, tier price) [DONE] (M)"/>
+          <outline text="Product detail (colors, storage, stock badge, reserve flow) [DONE] (M)"/>
+          <outline text="Cart page + Cart drawer [DONE] (M)"/>
+          <outline text="Checkout page (Stripe UI shell) [DONE mockup] (M)"/>
+          <outline text="Contact · Help pages [DONE] (S)"/>
+          <outline text="Ops page (live sync heartbeat demo) [DONE] (S)"/>
+          <outline text="Enter shortcut (/enter/:where mock session) [DONE] (S)"/>
+        </outline>
+        <outline text="Store components (24)">
+          <outline text="Header, Footer, Logo, Hero [DONE]"/>
+          <outline text="ProductCard, ProductGrid, CatalogFilters [DONE]"/>
+          <outline text="CartDrawer, ReserveFlow, StockBadge [DONE]"/>
+          <outline text="TierBadge, TierPrice, SyncHeartbeat, Recommendations, Testimonials, Stars [DONE]"/>
+        </outline>
+        <outline text="TO WIRE (backend integration)">
+          <outline text="Replace mock CATALOG with real products/variants queries [TODO] (L)"/>
+          <outline text="Real pricing-engine RPC for cart totals [TODO] (M)"/>
+          <outline text="Real stock from inventory_snapshots + realtime [TODO] (M)"/>
+          <outline text="Real Stripe checkout session creation [TODO] (M)"/>
+        </outline>
+      </outline>
+      <outline text="3 · Frontend — Customer Portal [DONE mockup]">
+        <outline text="Overview (latest order, tier progress, next action) [DONE] (M)"/>
+        <outline text="Orders list + Order detail (timeline, items, totals) [DONE] (M)"/>
+        <outline text="Order PDF/CSV export (jsPDF) [DONE] (M)"/>
+        <outline text="Wishlist [DONE] (S)"/>
+        <outline text="Tier dashboard [DONE] (S)"/>
+        <outline text="Inventory API page — live feed simulation, gated T3/T4 [DONE NEW] (M)"/>
+        <outline text="Addresses CRUD [DONE mockup] (S)"/>
+        <outline text="Payment methods (Stripe-managed) [DONE mockup] (S)"/>
+        <outline text="Settings (profile, daily stock digest opt-in) [DONE mockup] (S)"/>
+        <outline text="TO WIRE: real account data, orders, addresses via Supabase + RLS [TODO] (L)"/>
+        <outline text="TO BUILD: real partner API key issue/rotate UI for the customer [TODO] (M)"/>
+      </outline>
+      <outline text="4 · Frontend — Admin Dashboard [DONE mockup]">
+        <outline text="Dashboard KPIs [DONE] (M)"/>
+        <outline text="Customers + inline tier assignment [DONE] (M)"/>
+        <outline text="Orders management [DONE] (M)"/>
+        <outline text="Inventory view [DONE] (M)"/>
+        <outline text="Prices view [DONE] (M)"/>
+        <outline text="API logs view [DONE] (S)"/>
+        <outline text="AI bots view [DONE] (S)"/>
+        <outline text="Reports view [DONE] (S)"/>
+        <outline text="TO BUILD — new admin surfaces">
+          <outline text="Pricing flag queue (override / acknowledge / watch) [TODO NEW] (L)"/>
+          <outline text="Catalog import/export UI (upload xls/csv, mapping, dry-run, errors) [TODO NEW] (L)"/>
+          <outline text="Partner management (keys, subscriptions, margin rules) [TODO NEW] (L)"/>
+          <outline text="Inventory locations / masking map editor [TODO NEW] (M)"/>
+          <outline text="Partner fulfillment orders console [TODO NEW] (M)"/>
+          <outline text="Vendor grade → CTIA mapping editor [TODO NEW] (M)"/>
+          <outline text="Wire all admin views to real data + RLS [TODO] (XL)"/>
+        </outline>
+      </outline>
+      <outline text="5 · Design System &amp; Shared UI [DONE]">
+        <outline text="Tailwind tokens, tier colors, spring easing, dark mode [DONE] (M)"/>
+        <outline text="Primitives: Button, Badge, Stars, Field, Panel, Stat [DONE] (S)"/>
+        <outline text="Layouts: Root, Portal, Admin, Auth [DONE] (M)"/>
+        <outline text="Shadcn/UI adoption for remaining complex components [TODO] (M)"/>
+        <outline text="packages/shared-types (domain types, single source of truth) [SCAFFOLD] (S)"/>
+      </outline>
+      <outline text="6 · Backend — Database &amp; RLS (Supabase Postgres) [SCAFFOLD + TODO]">
+        <outline text="Existing migrations">
+          <outline text="0001 initial schema (identity, tiers, catalog, suppliers, sales) [DONE] (L)"/>
+          <outline text="0002 RLS policies (every table) [DONE] (L)"/>
+          <outline text="0003 pricing tiers (price_rules, prices, materialization) [DONE] (M)"/>
+          <outline text="0004 supplier sync (inventory_snapshots, sync runs, advisory locks) [DONE] (M)"/>
+          <outline text="0005 audit log + ai_actions [DONE] (S)"/>
+        </outline>
+        <outline text="New migrations (designed, not written)">
+          <outline text="0006 partner feed (keys, subscriptions, margin, projection, deliveries, locations) [TODO NEW] (L)"/>
+          <outline text="0007 catalog standard (model_number, carrier, grade, warehouse, vendor_grade_map) [TODO NEW] (M)"/>
+          <outline text="0008 pricing v2 (ctia_grade, prices flags, competitor_quotes, pricing_flags, tier rebound) [TODO NEW] (M)"/>
+          <outline text="0009 partner fulfillment (orders + items, price_source, idempotency) [TODO NEW] (M)"/>
+        </outline>
+        <outline text="RLS coverage tests (cross-tenant, scope isolation) [TODO] (L)"/>
+        <outline text="Seed data for demos [SCAFFOLD] (S)"/>
+      </outline>
+      <outline text="7 · Backend — Edge Functions (Deno) [SCAFFOLD]">
+        <outline text="pricing-engine (read session tier price) — reference impl [SCAFFOLD] (M)"/>
+        <outline text="tier-upgrade (cumulative units lifecycle) — reference impl [SCAFFOLD] (M)"/>
+        <outline text="stripe-webhook (signature verify, order transition) — reference impl [SCAFFOLD] (M)"/>
+        <outline text="Wire + deploy all three to linked project [TODO] (M)"/>
+        <outline text="Rate limiting per-IP / per-user [TODO] (S)"/>
+      </outline>
+      <outline text="8 · Auth &amp; Identity [SCAFFOLD → TODO]">
+        <outline text="Supabase Auth (email+password, magic link, OAuth-ready) [TODO] (M)"/>
+        <outline text="Sign-up hook (mirror users, default account, membership) [TODO] (M)"/>
+        <outline text="JWT custom claims (account_id, tier_id) [TODO] (S)"/>
+        <outline text="Role model (customer/staff/admin) + SECURITY DEFINER helpers [TODO] (M)"/>
+        <outline text="Admin invitations flow [TODO] (S)"/>
+        <outline text="M2M API-key auth (Argon2, per-key rate limits, rotation) [TODO NEW] (L)"/>
+        <outline text="Session lifecycle, refresh rotation, re-auth for sensitive actions [TODO] (M)"/>
+        <outline text="Frontend currently uses MOCK auth — replace with real [TODO] (M)"/>
+      </outline>
+      <outline text="9 · Pricing Engine v2 (nightly batch) [NEW]">
+        <outline text="Reference implementation pricing_engine.py [DONE] (M)"/>
+        <outline text="Productionize batch (services/pricing-batch) [TODO NEW] (L)"/>
+        <outline text="Five competitive sources">
+          <outline text="eBay Browse API connector [TODO] (M)"/>
+          <outline text="Best Buy developer API connector [TODO] (M)"/>
+          <outline text="Amazon Renewed (aggregator/Keepa) connector [TODO] (M)"/>
+          <outline text="Walmart Restored (aggregator) connector [TODO] (S)"/>
+          <outline text="Back Market scheduled scrape (Scrapling) [TODO] (M)"/>
+        </outline>
+        <outline text="Benchmark: match, ±30% trim, mean, locked ×0.9, confidence [TODO] (M)"/>
+        <outline text="CTIA grade gating + per-vendor grade map [TODO NEW] (M)"/>
+        <outline text="Waterfall: kit cost, floors, tier bands, per-tier flags [DONE ref / TODO prod] (M)"/>
+        <outline text="Flag queue processing + admin actions [TODO NEW] (M)"/>
+        <outline text="Tier-order + golden-file + unit tests [TODO] (L)"/>
+        <outline text="Nightly scheduler (pg_cron / job runner) [TODO] (S)"/>
+        <outline text="Contract note: drops cart-tier promotion (Agreement §1.3) — Change Order [DECISION] (S)"/>
+      </outline>
+      <outline text="10 · Supplier Integrations — inbound (Python + Scrapling) [SCAFFOLD]">
+        <outline text="Source-1 adapter structure (client, models, writer, sync, CLI) [SCAFFOLD] (M)"/>
+        <outline text="Source-2 adapter structure [SCAFFOLD] (M)"/>
+        <outline text="Real REST ingestion per supplier [TODO] (L)"/>
+        <outline text="Scrapling HTML fallback (NotImplementedError today) [TODO] (M)"/>
+        <outline text="Daily .xls/.csv feed parser (HYLA Daily Stock Report shape) [TODO NEW] (M)"/>
+        <outline text="Idempotent upserts + advisory locks + sync-run rows [TODO] (M)"/>
+        <outline text="Discrepancy detection → inventory-triage-agent [TODO] (S)"/>
+      </outline>
+      <outline text="11 · Catalog Standard &amp; Import/Export [NEW — standard DONE]">
+        <outline text="Product catalog standard doc [DONE NEW] (M)"/>
+        <outline text="Canonical CSV import/export template [DONE NEW] (S)"/>
+        <outline text="Import pipeline: normalize → validate → upsert (3 layers) [TODO NEW] (L)"/>
+        <outline text="Vendor column-mapping profiles (per supplier) [TODO NEW] (M)"/>
+        <outline text="Carrier normalization + CTIA grade mapping [TODO NEW] (S)"/>
+        <outline text="Masked-quantity ('200+') + natural-key SKU minting [TODO NEW] (S)"/>
+        <outline text="Internal canonical export (round-trippable, with cost) [TODO NEW] (M)"/>
+        <outline text="Admin import/export UI (see branch 4) [TODO NEW] (L)"/>
+      </outline>
+      <outline text="12 · Partner Inventory API — outbound feed [NEW]">
+        <outline text="Design contract (PARTNER-INVENTORY-API.md) [DONE NEW] (M)"/>
+        <outline text="services/partner-api service scaffold [TODO NEW] (M)"/>
+        <outline text="API-key auth + scopes (inventory:read) [TODO NEW] (M)"/>
+        <outline text="Subscriptions + price_source (cost_plus_margin | tier) [TODO NEW] (M)"/>
+        <outline text="Projection recompute (per account × variant × location) [TODO NEW] (L)"/>
+        <outline text="No-op suppression via content_hash [TODO NEW] (M)"/>
+        <outline text="Webhook emitter (HMAC sign, sequence, retry+backoff, degraded) [TODO NEW] (L)"/>
+        <outline text="Pull endpoints (cursor pagination, filters) [TODO NEW] (M)"/>
+        <outline text="Margin resolution + floor invariant [TODO NEW] (M)"/>
+        <outline text="Masking allow-list serializer + contract tests [TODO NEW] (M)"/>
+        <outline text="Rate limits, SSRF deny-list on endpoint_url [TODO NEW] (S)"/>
+        <outline text="Customer-facing Inventory API page [DONE mockup] (M)"/>
+      </outline>
+      <outline text="13 · SmartPay Integration (inventory + fulfillment) [NEW]">
+        <outline text="Integration contract (SMARTPAY-INTEGRATION.md) [DONE NEW] (M)"/>
+        <outline text="OMP→SP feed at CONSUMER tier, Apple+Samsung, certified-only [TODO NEW] (M)"/>
+        <outline text="Brand-inclusive filter + delivery ETA + carrier options [TODO NEW] (M)"/>
+        <outline text="SP→OMP fulfillment write API (place/cancel/status) [TODO NEW] (L)"/>
+        <outline text="Required Idempotency-Key (anti double-dropship) [TODO NEW] (M)"/>
+        <outline text="fulfillment:write separate credential + mutual HMAC [TODO NEW] (M)"/>
+        <outline text="Order status webhooks to SP [TODO NEW] (M)"/>
+        <outline text="Reservation on accept (decrement projection) [TODO NEW] (M)"/>
+        <outline text="Open: OMP↔SP margin formula [DECISION] (S)"/>
+        <outline text="Open: blind-dropship / SP-branded packaging [DECISION] (S)"/>
+        <outline text="Open: returns / RMA flow [TODO] (M)"/>
+        <outline text="CUPE marketplace API validation (learnings) [TODO] (S)"/>
+      </outline>
+      <outline text="14 · AI Agent Swarm (services/ai-api) [SCAFFOLD]">
+        <outline text="Orchestrator + server (Fastify) [SCAFFOLD] (M)"/>
+        <outline text="pricing-agent, tier-classifier, inventory-triage, customer-support [SCAFFOLD] (L)"/>
+        <outline text="Real Anthropic Agent SDK wiring (no live calls yet) [TODO] (L)"/>
+        <outline text="MCP tools (read-only Supabase) [SCAFFOLD] (M)"/>
+        <outline text="Propose→admin-approve→apply loop + audit [TODO] (M)"/>
+        <outline text="Guardrails: prompt-injection, cost caps, redaction, eval set [SCAFFOLD/TODO] (M)"/>
+      </outline>
+      <outline text="15 · Payments — Stripe [SCAFFOLD]">
+        <outline text="Checkout session creation [TODO] (M)"/>
+        <outline text="stripe-webhook (paid → order transition, payments row) [SCAFFOLD] (M)"/>
+        <outline text="Idempotency + replay protection (stripe_event_id) [TODO] (S)"/>
+        <outline text="Refunds + reconciliation [TODO] (M)"/>
+        <outline text="Stripe Tax (later milestone) [TODO] (M)"/>
+      </outline>
+      <outline text="16 · Fulfillment &amp; Shipping [TODO]">
+        <outline text="Dropship dispatch to supplier on paid order [TODO] (M)"/>
+        <outline text="Shipments table + carrier tracking (FedEx/UPS) [TODO] (M)"/>
+        <outline text="Delivery ETA from location [TODO NEW] (S)"/>
+        <outline text="Landed cost (FedEx/UPS live rates) — Phase 2 [TODO] (M)"/>
+        <outline text="Ground + insurance option [TODO] (S)"/>
+      </outline>
+      <outline text="17 · Observability &amp; Ops [SCAFFOLD → TODO]">
+        <outline text="Sentry SDK across services [SCAFFOLD] (S)"/>
+        <outline text="PostHog product analytics [SCAFFOLD] (S)"/>
+        <outline text="Structured logging + PII redaction [SCAFFOLD] (M)"/>
+        <outline text="Ops runbook (sync fails, disputes, agent rollback) [TODO] (M)"/>
+        <outline text="Supplier health + tier distribution reports [TODO] (M)"/>
+      </outline>
+      <outline text="18 · Security &amp; Compliance [PARTIAL]">
+        <outline text="Threat model (STRIDE) [DONE doc] (M)"/>
+        <outline text="Data classification (incl. PII, partner, fulfillment) [DONE doc] (M)"/>
+        <outline text="RLS on every table + tests [TODO] (L)"/>
+        <outline text="Secrets management (VPS env, Keychain, rotation) [TODO] (S)"/>
+        <outline text="Partner masking non-disclosure invariants + tests [TODO NEW] (M)"/>
+        <outline text="Idempotency / anti double-dispatch [TODO NEW] (S)"/>
+        <outline text="LGPD/GDPR/CCPA data-rights flows [TODO] (M)"/>
+        <outline text="Pre-launch security pass [TODO] (M)"/>
+      </outline>
+      <outline text="19 · DevOps / Infra / Deploy [SCAFFOLD]">
+        <outline text="Dockerfiles (web, ai-api, supplier x2) [DONE] (M)"/>
+        <outline text="docker-compose dev + prod (Caddy, registry) [DONE] (S)"/>
+        <outline text="VPS provisioning + Caddy TLS [TODO] (M)"/>
+        <outline text="CI pipeline (build/push images) — MISSING [TODO] (M)"/>
+        <outline text="Supabase project link + migrations apply [TODO] (S)"/>
+        <outline text="Deploy divergence: front on Vercel vs docs' VPS — DECIDE [DECISION] (S)"/>
+        <outline text="Env/secret provisioning per service [TODO] (S)"/>
+      </outline>
+      <outline text="20 · QA &amp; Testing [TODO]">
+        <outline text="Frontend component/interaction tests [TODO] (M)"/>
+        <outline text="Pricing golden-file + unit + tier-order tests [TODO NEW] (L)"/>
+        <outline text="RLS / auth-bypass integration tests [TODO] (L)"/>
+        <outline text="Partner API contract tests (masking, no-op, cross-tenant) [TODO NEW] (M)"/>
+        <outline text="Fulfillment idempotency / double-submit tests [TODO NEW] (M)"/>
+        <outline text="Supplier feed schema-drift tests [TODO] (M)"/>
+        <outline text="E2E happy paths (checkout, portal, admin) [TODO] (L)"/>
+      </outline>
+      <outline text="21 · Cross-cutting [PARTIAL]">
+        <outline text="Mobile-first verified 320–428px [DONE frontend] (M)"/>
+        <outline text="Accessibility (landmarks, focus, contrast, aria-live) [PARTIAL] (M)"/>
+        <outline text="Performance budgets (pricing p50&lt;80ms, storefront) [TODO] (S)"/>
+        <outline text="i18n: USD + English only at launch (Schedule A.3) [DONE scope] (S)"/>
+        <outline text="Money as integer cents end-to-end [DONE convention] (S)"/>
+      </outline>
+      <outline text="22 · Delivery Phases (budget roll-up)">
+        <outline text="Phase 1 — Discovery &amp; Design (wireframes, spec, supplier audit) [DONE/PARTIAL]"/>
+        <outline text="Phase 2 — Backend &amp; Integrations (DB, RLS, adapters, pricing, AI v1) [TODO core]"/>
+        <outline text="Phase 3 — Frontend &amp; Portal (wire mockup to backend) [mockup DONE, wiring TODO]"/>
+        <outline text="Phase 4 — QA, Deploy, Handover [TODO]"/>
+        <outline text="Added scope (new SOW / change order)">
+          <outline text="Partner Inventory API [NEW]"/>
+          <outline text="Catalog Standard + Import/Export [NEW]"/>
+          <outline text="Pricing Engine v2 (benchmark + CTIA) [NEW]"/>
+          <outline text="SmartPay integration (inventory + fulfillment) [NEW]"/>
+        </outline>
+        <outline text="Budget note: mockup UI is built; the bulk of remaining cost is backend wiring + the 4 new-scope workstreams"/>
+      </outline>
+    </outline>
+  </body>
+</opml>
