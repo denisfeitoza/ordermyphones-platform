@@ -34,6 +34,9 @@
 | `partner_api_keys.secret_hash`, `partner_feed_subscriptions.signing_secret` | Restricted | Hashed / secret material; shown in plaintext exactly once at creation; overlap rotation. |
 | `partner_inventory_projection.partner_price_cents` | Internal | The only price a partner may observe. |
 | `partner_webhook_deliveries.payload` | Internal | Exactly what we signed and sent; retained for delivery forensics and dispute resolution. |
+| `partner_fulfillment_orders.ship_to` | **Confidential** | End-customer PII from a partner (e.g. SmartPay's consumer). Fulfillment use only; redacted in logs; never sent to an LLM. |
+| `partner_fulfillment_orders.idempotency_key` | Internal | Dedup guard; not sensitive but never reused across partners. |
+| `product_variants.ctia_grade` | Internal | Canonical condition grade; drives consumer visibility. |
 
 ## 3. Retention
 

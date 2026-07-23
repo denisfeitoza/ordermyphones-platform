@@ -51,10 +51,12 @@ A buying entity. A user can belong to several accounts (e.g. their personal acco
 |---|---|---|
 | `id` | `uuid` ||
 | `code` | `text` | `'tier_1'`, `'tier_2'`, `'tier_3'`, `'tier_4'`; unique |
-| `label` | `text` | "Consumer", "Retailer", "Multi-Store", "Wholesale" |
-| `min_units` | `int` | 1, 10, 50, 401 |
-| `max_units` | `int` | 10, 50, 400, _null_ for unbounded |
+| `label` | `text` | "Consumer", "Retailer", "Wholesale", "Distributor" (v2 — see note) |
+| `min_units` | `int` | 1, 10, 50, 400 |
+| `max_units` | `int` | 9, 49, 399, _null_ for unbounded |
 | `position` | `int` | sort order |
+
+> **v2 tier change.** T3/T4 are renamed **Wholesale** / **Distributor** (were *Multi-Store* / *Wholesale*) and the top boundary moves to **399/400** (was 400/401), per [`PRICING-ENGINE.md`](PRICING-ENGINE.md). The live app (`data/tiers.ts`) still carries the v1 labels — tracked divergence, not yet renamed.
 
 ### `price_rules`
 A composable rule. The pricing engine evaluates the matching set per cart line.
@@ -72,15 +74,22 @@ A composable rule. The pricing engine evaluates the matching set per cart line.
 | `effective_from`, `effective_to` | `timestamptz` ||
 
 ### `prices`
-Materialized effective prices per variant × tier, refreshed when `price_rules` change.
+Materialized price per variant × tier, written by the **nightly pricing batch** (v2 — [`PRICING-ENGINE.md`](PRICING-ENGINE.md)). Every SKU is priced at all four tiers; per-tier visibility is a flag, so a SKU hidden from consumers stays live for volume tiers (never dead inventory).
 
 | Column | Type | Notes |
 |---|---|---|
 | `variant_id` | `uuid` ||
 | `tier_id` | `uuid` ||
-| `price_cents` | `bigint` ||
+| `price_cents` | `bigint` | `check (price_cents >= 1)` |
 | `currency` | `text` | `'USD'` |
+| `visible` | `boolean` | false → hidden from this tier (grade gate or floor) but still stored |
+| `flag` | `enum('ok','hidden_grade','flag_margin','flag_unbenchmarked')` | why, if not `ok` |
+| `benchmark_cents` | `bigint` | nullable; the market benchmark used (consumer tiers) |
+| `confidence` | `enum('high','low','none')` | benchmark confidence |
+| `computed_at` | `timestamptz` | when the batch last wrote this row |
 | primary key | `(variant_id, tier_id)` ||
+
+`price_rules` remains for admin overrides (the flag-queue "Override" action, 30-day expiry); the day-to-day price comes from the batch, not from rules.
 
 ## 4. Catalog
 
@@ -115,9 +124,10 @@ Materialized effective prices per variant × tier, refreshed when `price_rules` 
 | `carrier` | `enum('att','verizon','tmobile','sprint','boost','spectrum','xfinity','unlocked','wifi')` | normalized |
 | `carrier_raw` | `text` | original supplier string, kept for audit |
 | `lock_status` | `enum('locked','unlocked')` ||
-| `grade` | `text` | full grade incl. suffix: `'DLS B+'`, `'TPS A-'` |
+| `grade` | `text` | full vendor grade incl. suffix: `'DLS B+'`, `'TPS A'` |
 | `grade_scale` | `enum('DLS','TPS')` | derived from `grade` prefix |
-| `condition` | `enum('new','cpo','refurbished','used_a','used_b','used_c')` | coarse; derived from `grade` via `grade_condition_map` |
+| `ctia_grade` | `enum('NEW','CPO','A','B','C','D')` | **canonical** condition axis; from `vendor_grade_map`; drives the grade gate ([`PRICING-ENGINE.md`](PRICING-ENGINE.md) §2) |
+| `condition` | `enum('new','cpo','refurbished','used_a','used_b','used_c')` | coarse display label, derived from `ctia_grade` (`A→used_a`, `B→used_b`, `C/D→used_c`) |
 | `protocol` | `text` | nullable; `'GSM'`; phones only |
 | `attributes` | `jsonb` | reserved / forward-compat: `screen_size`, `ram`, `launch_date`, … |
 
@@ -210,7 +220,7 @@ Each supplier sync writes a row per variant. The latest snapshot per (`variant_i
 | `filters` | `jsonb` | optional brand / condition / location subset |
 
 ### `partner_margin_rules`
-Same composable shape as `price_rules`, deliberately a separate table — retail tier pricing and partner margin must not be conflated.
+Per-partner margin over cost — used **only** when a partner is priced cost-plus (a wholesale reseller). A partner subscribed at a **standard tier** (e.g. SmartPay at consumer) is priced from `prices` instead and does not consult this table. The two pricing paths are exclusive per subscription; `partner_feed_subscriptions.price_source` decides which wins.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -222,6 +232,27 @@ Same composable shape as `price_rules`, deliberately a separate table — retail
 | `min_margin_cents` | `bigint` | absolute floor; default `1` |
 | `priority` | `int` | higher wins on conflict |
 | `effective_from`, `effective_to` | `timestamptz` ||
+
+> `partner_feed_subscriptions` gains a `price_source enum('cost_plus_margin','tier')` and a nullable `tier_id` (the tier a `tier`-priced partner receives, e.g. consumer for SmartPay). `cost_plus_margin` reads `partner_margin_rules`; `tier` reads `prices`. This resolves the two pricing models introduced by Pricing Engine v2 vs. the original wholesale-partner margin.
+
+### `partner_fulfillment_orders`
+Orders placed **by a partner** (SmartPay → OMP) for dropship to the partner's end customer. The write side of the partner boundary — distinct scope, carries PII, strictly idempotent.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `uuid` | = `omp_order_id` |
+| `account_id` | `uuid` | the partner |
+| `partner_order_ref` | `text` | partner's own id; `unique (account_id, partner_order_ref)` |
+| `idempotency_key` | `text` | required on create; `unique (account_id, idempotency_key)`; honored 24 h |
+| `status` | `enum('accepted','processing','shipped','delivered','canceled','rejected','exception')` ||
+| `ship_to` | `jsonb` | end-customer address — **Confidential PII**; never logged |
+| `shipping_speed` | `enum('express','ground')` ||
+| `reserved_location_id` | `uuid` | FK → `inventory_locations.id`; where stock was reserved |
+| `total_cents` | `bigint` | at OMP's published price at accept time; never client-supplied |
+| `estimated_ship_date`, `estimated_delivery_date` | `date` ||
+| `created_at`, `updated_at` | timestamptz ||
+
+Line items live in a child `partner_fulfillment_order_items (order_id, variant_id, qty, unit_price_cents)`. Each accepted order reserves stock (decrements the projection other partners see) and, on dispatch, creates the normal `shipments` row.
 
 ### `partner_inventory_projection`
 Materialized per-partner, **per-location** view of sellable stock. Always **recomputed**, never incremented in place. A SKU held by two suppliers is two rows — quantities are never summed across locations.
@@ -391,6 +422,9 @@ Every AI proposal lands here. The platform applies an action only after the admi
 - `check (available_qty >= 0)` and `check (partner_price_cents >= 1)` on `partner_inventory_projection`.
 - **Margin floor invariant:** `partner_price_cents >= unit_cost_cents + min_margin_cents`. Enforced when the rule is written, not when the event is emitted — a rule that would sell at or below cost is rejected at the source.
 - Partial index `idx_partner_deliveries_pending on partner_webhook_deliveries (next_retry_at) where delivered_at is null`.
+- `unique (account_id, partner_order_ref)` and `unique (account_id, idempotency_key)` on `partner_fulfillment_orders` — the two guards against double dropship.
+- `check (price_cents >= 1)` on `prices`; **tier-order invariant** enforced by the pricing batch, not the DB: `cost < T4 < T3 < T2 < T1` across visible tiers, or the SKU is withheld from publish.
+- Grade gate is a **publish-time** rule: a variant whose `ctia_grade` is not in `{NEW,CPO,A}` never gets a `visible=true` row for `tier_1`/`tier_2`.
 
 ## 11. Migrations index
 
@@ -402,4 +436,6 @@ Every AI proposal lands here. The platform applies an action only after the admi
 | 0004 | `0004_supplier_sync.sql` | `inventory_snapshots`, `supplier_sync_runs`, advisory-lock helpers. |
 | 0005 | `0005_audit_log.sql` | `audit_log`, `ai_actions`, BRIN index. |
 | 0006 | `0006_partner_feed.sql` | `inventory_locations` (keyed `(supplier_id, warehouse)`), `partner_api_keys`, `partner_feed_subscriptions`, `partner_margin_rules`, `partner_inventory_projection`, `partner_webhook_deliveries`, projection recompute function, RLS policies for all six. |
-| 0007 | `0007_catalog_standard.sql` | `products.model_number`/`product_family`/`category`; variant columns (`capacity`, `carrier`, `carrier_raw`, `lock_status`, `grade`, `grade_scale`, `protocol`); `inventory_snapshots.warehouse`/`qty_is_floor`; `grade_condition_map` table; natural-key uniques. Implements [`PRODUCT-CATALOG-STANDARD.md`](PRODUCT-CATALOG-STANDARD.md). |
+| 0007 | `0007_catalog_standard.sql` | `products.model_number`/`product_family`/`category`; variant columns (`capacity`, `carrier`, `carrier_raw`, `lock_status`, `grade`, `grade_scale`, `protocol`); `inventory_snapshots.warehouse`/`qty_is_floor`; `vendor_grade_map` table; natural-key uniques. Implements [`PRODUCT-CATALOG-STANDARD.md`](PRODUCT-CATALOG-STANDARD.md). |
+| 0008 | `0008_pricing_v2.sql` | Tier rename/rebound (Wholesale/Distributor, 399/400); `product_variants.ctia_grade`; `prices` gains `visible`/`flag`/`benchmark_cents`/`confidence`/`computed_at`; `competitor_quotes` + `pricing_flags` (admin queue). Implements [`PRICING-ENGINE.md`](PRICING-ENGINE.md). |
+| 0009 | `0009_partner_fulfillment.sql` | `partner_fulfillment_orders` + items; `partner_feed_subscriptions.price_source`/`tier_id`; idempotency + ref uniques. Implements [`../integrations/SMARTPAY-INTEGRATION.md`](../integrations/SMARTPAY-INTEGRATION.md). |

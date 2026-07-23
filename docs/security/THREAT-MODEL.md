@@ -17,6 +17,7 @@
 | Supplier identity ↔ location mapping | **High** | Postgres (`inventory_locations`) — leaking it undoes the white-label model |
 | Partner margin rules | High | Postgres (`partner_margin_rules`) — reveals our cost basis by inversion |
 | Partner API keys / webhook signing secrets | Critical | Postgres (hashed / `Restricted`), partner-side env |
+| End-customer ship-to addresses (partner fulfillment) | High (PII) | Postgres (`partner_fulfillment_orders.ship_to`) |
 
 ## 2. Actors
 
@@ -31,6 +32,7 @@
 | Stripe | External; processes payments; sends webhooks. |
 | AI agent | Application identity; reads via tools; proposes actions; never writes. |
 | **Feed partner (M2M)** | External system holding an API key scoped to one account. Reads its own marked-up inventory feed. Nothing else — no orders, no PII, no other tenant. |
+| **Fulfillment partner (M2M, write)** | Holds a distinct `fulfillment:write` key (e.g. SmartPay). Places dropship orders carrying an end-customer address. Cannot read the catalog beyond order echoes; cannot read the read-feed. |
 
 ## 3. Threats (STRIDE-style summary)
 
@@ -43,6 +45,8 @@
 | Spoofed supplier response (MITM) | Low | Medium | HTTPS only; adapter pins TLS expectations; sandbox vs prod base URLs differ. |
 | Forged partner API key | Low | Medium | Argon2id verification; `revoked_at` checked per request with no cache; rate limit applied *before* the hash comparison. |
 | Attacker forges an `inventory.updated` webhook to a partner | Medium | High | Outbound HMAC-SHA256 `X-OMP-Signature` with a 5-min timestamp window; partner contract mandates verification before parsing. |
+| Forged / replayed partner fulfillment order | Medium | **High** | Mutual HMAC signature on inbound `POST`; **required** `Idempotency-Key` (24 h) + `unique (account_id, partner_order_ref)` — a replay returns the same `omp_order_id`, never a second dropship. |
+| Partner tampers the price on an order | Low | Medium | Price is never accepted from the partner; OMP fulfills at its own published `prices` value and echoes it back. |
 
 ### Tampering
 
@@ -54,6 +58,8 @@
 | AI proposal tampering (admin race condition) | Low | Medium | `ai_actions.status` is a state machine with valid transitions; `approved_by_user_id` + `applied_at` are immutable once set. |
 | Partner replays a captured payload to desync its own state | Low | Low | Monotonic `sequence` per subscription; partner discards lower sequences; signature timestamp window. |
 | Margin rule edited to sell at or below cost | Low | High | Floor invariant `partner_price_cents >= unit_cost_cents + min_margin_cents` validated at rule-write time; violating rules rejected, never emitted. |
+| Double dropship from a retried order | Medium | **High** | Idempotency key is required, not optional; the fulfillment write is idempotent — a double-submit reserves and ships exactly once. A physical device + real money ride on this. |
+| Grade-gated stock leaks into a consumer price | Low | High | Grade gate is a **publish-time** invariant: a sub-A `ctia_grade` never produces a `visible` T1/T2 `prices` row. Asserted in the pricing golden-file test. |
 
 ### Repudiation
 
@@ -73,6 +79,8 @@
 | **Supplier identity leaks into a partner payload** | Medium | **High** | Outbound serializer is an explicit field allow-list, not a redaction pass — a new upstream column cannot leak by default. Contract test asserts emitted keys == allow-list; second test asserts no `suppliers.display_name` string appears in any generated payload. |
 | Our cost basis inferred from feed prices | Medium | Medium | Only the marked-up price is emitted; `unit_cost_cents` and `margin_bps` never cross the boundary. Residual inference risk if a partner also buys upstream directly — accepted, commercial not technical. |
 | Cross-partner leak via the feed API | Low | Critical | Scope applied in the API service *and* RLS on `partner_inventory_projection`; integration tests attempt cross-account feed reads. |
+| End-customer PII (`ship_to`) leaks via logs/prompts | Medium | High | `ship_to` is `Confidential`; redacted in logs, opaque IDs across service boundaries, never sent to an LLM. Stored for fulfillment only. |
+| `fulfillment:write` key leak used to read the catalog | Low | Medium | The write scope cannot enumerate inventory; it only echoes SKUs already on an order. Read requires the separate `inventory:read` key. |
 | Internal errors leaked to partners | Medium | Low | Structured error envelope with a fixed code set + opaque `correlation_id`; stack traces, SQL and upstream error text never serialized outbound. |
 
 ### Denial of service
@@ -95,6 +103,7 @@
 | AI agent escalates beyond proposal | Very low | Critical | Agents have no write tools; the platform validates every approved proposal against business invariants. |
 | Staff issues high-value refund without admin approval | Low | High | Refunds above a configured cap require `admin`; everything is in `audit_log`. |
 | Partner key escalates to a customer session | Very low | Critical | An API key never mints a JWT, sets a cookie, or yields a Supabase client. Scope is inventory-read-only and strictly smaller than the account's own human session. |
+| `inventory:read` key used to place an order | Very low | High | Order placement requires the `fulfillment:write` scope; the read key is rejected by the fulfillment endpoint. Two scopes, two keys, no path between them. |
 
 ## 4. AI-specific threats
 
