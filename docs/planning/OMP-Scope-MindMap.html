@@ -119,8 +119,11 @@ const SIZEMEAN={en:'relative complexity (not hours)',pt:'complexidade relativa (
 const HUE=['#c46bff','#5cc8ff','#22c07a','#f2b23c','#ff5d6c','#2dd4bf','#8b9cff','#ff9f5c','#e06bd8','#7ee06b','#6bd0ff','#ffd15c'];
 let active=new Set(STATUS);
 const SVGNS="http://www.w3.org/2000/svg";
-const RING=[0,330,300,280];  // radius added per depth level
-const LMAX=30;               // label truncation in the map (full text in the panel)
+const LMAX=28;               // label truncation in the map (full text in the panel)
+const SLOT=80;               // tangential room per leaf
+const INNER=250;             // radius of the innermost (section) ring
+const STAGGER=72;            // radial offset alternated so cards never touch
+let R_AT = d=>d*300;         // radius for a given depth — recomputed each layout from node count
 let idc=0;
 function prep(n,depth,parent,hue){ n._id=idc++; n._depth=depth; n._parent=parent; n._hue=hue;
   n._collapsed = depth>=2;                 // items hidden until you open a module
@@ -136,30 +139,61 @@ function visKids(n){ return (n._collapsed||!n.children)?[]:n.children; }
 function leaves(n){ const k=visKids(n); if(!k.length) return 1; return k.reduce((s,c)=>s+leaves(c),0); }
 
 const cx=0, cy=0;
-function layout(n,depth,a0,a1){
+function maxVisDepth(){ let m=1; (function w(n){ if((n._depth||0)>m)m=n._depth; visKids(n).forEach(w); })(DATA); return m; }
+function computeRadii(){
+  const L=leaves(DATA);
+  const D=maxVisDepth();
+  const Router=Math.max(640, L*SLOT/(2*Math.PI));   // grow the outer ring with node count
+  R_AT = d => d<=0 ? 0 : INNER + (Router-INNER)*((d-1)/Math.max(1,D-1));
+}
+function layout(n,depth,a0,a1,idx){
   n._depth=depth;
   const a=(a0+a1)/2; n._ang=a;
-  const r = RING.slice(0,depth+1).reduce((s,x)=>s+x,0);
+  const stag = depth>=2 ? (idx%2)*STAGGER : 0;      // push every other sibling outward
+  const r = R_AT(depth) + stag;
   n._r=r; n._x=cx+r*Math.cos(a); n._y=cy+r*Math.sin(a);
   const k=visKids(n); if(!k.length) return;
   const tot=k.reduce((s,c)=>s+leaves(c),0);
   let cur=a0;
-  for(const c of k){ const span=(a1-a0)*leaves(c)/tot; layout(c,depth+1,cur,cur+span); cur+=span; }
+  k.forEach((c,i)=>{ const span=(a1-a0)*leaves(c)/tot; layout(c,depth+1,cur,cur+span,i); cur+=span; });
 }
 function relayout(){
-  // root children span full circle; give a small gap
+  computeRadii();
   const k=visKids(DATA); const tot=k.reduce((s,c)=>s+leaves(c),0)||1;
   DATA._depth=0; DATA._ang=0; DATA._r=0; DATA._x=0; DATA._y=0;
   let cur=-Math.PI/2; // start at top
-  for(const c of k){ const span=2*Math.PI*leaves(c)/tot; layout(c,1,cur,cur+span); cur+=span; }
+  k.forEach((c,i)=>{ const span=2*Math.PI*leaves(c)/tot; layout(c,1,cur,cur+span,i); cur+=span; });
+}
+function measure(){ (function w(n){
+  n._w = n._depth===0 ? label(n).length*CW+40 : cardW(n);
+  n._left = Math.cos(n._ang)<-0.0001 && n._depth>0;
+  visKids(n).forEach(w); })(DATA); }
+function boxOf(n){ const x0=n._left? n._x-n._w : n._x; return [x0, x0+n._w, n._y-14, n._y+14]; }
+function collide(){
+  const nodes=[]; (function w(n){ if(n._depth>=1) nodes.push(n); visKids(n).forEach(w); })(DATA);
+  for(let it=0; it<44; it++){
+    let any=false;
+    for(let i=0;i<nodes.length;i++) for(let j=i+1;j<nodes.length;j++){
+      const A=nodes[i], B=nodes[j], a=boxOf(A), b=boxOf(B);
+      const ox=Math.min(a[1],b[1])-Math.max(a[0],b[0]);
+      const oy=Math.min(a[3],b[3])-Math.max(a[2],b[2]);
+      if(ox>0 && oy>0){
+        any=true;
+        const push=oy/2+3, dir=A._y<=B._y?-1:1;
+        const aLeaf=!visKids(A).length, bLeaf=!visKids(B).length;
+        if(aLeaf){ A._y+=dir*push; A._r=Math.hypot(A._x,A._y); A._ang=Math.atan2(A._y,A._x); }
+        if(bLeaf){ B._y-=dir*push; B._r=Math.hypot(B._x,B._y); B._ang=Math.atan2(B._y,B._x); }
+      }
+    }
+    if(!any) break;
+  }
 }
 
 function polar(r,a){ return [r*Math.cos(a), r*Math.sin(a)]; }
 function vein(p,c){
   const [x1,y1]=[p._x,p._y], [x2,y2]=[c._x,c._y];
-  const r1=p._r + RING[Math.min(c._depth,3)]*0.5;
-  const r2=c._r - RING[Math.min(c._depth,3)]*0.5;
-  const [cx1,cy1]=polar(r1,p._ang), [cx2,cy2]=polar(r2,c._ang);
+  const midr=(p._r+c._r)/2;
+  const [cx1,cy1]=polar(midr,p._ang), [cx2,cy2]=polar(midr,c._ang);
   return `M${x1.toFixed(1)} ${y1.toFixed(1)} C${cx1.toFixed(1)} ${cy1.toFixed(1)} ${cx2.toFixed(1)} ${cy2.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
 }
 
@@ -172,7 +206,7 @@ function passesFilter(n){ // keep if self or descendant has an active status; st
 }
 
 function draw(){
-  relayout();
+  relayout(); measure(); collide();
   gV.innerHTML=''; gN.innerHTML='';
   (function walk(n){
     const kids=visKids(n);
@@ -197,8 +231,8 @@ function draw(){
 
 function drawNode(n){
   const isRoot=n._depth===0, isSection=n._depth===1, isModule=/^M\d\d/.test(n.en)||/^D\d/.test(n.en);
-  const left = Math.cos(n._ang)<-0.0001 && !isRoot;
-  const w=isRoot? label(n).length*CW+40 : cardW(n);
+  const left = n._left;
+  const w = n._w;
   const g=document.createElementNS(SVGNS,'g'); g.setAttribute('class','card'+(n.status&&!active.has(n.status)?' dim':''));
   const x = isRoot? -w/2 : (left? n._x - w : n._x);
   const y = n._y - H/2;
