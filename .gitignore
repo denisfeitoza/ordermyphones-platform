@@ -81,3 +81,11 @@ pids/
 .claude/settings.local.json
 .preview/
 .vercel
+
+# Internal strategy — never in the public repo
+docs/planning/PRICING-ANALYSIS-INTERNAL.md
+docs/planning/OMP-Scope-vs-Contract.md
+docs/planning/OMP-Build-Plan-By-Module.md
+docs/planning/OMP-Scope-MindMap.html
+docs/planning/OMP-Platform-Scope-Mindmap.*
+docs/contract/CHANGE-ORDER-01.md
