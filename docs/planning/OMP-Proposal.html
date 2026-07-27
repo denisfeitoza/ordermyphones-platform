@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OMP Platform — Mind Map</title>
+<style>
+  :root{
+    --bg:#08090c; --panel:#12151d; --panel2:#171b24; --border:#262c38; --border2:#333b49;
+    --text:#e8ebf1; --muted:#8b93a4;
+    --brand:#c46bff; --brand2:#5cc8ff;
+    --done:#22c07a; --wire:#2dd4bf; --scaffold:#f2b23c; --todo:#8b93a4; --new:#c46bff; --decision:#ff5d6c;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+    font:14px/1.4 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Inter,sans-serif;-webkit-font-smoothing:antialiased}
+  #stage{position:fixed;inset:0;cursor:grab;background:
+     radial-gradient(1400px 800px at 60% 40%, #14101d 0%, #08090c 60%)}
+  #stage.drag{cursor:grabbing}
+  svg{width:100%;height:100%;display:block;touch-action:none}
+  .vein{fill:none;stroke-linecap:round}
+  .card rect{transition:filter .12s}
+  .card:hover rect{filter:brightness(1.25)}
+  .card text{pointer-events:none;dominant-baseline:middle}
+  .card .lbl{fill:var(--text)}
+  .card.dim{opacity:.42}
+  .toggle{fill:#0c0e13;stroke-width:1.4}
+  .toggle-sign{fill:var(--muted);pointer-events:none;dominant-baseline:middle;text-anchor:middle;font-weight:700}
+  /* HUD */
+  .hud{position:fixed;z-index:10;background:rgba(18,21,29,.86);border:1px solid var(--border2);
+    border-radius:14px;backdrop-filter:blur(8px)}
+  #topbar{top:14px;left:14px;right:14px;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;padding:10px 14px}
+  h1{font-size:15px;margin:0;font-weight:800;letter-spacing:-.01em}
+  h1 .a{background:linear-gradient(90deg,var(--brand),var(--brand2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .grow{flex:1}
+  .seg{display:inline-flex;background:var(--panel);border:1px solid var(--border2);border-radius:999px;padding:3px;gap:2px}
+  .seg button{border:0;background:transparent;color:var(--muted);border-radius:999px;padding:5px 12px;font-size:12px;font-weight:800;cursor:pointer}
+  .seg button.on{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#0a0b0e}
+  .btn{cursor:pointer;border:1px solid var(--border2);background:var(--panel);color:var(--text);
+    border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;user-select:none}
+  .btn:hover{background:var(--panel2)} .btn:active{transform:scale(.97)}
+  input.search{background:var(--panel);border:1px solid var(--border2);color:var(--text);border-radius:999px;
+    padding:7px 13px;font-size:12.5px;outline:none;width:190px}
+  input.search:focus{border-color:var(--brand)}
+  #legend{bottom:14px;left:14px;display:flex;gap:6px;flex-wrap:wrap;max-width:70vw;padding:9px 12px}
+  .lg{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border2);background:var(--panel);
+    border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;user-select:none}
+  .lg.off{opacity:.3} .lg .d{width:9px;height:9px;border-radius:50%}
+  .cxmini{display:inline-flex;align-items:flex-end;gap:1.5px;height:13px}
+  .cxmini i{width:2.5px;border-radius:1px;background:var(--muted);display:block}
+  #zoom{bottom:14px;right:14px;display:flex;flex-direction:column;gap:6px;padding:8px}
+  #zoom button{width:34px;height:34px;font-size:17px;font-weight:800;border-radius:10px;border:1px solid var(--border2);
+    background:var(--panel);color:var(--text);cursor:pointer}
+  #zoom button:hover{background:var(--panel2)}
+  #hint{bottom:14px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--muted);padding:6px 12px;pointer-events:none}
+  #detail{top:86px;right:14px;width:330px;max-width:calc(100vw - 28px);max-height:calc(100vh - 170px);overflow:auto;
+    padding:16px 16px 18px;display:none;box-shadow:0 20px 60px -20px rgba(0,0,0,.7)}
+  #detail.on{display:block}
+  #detail .crumb{font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.5}
+  #detail .crumb b{color:var(--brand2);font-weight:600}
+  #detail h2{font-size:16px;margin:0 0 10px;line-height:1.35;letter-spacing:-.01em}
+  #detail .meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px}
+  #detail .pill{font-size:10px;font-weight:800;letter-spacing:.03em;padding:3px 9px;border-radius:999px;text-transform:uppercase}
+  #detail .size{font-size:11px;font-weight:800;padding:3px 8px;border-radius:7px;background:#1c2230;color:var(--muted);border:1px solid var(--border2)}
+  #detail .cxchip{display:inline-flex;align-items:flex-end;gap:6px;font-size:11px;font-weight:700;color:var(--text);
+    padding:3px 9px;border-radius:999px;background:#1c2230;border:1px solid var(--border2)}
+  #detail .cxbars{display:inline-flex;align-items:flex-end;gap:2px;height:13px}
+  #detail .cxbars i{width:3px;border-radius:1px;display:block}
+  #detail .mean{font-size:12px;color:var(--muted);margin:2px 0 14px}
+  #detail .kh{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:12px 0 8px;font-weight:700}
+  #detail .kid{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;padding:5px 0;border-top:1px solid var(--border)}
+  #detail .kid .kd{width:8px;height:8px;border-radius:50%;margin-top:5px;flex:0 0 8px}
+  #detail .close{position:absolute;top:12px;right:12px;width:26px;height:26px;border-radius:8px;border:1px solid var(--border2);
+    background:var(--panel);color:var(--muted);cursor:pointer;font-size:15px;line-height:1}
+  .p-done{background:rgba(34,192,122,.16);color:var(--done)} .p-wire{background:rgba(45,212,191,.16);color:var(--wire)}
+  .p-scaffold{background:rgba(242,178,60,.16);color:var(--scaffold)} .p-todo{background:rgba(139,147,164,.16);color:#aeb6c6}
+  .p-new{background:rgba(196,107,255,.18);color:var(--new)} .p-decision{background:rgba(255,93,108,.16);color:var(--decision)}
+  /* ---- Outline / proposal view ---- */
+  #outline{position:fixed;inset:0;overflow-y:auto;display:none;padding:92px 0 70px}
+  #outline.on{display:block}
+  .doc{max-width:940px;margin:0 auto;padding:0 20px}
+  .cover{padding:18px 4px 6px}
+  .cover .ctitle{font-size:26px;font-weight:800;letter-spacing:-.02em}
+  .cover .ctitle b{background:linear-gradient(90deg,var(--brand),var(--brand2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .cover .csub{color:var(--muted);font-size:14px;margin-top:6px;max-width:70ch}
+  .cstats{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0 6px}
+  .cstat{background:var(--panel);border:1px solid var(--border2);border-radius:14px;padding:12px 16px;min-width:120px}
+  .cstat b{display:block;font-size:22px;font-weight:800;line-height:1.1}
+  .cstat span{font-size:12px;color:var(--muted)}
+  .cstat.oos{border-color:rgba(255,93,108,.5)} .cstat.oos b{color:var(--decision)}
+  .cstat.good b{color:var(--done)}
+  .sec{margin:14px 0;border:1px solid var(--border);border-radius:18px;background:var(--panel);overflow:hidden}
+  .sechead{display:flex;align-items:center;gap:12px;padding:15px 18px;border-left:4px solid var(--border2);cursor:pointer;transition:background .12s}
+  .sechead:hover{background:var(--panel2)}
+  .secname{font-size:16px;font-weight:800;flex:1;letter-spacing:-.01em}
+  .seccount{font-size:11px;font-weight:700;color:var(--muted);background:var(--panel2);border:1px solid var(--border2);border-radius:999px;padding:3px 10px}
+  .secbody{padding:6px 12px 12px}
+  .sec.closed .secbody{display:none}
+  .caret{color:var(--muted);transition:transform .15s;font-size:12px;width:12px}
+  .sec.closed .caret{transform:rotate(-90deg)}
+  .mod{border-radius:12px;margin:4px 0;background:var(--bg2,#0f1116);border:1px solid transparent}
+  .mod:hover{border-color:var(--border)}
+  .mod.oos{background:rgba(255,93,108,.05);border-color:rgba(255,93,108,.28)}
+  .modhead{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer}
+  .mdot{width:9px;height:9px;border-radius:50%;flex:0 0 9px}
+  .mname{flex:1;font-size:14px;font-weight:600}
+  .mname .mid{color:var(--brand2);font-family:ui-monospace,monospace;font-size:12.5px;margin-right:4px}
+  .szc{font-size:10px;font-weight:800;color:var(--muted);background:var(--panel2);border:1px solid var(--border2);border-radius:6px;padding:2px 6px}
+  .obars{display:inline-flex;align-items:flex-end;gap:2px;height:13px}
+  .obars i{width:3px;border-radius:1px;display:block}
+  .items{padding:0 14px 12px 34px;display:none}
+  .mod.open .items{display:block}
+  .item{display:flex;align-items:flex-start;gap:9px;padding:6px 0;font-size:13px;border-top:1px solid var(--border)}
+  .item:first-child{border-top:0}
+  .idot{width:7px;height:7px;border-radius:50%;margin-top:6px;flex:0 0 7px}
+  .itxt{flex:1;color:#c9cfda}
+  .isz{font-size:10px;font-weight:800;color:var(--muted)}
+  .pill{font-size:10px;font-weight:800;letter-spacing:.03em;padding:2px 8px;border-radius:999px;text-transform:uppercase}
+  .hidden{display:none!important}
+  @media(max-width:640px){ input.search{width:120px} #legend{max-width:58vw} h1{font-size:13px} #hint{display:none}
+    .cover .ctitle{font-size:20px} #outline{padding-top:120px} }
+</style>
+</head>
+<body>
+<div id="stage">
+  <svg id="svg"><g id="vp">
+    <g id="veins"></g><g id="nodes"></g>
+  </g></svg>
+</div>
+
+<div class="hud" id="topbar">
+  <h1><span class="a" id="ttl"></span></h1>
+  <div class="seg" id="viewseg"><button id="v-map" class="on" onclick="setView('map')"></button><button id="v-list" onclick="setView('list')"></button></div>
+  <div class="grow"></div>
+  <input class="search" id="q" oninput="search()" >
+  <div class="seg"><button id="l-en" class="on" onclick="setLang('en')">EN</button><button id="l-pt" onclick="setLang('pt')">PT-BR</button></div>
+  <button class="btn" id="b-exp" onclick="allExpand(true)"></button>
+  <button class="btn" id="b-col" onclick="allExpand(false)"></button>
+  <button class="btn" id="b-fit" onclick="fit()"></button>
+</div>
+<div id="outline"></div>
+<div class="hud" id="legend"></div>
+<div class="hud" id="zoom">
+  <button onclick="zoomBtn(1.25)">+</button>
+  <button onclick="zoomBtn(0.8)">−</button>
+</div>
+<div class="hud" id="hint"></div>
+<div class="hud" id="detail">
+  <button class="close" onclick="closeDetail()">×</button>
+  <div class="crumb" id="d-crumb"></div>
+  <h2 id="d-title"></h2>
+  <div class="meta" id="d-meta"></div>
+  <div class="mean" id="d-mean"></div>
+  <div id="d-kids"></div>
+</div>
+
+<script>
+const DATA = {"en": "OMP Platform — Full Build Scope", "pt": "Plataforma OMP — Escopo Completo de Construção", "status": null, "size": null, "children": [{"en": "1 · Business model", "pt": "1 · Modelo de negócio", "status": null, "size": null, "children": [{"en": "Two commercial directions", "pt": "Duas direções comerciais", "status": null, "size": null, "children": [{"en": "Storefront — sell to humans (tier-priced catalog, cart, checkout)", "pt": "Storefront — vender para humanos (catálogo com preço por tier, carrinho, checkout)", "status": null, "size": "L", "children": []}, {"en": "Partner Inventory API — sell to machines (outbound feed + fulfillment)", "pt": "Partner Inventory API — vender para máquinas (feed outbound + fulfillment)", "status": null, "size": "XL", "children": []}]}, {"en": "Customer tiers (Pricing v2)", "pt": "Tiers de cliente (Pricing v2)", "status": null, "size": null, "children": [{"en": "T1 Consumer 1–9 · market-benchmark price", "pt": "T1 Consumer 1–9 · preço por benchmark de mercado", "status": null, "size": null, "children": []}, {"en": "T2 Retailer 10–49 · consumer − $20", "pt": "T2 Retailer 10–49 · consumer − $20", "status": null, "size": null, "children": []}, {"en": "T3 Wholesale 50–399 · cost-plus band", "pt": "T3 Wholesale 50–399 · banda cost-plus", "status": null, "size": null, "children": []}, {"en": "T4 Distributor 400+ · cost-plus band", "pt": "T4 Distributor 400+ · banda cost-plus", "status": null, "size": null, "children": []}]}, {"en": "Suppliers (masked from partners)", "pt": "Fornecedores (mascarados dos parceiros)", "status": null, "size": null, "children": [{"en": "Source 1 — Assurant / HYLA (US dropship, volume)", "pt": "Source 1 — Assurant / HYLA (US dropship, volume)", "status": null, "size": null, "children": []}, {"en": "Source 2 — Mannapov LLC + reserved Dubai (DXB) slot", "pt": "Source 2 — Mannapov LLC + slot reservado de Dubai (DXB)", "status": null, "size": null, "children": []}, {"en": "Masking: warehouse → OMP location, e.g. TX1 → 'Texas Inventory'", "pt": "Mascaramento: warehouse → location OMP, ex. TX1 → 'Texas Inventory'", "status": null, "size": null, "children": []}]}]}, {"en": "Foundation", "pt": "Fundação", "status": null, "size": null, "children": [{"en": "M00 · Project setup & DevOps", "pt": "M00 · Setup do projeto & DevOps", "status": null, "size": "M", "children": [{"en": "Monorepo layout (apps/web, services, packages, supabase, docs)", "pt": "Layout monorepo (apps/web, services, packages, supabase, docs)", "status": null, "size": null, "children": []}, {"en": "Dockerfiles + docker-compose dev/prod (Caddy, registry)", "pt": "Dockerfiles + docker-compose dev/prod (Caddy, registry)", "status": null, "size": null, "children": []}, {"en": "CI pipeline (build, push, test, lint) — MISSING", "pt": "Pipeline CI (build, push, test, lint) — FALTANDO", "status": null, "size": null, "children": []}, {"en": "VPS provisioning + Caddy TLS + env.d per service", "pt": "Provisionamento VPS + Caddy TLS + env.d por serviço", "status": null, "size": null, "children": []}, {"en": "Supabase project link + migration apply", "pt": "Link do projeto Supabase + aplicar migrações", "status": null, "size": null, "children": []}, {"en": "Deploy target: Vercel vs VPS — decide", "pt": "Alvo de deploy: Vercel vs VPS — decidir", "status": null, "size": null, "children": []}]}, {"en": "M01 · Database schema & migrations", "pt": "M01 · Schema do banco & migrações", "status": null, "size": "L", "children": [{"en": "0001 initial schema (identity, tiers, catalog, suppliers, sales)", "pt": "0001 schema inicial (identity, tiers, catalog, suppliers, sales)", "status": null, "size": null, "children": []}, {"en": "0003 pricing tiers · 0004 supplier sync · 0005 audit log", "pt": "0003 pricing tiers · 0004 supplier sync · 0005 audit log", "status": null, "size": null, "children": []}, {"en": "0006 partner feed (keys, subs, margin, projection, deliveries, locations)", "pt": "0006 partner feed (keys, subs, margin, projection, deliveries, locations)", "status": null, "size": null, "children": []}, {"en": "0007 catalog standard (grade, carrier, warehouse, vendor_grade_map)", "pt": "0007 catalog standard (grade, carrier, warehouse, vendor_grade_map)", "status": null, "size": null, "children": []}, {"en": "0008 pricing v2 (ctia_grade, prices flags, competitor_quotes)", "pt": "0008 pricing v2 (ctia_grade, flags de prices, competitor_quotes)", "status": null, "size": null, "children": []}, {"en": "0009 partner fulfillment (orders + items, idempotency)", "pt": "0009 partner fulfillment (orders + items, idempotency)", "status": null, "size": null, "children": []}]}, {"en": "M02 · RLS & authorization", "pt": "M02 · RLS & autorização", "status": null, "size": "L", "children": [{"en": "0002 RLS policies for initial tables", "pt": "0002 policies RLS das tabelas iniciais", "status": null, "size": null, "children": []}, {"en": "Policies for all new tables (partner, fulfillment, pricing, catalog)", "pt": "Policies para todas as tabelas novas (partner, fulfillment, pricing, catalog)", "status": null, "size": null, "children": []}, {"en": "SECURITY DEFINER helpers (role, account membership)", "pt": "Helpers SECURITY DEFINER (role, membership de conta)", "status": null, "size": null, "children": []}, {"en": "Partner isolation + scope enforcement (read vs write)", "pt": "Isolamento de parceiro + enforcement de escopo (read vs write)", "status": null, "size": null, "children": []}]}, {"en": "M03 · Auth & identity", "pt": "M03 · Auth & identidade", "status": null, "size": "L", "children": [{"en": "Supabase Auth (password, magic link, OAuth-ready)", "pt": "Supabase Auth (senha, magic link, pronto p/ OAuth)", "status": null, "size": null, "children": []}, {"en": "Sign-up hook (mirror users, default account, membership)", "pt": "Hook de sign-up (espelhar users, conta padrão, membership)", "status": null, "size": null, "children": []}, {"en": "JWT claims (account_id, tier_id); DB re-derives role", "pt": "Claims JWT (account_id, tier_id); DB re-deriva role", "status": null, "size": null, "children": []}, {"en": "Admin invitations · password reset · session rotation", "pt": "Convites de admin · reset de senha · rotação de sessão", "status": null, "size": null, "children": []}, {"en": "M2M API-key auth (Argon2, rate limit, overlap rotation)", "pt": "Auth M2M por API-key (Argon2, rate limit, rotação com overlap)", "status": null, "size": null, "children": []}, {"en": "Replace mock auth in the frontend", "pt": "Substituir auth mock no frontend", "status": null, "size": null, "children": []}]}, {"en": "M04 · Design system & UI kit", "pt": "M04 · Design system & UI kit", "status": null, "size": "M", "children": [{"en": "Tailwind tokens, tier colors, spring easing, dark mode", "pt": "Tokens Tailwind, cores de tier, easing spring, dark mode", "status": null, "size": null, "children": []}, {"en": "Primitives (Button, Badge, Panel, Stat, Field) + layouts", "pt": "Primitivos (Button, Badge, Panel, Stat, Field) + layouts", "status": null, "size": null, "children": []}, {"en": "Adopt Shadcn/UI for complex components as needed", "pt": "Adotar Shadcn/UI para componentes complexos conforme necessário", "status": null, "size": null, "children": []}]}, {"en": "M05 · Shared types package", "pt": "M05 · Pacote de tipos compartilhados", "status": null, "size": "S", "children": [{"en": "pricing, order, supplier, catalog types (incl. CTIA grade)", "pt": "tipos de pricing, order, supplier, catalog (incl. CTIA grade)", "status": null, "size": null, "children": []}, {"en": "Keep in lock-step with generated Supabase types", "pt": "Manter em sincronia com os tipos gerados do Supabase", "status": null, "size": null, "children": []}, {"en": "Add partner, fulfillment, pricing-v2 result types", "pt": "Adicionar tipos de partner, fulfillment, resultado pricing-v2", "status": null, "size": null, "children": []}]}]}, {"en": "Storefront", "pt": "Storefront", "status": null, "size": null, "children": [{"en": "M06 · Catalog & product browsing", "pt": "M06 · Catálogo & navegação de produto", "status": null, "size": "L", "children": [{"en": "Catalog page + filters (brand, condition, storage, tier price)", "pt": "Página de catálogo + filtros (marca, condição, storage, preço por tier)", "status": null, "size": null, "children": []}, {"en": "Product detail (colors, storage, stock badge, reserve flow)", "pt": "Detalhe do produto (cores, storage, stock badge, reserve flow)", "status": null, "size": null, "children": []}, {"en": "Wire: real products/variants queries", "pt": "Wire: queries reais de products/variants", "status": null, "size": null, "children": []}, {"en": "Wire: real stock + Supabase Realtime", "pt": "Wire: stock real + Supabase Realtime", "status": null, "size": null, "children": []}, {"en": "Wire: real tier price from prices (pricing v2)", "pt": "Wire: preço de tier real de prices (pricing v2)", "status": null, "size": null, "children": []}, {"en": "Server-side search + pagination; product images", "pt": "Busca + paginação server-side; imagens de produto", "status": null, "size": null, "children": []}]}, {"en": "M07 · Cart & checkout", "pt": "M07 · Carrinho & checkout", "status": null, "size": "L", "children": [{"en": "Cart page + cart drawer, quantity controls", "pt": "Página de carrinho + drawer, controles de quantidade", "status": null, "size": null, "children": []}, {"en": "Checkout page shell", "pt": "Shell da página de checkout", "status": null, "size": null, "children": []}, {"en": "Wire: pricing RPC for line + cart totals", "pt": "Wire: RPC de pricing para linha + totais do carrinho", "status": null, "size": null, "children": []}, {"en": "Wire: create draft order + Stripe session", "pt": "Wire: criar draft order + sessão Stripe", "status": null, "size": null, "children": []}, {"en": "Stock reservation on checkout start", "pt": "Reserva de stock ao iniciar checkout", "status": null, "size": null, "children": []}]}, {"en": "M08 · Customer portal", "pt": "M08 · Portal do cliente", "status": null, "size": "L", "children": [{"en": "Overview, Orders, Order detail (timeline, items, totals)", "pt": "Overview, Orders, Detalhe do pedido (timeline, itens, totais)", "status": null, "size": null, "children": []}, {"en": "Order PDF/CSV export", "pt": "Export de pedido em PDF/CSV", "status": null, "size": null, "children": []}, {"en": "Wishlist, Tier dashboard, Addresses, Payment, Settings", "pt": "Wishlist, dashboard de Tier, Endereços, Pagamento, Settings", "status": null, "size": null, "children": []}, {"en": "Wire: real orders/addresses/payments + RLS", "pt": "Wire: orders/addresses/payments reais + RLS", "status": null, "size": null, "children": []}, {"en": "Wire: realtime order/shipment status", "pt": "Wire: status realtime de pedido/envio", "status": null, "size": null, "children": []}]}, {"en": "M09 · Portal: Inventory API self-serve", "pt": "M09 · Portal: Inventory API self-serve", "status": null, "size": "M", "children": [{"en": "Inventory API page (feed sim, credentials, payload, samples), gated T3/T4", "pt": "Página Inventory API (sim de feed, credenciais, payload, samples), gated T3/T4", "status": null, "size": null, "children": []}, {"en": "Wire: real key issue/rotate/revoke", "pt": "Wire: emissão/rotação/revogação de key reais", "status": null, "size": null, "children": []}, {"en": "Wire: webhook registration + health + delivery history", "pt": "Wire: registro de webhook + health + histórico de entrega", "status": null, "size": null, "children": []}]}]}, {"en": "Admin", "pt": "Admin", "status": null, "size": null, "children": [{"en": "M10 · Admin dashboard core", "pt": "M10 · Núcleo do dashboard admin", "status": null, "size": "L", "children": [{"en": "Dashboard, Customers (+tier assign), Orders, Inventory, Prices, Reports", "pt": "Dashboard, Customers (+atribuir tier), Orders, Inventory, Prices, Reports", "status": null, "size": null, "children": []}, {"en": "Wire every view to real data + RLS (staff vs admin)", "pt": "Ligar cada view a dados reais + RLS (staff vs admin)", "status": null, "size": null, "children": []}, {"en": "Order transitions, refunds (admin-gated), tier override", "pt": "Transições de pedido, reembolsos (só admin), override de tier", "status": null, "size": null, "children": []}, {"en": "Reporting queries (sales, supplier health, tier distribution)", "pt": "Queries de relatório (vendas, saúde de fornecedor, distribuição de tier)", "status": null, "size": null, "children": []}]}, {"en": "M11 · Admin: pricing flag queue", "pt": "M11 · Admin: fila de flags de pricing", "status": null, "size": "L", "children": [{"en": "Flag queue list (sku, cost, benchmark, gap-to-floor, sources)", "pt": "Lista da fila de flags (sku, custo, benchmark, gap-ao-floor, sources)", "status": null, "size": null, "children": []}, {"en": "Override (manual price, 30-day expiry, audited)", "pt": "Override (preço manual, expira em 30 dias, auditado)", "status": null, "size": null, "children": []}, {"en": "Acknowledge (stays T3/T4-only) · Watch (auto-reprice)", "pt": "Acknowledge (fica só T3/T4) · Watch (reprecifica automático)", "status": null, "size": null, "children": []}]}, {"en": "M12 · Admin: catalog import/export", "pt": "M12 · Admin: import/export de catálogo", "status": null, "size": "L", "children": [{"en": "Upload xls/xlsx/csv + column-mapping profile", "pt": "Upload xls/xlsx/csv + profile de mapeamento de colunas", "status": null, "size": null, "children": []}, {"en": "Dry-run preview: parsed rows, per-row validation, rejects", "pt": "Preview dry-run: linhas parseadas, validação por linha, rejeições", "status": null, "size": null, "children": []}, {"en": "Commit import (idempotent) + run summary", "pt": "Confirmar import (idempotente) + resumo do run", "status": null, "size": null, "children": []}, {"en": "Export canonical CSV (round-trippable) + history", "pt": "Export CSV canônico (round-trip) + histórico", "status": null, "size": null, "children": []}]}, {"en": "M13 · Admin: partner management", "pt": "M13 · Admin: gestão de parceiros", "status": null, "size": "L", "children": [{"en": "Partners, API keys (issue/rotate/revoke), subscriptions", "pt": "Parceiros, API keys (emitir/rotacionar/revogar), assinaturas", "status": null, "size": null, "children": []}, {"en": "Margin rules editor (global + per-partner, bps, floor)", "pt": "Editor de regras de margem (global + por parceiro, bps, floor)", "status": null, "size": null, "children": []}, {"en": "Inventory locations / masking map editor", "pt": "Editor de locations / mapa de mascaramento", "status": null, "size": null, "children": []}, {"en": "Vendor grade → CTIA mapping editor", "pt": "Editor de mapeamento grade do fornecedor → CTIA", "status": null, "size": null, "children": []}, {"en": "Partner fulfillment orders console + webhook monitor", "pt": "Console de pedidos de fulfillment + monitor de webhook", "status": null, "size": null, "children": []}]}]}, {"en": "Pricing", "pt": "Pricing", "status": null, "size": null, "children": [{"en": "M14 · Pricing Engine v2 batch", "pt": "M14 · Batch do Pricing Engine v2", "status": null, "size": "XL", "children": [{"en": "Reference implementation pricing_engine.py (pure function)", "pt": "Implementação de referência pricing_engine.py (função pura)", "status": null, "size": null, "children": []}, {"en": "Productionize as batch service (services/pricing-batch)", "pt": "Produtizar como serviço batch (services/pricing-batch)", "status": null, "size": null, "children": []}, {"en": "Waterfall: kit cost, tier bands, floors, per-tier flags", "pt": "Cascata: custo de kit, bandas de tier, floors, flags por tier", "status": null, "size": null, "children": []}, {"en": "CTIA grade gate (sub-A hidden from T1/T2, skips paid fetch)", "pt": "Grade gate CTIA (sub-A oculto de T1/T2, pula fetch pago)", "status": null, "size": null, "children": []}, {"en": "Publish to prices (visible/flag/benchmark/confidence)", "pt": "Publicar em prices (visible/flag/benchmark/confidence)", "status": null, "size": null, "children": []}, {"en": "Guardrails: >15% cost-change hold, zero-qty delist, lowest cost", "pt": "Guardrails: hold >15% de mudança de custo, delist qty-zero, menor custo", "status": null, "size": null, "children": []}, {"en": "Nightly scheduler + golden-file/unit/tier-order tests", "pt": "Scheduler noturno + testes golden-file/unit/ordem-de-tier", "status": null, "size": null, "children": []}]}, {"en": "M15 · Competitive price bots & scraping", "pt": "M15 · Bots de preço & scraping competitivo", "status": null, "size": "XL", "children": [{"en": "One bot + scraper operation PER source (login/session, proxy, anti-bot)", "pt": "Uma operação de bot + scraper POR fonte (login/sessão, proxy, anti-bot)", "status": null, "size": "L", "children": []}, {"en": "eBay · Best Buy — official APIs where still available", "pt": "eBay · Best Buy — APIs oficiais onde ainda houver", "status": null, "size": "M", "children": []}, {"en": "Amazon · Walmart · Back Market — scraping bots (no open price API)", "pt": "Amazon · Walmart · Back Market — bots de scraping (sem API de preço aberta)", "status": null, "size": "L", "children": []}, {"en": "Dedicated worker/machine running all source ops nightly", "pt": "Worker/máquina dedicada rodando todas as operações à noite", "status": null, "size": "M", "children": []}, {"en": "Proxy pool · CAPTCHA/anti-bot handling · per-source maintenance (fragile)", "pt": "Pool de proxy · CAPTCHA/anti-bot · manutenção por fonte (frágil)", "status": null, "size": "L", "children": []}, {"en": "Normalize to CompetitorQuote + match (model/capacity/condition/lock)", "pt": "Normalizar para CompetitorQuote + match (modelo/capacidade/condição/lock)", "status": null, "size": "M", "children": []}, {"en": "Monitoring + stale-data alerts (feed can silently go dead)", "pt": "Monitor + alerta de dado defasado (o feed pode morrer em silêncio)", "status": null, "size": "S", "children": []}]}, {"en": "M16 · Realtime pricing edge function", "pt": "M16 · Edge function de pricing realtime", "status": null, "size": "M", "children": [{"en": "pricing-engine + tier-upgrade Deno functions (reference)", "pt": "Funções Deno pricing-engine + tier-upgrade (referência)", "status": null, "size": null, "children": []}, {"en": "Serve session tier price (single lookup, no compute)", "pt": "Servir preço do tier da sessão (lookup único, sem cálculo)", "status": null, "size": null, "children": []}, {"en": "Deploy + wire to storefront; perf budget p50<80ms", "pt": "Deploy + wire ao storefront; budget de perf p50<80ms", "status": null, "size": null, "children": []}]}]}, {"en": "Catalog & Suppliers", "pt": "Catálogo & Fornecedores", "status": null, "size": null, "children": [{"en": "M17 · Catalog standard & import pipeline", "pt": "M17 · Padrão de catálogo & pipeline de import", "status": null, "size": "L", "children": [{"en": "Catalog standard doc + canonical CSV template", "pt": "Doc do padrão de catálogo + template CSV canônico", "status": null, "size": null, "children": []}, {"en": "Parser xls/xlsx/csv (HYLA Daily Stock Report shape)", "pt": "Parser xls/xlsx/csv (formato HYLA Daily Stock Report)", "status": null, "size": null, "children": []}, {"en": "Three-layer explode: product / variant / inventory offer", "pt": "Explosão em 3 camadas: product / variant / inventory offer", "status": null, "size": null, "children": []}, {"en": "Normalization: carrier, CTIA grade, masked-qty 200+, color *", "pt": "Normalização: carrier, CTIA grade, qty-mascarada 200+, cor *", "status": null, "size": null, "children": []}, {"en": "Deterministic SKU minting (grade suffix preserved)", "pt": "Geração determinística de SKU (sufixo de grade preservado)", "status": null, "size": null, "children": []}, {"en": "Idempotent upserts + canonical export (round-trippable)", "pt": "Upserts idempotentes + export canônico (round-trip)", "status": null, "size": null, "children": []}]}, {"en": "M18 · Supplier adapters (inbound)", "pt": "M18 · Adaptadores de fornecedor (inbound)", "status": null, "size": "L", "children": [{"en": "Source-1/2 adapter structure (client, models, writer, sync, CLI)", "pt": "Estrutura dos adapters Source-1/2 (client, models, writer, sync, CLI)", "status": null, "size": null, "children": []}, {"en": "Real REST ingestion per supplier", "pt": "Ingestão REST real por fornecedor", "status": null, "size": null, "children": []}, {"en": "Scrapling HTML fallback (today NotImplementedError)", "pt": "Fallback HTML Scrapling (hoje NotImplementedError)", "status": null, "size": null, "children": []}, {"en": "Scheduled sync, advisory locks, sync-run rows, idempotency", "pt": "Sync agendado, advisory locks, linhas de sync-run, idempotency", "status": null, "size": null, "children": []}, {"en": "Warehouse → inventory_location mapping on ingest", "pt": "Mapeamento warehouse → inventory_location no ingest", "status": null, "size": null, "children": []}]}]}, {"en": "Partner Distribution", "pt": "Distribuição para Parceiros", "status": null, "size": null, "children": [{"en": "M19 · Partner Inventory API (outbound)", "pt": "M19 · Partner Inventory API (outbound)", "status": null, "size": "XL", "children": [{"en": "Design contract (PARTNER-INVENTORY-API.md)", "pt": "Contrato de design (PARTNER-INVENTORY-API.md)", "status": null, "size": null, "children": []}, {"en": "services/partner-api service (Node + TS)", "pt": "Serviço services/partner-api (Node + TS)", "status": null, "size": null, "children": []}, {"en": "API-key auth + inventory:read scope + subscriptions", "pt": "Auth por API-key + escopo inventory:read + assinaturas", "status": null, "size": null, "children": []}, {"en": "Projection recompute (account × variant × location), in-tx", "pt": "Recompute da projeção (account × variant × location), em transação", "status": null, "size": null, "children": []}, {"en": "No-op suppression via content_hash", "pt": "Supressão de no-op via content_hash", "status": null, "size": null, "children": []}, {"en": "Webhook emitter: HMAC, sequence, retry+backoff, degraded", "pt": "Emissor de webhook: HMAC, sequence, retry+backoff, degraded", "status": null, "size": null, "children": []}, {"en": "Pull endpoints: cursor pagination + filters", "pt": "Endpoints de pull: paginação por cursor + filtros", "status": null, "size": null, "children": []}, {"en": "Margin resolution + floor invariant", "pt": "Resolução de margem + invariante de floor", "status": null, "size": null, "children": []}, {"en": "Masking allow-list serializer + contract tests", "pt": "Serializer allow-list de mascaramento + testes de contrato", "status": null, "size": null, "children": []}, {"en": "Rate limits + SSRF deny-list on endpoint_url", "pt": "Rate limits + deny-list SSRF em endpoint_url", "status": null, "size": null, "children": []}]}, {"en": "M20 · SmartPay integration", "pt": "M20 · Integração SmartPay", "status": null, "size": "XL", "children": [{"en": "Integration contract (SMARTPAY-INTEGRATION.md)", "pt": "Contrato de integração (SMARTPAY-INTEGRATION.md)", "status": null, "size": null, "children": []}, {"en": "Feed at CONSUMER tier, Apple+Samsung, certified-only", "pt": "Feed no tier CONSUMER, Apple+Samsung, só certificados", "status": null, "size": null, "children": []}, {"en": "Brand filter + delivery_eta_days + carrier_options", "pt": "Filtro por marca + delivery_eta_days + carrier_options", "status": null, "size": null, "children": []}, {"en": "Fulfillment write API: place / cancel / status", "pt": "API de fulfillment (write): place / cancel / status", "status": null, "size": null, "children": []}, {"en": "Required Idempotency-Key (anti double-dropship)", "pt": "Idempotency-Key obrigatória (anti double-dropship)", "status": null, "size": null, "children": []}, {"en": "fulfillment:write separate credential + mutual HMAC", "pt": "Credencial fulfillment:write separada + HMAC mútuo", "status": null, "size": null, "children": []}, {"en": "Reservation on accept + order status webhooks to SP", "pt": "Reserva no accept + webhooks de status do pedido para a SP", "status": null, "size": null, "children": []}, {"en": "OMP↔SP margin formula (fixed vs %)", "pt": "Fórmula de margem OMP↔SP (fixa vs %)", "status": null, "size": null, "children": []}, {"en": "Blind-dropship / SP-branded packaging", "pt": "Blind-dropship / embalagem com marca SP", "status": null, "size": null, "children": []}, {"en": "Returns / RMA flow + CUPE validation learnings", "pt": "Fluxo de devolução / RMA + aprendizados da validação CUPE", "status": null, "size": null, "children": []}]}]}, {"en": "Commerce backend", "pt": "Backend de comércio", "status": null, "size": null, "children": [{"en": "M21 · Orders & sales domain", "pt": "M21 · Domínio de pedidos & vendas", "status": null, "size": "L", "children": [{"en": "Cart → draft order → state machine (draft…delivered/refunded)", "pt": "Carrinho → draft order → máquina de estados (draft…delivered/refunded)", "status": null, "size": null, "children": []}, {"en": "Order items with price snapshot + supplier routing", "pt": "Itens do pedido com snapshot de preço + roteamento de fornecedor", "status": null, "size": null, "children": []}, {"en": "Stock reservation (net-of-reservations, shared with feed)", "pt": "Reserva de stock (líquido de reservas, compartilhado com o feed)", "status": null, "size": null, "children": []}, {"en": "Tier-at-order + cumulative-units lifecycle", "pt": "Tier-no-pedido + ciclo de vida por unidades acumuladas", "status": null, "size": null, "children": []}, {"en": "Refund/return states + partner orders unify here", "pt": "Estados de reembolso/devolução + pedidos de parceiro unificam aqui", "status": null, "size": null, "children": []}]}, {"en": "M22 · Payments (Stripe)", "pt": "M22 · Pagamentos (Stripe)", "status": null, "size": "M", "children": [{"en": "stripe-webhook (verify, transition, payments row)", "pt": "stripe-webhook (verificar, transicionar, linha de payments)", "status": null, "size": null, "children": []}, {"en": "Checkout session creation (server action)", "pt": "Criação de sessão de checkout (server action)", "status": null, "size": null, "children": []}, {"en": "Idempotency + replay protection (stripe_event_id)", "pt": "Idempotency + proteção contra replay (stripe_event_id)", "status": null, "size": null, "children": []}, {"en": "Refunds + reconciliation; Stripe Tax (later)", "pt": "Reembolsos + reconciliação; Stripe Tax (depois)", "status": null, "size": null, "children": []}]}, {"en": "M23 · Fulfillment & shipping", "pt": "M23 · Fulfillment & envio", "status": null, "size": "L", "children": [{"en": "Dropship dispatch to routed supplier on paid order", "pt": "Despacho dropship ao fornecedor roteado no pedido pago", "status": null, "size": null, "children": []}, {"en": "Shipments + carrier tracking (FedEx/UPS)", "pt": "Envios + tracking de transportadora (FedEx/UPS)", "status": null, "size": null, "children": []}, {"en": "Delivery ETA from origin location (TX/FL/CA)", "pt": "ETA de entrega pela location de origem (TX/FL/CA)", "status": null, "size": null, "children": []}, {"en": "Landed cost via live FedEx/UPS rates (Phase 2)", "pt": "Custo landed via taxas FedEx/UPS ao vivo (Fase 2)", "status": null, "size": null, "children": []}, {"en": "Ground + insurance option", "pt": "Opção terrestre + seguro", "status": null, "size": null, "children": []}]}]}, {"en": "AI", "pt": "IA", "status": null, "size": null, "children": [{"en": "M24 · AI orchestrator & agent swarm", "pt": "M24 · Orquestrador de IA & swarm de agentes", "status": null, "size": "XL", "children": [{"en": "Orchestrator + Fastify server", "pt": "Orquestrador + servidor Fastify", "status": null, "size": null, "children": []}, {"en": "Agents: pricing, tier-classifier, inventory-triage, support", "pt": "Agentes: pricing, tier-classifier, inventory-triage, support", "status": null, "size": null, "children": []}, {"en": "Real Anthropic Agent SDK wiring (no live calls yet)", "pt": "Wiring real do Anthropic Agent SDK (sem chamadas ao vivo ainda)", "status": null, "size": null, "children": []}, {"en": "MCP tools (read-only Supabase), least-privilege", "pt": "MCP tools (Supabase read-only), menor privilégio", "status": null, "size": null, "children": []}, {"en": "Propose → admin-approve → apply loop + audit", "pt": "Loop propor → admin aprova → aplicar + auditoria", "status": null, "size": null, "children": []}, {"en": "Guardrails: injection, cost caps, redaction, eval set", "pt": "Guardrails: injection, teto de custo, redação, eval set", "status": null, "size": null, "children": []}]}]}, {"en": "Cross-cutting", "pt": "Transversais", "status": null, "size": null, "children": [{"en": "M25 · Observability & ops", "pt": "M25 · Observabilidade & ops", "status": null, "size": "M", "children": [{"en": "Sentry + PostHog; structured logging + PII redaction", "pt": "Sentry + PostHog; logging estruturado + redação de PII", "status": null, "size": null, "children": []}, {"en": "Ops runbook (sync fails, disputes, rollback, rotation)", "pt": "Runbook de ops (falhas de sync, disputas, rollback, rotação)", "status": null, "size": null, "children": []}, {"en": "Health dashboards + alerts (degraded subs, batch fails)", "pt": "Dashboards de saúde + alertas (subs degradadas, falhas de batch)", "status": null, "size": null, "children": []}]}, {"en": "M26 · Security, compliance & data rights", "pt": "M26 · Segurança, compliance & direitos de dados", "status": null, "size": "L", "children": [{"en": "Threat model + data classification docs", "pt": "Docs de threat model + classificação de dados", "status": null, "size": null, "children": []}, {"en": "RLS coverage + auth-bypass tests", "pt": "Cobertura de RLS + testes de bypass de auth", "status": null, "size": null, "children": []}, {"en": "Masking non-disclosure invariants + idempotency guarantees", "pt": "Invariantes de não-divulgação de mascaramento + garantias de idempotency", "status": null, "size": null, "children": []}, {"en": "Secrets management + rotation runbook", "pt": "Gestão de segredos + runbook de rotação", "status": null, "size": null, "children": []}, {"en": "End-customer PII handling; LGPD/GDPR/CCPA data-rights", "pt": "Tratamento de PII do cliente final; direitos LGPD/GDPR/CCPA", "status": null, "size": null, "children": []}, {"en": "Pre-launch security pass", "pt": "Passagem de segurança pré-launch", "status": null, "size": null, "children": []}]}, {"en": "M27 · QA, testing & release", "pt": "M27 · QA, testes & release", "status": null, "size": "XL", "children": [{"en": "Frontend component/interaction tests", "pt": "Testes de componente/interação do frontend", "status": null, "size": null, "children": []}, {"en": "Pricing golden-file + unit + tier-order tests", "pt": "Testes de pricing golden-file + unit + ordem-de-tier", "status": null, "size": null, "children": []}, {"en": "RLS / auth-bypass integration tests", "pt": "Testes de integração RLS / bypass de auth", "status": null, "size": null, "children": []}, {"en": "Partner API contract tests (masking, no-op, cross-tenant)", "pt": "Testes de contrato da Partner API (mascaramento, no-op, cross-tenant)", "status": null, "size": null, "children": []}, {"en": "Fulfillment idempotency / double-submit tests", "pt": "Testes de idempotency / double-submit de fulfillment", "status": null, "size": null, "children": []}, {"en": "E2E happy paths + Stripe drills + rollback checklist", "pt": "Caminhos felizes E2E + drills de Stripe + checklist de rollback", "status": null, "size": null, "children": []}]}]}]};
+const CLIENT = true;   // client-facing mode: hide status, out-of-scope, counts
+let LANG='en';
+const I18N={en:{ttl:"OMP Platform",exp:"Expand all",col:"Collapse",fit:"Fit",q:"Search…",vmap:"Mind map",vlist:"Outline",
+  hint:"drag to pan · scroll to zoom · click a node for details",
+  ptitle:"OMP Platform — <b>Build Proposal</b>",
+  psub:"Full scope, module by module. Signal bars show relative complexity; ",
+  psub_client:"The complete platform, module by module. Signal bars indicate the relative build effort of each part.",
+  s_mods:"modules total", s_in:"in scope", s_new:"new"},
+ pt:{ttl:"Plataforma OMP",exp:"Expandir",col:"Recolher",fit:"Ajustar",q:"Buscar…",vmap:"Mapa mental",vlist:"Lista",
+  hint:"arraste para navegar · scroll para zoom · clique num nó para ver detalhes",
+  ptitle:"Plataforma OMP — <b>Proposta de Construção</b>",
+  psub:"Escopo completo, módulo a módulo. As barras mostram a complexidade relativa; ",
+  psub_client:"A plataforma completa, módulo a módulo. As barras indicam o esforço relativo de construção de cada parte.",
+  s_mods:"módulos no total", s_in:"no escopo", s_new:"novos"}};
+const STATUS=['done','wire','scaffold','todo','new','decision'];
+const STLABEL={en:{done:'Done',wire:'Wire',scaffold:'Scaffold',todo:'To do',new:'New',decision:'Decision'},
+               pt:{done:'Pronto',wire:'Wire',scaffold:'Scaffold',todo:'A fazer',new:'Novo',decision:'Decisão'}};
+const STMEAN={en:{done:'Built and working.',wire:'Mockup built — needs backend wiring.',scaffold:'Structure exists, business logic pending.',todo:'To build from scratch.',new:'New scope — designed in docs, not built.',decision:'Business/client decision needed.'},
+              pt:{done:'Construído e funcionando.',wire:'Mockup pronto — falta ligar ao backend.',scaffold:'Estrutura existe, lógica pendente.',todo:'A construir do zero.',new:'Escopo novo — desenhado nos docs, não construído.',decision:'Precisa de decisão de negócio/cliente.'}};
+const SIZEMEAN={en:'relative complexity (not hours)',pt:'complexidade relativa (não horas)'};
+const SZMAP={S:1,M:2,L:3,XL:4};
+const CXLBL={en:['','Low','Medium','High','Very high'],pt:['','Baixa','Média','Alta','Muito alta']};
+const CXCOL=['','#22c07a','#f2b23c','#ff9f5c','#ff5d6c'];  // complexity 1→4 colour ramp
+const OOS=new Set(['M14','M15','M19','M24']);              // outside scope → phase 
+function isOOS(n){ const m=(n.en.match(/^M\d\d/)||[])[0]; return m?OOS.has(m):false; }
+function cplx(n){ if(n._cx) return n._cx; let v;
+  if(n.size) v=SZMAP[n.size];
+  else if(n.children&&n.children.length) v=Math.max(...n.children.map(cplx));
+  else v = n.status ? ({done:1,wire:2,scaffold:2,todo:2,new:3,decision:1})[n.status] : 2;
+  return n._cx=v; }
+const HUE=['#c46bff','#5cc8ff','#22c07a','#f2b23c','#ff5d6c','#2dd4bf','#8b9cff','#ff9f5c','#e06bd8','#7ee06b','#6bd0ff','#ffd15c'];
+let active=new Set(STATUS);
+const SVGNS="http://www.w3.org/2000/svg";
+const LMAX=28;               // label truncation in the map (full text in the panel)
+const SLOT=80;               // tangential room per leaf
+const INNER=250;             // radius of the innermost (section) ring
+const STAGGER=72;            // radial offset alternated so cards never touch
+let R_AT = d=>d*300;         // radius for a given depth — recomputed each layout from node count
+let idc=0;
+function prep(n,depth,parent,hue){ n._id=idc++; n._depth=depth; n._parent=parent; n._hue=hue;
+  n._collapsed = depth>=2;                 // items hidden until you open a module
+  (n.children||[]).forEach((c,i)=>prep(c,depth+1, n, depth===0?HUE[i%HUE.length]:hue)); }
+prep(DATA,0,null,'#c46bff');
+if(CLIENT){ const HIDE=new Set(['How to read','Open decisions']); (DATA.children||[]).forEach(c=>{ if(HIDE.has(c.en)) c._skip=true; }); }
+
+const CW=6.5, PAD=13, H=26;  // text metrics
+function label(n){ return LANG==='pt'?n.pt:n.en; }
+function disp(n){ const s=label(n); return s.length>LMAX ? s.slice(0,LMAX-1)+'…' : s; }
+function cardW(n){ const base = n._depth===0?18:0; return disp(n).length*CW + PAD*2 + base + (n.status?14:0) + 26; }
+
+function visKids(n){ return (n._collapsed||!n.children)?[]:n.children.filter(c=>!c._skip); }
+function leaves(n){ const k=visKids(n); if(!k.length) return 1; return k.reduce((s,c)=>s+leaves(c),0); }
+
+const cx=0, cy=0;
+function maxVisDepth(){ let m=1; (function w(n){ if((n._depth||0)>m)m=n._depth; visKids(n).forEach(w); })(DATA); return m; }
+function computeRadii(){
+  const L=leaves(DATA);
+  const D=maxVisDepth();
+  const Router=Math.max(640, L*SLOT/(2*Math.PI));   // grow the outer ring with node count
+  R_AT = d => d<=0 ? 0 : INNER + (Router-INNER)*((d-1)/Math.max(1,D-1));
+}
+function layout(n,depth,a0,a1,idx){
+  n._depth=depth;
+  const a=(a0+a1)/2; n._ang=a;
+  const stag = depth>=2 ? (idx%2)*STAGGER : 0;      // push every other sibling outward
+  const r = R_AT(depth) + stag;
+  n._r=r; n._x=cx+r*Math.cos(a); n._y=cy+r*Math.sin(a);
+  const k=visKids(n); if(!k.length) return;
+  const tot=k.reduce((s,c)=>s+leaves(c),0);
+  let cur=a0;
+  k.forEach((c,i)=>{ const span=(a1-a0)*leaves(c)/tot; layout(c,depth+1,cur,cur+span,i); cur+=span; });
+}
+function relayout(){
+  computeRadii();
+  const k=visKids(DATA); const tot=k.reduce((s,c)=>s+leaves(c),0)||1;
+  DATA._depth=0; DATA._ang=0; DATA._r=0; DATA._x=0; DATA._y=0;
+  let cur=-Math.PI/2; // start at top
+  k.forEach((c,i)=>{ const span=2*Math.PI*leaves(c)/tot; layout(c,1,cur,cur+span,i); cur+=span; });
+}
+function measure(){ (function w(n){
+  n._w = n._depth===0 ? label(n).length*CW+40 : cardW(n);
+  n._left = Math.cos(n._ang)<-0.0001 && n._depth>0;
+  visKids(n).forEach(w); })(DATA); }
+function boxOf(n){ const x0=n._left? n._x-n._w : n._x; return [x0, x0+n._w, n._y-14, n._y+14]; }
+function collide(){
+  const nodes=[]; (function w(n){ if(n._depth>=1) nodes.push(n); visKids(n).forEach(w); })(DATA);
+  for(let it=0; it<44; it++){
+    let any=false;
+    for(let i=0;i<nodes.length;i++) for(let j=i+1;j<nodes.length;j++){
+      const A=nodes[i], B=nodes[j], a=boxOf(A), b=boxOf(B);
+      const ox=Math.min(a[1],b[1])-Math.max(a[0],b[0]);
+      const oy=Math.min(a[3],b[3])-Math.max(a[2],b[2]);
+      if(ox>0 && oy>0){
+        any=true;
+        const push=oy/2+3, dir=A._y<=B._y?-1:1;
+        const aLeaf=!visKids(A).length, bLeaf=!visKids(B).length;
+        if(aLeaf){ A._y+=dir*push; A._r=Math.hypot(A._x,A._y); A._ang=Math.atan2(A._y,A._x); }
+        if(bLeaf){ B._y-=dir*push; B._r=Math.hypot(B._x,B._y); B._ang=Math.atan2(B._y,B._x); }
+      }
+    }
+    if(!any) break;
+  }
+}
+
+function polar(r,a){ return [r*Math.cos(a), r*Math.sin(a)]; }
+function vein(p,c){
+  const [x1,y1]=[p._x,p._y], [x2,y2]=[c._x,c._y];
+  const midr=(p._r+c._r)/2;
+  const [cx1,cy1]=polar(midr,p._ang), [cx2,cy2]=polar(midr,c._ang);
+  return `M${x1.toFixed(1)} ${y1.toFixed(1)} C${cx1.toFixed(1)} ${cy1.toFixed(1)} ${cx2.toFixed(1)} ${cy2.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+}
+
+const gV=document.getElementById('veins'), gN=document.getElementById('nodes');
+function passesFilter(n){ // keep if self or descendant has an active status; structural info leaves always kept
+  const anyKid=(n.children||[]).some(passesFilter);
+  if(n.status) return active.has(n.status)||anyKid;
+  if(!n.children||!n.children.length) return true;
+  return anyKid;
+}
+
+function draw(){
+  relayout(); measure(); collide();
+  gV.innerHTML=''; gN.innerHTML='';
+  (function walk(n){
+    const kids=visKids(n);
+    for(const c of kids){
+      if(!passesFilter(c)) continue;
+      const path=document.createElementNS(SVGNS,'path');
+      path.setAttribute('class','vein'); path.setAttribute('d',vein(n,c));
+      path.setAttribute('stroke', c._hue);
+      path.setAttribute('stroke-width', Math.max(1, 3.4 - c._depth*0.7));
+      path.setAttribute('opacity', 0.5 - c._depth*0.06);
+      gV.appendChild(path);
+      walk(c);
+    }
+  })(DATA);
+  // nodes (draw after veins)
+  (function walk(n){
+    if(n!==DATA && !passesFilter(n)) return;
+    drawNode(n);
+    for(const c of visKids(n)){ if(passesFilter(c)) walk(c); }
+  })(DATA);
+}
+
+function drawNode(n){
+  const isRoot=n._depth===0, isSection=n._depth===1, isModule=/^M\d\d/.test(n.en)||/^D\d/.test(n.en);
+  const left = n._left;
+  const w = n._w;
+  const g=document.createElementNS(SVGNS,'g'); g.setAttribute('class','card'+(n.status&&!active.has(n.status)?' dim':''));
+  const x = isRoot? -w/2 : (left? n._x - w : n._x);
+  const y = n._y - H/2;
+  const rect=document.createElementNS(SVGNS,'rect');
+  rect.setAttribute('x',x); rect.setAttribute('y',y); rect.setAttribute('width',w); rect.setAttribute('height',H);
+  rect.setAttribute('rx',isRoot?13:9);
+  if(isRoot){ rect.setAttribute('fill','url(#rootg)'); rect.setAttribute('stroke','none'); }
+  else{ const showStatus=n.status&&!CLIENT;
+        rect.setAttribute('fill', isSection? '#1a2030' : '#141822');
+        rect.setAttribute('stroke', showStatus? `var(--${n.status})` : (isSection? n._hue : '#2a3140'));
+        rect.setAttribute('stroke-width', isSection?1.6:1.1);
+        rect.setAttribute('stroke-opacity', showStatus?0.8:(isSection?0.9:0.7)); }
+  g.appendChild(rect);
+  // status dot
+  let tx = x + PAD;
+  if(n.status && !CLIENT){ const d=document.createElementNS(SVGNS,'circle'); d.setAttribute('cx',x+10);d.setAttribute('cy',n._y);
+    d.setAttribute('r',3.5); d.setAttribute('fill',`var(--${n.status})`); g.appendChild(d); tx=x+20; }
+  const t=document.createElementNS(SVGNS,'text'); t.setAttribute('class','lbl');
+  t.setAttribute('x',tx); t.setAttribute('y',n._y+0.5);
+  t.setAttribute('font-size', isRoot?15:(isSection?13.5:12));
+  t.setAttribute('font-weight', isRoot?800:(isSection||isModule?700:500));
+  if(isRoot){ t.setAttribute('fill','#0a0b0e'); t.setAttribute('text-anchor','middle'); t.setAttribute('x', n._x); }
+  t.textContent=isRoot?label(n):disp(n);
+  g.appendChild(t);
+  const ttl=document.createElementNS(SVGNS,'title'); ttl.textContent=label(n)+`  ·  ${CXLBL[LANG][cplx(n)]}`+((isOOS(n)&&!CLIENT)?`  ·  `:''); g.appendChild(ttl);
+  // complexity signal bars (cellular style) — every node except the root
+  if(!isRoot){
+    const lvl=cplx(n), col=CXCOL[lvl], bw=3, gap=2, grpW=4*bw+3*gap, bx=x+w-8-grpW;
+    for(let k=0;k<4;k++){ const bh=4+k*3.2; const r=document.createElementNS(SVGNS,'rect');
+      r.setAttribute('x',bx+k*(bw+gap)); r.setAttribute('y',n._y+7-bh); r.setAttribute('width',bw); r.setAttribute('height',bh);
+      r.setAttribute('rx',1); r.setAttribute('fill', k<lvl?col:'#2a3140'); g.appendChild(r); }
+  }
+  // out-of-scope accent: red bar on the centre-facing edge + red ring
+  if(isOOS(n) && !CLIENT){
+    const edge=left? x+w-3 : x;
+    const a=document.createElementNS(SVGNS,'rect'); a.setAttribute('x',edge);a.setAttribute('y',y);
+    a.setAttribute('width',3);a.setAttribute('height',H);a.setAttribute('rx',1.5);a.setAttribute('fill','#ff5d6c'); g.appendChild(a);
+    rect.setAttribute('stroke','#ff5d6c'); rect.setAttribute('stroke-opacity',0.85);
+  }
+  // collapse indicator if it has hidden/holdable children
+  if(n.children&&n.children.length){
+    const cxp = left? x-2 : x+w+2, cyp=n._y;
+    const tg=document.createElementNS(SVGNS,'circle'); tg.setAttribute('class','toggle');
+    tg.setAttribute('cx',cxp);tg.setAttribute('cy',cyp);tg.setAttribute('r',9);
+    tg.setAttribute('stroke', n._hue);
+    const sg=document.createElementNS(SVGNS,'text'); sg.setAttribute('class','toggle-sign');
+    sg.setAttribute('x',cxp);sg.setAttribute('y',cyp+0.5);sg.setAttribute('font-size',13);
+    sg.textContent=n._collapsed?'+':'–';
+    const toggle=(e)=>{ e.stopPropagation(); n._collapsed=!n._collapsed; draw(); };
+    tg.style.cursor='pointer'; sg.style.cursor='pointer'; tg.onclick=toggle; sg.onclick=toggle;
+    g.appendChild(tg); g.appendChild(sg);
+  }
+  g.style.cursor='pointer';
+  g.onclick=(e)=>{ e.stopPropagation(); openDetail(n); };
+  gN.appendChild(g);
+}
+
+// ---- pan / zoom ----
+let vp={x:0,y:0,s:1};
+const vpEl=document.getElementById('vp'), svg=document.getElementById('svg'), stage=document.getElementById('stage');
+function apply(){ vpEl.setAttribute('transform',`translate(${vp.x} ${vp.y}) scale(${vp.s})`); }
+function fit(){ const b=vpEl.getBBox(); const W=innerWidth,Hh=innerHeight;
+  const s=Math.min(W/(b.width+180), Hh/(b.height+220), 1.0);
+  vp.s=s; vp.x=W/2 - (b.x+b.width/2)*s; vp.y=Hh/2 - (b.y+b.height/2)*s; apply(); }
+function zoomBtn(f){ zoomAt(innerWidth/2, innerHeight/2, f); }
+function zoomAt(px,py,f){ const ns=Math.max(0.2,Math.min(3,vp.s*f));
+  vp.x = px-(px-vp.x)*(ns/vp.s); vp.y=py-(py-vp.y)*(ns/vp.s); vp.s=ns; apply(); }
+stage.addEventListener('wheel',e=>{ e.preventDefault(); zoomAt(e.clientX,e.clientY, e.deltaY<0?1.12:0.89); },{passive:false});
+let drag=null;
+stage.addEventListener('pointerdown',e=>{ if(e.target.closest && e.target.closest('.card')) return; drag={x:e.clientX,y:e.clientY,ox:vp.x,oy:vp.y}; stage.classList.add('drag'); stage.setPointerCapture(e.pointerId); });
+stage.addEventListener('pointermove',e=>{ if(!drag)return; vp.x=drag.ox+(e.clientX-drag.x); vp.y=drag.oy+(e.clientY-drag.y); apply(); });
+stage.addEventListener('pointerup',e=>{ drag=null; stage.classList.remove('drag'); });
+// pinch
+let pt=new Map();
+stage.addEventListener('pointerdown',e=>pt.set(e.pointerId,e));
+stage.addEventListener('pointermove',e=>{ if(pt.has(e.pointerId))pt.set(e.pointerId,e);
+  if(pt.size===2){ drag=null; const [a,b]=[...pt.values()]; const d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+    if(stage._pd){ const f=d/stage._pd; zoomAt((a.clientX+b.clientX)/2,(a.clientY+b.clientY)/2,f); } stage._pd=d; } });
+stage.addEventListener('pointerup',e=>{ pt.delete(e.pointerId); if(pt.size<2)stage._pd=null; });
+
+// ---- controls ----
+function allExpand(open){
+  if(VIEW==='list'){ document.querySelectorAll('#outline .mod').forEach(m=>m.classList.toggle('open',open));
+    document.querySelectorAll('#outline .sec').forEach(s=>s.classList.toggle('closed',!open)); return; }
+  (function w(n){ if(n._depth>=1 && n.children&&n.children.length) n._collapsed=!open; (n.children||[]).forEach(w); })(DATA); draw(); fit(); }
+function search(){ const q=document.getElementById('q').value.trim().toLowerCase();
+  if(VIEW==='list'){ filterOutline(q); return; }
+  if(!q){ draw(); return; }
+  // expand branches containing a hit, dim the rest
+  (function w(n){ const hit=(n.en+' '+n.pt).toLowerCase().includes(q);
+     let kidhit=false; (n.children||[]).forEach(c=>{ if(w(c))kidhit=true; });
+     if(kidhit && n.children) n._collapsed=false;
+     n._hit = hit||kidhit; return n._hit; })(DATA);
+  draw();
+  // dim non-hits
+  document.querySelectorAll('#nodes .card').forEach(()=>{});
+  gN.querySelectorAll('text.lbl').forEach(t=>{ const on=t.textContent.toLowerCase().includes(q);
+    t.closest('.card').classList.toggle('dim', !on && q.length>0); });
+}
+function renderLegend(){ const box=document.getElementById('legend'); box.innerHTML='';
+  if(!CLIENT){
+    const c={}; STATUS.forEach(s=>c[s]=0); (function w(n){ if(n.status&&c[n.status]!==undefined)c[n.status]++; (n.children||[]).forEach(w); })(DATA);
+    STATUS.forEach(s=>{ const el=document.createElement('span'); el.className='lg'+(active.has(s)?'':' off');
+      el.innerHTML=`<span class="d" style="background:var(--${s})"></span>${STLABEL[LANG][s]} ${c[s]}`;
+      el.onclick=()=>{ active.has(s)?active.delete(s):active.add(s); el.classList.toggle('off'); draw(); };
+      box.appendChild(el); }); }
+  const cxleg=document.createElement('span'); cxleg.className='lg'; cxleg.style.cursor='default';
+  cxleg.innerHTML=`<span class="cxmini"><i style="height:4px"></i><i style="height:7px"></i><i style="height:10px"></i><i style="height:13px"></i></span>${LANG==='pt'?'complexidade':'complexity'}`;
+  box.appendChild(cxleg);
+  if(!CLIENT){ const oosleg=document.createElement('span'); oosleg.className='lg'; oosleg.style.cursor='default';
+    oosleg.innerHTML=`<span class="d" style="background:var(--decision)"></span>${LANG==='pt'?'':''}`;
+    box.appendChild(oosleg); } }
+function texts(){ document.getElementById('ttl').textContent=I18N[LANG].ttl;
+  document.getElementById('q').placeholder=I18N[LANG].q;
+  document.getElementById('b-exp').textContent=I18N[LANG].exp;
+  document.getElementById('b-col').textContent=I18N[LANG].col;
+  document.getElementById('b-fit').textContent=I18N[LANG].fit;
+  document.getElementById('v-map').textContent=I18N[LANG].vmap;
+  document.getElementById('v-list').textContent=I18N[LANG].vlist;
+  document.getElementById('hint').textContent=I18N[LANG].hint; }
+function setLang(l){ LANG=l; document.getElementById('l-en').classList.toggle('on',l==='en');
+  document.getElementById('l-pt').classList.toggle('on',l==='pt'); texts(); renderLegend(); draw();
+  if(VIEW==='list') renderOutline();
+  if(curDetail) openDetail(curDetail); }
+
+// ---- detail panel ----
+function pathOf(n){ const arr=[]; let p=n._parent; while(p&&p._depth>=1){ arr.unshift(label(p)); p=p._parent; } return arr; }
+let curDetail=null;
+function openDetail(n){
+  if(n._depth===0){ closeDetail(); return; }
+  curDetail=n;
+  document.getElementById('d-crumb').innerHTML = pathOf(n).map(x=>`<b>${x}</b>`).join(' <span style="opacity:.5">›</span> ') || '&nbsp;';
+  document.getElementById('d-title').textContent = label(n);
+  const meta=document.getElementById('d-meta'); meta.innerHTML='';
+  if(n.status && !CLIENT){ const p=document.createElement('span'); p.className='pill p-'+n.status; p.textContent=STLABEL[LANG][n.status]; meta.appendChild(p); }
+  // complexity chip with signal bars
+  const lvl=cplx(n); const cxWrap=document.createElement('span'); cxWrap.className='cxchip';
+  let barsHtml=''; for(let k=0;k<4;k++){ barsHtml+=`<i style="height:${4+k*3}px;background:${k<lvl?CXCOL[lvl]:'#2a3140'}"></i>`; }
+  cxWrap.innerHTML=`<span class="cxbars">${barsHtml}</span>${CXLBL[LANG][lvl]}${n.size?` · ${n.size}`:''}`;
+  meta.appendChild(cxWrap);
+  if(isOOS(n) && !CLIENT){ const o=document.createElement('span'); o.className='pill p-decision'; o.textContent=(LANG==='pt'?'':''); meta.appendChild(o); }
+  document.getElementById('d-mean').innerHTML =
+     ((n.status&&!CLIENT)?STMEAN[LANG][n.status]+'  ·  ':'') + `${LANG==='pt'?'Complexidade':'Complexity'}: ${CXLBL[LANG][lvl]}`
+     + ((isOOS(n)&&!CLIENT)? `<br><b style="color:var(--decision)">${LANG==='pt'?'':''}</b>`:'');
+  const kb=document.getElementById('d-kids'); kb.innerHTML='';
+  const kids=n.children||[];
+  if(kids.length){
+    const h=document.createElement('div'); h.className='kh';
+    h.textContent=(LANG==='pt'?'Itens':'Items')+` (${kids.length})`; kb.appendChild(h);
+    kids.forEach(c=>{ const row=document.createElement('div'); row.className='kid';
+      const d=document.createElement('span'); d.className='kd'; d.style.background=c.status?`var(--${c.status})`:'#39424f'; row.appendChild(d);
+      const tx=document.createElement('span'); tx.textContent=label(c)+(c.size?`  (${c.size})`:''); row.appendChild(tx);
+      kb.appendChild(row); });
+  }
+  document.getElementById('detail').classList.add('on');
+}
+function closeDetail(){ document.getElementById('detail').classList.remove('on'); curDetail=null; }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeDetail(); });
+
+// ---- outline / proposal view ----
+let VIEW='map';
+function escH(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function barsHTML(lvl){ let s='<span class="obars">'; for(let k=0;k<4;k++) s+=`<i style="height:${4+k*3}px;background:${k<lvl?CXCOL[lvl]:'#2a3140'}"></i>`; return s+'</span>'; }
+function midWrap(t){ return t.replace(/^(M\d\d|D\d)(\s*·)?/, '<span class="mid">$1$2</span>'); }
+function statCounts(){ let mods=0,inScope=0,newCO=0; (function w(n){ if(/^M\d\d/.test(n.en)){ mods++; isOOS(n)?newCO++:inScope++; } (n.children||[]).forEach(w); })(DATA); return {mods,inScope,newCO}; }
+function itemsHTML(kids){ if(!kids||!kids.length) return '';
+  return '<div class="items">'+kids.map(it=>`<div class="item"><span class="idot" style="background:${(it.status&&!CLIENT)?`var(--${it.status})`:'#39424f'}"></span><span class="itxt">${escH(label(it))}</span>${it.size?`<span class="isz">${it.size}</span>`:''}</div>`).join('')+'</div>'; }
+function modRow(m){ const oos=isOOS(m)&&!CLIENT, kids=m.children||[]; const st=m.status&&!CLIENT;
+  return `<div class="mod${oos?' oos':''}"><div class="modhead">${st?`<span class="mdot" style="background:var(--${m.status})"></span>`:''}<span class="mname">${midWrap(escH(label(m)))}</span>${st?`<span class="pill p-${m.status}">${STLABEL[LANG][m.status]}</span>`:''}${barsHTML(cplx(m))}${m.size?`<span class="szc">${m.size}</span>`:''}${oos?`<span class="pill p-decision"></span>`:''}</div>${itemsHTML(kids)}</div>`; }
+function renderOutline(){ const o=document.getElementById('outline'); const S=statCounts();
+  const sub = CLIENT? I18N[LANG].psub_client : I18N[LANG].psub;
+  let h=`<div class="doc"><div class="cover"><div class="ctitle">${I18N[LANG].ptitle}</div><div class="csub">${sub}</div>`;
+  if(!CLIENT){ h+=`<div class="cstats"><div class="cstat"><b>${S.mods}</b><span>${I18N[LANG].s_mods}</span></div>`
+    +`<div class="cstat good"><b>${S.inScope}</b><span>${I18N[LANG].s_in}</span></div>`
+    +`<div class="cstat oos"><b>${S.newCO}</b><span>${I18N[LANG].s_new}</span></div></div>`; }
+  h+=`</div>`;
+  for(const sec of DATA.children){ if(sec._skip) continue; const mods=sec.children||[];
+    h+=`<div class="sec"><div class="sechead" style="border-left-color:${sec._hue}"><span class="caret">▾</span><span class="secname">${escH(label(sec))}</span>${CLIENT?'':`<span class="seccount">${mods.length}</span>`}${barsHTML(cplx(sec))}</div><div class="secbody">`;
+    for(const m of mods) h+=modRow(m);
+    h+=`</div></div>`; }
+  h+=`</div>`; o.innerHTML=h; }
+function filterOutline(q){ document.querySelectorAll('#outline .mod').forEach(m=>{ const on=!q||m.textContent.toLowerCase().includes(q); m.classList.toggle('hidden',!on); if(q&&on)m.classList.add('open'); });
+  document.querySelectorAll('#outline .sec').forEach(s=>{ const any=[...s.querySelectorAll('.mod')].some(m=>!m.classList.contains('hidden')); s.classList.toggle('hidden',!!q&&!any); if(q)s.classList.remove('closed'); }); }
+function setView(v){ VIEW=v;
+  document.getElementById('stage').style.display=v==='map'?'block':'none';
+  document.getElementById('outline').classList.toggle('on',v==='list');
+  document.getElementById('zoom').style.display=v==='map'?'flex':'none';
+  document.getElementById('legend').style.display=v==='map'?'flex':'none';
+  document.getElementById('hint').style.display=v==='map'?'block':'none';
+  document.getElementById('b-fit').style.display=v==='map'?'inline-flex':'none';
+  document.getElementById('v-map').classList.toggle('on',v==='map');
+  document.getElementById('v-list').classList.toggle('on',v==='list');
+  if(v==='list'){ closeDetail(); renderOutline(); } }
+document.getElementById('outline').addEventListener('click',e=>{
+  const sh=e.target.closest('.sechead'); if(sh){ sh.parentElement.classList.toggle('closed'); return; }
+  const mh=e.target.closest('.modhead'); if(mh){ mh.parentElement.classList.toggle('open'); } });
+
+// root gradient def
+const defs=document.createElementNS(SVGNS,'defs');
+defs.innerHTML='<linearGradient id="rootg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c46bff"/><stop offset="1" stop-color="#5cc8ff"/></linearGradient>';
+svg.insertBefore(defs, svg.firstChild);
+
+texts(); renderLegend(); draw(); fit();
+</script>
+</body>
+</html>
