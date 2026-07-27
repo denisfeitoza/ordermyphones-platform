@@ -33,7 +33,7 @@
 | M13 | Admin: partner management | TODO NEW | L | Keys, subscriptions, margin, locations, orders |
 | **Pricing** ||||
 | M14 | Pricing Engine v2 batch | TODO NEW | XL | Nightly waterfall, CTIA gate, floors, flags |
-| M15 | Competitive benchmark connectors | TODO NEW | L | eBay, Best Buy, Amazon, Walmart, Back Market |
+| M15 | Competitive price bots & scraping | TODO NEW | **XL** | One bot/scraper op per source (login, proxy, anti-bot) on a dedicated machine — HIGH complexity |
 | M16 | Realtime pricing edge function | SCAFFOLD | M | Serve session-tier price |
 | **Catalog & Suppliers** ||||
 | M17 | Catalog standard & import pipeline | NEW | L | Normalize → validate → upsert; export |
@@ -331,20 +331,26 @@
 
 ---
 
-## M15 · Competitive benchmark connectors `TODO` `NEW` `L`
-**Purpose:** pull nightly comps from five marketplaces.
+## M15 · Competitive price bots & scraping `TODO` `NEW` `XL` — **HIGH complexity**
+**Purpose:** pull nightly competitor prices from five marketplaces. **One bot/scraping operation per source**, running on a dedicated worker/machine. This is the hard, fragile part of Pricing v2 — treat as high complexity, not a simple API call.
 **Depends on:** M00
 
+**Why high complexity**
+- No single "easy API" covers all five. Each source is its **own operation**: session/login, proxy rotation, anti-bot / CAPTCHA handling, HTML that changes without notice.
+- Runs as scheduled bots on a dedicated worker/machine — its own infra, not a stateless function.
+- Fragile by nature → **recurring maintenance** (per-source break/fix) + monitoring, not a one-time build.
+
 **Build items**
-- [TODO] eBay Browse API connector (used/refurb + sold)
-- [TODO] Best Buy developer API connector (new SRP)
-- [TODO] Amazon Renewed via aggregator/Keepa connector
-- [TODO] Walmart Restored via same aggregator
-- [TODO] Back Market scheduled scrape (Scrapling)
-- [TODO] Normalize to `CompetitorQuote` (source, price, condition, lock_matched)
-- [TODO] Match logic (model + capacity + condition + lock) + admin condition map
-- [TODO] Failover aggregator + cost caps (~$150–200/mo budget)
-- [TODO] Cache + rate-limit per source
+- [TODO] Per-source bot/scraper operation (login/session, proxy pool, anti-bot/CAPTCHA)
+- [TODO] eBay · Best Buy — official APIs where still available (the easier two)
+- [TODO] Amazon · Walmart · Back Market — scraping bots (no open price API)
+- [TODO] Dedicated worker/machine + scheduler running all source ops nightly
+- [TODO] Normalize to `CompetitorQuote` + match (model + capacity + condition + lock) — **the real accuracy risk**
+- [TODO] Retries, rate-limit, cache per source
+- [TODO] Monitoring + stale-data alerts (a dead scraper must not silently freeze prices)
+- [TODO] Optional paid-aggregator fallback (Keepa etc.) where scraping is not worth it (~$150–200/mo)
+
+**Note:** the cheaper alternative is buying data from an aggregator instead of building per-source bots. Client's direction is to **build the bots/scraping in-house** → this module is sized `XL` accordingly.
 
 **Done when:** each source returns matched quotes; the batch consumes them; a source outage degrades gracefully.
 
