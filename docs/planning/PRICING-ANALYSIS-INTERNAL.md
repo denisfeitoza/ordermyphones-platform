@@ -8,9 +8,10 @@
 
 - O contrato de **USD 12.000** cobre a **loja core** (storefront + portal + admin + integração inbound de fornecedor + Stripe + tiers + os 8 módulos). É um preço **enxuto/agressivo** pra esse escopo.
 - O que entra de novo (IA, Pricing v2, Partner API como plataforma) **não é "mais features na loja"** — muda a categoria do produto pra **alta escala** (inteligência de preço + distribuição B2B via API + operação com IA). Isso pede preço por **valor/escala**, não por hora.
-- **Sugestão de aumento: +USD 15.000 a 18.000** (ponto recomendado **~USD 16.500**).
-- **Total revisado do projeto: ~USD 28.500** (faixa 27k–30k) — cerca de **2,3× a 2,4×** o contrato original.
-- **Mensalidade (§2.3) revisada: USD 700 a 1.300/mês** (vs. ~300–500 se fosse só a loja core), escalando com volume de parceiros/API/IA.
+- **Sugestão de aumento: +USD 19.000 a 23.000** (ponto recomendado **~USD 21.000**).
+- **Total revisado do projeto: ~USD 33.000** (faixa 30k–35k) — cerca de **2,5× a 2,9×** o contrato original.
+- **Mensalidade (§2.3) revisada: USD 900 a 1.700/mês** (vs. ~300–500 se fosse só a loja core), escalando com volume de parceiros/API/IA — inclui **infra dedicada de scraping** (worker + proxies) e manutenção por fonte.
+- **Correção importante:** o benchmark de preço (M15) **não é "chamar uma API"** — é **um bot/scraping por fonte, rodando numa máquina dedicada**, complexidade **alta (XL)**. Isso puxou o Pricing v2 pra cima (ver §3) e engordou o recorrente.
 
 ---
 
@@ -55,9 +56,12 @@ Precificando cada item pelo que ele realmente é (subsistema de alta escala, ris
 | Item | Faixa sugerida (one-time) | Ponto recomendado | Esforço aprox. |
 |---|---|---|---|
 | A.1 Swarm de IA | USD 5.000 – 7.000 | **6.000** | ~20–30 dev-dias |
-| A.2 Pricing Engine v2 | USD 5.000 – 7.000 | **6.000** | ~20–25 dev-dias |
+| A.2a Pricing — engine/waterfall (M14) | USD 4.000 – 5.500 | **4.500** | ~15–20 dev-dias |
+| A.2b Pricing — bots & scraping (M15) · **alta** | USD 5.000 – 8.000 | **6.000** | ~20–30 dev-dias |
 | A.3 Partner API (plataforma) | USD 4.000 – 6.000 | **4.500** | ~15–20 dev-dias |
-| **Total novo (one-time)** | **USD 14.000 – 20.000** | **~16.500** | ~55–75 dev-dias |
+| **Total novo (one-time)** | **USD 18.000 – 26.500** | **~21.000** | ~70–100 dev-dias |
+
+> **Por que o Pricing v2 foi dividido:** o engine (M14, a "cascata" de margem) é trabalho contido e previsível. Os **bots/scraping (M15)** são a parte cara e frágil — **uma operação por fonte** (login, proxy, anti-bot), rodando numa máquina dedicada, com manutenção recorrente. Separar deixa claro pro cliente onde mora o custo — e permite ele **fasear** (ex.: começar com 2 fontes via API, adicionar as de scraping depois).
 
 > Observação: o total novo é **maior que os 12k do base** — e isso é o sinal correto. O escopo novo é mais engenharia, mais risco e mais valor do que o contrato original inteiro.
 
@@ -68,11 +72,11 @@ Precificando cada item pelo que ele realmente é (subsistema de alta escala, ris
 | | USD |
 |---|---|
 | Contrato base (§2.1) | 12.000 |
-| + Escopo novo (recomendado) | ~16.500 |
-| **Total revisado do projeto** | **~28.500** (faixa 27.000 – 30.000) |
-| Múltiplo sobre o original | **~2,3× – 2,4×** |
+| + Escopo novo (recomendado) | ~21.000 |
+| **Total revisado do projeto** | **~33.000** (faixa 30.000 – 35.000) |
+| Múltiplo sobre o original | **~2,5× – 2,9×** |
 
-**Prazo:** os três itens somam ~55–75 dev-dias. Se feitos em série depois do base, o prazo de 120 dias praticamente **dobra**; em paralelo com um segundo dev, some ~6–9 semanas ao cronograma. Registre a extensão day-for-day (§3.3) no CO-01.
+**Prazo:** os itens somam ~70–100 dev-dias (o scraping do M15 puxou pra cima). Em série depois do base, o prazo de 120 dias **mais que dobra**; em paralelo com um segundo dev, some ~9–13 semanas ao cronograma. Registre a extensão day-for-day (§3.3) no CO-01.
 
 ---
 
@@ -83,12 +87,13 @@ O escopo novo traz custo e operação contínuos que a loja core não tinha:
 | Componente | Faixa mensal |
 |---|---|
 | Base (hosting, Sentry/PostHog, e-mail/SMS) | ~USD 200 – 400 |
-| Feeds de dados de mercado (Pricing v2) | ~USD 150 – 200 |
+| **Infra dedicada de scraping** (worker + pool de proxies) | ~USD 150 – 400 |
+| Manutenção por fonte (bots quebram quando o site muda) | ~USD 150 – 350 |
 | Uso de modelo de IA (swarm) | ~USD 100 – 500 (variável por volume) |
 | Infra extra p/ Partner API + batch noturno | ~USD 150 – 300 |
-| **Mensalidade sugerida** | **USD 700 – 1.300 / mês** |
+| **Mensalidade sugerida** | **USD 900 – 1.700 / mês** |
 
-Sugestão: cobrar um **piso** (ex. USD 800/mês) + repasse dos custos variáveis de IA/dados acima de uma franquia, ou faixas por volume de parceiros/chamadas. Formalizar no addendum da §2.3.
+Sugestão: cobrar um **piso** (ex. USD 1.000/mês) + repasse dos custos variáveis de IA/proxies acima de uma franquia, ou faixas por volume de parceiros/chamadas. Os **bots de scraping (M15) são o maior driver de recorrente** — não é "entrega e esquece", é operação contínua. Formalizar no addendum da §2.3.
 
 ---
 
