@@ -40,7 +40,8 @@
 | M18 | Supplier adapters (inbound) | SCAFFOLD | L | Source-1/2 REST + Scrapling + sync |
 | **Partner Distribution** ||||
 | M19 | Partner Inventory API (outbound) | TODO NEW | XL | Feed, keys, projection, webhooks, pull |
-| M20 | SmartPay integration | TODO NEW | XL | Consumer feed + fulfillment write API |
+| M20 | SmartPay integration | TODO NEW | XL | Consumer feed + fulfillment write API (our standard) |
+| M28 | Partner order-intake — per-partner API adapters | TODO NEW | **XL** | Adapt to each partner's OWN order API — HIGH, scales per partner |
 | **Commerce backend** ||||
 | M21 | Orders & sales domain | TODO | L | Cart→order→state machine, reservations |
 | M22 | Payments (Stripe) | SCAFFOLD | M | Checkout, webhook, refunds, reconciliation |
@@ -452,6 +453,31 @@
 - [TODO] CUPE marketplace validation learnings feed-in
 
 **Done when:** SP pulls consumer feed and places an idempotent order that reserves stock and dropships; double-submit is a no-op.
+
+**Note:** M20 covers order placement in **OUR** standard format. When a partner requires us to receive orders in **THEIR** API format, that per-partner adapter is **M28**.
+
+---
+
+## M28 · Partner order-intake — per-partner API adapters `TODO` `NEW` `XL` — **HIGH complexity**
+**Purpose:** receive partner orders **two ways** — (A) our standard order API (partner conforms, already in M20), and (B) **adapt to the partner's own order API** (we conform to their spec). Mode B is the new high-difficulty part: one adapter per partner, and the **partner dictates the contract** (per Agreement §1.4 "OMP will adapt to their needs").
+**Depends on:** M19, M20, M21, M03
+
+**Why high complexity**
+- It is the **mirror of the supplier side**: like per-supplier import mapping, but for inbound *orders* on the sales side.
+- **We** conform to **each partner's** API — different auth, payload, ack/status semantics per partner. We don't control the spec.
+- **Scales per partner:** each new customer integration = its own adapter → **variable cost**, not one-time.
+
+**Build items**
+- [TODO NEW] Order-intake service, dual-mode (our standard + adapt-to-theirs)
+- [TODO NEW] Per-partner adapter: conform to the partner's order API (auth, payload, errors)
+- [TODO NEW] Translate partner order → our order domain (M21); idempotency + validation
+- [TODO NEW] Ack + order status pushed back **in the partner's format**
+- [TODO NEW] Per-partner mapping profile + contract tests against their spec
+- [DONE NEW] Our-standard intake (the OMP fulfillment API) — already in M20
+
+**Scope note:** the two named customer integrations (SmartPay, Qpay) are in the base contract **if** they use one of the 4 covered tech stacks (§1.4). A partner whose order API needs a distinct stack, or a 3rd+ customer, is a Change Order.
+
+**Done when:** a partner places an order through *their* API and it lands as a valid OMP order, idempotently, with status echoed back in their format.
 
 ---
 

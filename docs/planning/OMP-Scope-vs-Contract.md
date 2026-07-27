@@ -8,7 +8,7 @@
 
 ## 1. Verdict in one paragraph
 
-The **core platform** (storefront, catalog, cart/checkout, customer portal, admin dashboard, Stripe, inbound supplier integration, tier pricing, the eight core modules) is **in scope** and matches the contract — most of it exists as a working mockup, with backend wiring pending. Three substantial workstreams we designed are **outside the contract**: the **AI agent swarm**, the **competitive-benchmark Pricing Engine v2**, and the **generalized multi-partner Inventory API** (beyond the two named customer integrations). Separately, the **Pricing v2 tier model conflicts with the contract's §1.3** (it drops the automatic volume-based upgrade and renames/re-bounds the tiers) and must be reconciled, not just added.
+The **core platform** (storefront, catalog, cart/checkout, customer portal, admin dashboard, Stripe, inbound supplier integration, tier pricing, the eight core modules) is **in scope** and matches the contract — most of it exists as a working mockup, with backend wiring pending. Several substantial workstreams we designed are **outside the contract**: the **AI agent swarm**; the **competitive-benchmark Pricing Engine v2** (whose price benchmark is **build-your-own bots + scraping, one operation per source** — high complexity, not a simple API); the **generalized multi-partner Inventory API** (beyond the two named customer integrations); and **partner order-intake that adapts to each partner's own order API** (mirror of the supplier side — high complexity, scales per partner). Separately, the **Pricing v2 tier model conflicts with the contract's §1.3** (it drops the automatic volume-based upgrade and renames/re-bounds the tiers) and must be reconciled, not just added.
 
 ---
 
@@ -49,6 +49,11 @@ These are real, substantial builds we designed that the Agreement does **not** c
 - **In scope:** integrating **SmartPay and Qpay** as customers (§1.4 names both, "up to two (2)").
 - **Out of scope:** turning that into a **general reseller-feed product** — multi-partner API-key issuance/rotation, per-partner margin-rule engine, webhook delivery infrastructure with retry/backoff, no-op suppression, masking allow-list, SSRF controls, and the **customer-facing self-serve "Inventory API" portal page**. That is more than "integrate with SmartPay and Qpay"; it is a platform capability to onboard arbitrary partners.
 - **Rule of thumb:** delivering the two named integrations = in scope. Everything that lets a *third, fourth, Nth* partner self-onboard = Change Order.
+
+### 3.4 Partner order-intake — adapting to the partner's own order API — **partly out of scope** 🟡
+- **In scope:** partners placing orders through **OMP's standard** order API (our format, partner conforms).
+- **Out of scope:** where a partner (e.g. SmartPay, per the working call) places orders through **its own** API and **OMP must adapt to that spec** — a per-partner inbound-order adapter. This is the **mirror of the inbound supplier integration**, on the sales side: we don't control the contract, the partner does, and it **scales per partner**.
+- **Rule of thumb:** our-standard intake = base scope; each partner whose order API we must conform to = its own adapter (Change Order beyond the two named / four tech stacks, §1.4).
 
 ---
 
@@ -94,11 +99,12 @@ The contract already lists these as **out unless Change Order** — we are **not
 
 ## 7. Recommendation
 
-Bundle the OUT items into **one Change Order** with three line items the client can accept or decline independently:
+Bundle the OUT items into **one Change Order** (CO-01) with independently accept/decline line items:
 
 1. **AI Agent Swarm** (orchestrator + 4 agents + guardrails) — optional, high value, fully separable.
-2. **Pricing Engine v2** (competitive benchmark + CTIA gating + flag queue) + its recurring data-feed cost into §2.3 — this is the client's own deck, so likely a yes; just needs to be papered.
+2. **Pricing Engine v2** — split into (2a) the pricing **engine/waterfall** and (2b) the **competitive-price bots & scraping** (one bot/scraper per source, on a dedicated machine — **high complexity + recurring maintenance**, not a simple API). Plus recurring data/proxy cost into §2.3.
 3. **Partner Inventory API platform** (multi-partner beyond SmartPay/Qpay + self-serve portal) — quote the delta above the two named integrations.
+4. **Partner order-intake — adapt to their API** (we conform to each partner's order API; mirror of the supplier side) — **high complexity, scales per partner**. Our-standard order API is base scope; adapting to theirs is the new part.
 
 And **one reconciliation note** (not a new charge, but a written §8 amendment): the §1.3 tier logic change (auto-upgrade dropped, tiers renamed/re-bounded).
 
