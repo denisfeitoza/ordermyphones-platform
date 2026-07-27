@@ -70,6 +70,23 @@ This Change Order ("CO-01") is issued pursuant to **Section 8 (Change Orders)** 
 
 ---
 
+### Item A.4 — Partner order-intake (adapt to the partner's own order API)
+**Status against Agreement:** Outside base scope. The base Agreement provides order placement through **OMP's standard** order API (partner conforms). This item covers the opposite direction contemplated at the working call: where a partner (e.g. SmartPay) places orders through **its own** API and **OMP adapts to that spec** (Section 1.4: "OMP will adapt to their needs"). It is the mirror of the inbound supplier integration, on the sales side.
+
+**Description & deliverables**
+- Order-intake service supporting both modes — OMP standard **and** adapt-to-partner.
+- **Per-partner adapter:** OMP conforms to the partner's order API (their auth, payload, error and status semantics), translating each order into the OMP order domain, with idempotency and validation, and pushing acknowledgements/status back **in the partner's format**.
+- Per-partner mapping profile + contract tests against the partner's spec.
+
+**High complexity + variable cost:** the partner dictates the contract, and this **scales per partner** — each additional customer whose order API OMP must adapt to is its own adapter. The two named customers (SmartPay, Qpay) are included **only** where they share one of the four covered tech stacks (Section 1.4); a third customer, or a distinct tech stack, is a further Change Order.
+
+**Additional time:** _[proposed]_ ___ business days (≈ 3–5 weeks for the service + first adapter; each further partner adapter ~1–2 weeks)
+**Additional fee (one-time):** USD _[proposed]_ ________ (service + first adapter) · **+USD _[proposed]_ per additional partner adapter**
+
+**Accepted?** ☐ Yes ☐ No — Client initials: ____
+
+---
+
 ## PART B — Scope Reconciliation (no additional fee)
 
 This Part amends contracted behavior to match the agreed v2 design. It carries **no charge**; it exists so the delivered Platform lawfully matches the Agreement.
@@ -104,7 +121,7 @@ These are **not** charged now. They are recorded so both Parties know in advance
 The delivery timeline in Section 3.1 is extended by the sum of the accepted Part A items' additional time, applied day-for-day per Section 3.3.
 
 - Base timeline: 120 days from the Effective Date.
-- Accepted additional time (sum of A.1 / A.2 / A.3 as checked): ____ business days.
+- Accepted additional time (sum of A.1 / A.2 / A.3 / A.4 as checked): ____ business days.
 - **Revised estimated Final Delivery:** ________________.
 
 ---
@@ -117,6 +134,7 @@ The delivery timeline in Section 3.1 is extended by the sum of the accepted Part
 | Item A.1 — AI Agent Swarm _(if accepted)_ | _[proposed]_ __________ |
 | Item A.2 — Pricing Engine v2 _(if accepted)_ | _[proposed]_ __________ |
 | Item A.3 — Partner Inventory API Platform _(if accepted)_ | _[proposed]_ __________ |
+| Item A.4 — Partner order-intake (adapt to their API) _(if accepted)_ | _[proposed]_ __________ |
 | **Revised total one-time fee** | __________ |
 
 **Billing of the added fee:** ☐ added pro-rata across the remaining installments (§2.2) · ☐ invoiced as a separate milestone on execution of CO-01 · ☐ other: __________.
@@ -154,7 +172,8 @@ Basis for the _[proposed]_ figures — relative to the USD 12,000 base that cove
 | Item | Relative effort (from the module WBS) | Suggested one-time range | Suggested time |
 |---|---|---|---|
 | A.1 AI Agent Swarm | XL — orchestrator + 4 agents + guardrails + evals | set from your day-rate × ~20–30 dev-days | ~4–6 weeks |
-| A.2 Pricing Engine v2 | XL — 5 connectors + engine + flag-queue UI + tests | ~20–25 dev-days | ~4–5 weeks |
+| A.2 Pricing Engine v2 | XL — engine + **per-source scraping bots** (login/proxy/anti-bot on a dedicated machine) + flag-queue UI + tests | ~35–45 dev-days | ~7–9 weeks |
 | A.3 Partner API platform (delta) | L — beyond the 2 named integrations | ~15–20 dev-days | ~3–4 weeks |
+| A.4 Partner order-intake (adapt to their API) | XL — per-partner adapters; **scales per partner** | ~15–25 dev-days (service + 1st adapter) | ~3–5 weeks |
 
-These are effort anchors, **not** prices — set the dollar amounts from your own rate and margin before sending. Confirm the market-data subscription figure (A.2) with the actual aggregator quote. Do not send the placeholders unfilled.
+These are effort anchors, **not** prices — set the dollar amounts from your own rate and margin before sending. Note A.2's competitive pricing is **build-your-own bots + scraping** (high complexity + recurring maintenance), not a simple API; confirm any market-data subscription with a live quote. A.4 **scales per partner** (each additional customer order API = its own adapter). Do not send the placeholders unfilled.

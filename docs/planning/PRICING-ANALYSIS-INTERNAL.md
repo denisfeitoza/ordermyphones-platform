@@ -8,8 +8,8 @@
 
 - O contrato de **USD 12.000** cobre a **loja core** (storefront + portal + admin + integração inbound de fornecedor + Stripe + tiers + os 8 módulos). É um preço **enxuto/agressivo** pra esse escopo.
 - O que entra de novo (IA, Pricing v2, Partner API como plataforma) **não é "mais features na loja"** — muda a categoria do produto pra **alta escala** (inteligência de preço + distribuição B2B via API + operação com IA). Isso pede preço por **valor/escala**, não por hora.
-- **Sugestão de aumento: +USD 19.000 a 23.000** (ponto recomendado **~USD 21.000**).
-- **Total revisado do projeto: ~USD 33.000** (faixa 30k–35k) — cerca de **2,5× a 2,9×** o contrato original.
+- **Sugestão de aumento: +USD 23.000 a 28.000** (ponto recomendado **~USD 25.500**).
+- **Total revisado do projeto: ~USD 37.500** (faixa 34k–40k) — cerca de **2,8× a 3,3×** o contrato original.
 - **Mensalidade (§2.3) revisada: USD 900 a 1.700/mês** (vs. ~300–500 se fosse só a loja core), escalando com volume de parceiros/API/IA — inclui **infra dedicada de scraping** (worker + proxies) e manutenção por fonte.
 - **Correção importante:** o benchmark de preço (M15) **não é "chamar uma API"** — é **um bot/scraping por fonte, rodando numa máquina dedicada**, complexidade **alta (XL)**. Isso puxou o Pricing v2 pra cima (ver §3) e engordou o recorrente.
 
@@ -36,8 +36,9 @@ Uma **loja single-tenant** de e-commerce, completa mas "clássica":
 | **A.1 — Swarm de IA** | Muito alta (XL) | Subsistema inteiro: orquestrador + 4 agentes + guardrails + eval. Opera o negócio, não é feature de tela. Risco alto (ação autônoma) = engenharia cara. |
 | **A.2 — Pricing Engine v2** | Muito alta (XL) | 5 integrações de marketplace + engine de benchmark + CTIA + flag queue + custo recorrente de dados. **É o que define TODA a margem** — leverage direto no lucro do cliente. |
 | **A.3 — Partner API (plataforma)** | Alta (L–XL) | De "integrar SmartPay/Qpay" (isso é escopo base) pra **plataforma multi-parceiro**: keys, margem por parceiro, webhooks, masking. Isso **gera receita** pro cliente (canal B2B/atacado). |
+| **A.4 — Recebimento de pedido por parceiro** | Alta (XL) | Cada parceiro faz pedido pela **API dele**; a gente se adapta a cada spec. Um adapter por parceiro, escala variável. Espelho do lado de fornecedor. |
 
-O ponto central: esses três transformam OMP de **loja** em **plataforma** — inteligência de preço, distribuição B2B por API e operação com IA. Trabalho de escala/B2B/API/IA vale mais por hora do que uma vitrine de varejo. É legítimo cobrar prêmio.
+O ponto central: esses itens transformam OMP de **loja** em **plataforma** — inteligência de preço, distribuição B2B por API e operação com IA. Trabalho de escala/B2B/API/IA vale mais por hora do que uma vitrine de varejo. É legítimo cobrar prêmio.
 
 **Importante separar (não cobrar duas vezes):** integrar **SmartPay e Qpay** já está no contrato base (§1.4) — **não entra na conta nova**. O que entra é só a **plataforma genérica** por cima desses dois.
 
@@ -59,9 +60,12 @@ Precificando cada item pelo que ele realmente é (subsistema de alta escala, ris
 | A.2a Pricing — engine/waterfall (M14) | USD 4.000 – 5.500 | **4.500** | ~15–20 dev-dias |
 | A.2b Pricing — bots & scraping (M15) · **alta** | USD 5.000 – 8.000 | **6.000** | ~20–30 dev-dias |
 | A.3 Partner API (plataforma) | USD 4.000 – 6.000 | **4.500** | ~15–20 dev-dias |
-| **Total novo (one-time)** | **USD 18.000 – 26.500** | **~21.000** | ~70–100 dev-dias |
+| A.4 Recebimento de pedido por parceiro (M28) · **alta** | USD 4.000 – 6.000 | **4.500** | ~15–25 dev-dias |
+| **Total novo (one-time)** | **USD 22.000 – 32.500** | **~25.500** | ~85–125 dev-dias |
 
-> **Por que o Pricing v2 foi dividido:** o engine (M14, a "cascata" de margem) é trabalho contido e previsível. Os **bots/scraping (M15)** são a parte cara e frágil — **uma operação por fonte** (login, proxy, anti-bot), rodando numa máquina dedicada, com manutenção recorrente. Separar deixa claro pro cliente onde mora o custo — e permite ele **fasear** (ex.: começar com 2 fontes via API, adicionar as de scraping depois).
+> **Por que o Pricing v2 foi dividido:** o engine (M14, a "cascata" de margem) é trabalho contido e previsível. Os **bots/scraping (M15)** são a parte cara e frágil — **uma operação por fonte** (login, proxy, anti-bot), rodando numa máquina dedicada, com manutenção recorrente. Separar deixa claro pro cliente onde mora o custo — e permite ele **fasear**.
+>
+> **A.4 escala por parceiro.** O valor acima cobre o **serviço de recebimento (dual-mode) + o 1º adapter** (ex.: SmartPay). Cada **parceiro adicional** que exige a gente adaptar à API *dele* = **+USD 2.000 – 3.500 por adapter** (custo variável, vira Change Order a partir do 3º cliente, §1.4). É o espelho do lado de fornecedor: a gente não controla a spec, o parceiro dita.
 
 > Observação: o total novo é **maior que os 12k do base** — e isso é o sinal correto. O escopo novo é mais engenharia, mais risco e mais valor do que o contrato original inteiro.
 
@@ -72,11 +76,11 @@ Precificando cada item pelo que ele realmente é (subsistema de alta escala, ris
 | | USD |
 |---|---|
 | Contrato base (§2.1) | 12.000 |
-| + Escopo novo (recomendado) | ~21.000 |
-| **Total revisado do projeto** | **~33.000** (faixa 30.000 – 35.000) |
-| Múltiplo sobre o original | **~2,5× – 2,9×** |
+| + Escopo novo (recomendado) | ~25.500 |
+| **Total revisado do projeto** | **~37.500** (faixa 34.000 – 40.000) |
+| Múltiplo sobre o original | **~2,8× – 3,3×** |
 
-**Prazo:** os itens somam ~70–100 dev-dias (o scraping do M15 puxou pra cima). Em série depois do base, o prazo de 120 dias **mais que dobra**; em paralelo com um segundo dev, some ~9–13 semanas ao cronograma. Registre a extensão day-for-day (§3.3) no CO-01.
+**Prazo:** os itens somam ~85–125 dev-dias (o scraping do M15 e o recebimento por-parceiro do M28 puxaram pra cima). Em série depois do base, o prazo de 120 dias **mais que dobra**; em paralelo com um segundo dev, some ~11–16 semanas ao cronograma. Registre a extensão day-for-day (§3.3) no CO-01.
 
 ---
 
@@ -101,7 +105,7 @@ Sugestão: cobrar um **piso** (ex. USD 1.000/mês) + repasse dos custos variáve
 
 - **Não** venda como "ficou mais caro". Venda como **mudança de categoria**: "o contrato construiu a loja; o CO-01 constrói a **plataforma de distribuição + inteligência de preço + operação com IA**."
 - Amarre no **retorno do cliente**: a Partner API é **canal de receita** (SmartPay/atacado); o Pricing v2 **protege e otimiza a margem** dele todo dia. O preço se paga.
-- Deixe os **3 itens independentes** no CO-01 (já estão) — o cliente pode faseá-los. Se travar no orçamento, entrega A.2 (pricing, paga-se sozinho) primeiro, A.1/A.3 depois.
+- Deixe os **itens independentes** no CO-01 (já estão) — o cliente pode faseá-los. Se travar no orçamento, entrega A.2 (pricing, paga-se sozinho) primeiro, o resto depois.
 - Use o **mapa mental** (barras de complexidade + marca vermelha de fora-de-escopo) como material visual da conversa — mostra em segundos por que o CO-01 é trabalho pesado.
 
 ---

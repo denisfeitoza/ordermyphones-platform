@@ -104,6 +104,8 @@ Brand filtering is **inclusive by brand** (whole-brand allow, e.g. "all Apple"),
 
 When a consumer completes a lease on SP's storefront, SP calls OMP to fulfill. This is **write** access and it moves an end-customer address into OMP — a deliberate, separately-scoped crossing.
 
+> **Two intake modes — §4 below is Mode A (OMP standard).** SP may instead require OMP to receive orders through **SP's own order API** (SP dictates the spec; OMP adapts, per Agreement §1.4). That per-partner adapter is a distinct, high-complexity build that **scales per partner** — see build module **M28** and Change Order **CO-01 Item A.4**. This §4 documents the OMP-standard endpoint; if SP's spec supersedes it, the payloads below become the internal target the adapter maps onto.
+
 ### 4.1 Place an order
 
 ```
