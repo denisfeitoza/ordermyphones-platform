@@ -46,6 +46,8 @@
   .lg{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border2);background:var(--panel);
     border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;user-select:none}
   .lg.off{opacity:.3} .lg .d{width:9px;height:9px;border-radius:50%}
+  .cxmini{display:inline-flex;align-items:flex-end;gap:1.5px;height:13px}
+  .cxmini i{width:2.5px;border-radius:1px;background:var(--muted);display:block}
   #zoom{bottom:14px;right:14px;display:flex;flex-direction:column;gap:6px;padding:8px}
   #zoom button{width:34px;height:34px;font-size:17px;font-weight:800;border-radius:10px;border:1px solid var(--border2);
     background:var(--panel);color:var(--text);cursor:pointer}
@@ -60,6 +62,10 @@
   #detail .meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px}
   #detail .pill{font-size:10px;font-weight:800;letter-spacing:.03em;padding:3px 9px;border-radius:999px;text-transform:uppercase}
   #detail .size{font-size:11px;font-weight:800;padding:3px 8px;border-radius:7px;background:#1c2230;color:var(--muted);border:1px solid var(--border2)}
+  #detail .cxchip{display:inline-flex;align-items:flex-end;gap:6px;font-size:11px;font-weight:700;color:var(--text);
+    padding:3px 9px;border-radius:999px;background:#1c2230;border:1px solid var(--border2)}
+  #detail .cxbars{display:inline-flex;align-items:flex-end;gap:2px;height:13px}
+  #detail .cxbars i{width:3px;border-radius:1px;display:block}
   #detail .mean{font-size:12px;color:var(--muted);margin:2px 0 14px}
   #detail .kh{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:12px 0 8px;font-weight:700}
   #detail .kid{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;padding:5px 0;border-top:1px solid var(--border)}
@@ -116,6 +122,16 @@ const STLABEL={en:{done:'Done',wire:'Wire',scaffold:'Scaffold',todo:'To do',new:
 const STMEAN={en:{done:'Built and working.',wire:'Mockup built — needs backend wiring.',scaffold:'Structure exists, business logic pending.',todo:'To build from scratch.',new:'New scope — designed in docs, not built.',decision:'Business/client decision needed.'},
               pt:{done:'Construído e funcionando.',wire:'Mockup pronto — falta ligar ao backend.',scaffold:'Estrutura existe, lógica pendente.',todo:'A construir do zero.',new:'Escopo novo — desenhado nos docs, não construído.',decision:'Precisa de decisão de negócio/cliente.'}};
 const SIZEMEAN={en:'relative complexity (not hours)',pt:'complexidade relativa (não horas)'};
+const SZMAP={S:1,M:2,L:3,XL:4};
+const CXLBL={en:['','Low','Medium','High','Very high'],pt:['','Baixa','Média','Alta','Muito alta']};
+const CXCOL=['','#22c07a','#f2b23c','#ff9f5c','#ff5d6c'];  // complexity 1→4 colour ramp
+const OOS=new Set(['M14','M15','M19','M24']);              // outside base contract → Change Order CO-01
+function isOOS(n){ const m=(n.en.match(/^M\d\d/)||[])[0]; return m?OOS.has(m):false; }
+function cplx(n){ if(n._cx) return n._cx; let v;
+  if(n.size) v=SZMAP[n.size];
+  else if(n.children&&n.children.length) v=Math.max(...n.children.map(cplx));
+  else v = n.status ? ({done:1,wire:2,scaffold:2,todo:2,new:3,decision:1})[n.status] : 2;
+  return n._cx=v; }
 const HUE=['#c46bff','#5cc8ff','#22c07a','#f2b23c','#ff5d6c','#2dd4bf','#8b9cff','#ff9f5c','#e06bd8','#7ee06b','#6bd0ff','#ffd15c'];
 let active=new Set(STATUS);
 const SVGNS="http://www.w3.org/2000/svg";
@@ -133,7 +149,7 @@ prep(DATA,0,null,'#c46bff');
 const CW=6.5, PAD=13, H=26;  // text metrics
 function label(n){ return LANG==='pt'?n.pt:n.en; }
 function disp(n){ const s=label(n); return s.length>LMAX ? s.slice(0,LMAX-1)+'…' : s; }
-function cardW(n){ const base = n._depth===0?18:0; return disp(n).length*CW + PAD*2 + base + (n.status?14:0) + (n.size?18:0); }
+function cardW(n){ const base = n._depth===0?18:0; return disp(n).length*CW + PAD*2 + base + (n.status?14:0) + 26; }
 
 function visKids(n){ return (n._collapsed||!n.children)?[]:n.children; }
 function leaves(n){ const k=visKids(n); if(!k.length) return 1; return k.reduce((s,c)=>s+leaves(c),0); }
@@ -256,11 +272,21 @@ function drawNode(n){
   if(isRoot){ t.setAttribute('fill','#0a0b0e'); t.setAttribute('text-anchor','middle'); t.setAttribute('x', n._x); }
   t.textContent=isRoot?label(n):disp(n);
   g.appendChild(t);
-  const ttl=document.createElementNS(SVGNS,'title'); ttl.textContent=label(n); g.appendChild(ttl);
-  // size badge on the right
-  if(n.size){ const b=document.createElementNS(SVGNS,'text'); b.setAttribute('x',x+w-9);b.setAttribute('y',n._y+0.5);
-    b.setAttribute('text-anchor','end'); b.setAttribute('font-size',10);b.setAttribute('font-weight',800);
-    b.setAttribute('fill','var(--muted)'); b.textContent=n.size; g.appendChild(b); }
+  const ttl=document.createElementNS(SVGNS,'title'); ttl.textContent=label(n)+`  ·  ${CXLBL[LANG][cplx(n)]}`+(isOOS(n)?`  ·  CO-01`:''); g.appendChild(ttl);
+  // complexity signal bars (cellular style) — every node except the root
+  if(!isRoot){
+    const lvl=cplx(n), col=CXCOL[lvl], bw=3, gap=2, grpW=4*bw+3*gap, bx=x+w-8-grpW;
+    for(let k=0;k<4;k++){ const bh=4+k*3.2; const r=document.createElementNS(SVGNS,'rect');
+      r.setAttribute('x',bx+k*(bw+gap)); r.setAttribute('y',n._y+7-bh); r.setAttribute('width',bw); r.setAttribute('height',bh);
+      r.setAttribute('rx',1); r.setAttribute('fill', k<lvl?col:'#2a3140'); g.appendChild(r); }
+  }
+  // out-of-scope accent: red bar on the centre-facing edge + red ring
+  if(isOOS(n)){
+    const edge=left? x+w-3 : x;
+    const a=document.createElementNS(SVGNS,'rect'); a.setAttribute('x',edge);a.setAttribute('y',y);
+    a.setAttribute('width',3);a.setAttribute('height',H);a.setAttribute('rx',1.5);a.setAttribute('fill','#ff5d6c'); g.appendChild(a);
+    rect.setAttribute('stroke','#ff5d6c'); rect.setAttribute('stroke-opacity',0.85);
+  }
   // collapse indicator if it has hidden/holdable children
   if(n.children&&n.children.length){
     const cxp = left? x-2 : x+w+2, cyp=n._y;
@@ -322,7 +348,13 @@ function renderLegend(){ const box=document.getElementById('legend'); box.innerH
   STATUS.forEach(s=>{ const el=document.createElement('span'); el.className='lg'+(active.has(s)?'':' off');
     el.innerHTML=`<span class="d" style="background:var(--${s})"></span>${STLABEL[LANG][s]} ${c[s]}`;
     el.onclick=()=>{ active.has(s)?active.delete(s):active.add(s); el.classList.toggle('off'); draw(); };
-    box.appendChild(el); }); }
+    box.appendChild(el); });
+  const cxleg=document.createElement('span'); cxleg.className='lg'; cxleg.style.cursor='default';
+  cxleg.innerHTML=`<span class="cxmini"><i style="height:4px"></i><i style="height:7px"></i><i style="height:10px"></i><i style="height:13px"></i></span>${LANG==='pt'?'complexidade':'complexity'}`;
+  box.appendChild(cxleg);
+  const oosleg=document.createElement('span'); oosleg.className='lg'; oosleg.style.cursor='default';
+  oosleg.innerHTML=`<span class="d" style="background:var(--decision)"></span>${LANG==='pt'?'fora do escopo (CO-01)':'out of scope (CO-01)'}`;
+  box.appendChild(oosleg); }
 function texts(){ document.getElementById('ttl').textContent=I18N[LANG].ttl;
   document.getElementById('q').placeholder=I18N[LANG].q;
   document.getElementById('b-exp').textContent=I18N[LANG].exp;
@@ -343,9 +375,15 @@ function openDetail(n){
   document.getElementById('d-title').textContent = label(n);
   const meta=document.getElementById('d-meta'); meta.innerHTML='';
   if(n.status){ const p=document.createElement('span'); p.className='pill p-'+n.status; p.textContent=STLABEL[LANG][n.status]; meta.appendChild(p); }
-  if(n.size){ const s=document.createElement('span'); s.className='size'; s.textContent=n.size; meta.appendChild(s); }
-  document.getElementById('d-mean').textContent =
-     (n.status?STMEAN[LANG][n.status]:'') + (n.size?`  ·  ${n.size} = ${SIZEMEAN[LANG]}`:'');
+  // complexity chip with signal bars
+  const lvl=cplx(n); const cxWrap=document.createElement('span'); cxWrap.className='cxchip';
+  let barsHtml=''; for(let k=0;k<4;k++){ barsHtml+=`<i style="height:${4+k*3}px;background:${k<lvl?CXCOL[lvl]:'#2a3140'}"></i>`; }
+  cxWrap.innerHTML=`<span class="cxbars">${barsHtml}</span>${CXLBL[LANG][lvl]}${n.size?` · ${n.size}`:''}`;
+  meta.appendChild(cxWrap);
+  if(isOOS(n)){ const o=document.createElement('span'); o.className='pill p-decision'; o.textContent=(LANG==='pt'?'FORA DO ESCOPO':'OUT OF SCOPE'); meta.appendChild(o); }
+  document.getElementById('d-mean').innerHTML =
+     (n.status?STMEAN[LANG][n.status]:'') + `  ·  ${LANG==='pt'?'Complexidade':'Complexity'}: ${CXLBL[LANG][lvl]}`
+     + (isOOS(n)? `<br><b style="color:var(--decision)">${LANG==='pt'?'Fora do escopo base — Change Order (CO-01)':'Outside base scope — Change Order (CO-01)'}</b>`:'');
   const kb=document.getElementById('d-kids'); kb.innerHTML='';
   const kids=n.children||[];
   if(kids.length){
