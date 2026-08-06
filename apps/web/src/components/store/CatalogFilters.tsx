@@ -2,6 +2,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Check } from 'lucide-react';
 import { CATALOG, CATEGORIES, CONDITIONS, type PhoneCategory } from '@/data/catalog';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 
 const BRANDS = ['Apple', 'Samsung'] as const;
 const PRICE_BANDS: { id: string; label: string; test: (msrp: number) => boolean }[] = [
@@ -56,6 +57,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export function CatalogFilters({ className, hideTitle = false }: { className?: string; hideTitle?: boolean }) {
+  const { t } = useI18n();
   const [params, setParams] = useSearchParams();
 
   function toggle(key: string, value: string) {
@@ -78,7 +80,7 @@ export function CatalogFilters({ className, hideTitle = false }: { className?: s
     <div className={cn('text-sm', className)}>
       {!hideTitle && (
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-base font-semibold tracking-tight">Filters</h2>
+          <h2 className="font-display text-base font-semibold tracking-tight">{t('Filters')}</h2>
           {hasFilters && (
             <button
               onClick={() =>
@@ -93,31 +95,31 @@ export function CatalogFilters({ className, hideTitle = false }: { className?: s
               }
               className="text-xs font-medium text-brand hover:underline"
             >
-              Clear all
+              {t('Clear all')}
             </button>
           )}
         </div>
       )}
 
-      <Section title="Category">
+      <Section title={t("Category")}>
         {CATEGORIES.map((c) => (
-          <FilterRow key={c.id} label={c.label} count={countCat(c.id)} active={is('category', c.id)} onClick={() => toggle('category', c.id)} />
+          <FilterRow key={c.id} label={t(c.label)} count={countCat(c.id)} active={is('category', c.id)} onClick={() => toggle('category', c.id)} />
         ))}
       </Section>
 
-      <Section title="Brand">
+      <Section title={t("Brand")}>
         {BRANDS.map((b) => (
           <FilterRow key={b} label={b} count={CATALOG.filter((i) => i.brand === b).length} active={is('brand', b)} onClick={() => toggle('brand', b)} />
         ))}
       </Section>
 
-      <Section title="Condition">
+      <Section title={t("Condition")}>
         {CONDITIONS.map((c) => (
-          <FilterRow key={c.id} label={c.label} count={CATALOG.filter((i) => i.condition === c.id).length} active={is('condition', c.id)} onClick={() => toggle('condition', c.id)} />
+          <FilterRow key={c.id} label={t(c.label)} count={CATALOG.filter((i) => i.condition === c.id).length} active={is('condition', c.id)} onClick={() => toggle('condition', c.id)} />
         ))}
       </Section>
 
-      <Section title="Price">
+      <Section title={t("Price")}>
         {PRICE_BANDS.map((p) => (
           <FilterRow key={p.id} label={p.label} count={CATALOG.filter((i) => p.test(i.msrpCents)).length} active={is('price', p.id)} onClick={() => toggle('price', p.id)} />
         ))}

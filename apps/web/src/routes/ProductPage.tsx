@@ -12,8 +12,10 @@ import { PulseDot } from '@/components/store/SyncHeartbeat';
 import { ProductGrid } from '@/components/store/ProductGrid';
 import { formatInt, formatUsd } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 
 export default function ProductPage() {
+  const { t } = useI18n();
   const { slug } = useParams<{ slug: string }>();
   const item = slug ? getItemBySlug(slug) : undefined;
   const { tier: storedTier } = useTier();
@@ -33,10 +35,10 @@ export default function ProductPage() {
   if (!item) {
     return (
       <div className="container flex flex-col items-center gap-4 py-24 text-center">
-        <h1 className="font-display text-2xl font-semibold">Phone not found</h1>
-        <p className="text-muted-foreground">That model isn’t in the catalog.</p>
+        <h1 className="font-display text-2xl font-semibold">{t('Phone not found')}</h1>
+        <p className="text-muted-foreground">{t('That model isn’t in the catalog.')}</p>
         <Link to="/catalog" className="text-sm font-medium text-brand hover:underline">
-          Back to catalog
+          {t('Back to catalog')}
         </Link>
       </div>
     );
@@ -153,10 +155,10 @@ export default function ProductPage() {
 
           {/* Quantity + volume break */}
           <div className="mt-6">
-            <span className="mb-2 block text-sm font-medium">Quantity</span>
+            <span className="mb-2 block text-sm font-medium">{t('Quantity')}</span>
             <div className="flex items-center gap-3">
               <div className="inline-flex items-center rounded-full border border-border">
-                <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="grid h-11 w-11 place-items-center rounded-l-full hover:bg-muted" aria-label="Decrease">
+                <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="grid h-11 w-11 place-items-center rounded-l-full hover:bg-muted" aria-label={t("Decrease")}>
                   <Minus className="h-4 w-4" strokeWidth={2} />
                 </button>
                 <input
@@ -164,9 +166,9 @@ export default function ProductPage() {
                   onChange={(e) => setQty(Math.max(1, Math.min(999, Number(e.target.value.replace(/\D/g, '')) || 1)))}
                   inputMode="numeric"
                   className="w-14 bg-transparent text-center font-mono text-sm font-semibold outline-none"
-                  aria-label="Quantity"
+                  aria-label={t("Quantity")}
                 />
-                <button onClick={() => setQty((q) => Math.min(999, q + 1))} className="grid h-11 w-11 place-items-center rounded-r-full hover:bg-muted" aria-label="Increase">
+                <button onClick={() => setQty((q) => Math.min(999, q + 1))} className="grid h-11 w-11 place-items-center rounded-r-full hover:bg-muted" aria-label={t("Increase")}>
                   <Plus className="h-4 w-4" strokeWidth={2} />
                 </button>
               </div>
@@ -179,44 +181,43 @@ export default function ProductPage() {
               </div>
             </div>
             <p className="mt-2.5 text-sm text-muted-foreground">
-              Need a larger quantity? Save it to your{' '}
-              <Link to="/portal/wishlist" className="font-medium text-brand hover:underline">wishlist</Link> to build a
-              bulk order in one go.
+              {t('Need a larger quantity? Save it to your')}{' '}
+              <Link to="/portal/wishlist" className="font-medium text-brand hover:underline">{t('wishlist')}</Link> {t('to build a bulk order in one go.')}
             </p>
           </div>
 
           {/* Actions */}
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Button variant="outline" size="lg" className="flex-1" disabled={soldOut} onClick={addToCart}>
-              Add to cart · {formatUsd(lineTotal)}
+              {t('Add to cart')} · {formatUsd(lineTotal)}
             </Button>
             <Button variant="primary" size="lg" className="flex-1" disabled={soldOut} onClick={buyNow}>
-              {soldOut ? 'Sold out' : 'Reserve & buy'}
+              {soldOut ? t('Sold out') : t('Reserve & buy')}
             </Button>
             <Button
               variant="outline"
               size="lg"
               className="sm:w-12 sm:px-0"
-              aria-label={hasWish(item.id) ? 'Saved to wishlist' : 'Save to wishlist'}
+              aria-label={hasWish(item.id) ? t('Saved to wishlist') : t('Save to wishlist')}
               onClick={() => addWish(item.id, { color, storage, qty })}
             >
               <Heart className={cn('h-5 w-5', hasWish(item.id) && 'fill-brand text-brand')} strokeWidth={2} />
-              <span className="sm:hidden">Save to wishlist</span>
+              <span className="sm:hidden">{t('Save to wishlist')}</span>
             </Button>
           </div>
 
           {/* Availability (sources kept private) */}
           <div className="mt-6 rounded-2xl border border-border p-4">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Availability</h2>
-              <span className="font-mono text-xs text-muted-foreground">{formatInt(available)} in stock</span>
+              <h2 className="text-sm font-semibold">{t('Availability')}</h2>
+              <span className="font-mono text-xs text-muted-foreground">{formatInt(available)} {t('in stock')}</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <PulseDot status={available > 0 ? 'online' : 'degraded'} />
               <span className="text-muted-foreground">
                 {available > 0
-                  ? 'Live stock confirmed and reserved at source — ships in 1–2 business days'
-                  : 'Out of stock — restock in progress'}
+                  ? t('Live stock confirmed and reserved at source — ships in 1–2 business days')
+                  : t('Out of stock — restock in progress')}
               </span>
             </div>
           </div>
@@ -227,10 +228,10 @@ export default function ProductPage() {
               { icon: ShieldCheck, label: '12-month warranty' },
               { icon: Truck, label: 'Ships from US stock' },
               { icon: RotateCcw, label: '30-day returns' },
-            ].map((t) => (
-              <div key={t.label} className="flex flex-col items-center gap-1.5 rounded-xl bg-muted/50 p-3 text-center text-muted-foreground">
-                <t.icon className="h-4 w-4" strokeWidth={1.75} />
-                {t.label}
+            ].map((tr) => (
+              <div key={tr.label} className="flex flex-col items-center gap-1.5 rounded-xl bg-muted/50 p-3 text-center text-muted-foreground">
+                <tr.icon className="h-4 w-4" strokeWidth={1.75} />
+                {t(tr.label)}
               </div>
             ))}
           </div>

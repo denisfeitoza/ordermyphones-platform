@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Search, ShoppingBag, Menu, X, UserRound } from 'lucide-react';
 import { useAuth, useCart, useTier } from '@/store';
+import { useI18n, LangSwitch } from '@/i18n';
 import { Logo } from './Logo';
 import { TierBadge } from './TierBadge';
 import { cn } from '@/lib/utils';
@@ -17,6 +18,7 @@ export function Header() {
   const { unitCount, setOpen } = useCart();
   const { signedIn } = useAuth();
   const { tier } = useTier();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [q, setQ] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
@@ -53,7 +55,7 @@ export function Header() {
                 )
               }
             >
-              {l.label}
+              {t(l.label)}
             </NavLink>
           ))}
         </nav>
@@ -64,38 +66,39 @@ export function Header() {
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              aria-label="Search products"
-              placeholder="Search iPhone, Galaxy, SKU…"
+              aria-label={t("Search products")}
+              placeholder={t("Search iPhone, Galaxy, SKU…")}
               className="h-10 w-full rounded-full border border-border bg-muted/40 pl-9 pr-4 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-brand focus:bg-background"
             />
           </div>
         </form>
 
         <div className="ml-auto flex items-center gap-2 md:ml-0">
+          <LangSwitch className="hidden md:inline-flex" />
           {signedIn && <TierBadge tier={tier} className="hidden sm:inline-flex" />}
           {signedIn ? (
             <Link
               to="/admin"
               className="grid h-10 w-10 place-items-center rounded-full border border-border hover:bg-muted"
-              aria-label="Admin console"
+              aria-label={t("Admin console")}
             >
               <UserRound className="h-[18px] w-[18px]" strokeWidth={2} />
             </Link>
           ) : (
             <Link
               to="/auth/sign-in"
-              aria-label="Sign in"
+              aria-label={t("Sign in")}
               className="inline-flex h-10 items-center gap-1.5 rounded-full border border-border px-2.5 text-sm font-medium hover:bg-muted sm:px-4"
             >
               <UserRound className="h-[18px] w-[18px] sm:hidden" strokeWidth={2} />
-              <span className="hidden sm:inline">Sign in</span>
+              <span className="hidden sm:inline">{t("Sign in")}</span>
             </Link>
           )}
           <button
             type="button"
             onClick={() => setOpen(true)}
             className="relative grid h-10 w-10 place-items-center rounded-full border border-border hover:bg-muted"
-            aria-label="Cart"
+            aria-label={t("Cart")}
           >
             <ShoppingBag className="h-[18px] w-[18px]" strokeWidth={2} />
             {unitCount > 0 && (
@@ -116,8 +119,8 @@ export function Header() {
                 <input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  aria-label="Search products"
-                  placeholder="Search iPhone, Galaxy, SKU…"
+                  aria-label={t("Search products")}
+                  placeholder={t("Search iPhone, Galaxy, SKU…")}
                   className="h-11 w-full rounded-full border border-border bg-muted/40 pl-9 pr-4 text-sm outline-none focus:border-brand focus:bg-background"
                 />
               </div>
@@ -130,13 +133,17 @@ export function Header() {
                   onClick={() => setMenuOpen(false)}
                   className="rounded-xl px-3 py-2.5 text-sm hover:bg-muted"
                 >
-                  {l.label}
+                  {t(l.label)}
                 </Link>
               ))}
             </nav>
+            <div className="flex items-center justify-between border-t border-border pt-3 md:hidden">
+              <span className="px-1 text-xs font-medium text-muted-foreground">{t("Language")}</span>
+              <LangSwitch />
+            </div>
             {signedIn && (
               <div className="flex items-center justify-between border-t border-border pt-3 sm:hidden">
-                <span className="px-1 text-xs font-medium text-muted-foreground">Your pricing tier</span>
+                <span className="px-1 text-xs font-medium text-muted-foreground">{t("Your pricing tier")}</span>
                 <TierBadge tier={tier} />
               </div>
             )}

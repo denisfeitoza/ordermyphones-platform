@@ -8,8 +8,10 @@ import { Stars } from '@/components/ui/Stars';
 import { TierPrice } from './TierPrice';
 import { StockBadge } from './StockBadge';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 
 export function ProductCard({ item }: { item: CatalogItem }) {
+  const { t } = useI18n();
   const { tier } = useTier();
   const { add, setOpen } = useCart();
   const { has, toggleItem } = useWishlist();
@@ -33,7 +35,7 @@ export function ProductCard({ item }: { item: CatalogItem }) {
       <button
         type="button"
         onClick={() => toggleItem(item.id)}
-        aria-label={saved ? 'Remove from wishlist' : 'Save to wishlist'}
+        aria-label={saved ? t('Remove from wishlist') : t('Save to wishlist')}
         aria-pressed={saved}
         className="absolute right-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-full border border-border bg-background/80 backdrop-blur transition-colors hover:bg-background"
       >
@@ -63,7 +65,7 @@ export function ProductCard({ item }: { item: CatalogItem }) {
               <h3 className="truncate font-medium tracking-tight hover:text-brand">{item.model}</h3>
             </Link>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              {storageLabel} · {item.condition === 'cpo' ? 'Certified Pre-Owned' : 'New'}
+              {storageLabel} · {item.condition === 'cpo' ? t('Certified Pre-Owned') : t('New')}
             </p>
           </div>
           <div className="flex shrink-0 -space-x-1 pt-1">
@@ -90,7 +92,7 @@ export function ProductCard({ item }: { item: CatalogItem }) {
               Add to cart
             </Button>
             <Button variant="primary" size="sm" disabled={soldOut} onClick={buyNow}>
-              {soldOut ? 'Sold out' : 'Buy now'}
+              {soldOut ? t('Sold out') : t('Buy now')}
             </Button>
           </div>
         </div>

@@ -6,8 +6,10 @@ import { useCart } from '@/store';
 import { Button } from '@/components/ui/Button';
 import { TierBadge } from './TierBadge';
 import { formatUsd } from '@/lib/format';
+import { useI18n } from '@/i18n';
 
 export function CartDrawer() {
+  const { t } = useI18n();
   const { open, setOpen, lines, unitCount, effectiveTier, subtotalCents, savingsCents, setQty, remove } = useCart();
   const navigate = useNavigate();
 
@@ -32,7 +34,7 @@ export function CartDrawer() {
           <button
             className="absolute inset-0 cursor-default bg-foreground/40 backdrop-blur-sm"
             onClick={() => setOpen(false)}
-            aria-label="Close cart"
+            aria-label={t("Close cart")}
           />
           <motion.aside
             className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-background shadow-2xl"
@@ -43,7 +45,7 @@ export function CartDrawer() {
           >
             <header className="flex items-center justify-between border-b border-border px-5 py-4">
               <div className="flex items-center gap-2">
-                <h2 className="font-display text-lg font-semibold tracking-tight">Your cart</h2>
+                <h2 className="font-display text-lg font-semibold tracking-tight">{t('Your cart')}</h2>
                 {unitCount > 0 && <span className="font-mono text-sm text-muted-foreground">{unitCount} units</span>}
               </div>
               <button
@@ -61,17 +63,17 @@ export function CartDrawer() {
                   <ShoppingBag className="h-7 w-7 text-muted-foreground" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <p className="font-medium">Your cart is empty</p>
-                  <p className="mt-1 text-sm text-muted-foreground">Add phones and the right tier price is applied automatically.</p>
+                  <p className="font-medium">{t("Your cart is empty")}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{t('Add phones and the right tier price is applied automatically.')}</p>
                 </div>
                 <Button variant="primary" onClick={() => setOpen(false)}>
-                  Browse catalog
+                  {t('Browse catalog')}
                 </Button>
               </div>
             ) : (
               <>
                 <div className="flex items-center justify-between border-b border-border bg-muted/40 px-5 py-3">
-                  <span className="text-xs text-muted-foreground">Your price</span>
+                  <span className="text-xs text-muted-foreground">{t('Your price')}</span>
                   <TierBadge tier={effectiveTier} />
                 </div>
 
@@ -127,20 +129,20 @@ export function CartDrawer() {
                 <footer className="space-y-3 border-t border-border px-5 py-4">
                   {savingsCents > 0 && (
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Tier savings vs retail</span>
+                      <span className="text-muted-foreground">{t('Tier savings vs retail')}</span>
                       <span className="font-mono font-medium text-success">−{formatUsd(savingsCents)}</span>
                     </div>
                   )}
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Subtotal</span>
+                    <span className="text-sm text-muted-foreground">{t('Subtotal')}</span>
                     <span className="font-mono text-xl font-semibold tabular-nums">{formatUsd(subtotalCents)}</span>
                   </div>
                   <Button variant="primary" size="lg" className="w-full" onClick={checkout}>
-                    Reserve &amp; checkout
+                    {t('Reserve & checkout')}
                     <ArrowRight className="h-4 w-4" strokeWidth={2} />
                   </Button>
                   <p className="text-center text-xs text-muted-foreground">
-                    Stock reserved at the source on checkout · taxes at next step
+                    {t('Stock reserved at the source on checkout · taxes at next step')}
                   </p>
                 </footer>
               </>

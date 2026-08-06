@@ -4,8 +4,10 @@ import { Mail } from 'lucide-react';
 import { useAuth } from '@/store';
 import { AuthLayout, AuthField, PasswordField } from '@/components/auth/AuthLayout';
 import { Button } from '@/components/ui/Button';
+import { useI18n } from '@/i18n';
 
 export default function SignInPage() {
+  const { t } = useI18n();
   const { signedIn, signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,9 +28,9 @@ export default function SignInPage() {
       subtitle="One console for your orders, tiers, inventory, and the live bots."
       footer={
         <>
-          New to OrderMyPhones?{' '}
+          {t('New to OrderMyPhones?')}{' '}
           <Link to="/auth/sign-up" className="font-medium text-brand hover:underline">
-            Create an account
+            {t('Create an account')}
           </Link>
         </>
       }
@@ -46,19 +48,19 @@ export default function SignInPage() {
           <PasswordField label="Password" required autoComplete="current-password" placeholder="••••••••" hint="Demo — any password works." />
           <div className="mt-1.5 text-right">
             <Link to="/auth/reset" className="text-xs text-muted-foreground hover:text-foreground">
-              Forgot password?
+              {t('Forgot password?')}
             </Link>
           </div>
         </div>
 
         <Button type="submit" size="lg" className="w-full">
-          Sign in
+          {t('Sign in')}
         </Button>
       </form>
 
       <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
         <span className="h-px flex-1 bg-border" />
-        or
+        {t('or')}
         <span className="h-px flex-1 bg-border" />
       </div>
 
@@ -70,7 +72,7 @@ export default function SignInPage() {
         onClick={() => navigate(`/auth/callback?email=${encodeURIComponent(email)}&from=${encodeURIComponent(from)}`)}
       >
         <Mail className="h-4 w-4" strokeWidth={2} />
-        Email me a magic link
+        {t('Email me a magic link')}
       </Button>
     </AuthLayout>
   );
