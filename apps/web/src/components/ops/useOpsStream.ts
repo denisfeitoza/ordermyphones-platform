@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { SupplierCode } from '@shared/supplier';
-import { CATALOG, SUPPLIER_NAMES, totalAvailable } from '@/data/catalog';
+import { CATALOG, SOURCE_LABELS, totalAvailable } from '@/data/catalog';
 import { resolveTierByUnits } from '@/data/tiers';
 
 export type LogKind = 'sync' | 'cross' | 'reserve' | 'dispatch' | 'price';
@@ -41,7 +41,7 @@ function newOrder(): LiveOrder {
 function makeEvent(idRef: { current: number }): LogEvent {
   const item = rand(CATALOG);
   const supplier: SupplierCode = rand(item.stock).supplier;
-  const name = SUPPLIER_NAMES[supplier];
+  const name = SOURCE_LABELS[supplier];
   const kind = rand<LogKind>(['sync', 'cross', 'reserve', 'dispatch', 'price']);
   const id = idRef.current++;
   const time = nowTime();
