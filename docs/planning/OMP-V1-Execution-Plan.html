@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OMP · v1.0 — Plano de Execução</title>
+<style>
+  :root{
+    --bg:#08090c; --bg2:#0f1116; --panel:#12151d; --panel2:#171b24;
+    --border:#262c38; --border2:#333b49; --text:#e8ebf1; --muted:#8b93a4; --faint:#5b6473;
+    --brand:#c46bff; --brand2:#5cc8ff;
+    --ok:#22c07a; --warn:#f2b23c; --hot:#ff9f5c; --red:#ff5d6c; --wire:#2dd4bf;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:radial-gradient(1300px 750px at 78% -6%, #17121f 0%, var(--bg) 56%);
+    color:var(--text);font:15px/1.55 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Inter,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1060px;margin:0 auto;padding:26px 20px 90px}
+  a{color:var(--brand2);text-decoration:none}
+
+  .kicker{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--brand2)}
+  h1{font-size:30px;margin:6px 0 8px;letter-spacing:-.02em;font-weight:800}
+  h1 .a{background:linear-gradient(90deg,var(--brand),var(--brand2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lead{color:var(--muted);max-width:76ch;font-size:15px}
+
+  nav.toc{position:sticky;top:0;z-index:30;background:rgba(8,9,12,.9);backdrop-filter:blur(9px);
+    border-bottom:1px solid var(--border);margin:20px -20px 8px;padding:10px 20px;display:flex;gap:6px;flex-wrap:wrap}
+  nav.toc a{font-size:11.5px;font-weight:700;color:var(--muted);border:1px solid var(--border2);border-radius:999px;padding:5px 10px;white-space:nowrap}
+  nav.toc a:hover{color:var(--text);background:var(--panel2)}
+
+  section{margin:38px 0}
+  h2{font-size:21px;letter-spacing:-.01em;margin:0 0 4px;font-weight:800;display:flex;align-items:center;gap:11px}
+  h2 .n{font-family:ui-monospace,monospace;font-size:12px;color:#0a0b0e;background:linear-gradient(135deg,var(--brand),var(--brand2));border-radius:9px;padding:3px 9px;font-weight:800}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 16px;max-width:80ch}
+
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px 18px;margin:10px 0}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:6px 0}
+  th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:8px 10px;border-bottom:1px solid var(--border2)}
+  td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+  tr:last-child td{border-bottom:0}
+  code{font-family:ui-monospace,monospace;font-size:12px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:1px 6px;color:#c9d4e6}
+  .chip{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border-radius:999px;padding:2px 8px;white-space:nowrap}
+  .c-ok{background:rgba(34,192,122,.15);color:var(--ok)}
+  .c-warn{background:rgba(242,178,60,.16);color:var(--warn)}
+  .c-hot{background:rgba(255,93,108,.15);color:var(--red)}
+  .c-new{background:rgba(196,107,255,.16);color:var(--brand)}
+  .c-later{background:rgba(139,147,164,.15);color:#aeb6c6}
+
+  /* decisões fechadas */
+  .locked{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:11px}
+  .lk{background:var(--panel);border:1px solid rgba(34,192,122,.4);border-radius:14px;padding:13px 15px}
+  .lk b{display:flex;gap:8px;align-items:center;font-size:13.5px;margin-bottom:4px}
+  .lk b::before{content:"✓";color:var(--ok);font-weight:800}
+  .lk span{color:var(--muted);font-size:12.5px;display:block}
+
+  /* preço pipeline */
+  .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:0;margin:12px 0 2px}
+  .step{background:var(--panel2);border:1px solid var(--border2);border-radius:13px;padding:11px 13px;font-size:12.5px;max-width:215px;min-width:158px}
+  .step b{display:block;font-size:12.5px;margin-bottom:3px}
+  .step span{color:var(--muted);font-size:11.5px;line-height:1.45;display:block}
+  .arr{align-self:center;color:var(--brand2);font-weight:800;padding:0 9px;font-size:16px}
+  .step.ok{border-color:rgba(34,192,122,.55)}
+  .step.warn{border-color:rgba(242,178,60,.55)}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+  .half{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+  .half.auto{border-color:rgba(34,192,122,.45)}
+  .half.man{border-color:rgba(242,178,60,.45)}
+  .half b.t{display:block;font-size:14px;margin-bottom:6px}
+  .half ul{margin:0;padding-left:16px;font-size:12.5px;color:#c9cfda}
+  .half li{margin:4px 0}
+  @media(max-width:700px){.split{grid-template-columns:1fr}}
+
+  /* jornadas */
+  .fl-h{display:flex;align-items:center;gap:10px;margin:22px 0 10px}
+  .fl-h .fid{font-family:ui-monospace,monospace;font-size:11px;font-weight:800;color:#0a0b0e;background:linear-gradient(90deg,var(--brand),var(--brand2));border-radius:7px;padding:2px 8px}
+  .fl-h b{font-size:15px}
+  .fnote{font-size:12px;color:var(--faint);margin:7px 0 0}
+
+  /* cronograma */
+  .wk{display:flex;gap:15px;align-items:flex-start;position:relative;padding-bottom:20px}
+  .wk::before{content:"";position:absolute;left:17px;top:38px;bottom:0;width:2px;background:var(--border2)}
+  .wk:last-child::before{display:none}
+  .wnum{flex:0 0 36px;height:36px;border-radius:50%;background:var(--panel2);border:1.6px solid var(--border2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;position:relative;z-index:1}
+  .wk.demo .wnum{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#0a0b0e;border:none}
+  .wbody{flex:1;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px 15px}
+  .wk.demo .wbody{border-color:rgba(196,107,255,.45)}
+  .wbody .mt{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-weight:800;font-size:14px}
+  .wbody ul{margin:6px 0 0;padding-left:17px;font-size:12.5px;color:#c9cfda}
+  .wbody li{margin:3px 0}
+  .demoflag{font-size:10px;font-weight:800;letter-spacing:.05em;background:rgba(196,107,255,.18);color:var(--brand);border-radius:999px;padding:2px 9px}
+
+  /* pré-requisitos */
+  .pre{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:11px}
+  .pr{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:13px 15px}
+  .pr .who{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border-radius:999px;padding:2px 9px;display:inline-block;margin-bottom:6px}
+  .pr .who.you{background:rgba(242,178,60,.16);color:var(--warn)}
+  .pr .who.dev{background:rgba(92,200,255,.14);color:var(--brand2)}
+  .pr b{display:block;font-size:13.5px;margin-bottom:3px}
+  .pr span{color:var(--muted);font-size:12.5px;display:block}
+
+  /* dúvidas */
+  .q{background:linear-gradient(180deg,rgba(196,107,255,.06),transparent 70%);border:1px solid rgba(196,107,255,.3);border-radius:16px;padding:15px 18px;margin:12px 0}
+  .q .qt{font-weight:800;font-size:14.5px;display:flex;gap:9px;align-items:baseline}
+  .q .qt .qn{color:var(--brand);font-family:ui-monospace,monospace;font-size:12px}
+  .q p{color:#c9cfda;font-size:13px;margin:7px 0}
+  .q .opt{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .q .opt span{border:1px dashed var(--border2);border-radius:999px;padding:4px 11px;font-size:12px;color:var(--muted)}
+  .q .opt span.rec{border-style:solid;border-color:rgba(34,192,122,.5);color:var(--ok);font-weight:700}
+  .q .opt span.rec::before{content:"★ ";font-size:10px}
+
+  .callout{background:linear-gradient(180deg,rgba(92,200,255,.06),transparent);border:1px solid rgba(92,200,255,.3);border-radius:14px;padding:13px 16px;font-size:13px;color:#c9cfda;margin:12px 0}
+  .callout b{color:var(--brand2)}
+  footer{margin-top:46px;border-top:1px solid var(--border);padding-top:16px;color:var(--faint);font-size:12px}
+  @media(max-width:640px){h1{font-size:23px}.step{max-width:none;flex:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">OrderMyPhones · Release 1.0</div>
+  <h1>v1.0 — <span class="a">Plano de Execução</span></h1>
+  <p class="lead">Versão mínima <b>funcional e manual</b>: banco e login reais, importa/exporta planilha, catálogo com fotos,
+  e clientes <b>convidados por link</b> fazendo pedido pelo portal — sem pagamento online, sem nenhuma API externa, sem bot.
+  Este documento fecha as decisões já tomadas, mostra como o preço funciona <b>sem API</b>, o cronograma de 4 semanas,
+  o que precisamos de cada lado, e as dúvidas que ainda faltam bater o martelo.</p>
+</header>
+
+<nav class="toc">
+  <a href="#s1">1 · Decisões fechadas</a>
+  <a href="#s2">2 · Preço sem API</a>
+  <a href="#s3">3 · Jornadas</a>
+  <a href="#s4">4 · Cronograma</a>
+  <a href="#s5">5 · Pré-requisitos</a>
+  <a href="#s6">6 · Dúvidas restantes</a>
+</nav>
+
+<!-- ========== 1 ========== -->
+<section id="s1">
+  <h2><span class="n">1</span> Decisões fechadas ✓</h2>
+  <p class="sub">O que já está batido e não se discute mais nesta versão.</p>
+  <div class="locked">
+    <div class="lk"><b>Preço segue o documento do Pricing Engine</b><span>Nada de modelo inventado: usamos o waterfall do documento oficial (bandas por tier, floors, flags). Detalhe de como ele roda sem API na seção 2.</span></div>
+    <div class="lk"><b>Conta só por convite — você escolhe o tier</b><span>Sem cadastro aberto. Você convida por e-mail, o tier já vai atribuído no convite. Ninguém de fora vê preço nenhum.</span></div>
+    <div class="lk"><b>QPay é cliente normal</b><span>Pede pelo portal como qualquer conta (tier atacado). Sem Excel especial, sem integração, sem foco extra.</span></div>
+    <div class="lk"><b>Zero API externa na v1.0</b><span>Sem bot de e-mail, sem Mannapov, sem APIs de comps, sem Stripe. Estoque entra e sai por planilha; pagamento é faturado por fora.</span></div>
+    <div class="lk"><b>Supabase: você prepara</b><span>Você limpa o projeto Supabase e me passa o acesso. Não crio nada lá antes disso.</span></div>
+    <div class="lk"><b>Interface em inglês · USD</b><span>Consistente com o mockup e com quem opera. Já decidido no mapeamento.</span></div>
+  </div>
+</section>
+
+<!-- ========== 2 ========== -->
+<section id="s2">
+  <h2><span class="n">2</span> Como o preço funciona sem API</h2>
+  <p class="sub">A descoberta que destrava a v1: no documento do engine, <b>os tiers de atacado não dependem de mercado</b> — são custo + banda fixa. E o custo já vem na planilha da HYLA. Ou seja: o preço pros seus clientes atuais (atacado/dealer) sai <b>automático no import</b>, fiel ao documento.</p>
+
+  <div class="flow">
+    <div class="step"><b>1 · Planilha entra</b><span>Import da HYLA traz o custo real de cada SKU</span></div>
+    <div class="arr">→</div>
+    <div class="step ok"><b>2 · T3/T4 automático</b><span>Wholesale: custo + $7–15 · Distributor: custo + $3–6 (bandas do documento)</span></div>
+    <div class="arr">→</div>
+    <div class="step warn"><b>3 · T1/T2 assistido</b><span>Consumer/Retailer dependem de benchmark — na v1: planilha de comps ou preço manual</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>4 · Flags</b><span>Sem margem → sinaliza e não ativa (regra do documento, mantida)</span></div>
+    <div class="arr">→</div>
+    <div class="step ok"><b>5 · Publicado</b><span>Cada cliente vê só o preço do tier dele</span></div>
+  </div>
+
+  <div class="split">
+    <div class="half auto">
+      <b class="t">🟢 Automático desde o dia 1</b>
+      <ul>
+        <li><b>Tier 3 (Wholesale)</b> e <b>Tier 4 (Distributor)</b> — cost-plus puro, calculado no import</li>
+        <li>Floors de margem do documento aplicados</li>
+        <li>Regra de ordem: custo &lt; T4 &lt; T3 sempre validada</li>
+        <li>É o preço que a QPay e os dealers veem</li>
+      </ul>
+    </div>
+    <div class="half man">
+      <b class="t">🟡 Assistido (até as APIs chegarem na v1.1)</b>
+      <ul>
+        <li><b>Tier 1 (Consumer)</b> — benchmark por planilha de comps ou valor manual por SKU</li>
+        <li><b>Tier 2 (Retailer)</b> — derivado do T1 (− $20, regra do documento)</li>
+        <li>Sem comps e sem manual → SKU fica oculto de T1/T2 (nunca chuta preço)</li>
+        <li>Override manual com registro de quem/quando, como no documento</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">💡 Tradução prática: <b>na v1.0 seus clientes de atacado já compram com preço certo automático</b>. O preço de consumidor final (que precisa de mercado) entra assistido agora e vira automático quando as chaves de API forem assinadas — sem mudar nada do que foi construído.</div>
+</section>
+
+<!-- ========== 3 ========== -->
+<section id="s3">
+  <h2><span class="n">3</span> As três jornadas da v1.0</h2>
+  <p class="sub">Todo o sistema se resume a estas três sequências. Amarelo = revisão humana · verde = ação que grava.</p>
+
+  <div class="fl-h"><span class="fid">J1</span><b>Você convida → cliente cria conta → faz pedido</b></div>
+  <div class="flow">
+    <div class="step"><b>1 · Convite</b><span>Admin: e-mail + tier + nome da empresa → sistema envia o link</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>2 · Conta</b><span>Cliente abre o link, define a senha — tier já vem atribuído</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>3 · Catálogo</b><span>Vê produtos publicados com o preço DO TIER DELE (só ele)</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>4 · Pedido</b><span>Carrinho → endereço de envio → "Enviar pedido" (sem pagamento)</span></div>
+    <div class="arr">→</div>
+    <div class="step warn"><b>5 · Aguardando 👀</b><span>Pedido nasce "aguardando aprovação" no seu admin</span></div>
+  </div>
+
+  <div class="fl-h"><span class="fid">J2</span><b>Você aprova → estoque abate → envia</b></div>
+  <div class="flow">
+    <div class="step warn"><b>1 · Revisar 👀</b><span>Admin vê o pedido: itens, tier, total, endereço, estoque disponível</span></div>
+    <div class="arr">→</div>
+    <div class="step ok"><b>2 · Aprovar ✓</b><span>Estoque abate (transação) · cliente vê status mudar no portal</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>3 · Separar</b><span>Romaneio de separação/envio com endereço</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>4 · Enviar</b><span>Marca "enviado" (+ tracking manual opcional) · faturamento por fora</span></div>
+  </div>
+  <p class="fnote"><b>Recusar</b> também existe: pedido negado devolve qualquer reserva e notifica o cliente com motivo.</p>
+
+  <div class="fl-h"><span class="fid">J3</span><b>Planilha entra → estoque atualiza → planilha sai</b></div>
+  <div class="flow">
+    <div class="step"><b>1 · Upload</b><span>Planilha HYLA (ou CSV nosso) no wizard</span></div>
+    <div class="arr">→</div>
+    <div class="step warn"><b>2 · Dry-run 👀</b><span>Prévia com aceitos/rejeitados e motivo por linha</span></div>
+    <div class="arr">→</div>
+    <div class="step ok"><b>3 · Confirmar ✓</b><span>Estoque + custos atualizados · T3/T4 reprecificados na hora</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>4 · Exportar</b><span>CSV/Excel do estoque a qualquer momento (round-trip)</span></div>
+  </div>
+</section>
+
+<!-- ========== 4 ========== -->
+<section id="s4">
+  <h2><span class="n">4</span> Cronograma — 4 semanas</h2>
+  <p class="sub">Cada semana fecha com algo demonstrável. A ordem prioriza o que destrava demonstração e clientes reais o quanto antes.</p>
+
+  <div class="wk demo">
+    <div class="wnum">S1</div>
+    <div class="wbody">
+      <div class="mt">Fundação + estoque real <span class="demoflag">🔴 DEMO VIVA</span></div>
+      <ul>
+        <li>Migrations + RLS no Supabase (assim que você liberar o projeto limpo)</li>
+        <li>Login real (admin/staff) — telas do mockup ligadas no Auth</li>
+        <li>Import wizard com a planilha real da HYLA → estoque + custo no banco</li>
+        <li><b>Demo de sexta:</b> logar de verdade e ver 2.6xx SKUs com estoque real na tela</li>
+      </ul>
+    </div>
+  </div>
+  <div class="wk">
+    <div class="wnum">S2</div>
+    <div class="wbody">
+      <div class="mt">Catálogo + preço automático</div>
+      <ul>
+        <li>CRUD de produto: criar/editar, fotos (upload), descrição, publicar</li>
+        <li>Pricing do documento rodando no import: T3/T4 automáticos + flags</li>
+        <li>Tela de preço: ver os 4 tiers por SKU, comps por planilha, override T1/T2</li>
+        <li>Export CSV/Excel round-trip</li>
+      </ul>
+    </div>
+  </div>
+  <div class="wk">
+    <div class="wnum">S3</div>
+    <div class="wbody">
+      <div class="mt">Convites + pedido do cliente</div>
+      <ul>
+        <li>Convite por e-mail com tier atribuído · cliente define senha e entra</li>
+        <li>Catálogo logado com preço do tier · carrinho · endereço · "Enviar pedido"</li>
+        <li>Portal do cliente: meus pedidos + status (telas do mockup, dado real)</li>
+        <li>Admin: fila de pedidos → aprovar (abate) / recusar → romaneio → enviado</li>
+      </ul>
+    </div>
+  </div>
+  <div class="wk">
+    <div class="wnum">S4</div>
+    <div class="wbody">
+      <div class="mt">Fechamento + operação assistida</div>
+      <ul>
+        <li>Configurações: usuários, locais, mapa de grades, parâmetros de preço</li>
+        <li>Auditoria ponta a ponta + testes dos critérios de "pronto" (documento anterior)</li>
+        <li>Convites reais: QPay e primeiros dealers entram</li>
+        <li>Semana de operação acompanhada — eu junto, ajustando o que aparecer</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 5 ========== -->
+<section id="s5">
+  <h2><span class="n">5</span> Pré-requisitos — quem entrega o quê</h2>
+  <p class="sub">Curto e honesto: o que eu preciso receber de você, e o que já está do meu lado.</p>
+  <div class="pre">
+    <div class="pr"><span class="who you">Você / Abdu</span><b>Projeto Supabase limpo</b><span>Você limpa e me passa acesso (ou o ref do projeto). É o único bloqueio do início da S1.</span></div>
+    <div class="pr"><span class="who you">Você / Abdu</span><b>Planilha HYLA do dia</b><span>Já tenho uma real (provada). Pra operar, o Abdu segue baixando a diária e subindo — 3 min/dia.</span></div>
+    <div class="pr"><span class="who you">Você / Abdu</span><b>Parâmetros de preço confirmados</b><span>As bandas/floors do documento valem como estão? Se o Abdu quiser mexer em algum número, é config — mas melhor fixar antes da S2.</span></div>
+    <div class="pr"><span class="who you">Você / Abdu</span><b>Lista dos primeiros convidados</b><span>E-mail + empresa + tier de cada cliente (QPay inclusa) — usada na S3/S4.</span></div>
+    <div class="pr"><span class="who dev">Meu lado</span><b>UI pronta + parser provado</b><span>Mockup completo, leitor da HYLA validado com 2.675 linhas, schema desenhado, deploy no ar.</span></div>
+    <div class="pr"><span class="who dev">Meu lado</span><b>E-mail de convite</b><span>v1 usa o e-mail nativo do Supabase (suficiente pra poucos convites). Remetente próprio bonito fica pra depois.</span></div>
+  </div>
+</section>
+
+<!-- ========== 6 ========== -->
+<section id="s6">
+  <h2><span class="n">6</span> Dúvidas restantes — as últimas antes de codar</h2>
+  <p class="sub">Cinco pontos novos que surgiram com as decisões de hoje. Recomendação marcada com ★.</p>
+
+  <div class="q">
+    <div class="qt"><span class="qn">D1</span> 📦 Quando o estoque abate: no pedido ou na aprovação?</div>
+    <p>Cliente pediu 20 unidades. Se abater só quando você aprovar, dois clientes podem pedir o mesmo estoque ao mesmo tempo. Se reservar já no pedido, o estoque "some" da vitrine até você decidir.</p>
+    <div class="opt"><span class="rec">Reserva no pedido + confirma na aprovação (recusa devolve) — ninguém compra o que já foi pedido</span><span>Abate só na aprovação</span><span>Abate direto no pedido, sem aprovação</span></div>
+  </div>
+
+  <div class="q">
+    <div class="qt"><span class="qn">D2</span> 👀 O que o cliente vê de estoque?</div>
+    <p>Mostrar quantidade exata revela seu inventário ao mercado (a QPay veria tudo). Alternativas: faixas ("em estoque / poucas unidades") ou número exato limitado.</p>
+    <div class="opt"><span class="rec">Faixas: "em estoque · restam poucas · esgotado" — sem número exato</span><span>Número exato até um teto (ex.: "50+")</span><span>Número exato sempre</span></div>
+  </div>
+
+  <div class="q">
+    <div class="qt"><span class="qn">D3</span> 🔢 Quantidade mínima e múltiplos por tier?</div>
+    <p>O documento de tiers define faixas (T3: 50–399 un., etc.) e o atacado opera em múltiplos de 5. O portal deve impor isso no carrinho?</p>
+    <div class="opt"><span class="rec">Mínimo por tier sim; múltiplo de 5 como aviso (não trava)</span><span>Tudo trava dura</span><span>Livre, você filtra na aprovação</span></div>
+  </div>
+
+  <div class="q">
+    <div class="qt"><span class="qn">D4</span> 🚚 Frete no pedido?</div>
+    <p>Sem API de frete na v1. O pedido fecha sem valor de frete (combinado por fora, como hoje) ou com um campo manual que você preenche na aprovação?</p>
+    <div class="opt"><span class="rec">Sem frete no sistema na v1 — combinado por fora (como já é hoje)</span><span>Campo manual na aprovação</span></div>
+  </div>
+
+  <div class="q">
+    <div class="qt"><span class="qn">D5</span> 🌐 Onde a v1 roda?</div>
+    <p>Hoje o site público está no Vercel (com o mockup). A v1 real pode subir no mesmo endereço (substituindo o mockup) ou num endereço separado (ex.: <code>app.</code>) mantendo o site de demonstração intacto.</p>
+    <div class="opt"><span class="rec">Mesmo endereço — o mockup VIRA o sistema (é a mesma UI ganhando vida)</span><span>Endereço separado app.ordermyphones…</span></div>
+  </div>
+
+  <div class="callout">✅ Respondidas as 5, começo a S1 no momento em que o Supabase limpo chegar. As respostas podem vir por áudio mesmo — eu atualizo este documento e travo tudo na seção 1.</div>
+</section>
+
+<footer>
+  OMP · v1.0 Plano de Execução — decisões de 27/07 incorporadas (preço = documento do Pricing Engine · convite com tier · QPay como cliente comum · zero API) · complementa o Mapeamento v1 (telas, fluxos e critérios de pronto).
+</footer>
+
+</div>
+</body>
+</html>
