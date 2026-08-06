@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OMP · v1 Operação Manual — Mapeamento</title>
+<style>
+  :root{
+    --bg:#08090c; --bg2:#0f1116; --panel:#12151d; --panel2:#171b24;
+    --border:#262c38; --border2:#333b49; --text:#e8ebf1; --muted:#8b93a4; --faint:#5b6473;
+    --brand:#c46bff; --brand2:#5cc8ff;
+    --ok:#22c07a; --warn:#f2b23c; --hot:#ff9f5c; --red:#ff5d6c; --wire:#2dd4bf;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:radial-gradient(1200px 700px at 75% -5%, #16121f 0%, var(--bg) 55%);
+    color:var(--text);font:15px/1.55 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Inter,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:26px 20px 90px}
+  a{color:var(--brand2);text-decoration:none} a:hover{text-decoration:underline}
+
+  /* topo */
+  header.hero{padding:14px 0 6px}
+  .kicker{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--brand2)}
+  h1{font-size:30px;margin:6px 0 8px;letter-spacing:-.02em;font-weight:800}
+  h1 .a{background:linear-gradient(90deg,var(--brand),var(--brand2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lead{color:var(--muted);max-width:74ch;font-size:15px}
+  .princ{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 4px}
+  .princ span{background:var(--panel);border:1px solid var(--border2);border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:700}
+  .princ b{color:var(--brand2)}
+
+  /* nav sticky */
+  nav.toc{position:sticky;top:0;z-index:30;background:rgba(8,9,12,.88);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border);margin:18px -20px 8px;padding:10px 20px;display:flex;gap:6px;flex-wrap:wrap}
+  nav.toc a{font-size:12px;font-weight:700;color:var(--muted);border:1px solid var(--border2);
+    border-radius:999px;padding:5px 11px;white-space:nowrap}
+  nav.toc a:hover{color:var(--text);background:var(--panel2);text-decoration:none}
+
+  section{margin:34px 0}
+  h2{font-size:21px;letter-spacing:-.01em;margin:0 0 4px;font-weight:800;display:flex;align-items:center;gap:10px}
+  h2 .n{font-family:ui-monospace,monospace;font-size:13px;color:var(--brand2);background:var(--panel);
+    border:1px solid var(--border2);border-radius:8px;padding:2px 8px}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 16px;max-width:78ch}
+  h3{font-size:15px;margin:20px 0 8px;font-weight:800}
+
+  /* cards e tabelas */
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px 18px;margin:10px 0}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:8px 0}
+  th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:8px 10px;border-bottom:1px solid var(--border2)}
+  td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+  tr:last-child td{border-bottom:0}
+  td b{font-weight:700}
+  .chip{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+    border-radius:999px;padding:2px 8px;white-space:nowrap}
+  .c-ok{background:rgba(34,192,122,.15);color:var(--ok)}
+  .c-wire{background:rgba(45,212,191,.15);color:var(--wire)}
+  .c-new{background:rgba(196,107,255,.16);color:var(--brand)}
+  .c-later{background:rgba(139,147,164,.15);color:#aeb6c6}
+  .c-warn{background:rgba(242,178,60,.16);color:var(--warn)}
+  .eff{display:inline-block;font-size:10px;font-weight:800;border:1px solid var(--border2);background:var(--panel2);
+    color:var(--muted);border-radius:6px;padding:2px 7px}
+
+  /* telas */
+  .screens{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+  .scr{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:15px 16px;display:flex;flex-direction:column;gap:8px}
+  .scr:hover{border-color:var(--border2)}
+  .scr .t{display:flex;align-items:center;gap:9px;font-weight:800;font-size:14.5px}
+  .scr .t .id{font-family:ui-monospace,monospace;font-size:11px;color:#0a0b0e;background:linear-gradient(90deg,var(--brand),var(--brand2));
+    border-radius:7px;padding:2px 7px;font-weight:800}
+  .scr .p{color:var(--muted);font-size:12.5px;margin:0}
+  .scr ul{margin:2px 0 0;padding-left:17px;font-size:12.5px;color:#c9cfda}
+  .scr ul li{margin:3px 0}
+  .scr .foot{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:6px}
+
+  /* fluxos */
+  .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:0;margin:12px 0 4px}
+  .step{background:var(--panel2);border:1px solid var(--border2);border-radius:12px;padding:10px 13px;
+    font-size:12.5px;max-width:200px;min-width:150px;position:relative}
+  .step b{display:block;font-size:12.5px;margin-bottom:3px}
+  .step span{color:var(--muted);font-size:11.5px;line-height:1.45;display:block}
+  .arr{align-self:center;color:var(--brand2);font-weight:800;padding:0 9px;font-size:16px}
+  .step.warn{border-color:rgba(242,178,60,.5)}
+  .step.ok{border-color:rgba(34,192,122,.5)}
+  .fnote{font-size:12px;color:var(--faint);margin:6px 0 0}
+
+  /* discussão */
+  .q{background:linear-gradient(180deg,rgba(196,107,255,.06),transparent 70%);border:1px solid rgba(196,107,255,.3);
+    border-radius:16px;padding:15px 18px;margin:12px 0}
+  .q .qt{font-weight:800;font-size:14.5px;display:flex;gap:9px;align-items:baseline}
+  .q .qt .qn{color:var(--brand);font-family:ui-monospace,monospace;font-size:12px}
+  .q p{color:#c9cfda;font-size:13px;margin:7px 0}
+  .q .opt{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .q .opt span{border:1px dashed var(--border2);border-radius:999px;padding:4px 11px;font-size:12px;color:var(--muted)}
+  .q .opt span.rec{border-style:solid;border-color:rgba(34,192,122,.5);color:var(--ok);font-weight:700}
+
+  code{font-family:ui-monospace,monospace;font-size:12px;background:var(--panel2);border:1px solid var(--border);
+    border-radius:6px;padding:1px 6px;color:#c9d4e6}
+  .legend{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0;font-size:11.5px;color:var(--muted)}
+  footer{margin-top:44px;border-top:1px solid var(--border);padding-top:16px;color:var(--faint);font-size:12px}
+  @media(max-width:640px){ h1{font-size:23px} .screens{grid-template-columns:1fr} .step{max-width:none;flex:1} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="kicker">OrderMyPhones · Release 1</div>
+  <h1>v1 — <span class="a">Operação Manual</span> · Mapeamento Completo</h1>
+  <p class="lead">A primeira versão <b>operável de verdade</b>: login real, catálogo com produtos e imagens, estoque funcional,
+  importação e exportação por planilha, entrada de pedidos e precificação. Onde ainda não há automação, a operação é
+  <b>manual por desenho</b> — o operador faz upload, revisa e confirma. A automação (bots, APIs, agendamentos) chega nas releases seguintes
+  <b>sem retrabalho</b>, porque cada fluxo manual já usa o mesmo pipeline que o automático usará.</p>
+  <div class="princ">
+    <span>⚡ <b>Velocidade:</b> algo vivo primeiro</span>
+    <span>✋ <b>Manual-primeiro:</b> upload &gt; integração</span>
+    <span>📦 <b>Dado real:</b> planilhas de verdade</span>
+    <span>🎨 <b>Mockup reaproveitado:</b> UI já existe</span>
+    <span>🔁 <b>Mesmo pipeline:</b> manual hoje, bot amanhã</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <a href="#s1">1 · Mockup → Real</a>
+  <a href="#s2">2 · Telas</a>
+  <a href="#s3">3 · Fluxos</a>
+  <a href="#s4">4 · Dados</a>
+  <a href="#s5">5 · Manual → Automático</a>
+  <a href="#s6">6 · Ordem de construção</a>
+  <a href="#s7">7 · Para discutir</a>
+</nav>
+
+<!-- ============ 1 ============ -->
+<section id="s1">
+  <h2><span class="n">1</span> O que o mockup já dá — e o que a v1 torna real</h2>
+  <p class="sub">O mockup no ar é a casca visual completa. A v1 não redesenha nada: ela troca o dado falso por dado real, área por área. O que a v1 não cobre continua como demonstração visual, sem atrapalhar.</p>
+  <div class="card">
+  <table>
+    <tr><th>Área</th><th>Mockup hoje</th><th>Na v1</th><th></th></tr>
+    <tr><td><b>Login / Auth</b></td><td>Sessão fake (localStorage)</td><td>Supabase Auth real, papéis admin/staff, convite por e-mail</td><td><span class="chip c-new">real na v1</span></td></tr>
+    <tr><td><b>Catálogo (admin)</b></td><td>Lista fixa de ~10 aparelhos</td><td>CRUD completo: criar produto, variantes, imagens, descrição, publicar</td><td><span class="chip c-new">real na v1</span></td></tr>
+    <tr><td><b>Estoque</b></td><td>Números decorativos</td><td>Quantidade real por variante × local, movimentos auditados, ajuste manual</td><td><span class="chip c-new">real na v1</span></td></tr>
+    <tr><td><b>Import / Export</b></td><td>Não existe</td><td>Wizard de import (HYLA .xls + CSV canônico) com dry-run; export completo</td><td><span class="chip c-new">real na v1</span></td></tr>
+    <tr><td><b>Pedidos (entrada QPay)</b></td><td>Não existe</td><td>Upload do Excel de pedido → valida → abate estoque → gera romaneio</td><td><span class="chip c-new">real na v1</span></td></tr>
+    <tr><td><b>Precificação</b></td><td>Desconto fake por tier</td><td>Engine v2 portado (waterfall + flags), rodado por botão, comps por planilha/API</td><td><span class="chip c-new">real na v1</span></td></tr>
+    <tr><td><b>Storefront público</b></td><td>Vitrine completa (visual)</td><td>Continua vitrine — checkout real fica pra v2</td><td><span class="chip c-later">v2</span></td></tr>
+    <tr><td><b>Portal do cliente</b></td><td>Portal completo (visual)</td><td>Continua demonstração — dados reais na v2</td><td><span class="chip c-later">v2</span></td></tr>
+    <tr><td><b>Stripe / pagamento</b></td><td>Shell visual</td><td>Fora da v1 (pedidos QPay são faturados fora do sistema)</td><td><span class="chip c-later">v2</span></td></tr>
+    <tr><td><b>Bots (HYLA e-mail/2FA, APIs)</b></td><td>—</td><td>Fora da v1 — o mesmo import vira automático depois</td><td><span class="chip c-later">v1.1+</span></td></tr>
+  </table>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section id="s2">
+  <h2><span class="n">2</span> Mapa de telas da v1</h2>
+  <p class="sub">Dez telas. As marcadas <span class="chip c-wire">wire</span> já existem no mockup e só ganham dado real; as <span class="chip c-new">nova</span> são construídas na v1. Esforço relativo: <span class="eff">S</span> <span class="eff">M</span> <span class="eff">L</span>.</p>
+
+  <div class="screens">
+
+    <div class="scr">
+      <div class="t"><span class="id">T1</span> Login &amp; Acesso</div>
+      <p class="p">Entrada única do sistema. Sem cadastro aberto — usuários são convidados.</p>
+      <ul>
+        <li>E-mail + senha (Supabase Auth) e magic link</li>
+        <li>Papéis: <b>admin</b> (tudo) · <b>staff</b> (opera, não configura)</li>
+        <li>Convite por e-mail, troca e reset de senha</li>
+        <li>Toda ação grava autor no log de auditoria</li>
+      </ul>
+      <div class="foot"><span class="chip c-new">nova</span><span class="eff">M</span></div>
+    </div>
+
+    <div class="scr">
+      <div class="t"><span class="id">T2</span> Dashboard</div>
+      <p class="p">Visão do dia em uma tela: o que tenho, o que saiu, o que precisa de atenção.</p>
+      <ul>
+        <li>Unidades em estoque · valor de custo total · SKUs ativos</li>
+        <li>Alertas: estoque baixo, itens sinalizados pelo pricing</li>
+        <li>Últimos imports e últimos pedidos</li>
+        <li>Atalhos: importar estoque · novo produto · subir pedido</li>
+      </ul>
+      <div class="foot"><span class="chip c-wire">wire</span><span class="eff">S</span></div>
+    </div>
+
+    <div class="scr">
+      <div class="t"><span class="id">T3</span> Produtos (lista)</div>
+      <p class="p">Catálogo administrável — busca, filtro e status de publicação.</p>
+      <ul>
+        <li>Busca por nome/SKU/model number</li>
+        <li>Filtros: marca, categoria, condição, status</li>
+        <li>Colunas: imagem, produto, variantes, estoque, status</li>
+        <li>Ações em massa: publicar / despublicar / arquivar</li>
+      </ul>
+      <div class="foot"><span class="chip c-wire">wire</span><span class="eff">M</span></div>
+    </div>
+
+    <div class="scr">
+      <div class="t"><span class="id">T4</span> Produto (form)</div>
+      <p class="p">Criar e editar produto completo — a tela de "subir produto novo".</p>
+      <ul>
+        <li>Dados: marca, modelo, model number (MPN), categoria, resumo, <b>descrição rica</b></li>
+        <li><b>Imagens:</b> upload múltiplo (Supabase Storage), capa + galeria, arrastar pra ordenar</li>
+        <li><b>Variantes:</b> capacidade, cor, carrier, lock, grade — SKU gerado automático (padrão do catálogo)</li>
+        <li>Status: rascunho → publicado → arquivado</li>
+      </ul>
+      <div class="foot"><span class="chip c-new">nova</span><span class="eff">L</span></div>
+    </div>
+
+    <div class="scr">
+      <div class="t"><span class="id">T5</span> Estoque</div>
+      <p class="p">O coração da v1: quantidade real por variante × local, com histórico auditado.</p>
+      <ul>
+        <li>Grade: SKU · local · qtd disponível · custo unitário · atualizado em</li>
+        <li><b>Ajuste manual</b> com motivo obrigatório (quebra, contagem, devolução…)</li>
+        <li>Histórico de movimentos por SKU (quem, quando, por quê, ±qtd)</li>
+        <li>Locais: Texas / Flórida / Califórnia (config em T10)</li>
+      </ul>
+      <div class="foot"><span class="chip c-new">nova</span><span class="eff">L</span></div>
+    </div>
+
+    <div class="scr">
+      <div class="t"><span class="id">T6</span> Importar estoque</div>
+      <p class="p">Wizard em 3 passos — o mesmo pipeline que o bot usará depois.</p>
+      <ul>
+        <li><b>1.</b> Upload .xls/.xlsx/.csv + escolher perfil (HYLA · CSV canônico · +novos)</li>
+        <li><b>2.</b> <b>Dry-run:</b> prévia com válidos ✅ e rejeitados ❌ (motivo linha a linha)</li>
+        <li><b>3.</b> Confirmar → upsert idempotente (rodar 2× não duplica)</li>
+        <li>Histórico de imports: arquivo, linhas, aceitos/rejeitados, autor</li>
+      </ul>
+      <div class="foot"><span class="chip c-new">nova</span><span class="eff">L</span></div>
+    </div>
+
+    <div class="scr">
+      <div class="t"><span class="id">T7</span> Exportar</div>
+      <p class="p">Estoque pra fora em um clique — round-trip garantido com o import.</p>
+      <ul>
+        <li>CSV canônico completo (com custo — uso interno)</li>
+        <li>Filtros: marca, local, condição, só-com-estoque</li>
+        <li>Formato re-importável sem perda (provado no padrão do catálogo)</li>
+        <li>Excel (.xlsx) opcional pra quem prefere</li>
+      </ul>
+      <div class="foot"><span class="chip c-new">nova</span><span class="eff">S</span></div>
+    </div>
+
+    <div class="scr">
+      <div class="t"><span class="id">T8</span> Pedidos (entrada QPay)</div>
+      <p class="p">Recebe o Excel diário da QPay e transforma em pedido com baixa de estoque.</p>
+      <ul>
+        <li>Upload do Excel de fulfillment (data, PO, SKU, qtd, série, endereço)</li>
+        <li>Validação: SKU existe? estoque cobre? múltiplo de 5?</li>
+        <li>Confirmar → <b>abate estoque</b> + cria pedido + endereço de envio</li>
+        <li>Pedido manual avulso (telefone/WhatsApp) na mesma tela</li>
+        <li>Exportar romaneio de envio (picking/shipping)</li>
+      </ul>
+      <div class="foot"><span class="chip c-new">nova</span><span class="eff">L</span></div>
+    </div>
+
+    <div class="scr">
+      <div class="t"><span class="id">T9</span> Precificação</div>
+      <p class="p">O cérebro (engine v2) portado pra produção — rodado por botão na v1.</p>
+      <ul>
+        <li>Comps: import por planilha (v1) e/ou APIs eBay·Walmart·Amazon quando as chaves chegarem</li>
+        <li>Botão <b>“Rodar precificação”</b> → waterfall: benchmark, kit, floors, 4 tiers</li>
+        <li>Fila de flags: margem abaixo do piso → item <b>não publica</b>, fica pra revisão</li>
+        <li>Override manual com validade + log de quem alterou</li>
+      </ul>
+      <div class="foot"><span class="chip c-new">nova</span><span class="eff">L</span></div>
+    </div>
+
+    <div class="scr">
+      <div class="t"><span class="id">T10</span> Configurações</div>
+      <p class="p">O que o admin ajusta sem mexer em código.</p>
+      <ul>
+        <li>Usuários e papéis (convidar, desativar)</li>
+        <li>Locais de estoque (nome, código)</li>
+        <li>Mapa de grades (vendor → CTIA → visível pra consumidor?)</li>
+        <li>Parâmetros do pricing (floors, kit, margens) — editáveis</li>
+      </ul>
+      <div class="foot"><span class="chip c-new">nova</span><span class="eff">M</span></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section id="s3">
+  <h2><span class="n">3</span> Fluxos-chave, passo a passo</h2>
+  <p class="sub">Cinco fluxos cobrem 90% da operação diária. Cada um já nasce no formato que a automação vai reutilizar — o bot só substitui o primeiro passo (o upload humano).</p>
+
+  <h3>F1 · Importar estoque HYLA (diário)</h3>
+  <div class="flow">
+    <div class="step"><b>1 · Upload</b><span>Operador baixa o .xls do e-mail da HYLA e sobe em T6</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>2 · Normalizar</b><span>Perfil HYLA: carrier, grade→CTIA, qtd "200+", SKU determinístico</span></div>
+    <div class="arr">→</div>
+    <div class="step warn"><b>3 · Dry-run</b><span>Prévia: 2.641 ok · 34 rejeitadas (motivo por linha). Nada gravado ainda</span></div>
+    <div class="arr">→</div>
+    <div class="step ok"><b>4 · Confirmar</b><span>Upsert idempotente: produtos, variantes e estoque por local</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>5 · Efeitos</b><span>Dashboard atualiza · pricing marca SKUs pra reprecificar</span></div>
+  </div>
+  <p class="fnote">Evolução: v1.1 troca o passo 1 pelo bot de e-mail (2FA) — passos 2–5 idênticos, cadência horária.</p>
+
+  <h3>F2 · Cadastrar produto novo com imagens</h3>
+  <div class="flow">
+    <div class="step"><b>1 · Criar</b><span>T4: marca, modelo, MPN, categoria, descrição</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>2 · Imagens</b><span>Upload múltiplo, define capa, ordena galeria</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>3 · Variantes</b><span>Capacidade × cor × carrier × lock × grade — SKU automático</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>4 · Estoque inicial</b><span>Opcional: quantidade e custo por local</span></div>
+    <div class="arr">→</div>
+    <div class="step ok"><b>5 · Publicar</b><span>Rascunho → publicado (aparece no catálogo)</span></div>
+  </div>
+
+  <h3>F3 · Pedido QPay (Excel diário → baixa de estoque)</h3>
+  <div class="flow">
+    <div class="step"><b>1 · Upload</b><span>Excel de fulfillment recebido às ~13h33 sobe em T8</span></div>
+    <div class="arr">→</div>
+    <div class="step warn"><b>2 · Validar</b><span>SKU existe? estoque cobre? múltiplo de 5? endereço ok?</span></div>
+    <div class="arr">→</div>
+    <div class="step ok"><b>3 · Confirmar</b><span>Abate estoque (transação) + cria pedido com itens e endereço</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>4 · Romaneio</b><span>Exporta lista de separação/envio com séries e endereço</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>5 · Status</b><span>Pedido: recebido → separado → enviado (manual na v1)</span></div>
+  </div>
+  <p class="fnote">Se o estoque não cobre uma linha: a linha fica <b>pendente</b> e as demais seguem — nunca trava o pedido inteiro.</p>
+
+  <h3>F4 · Rodar precificação</h3>
+  <div class="flow">
+    <div class="step"><b>1 · Comps</b><span>Planilha de preços de mercado (v1) ou APIs quando ativas</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>2 · Rodar</b><span>Botão em T9 → engine v2: benchmark → kit → floors → 4 tiers</span></div>
+    <div class="arr">→</div>
+    <div class="step warn"><b>3 · Flags</b><span>Sem margem → sinaliza e NÃO ativa (regra do Abdu)</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>4 · Revisar</b><span>Admin resolve: override · aceitar · aguardar</span></div>
+    <div class="arr">→</div>
+    <div class="step ok"><b>5 · Publicar</b><span>Preços dos 4 tiers gravados por SKU</span></div>
+  </div>
+
+  <h3>F5 · Exportar estoque</h3>
+  <div class="flow">
+    <div class="step"><b>1 · Filtrar</b><span>Marca / local / condição / só-com-estoque</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>2 · Baixar</b><span>CSV canônico (ou .xlsx)</span></div>
+    <div class="arr">→</div>
+    <div class="step ok"><b>3 · Round-trip</b><span>O mesmo arquivo re-importa em T6 sem perda</span></div>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section id="s4">
+  <h2><span class="n">4</span> Modelo de dados que fica real na v1</h2>
+  <p class="sub">Subconjunto do schema já desenhado — nada é inventado novo, só ativado. RLS em todas as tabelas desde o dia 1.</p>
+  <div class="card">
+  <table>
+    <tr><th>Tabela</th><th>Papel na v1</th><th>Observação</th></tr>
+    <tr><td><code>users</code> · <code>accounts</code></td><td>Login, papéis admin/staff</td><td>Espelho do Supabase Auth; convite por e-mail</td></tr>
+    <tr><td><code>products</code> · <code>product_variants</code></td><td>Catálogo real com MPN, categoria, grade CTIA</td><td>SKU determinístico (padrão do catálogo, provado na HYLA)</td></tr>
+    <tr><td><code>product_images</code> <span class="chip c-new">nova</span></td><td>Capa + galeria por produto, ordenável</td><td>Arquivos no Supabase Storage; só metadados no banco</td></tr>
+    <tr><td><code>inventory</code> (saldo) + <code>inventory_movements</code> <span class="chip c-new">nova</span></td><td>Saldo por variante × local + trilha de todo movimento</td><td><b>Saldo nunca é editado direto</b> — todo ajuste é um movimento com autor e motivo</td></tr>
+    <tr><td><code>import_runs</code> + <code>import_rows</code></td><td>Histórico de cada import com rejeições linha a linha</td><td>O dry-run grava aqui antes do commit</td></tr>
+    <tr><td><code>orders</code> · <code>order_items</code></td><td>Pedidos QPay e manuais, com endereço de envio</td><td>Status: recebido → separado → enviado</td></tr>
+    <tr><td><code>prices</code> + <code>pricing_flags</code></td><td>Saída do engine: preço por SKU × tier + fila de flags</td><td><code>visible=false</code> quando flagado — nunca publica no vermelho</td></tr>
+    <tr><td><code>vendor_grade_map</code> · <code>inventory_locations</code></td><td>Config: grades e locais</td><td>Editável em T10, sem código</td></tr>
+    <tr><td><code>audit_log</code></td><td>Quem fez o quê, antes/depois</td><td>Transversal a tudo</td></tr>
+  </table>
+  </div>
+  <p class="fnote">Alegoria do estoque: o saldo é o <b>extrato bancário</b> — você nunca "edita o saldo", você lança um movimento (depósito/saque com motivo), e o saldo é a soma. É isso que torna o estoque confiável e auditável.</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section id="s5">
+  <h2><span class="n">5</span> Manual agora → automático depois</h2>
+  <p class="sub">A régua da evolução. Nada do que é manual na v1 é retrabalho: o automático substitui só o gatilho, o pipeline é o mesmo.</p>
+  <div class="card">
+  <table>
+    <tr><th>Processo</th><th>v1 (manual)</th><th>Evolução</th><th>Quando</th></tr>
+    <tr><td><b>Estoque HYLA entra</b></td><td>Operador sobe o .xls em T6</td><td>Bot lê o e-mail (2FA via caixa dedicada), baixa e importa sozinho — cadência horária</td><td><span class="chip c-later">v1.1</span></td></tr>
+    <tr><td><b>Estoque Mannapov entra</b></td><td>Se vier planilha, mesmo T6</td><td>API direta (call com eles esta semana define o formato)</td><td><span class="chip c-later">v1.1–v2</span></td></tr>
+    <tr><td><b>Pedido QPay entra</b></td><td>Operador sobe o Excel em T8</td><td>Ingestão automática do e-mail diário; depois API se a QPay evoluir</td><td><span class="chip c-later">v1.1</span></td></tr>
+    <tr><td><b>Comps de preço</b></td><td>Planilha de comps ou digitação</td><td>APIs eBay/Walmart (grátis) + Amazon (paga, ~chaves do Abdu)</td><td><span class="chip c-later">v1.1</span></td></tr>
+    <tr><td><b>Rodar pricing</b></td><td>Botão em T9</td><td>Agendado noturno (02:00) + gatilho pós-import</td><td><span class="chip c-later">v1.1</span></td></tr>
+    <tr><td><b>Feed pra parceiros (saída)</b></td><td>Export CSV em T7 enviado por e-mail</td><td>Partner Inventory API (webhooks + pull, mascaramento)</td><td><span class="chip c-later">v2</span></td></tr>
+    <tr><td><b>Checkout consumidor</b></td><td>— (vitrine visual)</td><td>Stripe + carrinho real no storefront</td><td><span class="chip c-later">v2</span></td></tr>
+    <tr><td><b>SmartPay</b></td><td>—</td><td>Integração completa (longo prazo, confirmado na call)</td><td><span class="chip c-later">v2+</span></td></tr>
+  </table>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section id="s6">
+  <h2><span class="n">6</span> Ordem de construção sugerida</h2>
+  <p class="sub">Sequência pensada pra ter algo demonstrável o mais cedo possível (a prioridade da call: velocidade), com cada etapa destravando a seguinte.</p>
+  <div class="card">
+  <table>
+    <tr><th>#</th><th>Entrega</th><th>O que destrava</th><th>Esforço</th></tr>
+    <tr><td><b>1</b></td><td>Fundação: migrações + RLS + <b>login real</b> (T1)</td><td>Tudo — sem auth não há operação</td><td><span class="eff">M</span></td></tr>
+    <tr><td><b>2</b></td><td><b>Import HYLA</b> (T6, F1) + estoque real (T5)</td><td>💥 Primeira demo viva: estoque de verdade na tela, vindo do arquivo real</td><td><span class="eff">L</span></td></tr>
+    <tr><td><b>3</b></td><td>Catálogo CRUD + imagens (T3, T4, F2)</td><td>Subir produto novo com foto e descrição</td><td><span class="eff">L</span></td></tr>
+    <tr><td><b>4</b></td><td><b>Pedido QPay</b> (T8, F3)</td><td>O urgente do cliente: Excel → baixa de estoque → romaneio</td><td><span class="eff">L</span></td></tr>
+    <tr><td><b>5</b></td><td>Export (T7, F5) + Dashboard real (T2)</td><td>Round-trip completo + visão do dia</td><td><span class="eff">S</span></td></tr>
+    <tr><td><b>6</b></td><td><b>Pricing engine</b> em produção (T9, F4)</td><td>O “cérebro”: precifica o estoque importado, com flags</td><td><span class="eff">L</span></td></tr>
+    <tr><td><b>7</b></td><td>Configurações (T10) + polimento + auditoria ponta a ponta</td><td>Operação sem depender de dev</td><td><span class="eff">M</span></td></tr>
+  </table>
+  </div>
+  <p class="fnote">O marco 2 é o “algo vivo” da primeira semana: importar o arquivo real da HYLA e ver 2.6xx SKUs com estoque na tela. Os marcos 4 e 6 fecham o que a call definiu como essencial.</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section id="s7">
+  <h2><span class="n">7</span> Pontos pra gente discutir antes de codar</h2>
+  <p class="sub">Oito decisões que moldam a v1. Marquei em verde a minha recomendação — mas são suas/do Abdu.</p>
+
+  <div class="q">
+    <div class="qt"><span class="qn">Q1</span> Estoque por quantidade ou por número de série?</div>
+    <p>O Excel da QPay traz <b>número de série por unidade</b> (“placa única”). Rastrear série muda o estoque de “tenho 40 do SKU X” para “tenho estas 40 unidades específicas”. Mais rastreável, bem mais trabalho (recebimento precisa registrar cada série).</p>
+    <div class="opt"><span class="rec">Híbrido: saldo por quantidade + série capturada só na SAÍDA (pedido QPay)</span><span>Serializado completo (entrada e saída)</span><span>Só quantidade (ignora séries)</span></div>
+  </div>
+
+  <div class="q">
+    <div class="qt"><span class="qn">Q2</span> Imagens: por produto ou por variante/cor?</div>
+    <p>Foto do iPhone 16 azul ≠ foto do preto. Por produto é mais simples de operar; por cor é mais bonito na vitrine.</p>
+    <div class="opt"><span class="rec">v1: por produto (capa + galeria) · por cor fica pra v2</span><span>Por cor desde já</span></div>
+  </div>
+
+  <div class="q">
+    <div class="qt"><span class="qn">Q3</span> Comps de preço na v1: planilha ou API?</div>
+    <p>O Abdu vai assinar as APIs (~pagas). Enquanto as chaves não chegam, o engine precisa de comps de algum lugar pra rodar.</p>
+    <div class="opt"><span class="rec">Planilha de comps agora (roda já) + plugar APIs quando as chaves chegarem</span><span>Esperar as APIs</span><span>Digitação manual por SKU</span></div>
+  </div>
+
+  <div class="q">
+    <div class="qt"><span class="qn">Q4</span> Baixa de estoque QPay: automática ou com confirmação?</div>
+    <p>Abater direto no upload é rápido; confirmar depois do dry-run é seguro (pega SKU errado antes de sujar o saldo).</p>
+    <div class="opt"><span class="rec">Sempre dry-run → operador confirma (1 clique a mais, zero surpresa)</span><span>Abate direto no upload</span></div>
+  </div>
+
+  <div class="q">
+    <div class="qt"><span class="qn">Q5</span> O estoque flagado pelo pricing some de onde?</div>
+    <p>Regra da call: sem margem → não ativa. Não ativa <b>onde</b>? Na vitrine pública com certeza. E no export/romaneio interno?</p>
+    <div class="opt"><span class="rec">Flag esconde só de superfícies de venda; interno continua vendo tudo (com o selo)</span><span>Esconde de tudo</span></div>
+  </div>
+
+  <div class="q">
+    <div class="qt"><span class="qn">Q6</span> Quem opera no dia 1?</div>
+    <p>Define papéis e quanto investir em proteção contra erro (staff pode ajustar estoque? pode dar override de preço?).</p>
+    <div class="opt"><span class="rec">Abdu admin + 1–2 staff (opera estoque/pedido, não mexe em preço/config)</span><span>Só o Abdu por enquanto</span></div>
+  </div>
+
+  <div class="q">
+    <div class="qt"><span class="qn">Q7</span> Incremento de 5 da QPay: regra dura ou aviso?</div>
+    <p>Pedidos vêm em múltiplos de 5 (master pack). Se vier 23 na planilha: bloquear a linha ou aceitar com aviso?</p>
+    <div class="opt"><span class="rec">Aviso (aceita, sinaliza) — planilha deles pode ter exceção legítima</span><span>Bloqueio duro</span></div>
+  </div>
+
+  <div class="q">
+    <div class="qt"><span class="qn">Q8</span> Idioma da interface da v1?</div>
+    <p>O mockup é em inglês (mercado US, operadores do Abdu). Manter EN evita retrabalho; PT ajudaria só a equipe BR.</p>
+    <div class="opt"><span class="rec">Inglês (consistente com o mockup e com quem opera)</span><span>Bilíngue desde já</span></div>
+  </div>
+</section>
+
+<footer>
+  OMP · v1 Operação Manual — documento de mapeamento para discussão · gerado a partir do mockup existente, do padrão de catálogo (HYLA provado com 2.675 linhas) e das definições da call de 27/07.
+</footer>
+
+</div>
+</body>
+</html>
