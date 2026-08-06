@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Check, Lock, PackageCheck, ShoppingBag } from 'lucide-react';
 import { useAccount, useAuth, useCart } from '@/store';
 import type { AccountOrder } from '@/store';
-import { SUPPLIER_NAMES } from '@/data/catalog';
+import { SOURCE_LABELS } from '@/data/catalog';
 import { Button } from '@/components/ui/Button';
 import { TierBadge } from '@/components/store/TierBadge';
 import { ReserveFlow } from '@/components/store/ReserveFlow';
@@ -76,7 +76,7 @@ export default function CheckoutPage() {
         subtotalCents,
         savingsCents,
         status: 'reserved',
-        suppliers: [SUPPLIER_NAMES['source-1'], SUPPLIER_NAMES['source-2']],
+        suppliers: [SOURCE_LABELS['source-1'], SOURCE_LABELS['source-2']],
         lines: lines.map((l) => ({
           model: l.item.model,
           image: l.item.image,

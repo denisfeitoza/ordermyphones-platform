@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { CATALOG, unitPriceCents } from '@/data/catalog';
+import { CATALOG, SOURCE_LABELS, unitPriceCents } from '@/data/catalog';
 import { resolveTierByUnits } from '@/data/tiers';
 import type { PricingTierCode } from '@shared/pricing';
 
@@ -63,13 +63,13 @@ function seedOrder(
 // Seeded history → ~47 lifetime units, so the account sits at Retailer with 3 to Multi-Store.
 // Newest first: placeOrder() prepends live orders, so the whole list stays newest-first.
 const SEED: AccountOrder[] = [
-  seedOrder('OMP-71F08', '2026-06-15', 'processing', ['Assurant'], [
+  seedOrder('OMP-71F08', '2026-06-15', 'processing', [SOURCE_LABELS['source-1']], [
     line('iphone-16-pro-max', 'Desert Titanium', 256, 5, 'tier_1'),
   ]),
-  seedOrder('OMP-6620B', '2026-06-03', 'shipped', ['Assurant', 'Mannapov LLC'], [
+  seedOrder('OMP-6620B', '2026-06-03', 'shipped', [SOURCE_LABELS['source-1'], SOURCE_LABELS['source-2']], [
     line('iphone-16', 'Ultramarine', 128, 12, 'tier_2'),
   ]),
-  seedOrder('OMP-4A19C', '2026-05-12', 'delivered', ['Mannapov LLC'], [
+  seedOrder('OMP-4A19C', '2026-05-12', 'delivered', [SOURCE_LABELS['source-2']], [
     line('galaxy-s24', 'Cobalt Violet', 128, 30, 'tier_2'),
   ]),
 ];
