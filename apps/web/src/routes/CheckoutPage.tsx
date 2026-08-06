@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { TierBadge } from '@/components/store/TierBadge';
 import { ReserveFlow } from '@/components/store/ReserveFlow';
 import { formatUsd } from '@/lib/format';
+import { useI18n } from '@/i18n';
 
 type Phase = 'review' | 'reserving' | 'done';
 
@@ -17,9 +18,10 @@ function genOrderId() {
 }
 
 function Field({ label, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  const { t } = useI18n();
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-sm font-medium">{label}</span>
+      <span className="text-sm font-medium">{t(label)}</span>
       <input
         {...props}
         className="h-11 rounded-xl border border-border bg-background px-3.5 text-sm outline-none transition-colors focus:border-brand"
@@ -29,6 +31,7 @@ function Field({ label, ...props }: { label: string } & React.InputHTMLAttribute
 }
 
 export default function CheckoutPage() {
+  const { t } = useI18n();
   const { lines, unitCount, effectiveTier, subtotalCents, retailSubtotalCents, savingsCents, clear } = useCart();
   const { placeOrder } = useAccount();
   const { signIn } = useAuth();
@@ -45,10 +48,10 @@ export default function CheckoutPage() {
           <ShoppingBag className="h-7 w-7 text-muted-foreground" strokeWidth={1.5} />
         </div>
         <div>
-          <h1 className="font-display text-2xl font-semibold">Nothing to check out</h1>
-          <p className="mt-1 text-muted-foreground">Add a few phones and the right tier price is applied automatically.</p>
+          <h1 className="font-display text-2xl font-semibold">{t('Nothing to check out')}</h1>
+          <p className="mt-1 text-muted-foreground">{t('Add a few phones and the right tier price is applied automatically.')}</p>
         </div>
-        <Button onClick={() => navigate('/catalog')}>Browse catalog</Button>
+        <Button onClick={() => navigate('/catalog')}>{t('Browse catalog')}</Button>
       </div>
     );
   }
@@ -93,7 +96,7 @@ export default function CheckoutPage() {
   return (
     <div className="container py-8 md:py-12">
       <h1 className="mb-6 font-display text-2xl font-semibold tracking-tight md:text-3xl">
-        {phase === 'done' ? 'Order confirmed' : 'Checkout'}
+        {phase === 'done' ? t('Order confirmed') : t('Checkout')}
       </h1>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_380px] lg:gap-12 [&>*]:min-w-0">
@@ -101,7 +104,7 @@ export default function CheckoutPage() {
           {phase === 'review' && (
             <form onSubmit={submitReview} className="space-y-6">
               <section className="space-y-4 rounded-2xl border border-border p-5">
-                <h2 className="font-medium">Contact &amp; business</h2>
+                <h2 className="font-medium">{t('Contact & business')}</h2>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Work email" name="email" type="email" required placeholder="you@store.com" />
                   <Field label="Business name" required placeholder="Downtown Mobile LLC" />
@@ -109,7 +112,7 @@ export default function CheckoutPage() {
               </section>
 
               <section className="space-y-4 rounded-2xl border border-border p-5">
-                <h2 className="font-medium">Shipping address</h2>
+                <h2 className="font-medium">{t('Shipping address')}</h2>
                 <Field label="Street address" required placeholder="11816 Inwood Rd #1176" />
                 <div className="grid gap-4 sm:grid-cols-3">
                   <Field label="City" required placeholder="Dallas" />
@@ -120,20 +123,20 @@ export default function CheckoutPage() {
 
               <section className="flex items-center gap-3 rounded-2xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
                 <Lock className="h-4 w-4 shrink-0" strokeWidth={2} />
-                Payment is captured by Stripe in Order My Phones LLC&apos;s name — card data never touches this app.
+                {t("Payment is captured by Stripe in Order My Phones LLC's name — card data never touches this app.")}
               </section>
 
               <Button type="submit" size="lg" className="w-full">
-                Reserve stock &amp; place order
+                {t('Reserve stock & place order')}
               </Button>
             </form>
           )}
 
           {phase === 'reserving' && (
             <div className="rounded-2xl border border-border p-5">
-              <h2 className="font-medium">Reserving your order at source</h2>
+              <h2 className="font-medium">{t('Reserving your order at source')}</h2>
               <p className="mb-4 mt-1 text-sm text-muted-foreground">
-                We confirm live stock with each supplier and hold your units before charging.
+                {t('We confirm live stock with each supplier and hold your units before charging.')}
               </p>
               <ReserveFlow units={unitCount} onComplete={handleReserved} />
             </div>
@@ -164,11 +167,10 @@ export default function CheckoutPage() {
               <div className="mt-5 space-y-2 rounded-xl bg-muted/50 p-4 text-sm">
                 <div className="flex items-center gap-2 font-medium">
                   <PackageCheck className="h-4 w-4 text-success" strokeWidth={2} />
-                  {unitCount} {unitCount === 1 ? 'unit' : 'units'} reserved at source
+                  {unitCount} {unitCount === 1 ? t('unit') : t('units')} {t('reserved at source')}
                 </div>
                 <p className="text-muted-foreground">
-                  Reserved across our supplier network, cross-checked against open orders. Tracking posts as each
-                  shipment dispatches.
+                  {t('Reserved across our supplier network, cross-checked against open orders. Tracking posts as each shipment dispatches.')}
                 </p>
               </div>
 
@@ -180,7 +182,7 @@ export default function CheckoutPage() {
                     navigate('/catalog');
                   }}
                 >
-                  Continue shopping
+                  {t('Continue shopping')}
                 </Button>
                 <Button
                   variant="outline"
@@ -190,7 +192,7 @@ export default function CheckoutPage() {
                     navigate('/portal/orders');
                   }}
                 >
-                  Track order
+                  {t('Track order')}
                 </Button>
               </div>
             </motion.div>
@@ -201,7 +203,7 @@ export default function CheckoutPage() {
         <aside className="lg:sticky lg:top-28 lg:self-start">
           <div className="rounded-2xl border border-border p-5">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-medium">Order summary</h2>
+              <h2 className="font-medium">{t('Order summary')}</h2>
               <TierBadge tier={effectiveTier} />
             </div>
 
@@ -229,7 +231,7 @@ export default function CheckoutPage() {
               {savingsCents > 0 && <Row label={`Tier savings · ${effectiveTier.label}`} value={`−${formatUsd(savingsCents)}`} accent />}
               <Row label="Shipping" value="Free" muted />
               <div className="flex items-center justify-between border-t border-border pt-3">
-                <span className="font-medium">Total</span>
+                <span className="font-medium">{t('Total')}</span>
                 <span className="font-mono text-xl font-semibold tabular-nums">{formatUsd(subtotalCents)}</span>
               </div>
             </div>

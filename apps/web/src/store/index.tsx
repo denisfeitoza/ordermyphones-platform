@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { I18nProvider } from '@/i18n';
 import { TierProvider } from './tier';
 import { SyncProvider } from './sync';
 import { AuthProvider } from './auth';
@@ -16,6 +17,7 @@ export * from './cart';
 /** Composes the storefront client stores. Order matters: cart & wishlist read tier. */
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
+    <I18nProvider>
     <TierProvider>
       <SyncProvider>
         <AuthProvider>
@@ -27,5 +29,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
         </AuthProvider>
       </SyncProvider>
     </TierProvider>
+    </I18nProvider>
   );
 }

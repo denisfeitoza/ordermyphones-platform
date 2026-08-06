@@ -3,6 +3,7 @@ import type { TierDef } from '@/data/tiers';
 import { tierText } from '@/lib/tierStyles';
 import { formatUsd } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 
 export function TierPrice({
   item,
@@ -18,6 +19,7 @@ export function TierPrice({
   const price = unitPriceCents(item, tier.code);
   const retail = unitPriceCents(item, 'tier_1');
   const save = retail - price;
+  const { t } = useI18n();
   const priceCls = size === 'lg' ? 'text-3xl' : size === 'sm' ? 'text-base' : 'text-xl';
 
   return (
@@ -32,10 +34,10 @@ export function TierPrice({
       </div>
       {save > 0 ? (
         <span className={cn('text-xs font-medium', tierText[tier.tone])}>
-          Save {formatUsd(save)} per unit · {tier.label}
+          {t('Save')} {formatUsd(save)} {t('per unit')} · {tier.label}
         </span>
       ) : (
-        <span className="text-xs text-muted-foreground">Retail · buy more to unlock tier pricing</span>
+        <span className="text-xs text-muted-foreground">{t('Retail · buy more to unlock tier pricing')}</span>
       )}
     </div>
   );

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Logo } from './Logo';
+import { useI18n } from '@/i18n';
 
 const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
   {
@@ -41,14 +42,15 @@ const SOCIALS: { label: string; path: string }[] = [
 ];
 
 function FooterColumn({ title, links }: { title: string; links: { label: string; to: string }[] }) {
+  const { t } = useI18n();
   return (
     <div>
-      <h3 className="text-sm font-semibold">{title}</h3>
+      <h3 className="text-sm font-semibold">{t(title)}</h3>
       <ul className="mt-4 space-y-2.5">
         {links.map((l) => (
           <li key={l.label}>
             <Link to={l.to} className="text-sm text-background/55 transition-colors hover:text-background">
-              {l.label}
+              {t(l.label)}
             </Link>
           </li>
         ))}
@@ -58,6 +60,7 @@ function FooterColumn({ title, links }: { title: string; links: { label: string;
 }
 
 export function Footer() {
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [done, setDone] = useState(false);
 
@@ -74,9 +77,9 @@ export function Footer() {
           <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-brand/20 blur-3xl" aria-hidden />
           <div className="relative grid gap-8 md:grid-cols-2 md:items-center">
             <div>
-              <h2 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">Ready to stock up?</h2>
+              <h2 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">{t('Ready to stock up?')}</h2>
               <p className="mt-3 max-w-md text-background/60">
-                Tier pricing, new-arrival drops, and supplier availability alerts. One email a week — no noise.
+                {t('Tier pricing, new-arrival drops, and supplier availability alerts. One email a week — no noise.')}
               </p>
             </div>
             <form onSubmit={subscribe} className="flex w-full max-w-md gap-2 md:ml-auto">
@@ -85,11 +88,11 @@ export function Footer() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@store.com"
+                placeholder={t('you@store.com')}
                 className="h-12 w-full rounded-full border border-white/15 bg-white/5 px-5 text-sm text-background outline-none placeholder:text-background/40 focus:border-brand"
               />
               <Button type="submit" variant="brand" size="lg" className="shrink-0">
-                {done ? <Check className="h-4 w-4" strokeWidth={2.5} /> : 'Notify me'}
+                {done ? <Check className="h-4 w-4" strokeWidth={2.5} /> : t('Notify me')}
               </Button>
             </form>
           </div>
@@ -101,8 +104,7 @@ export function Footer() {
           <div className="sm:col-span-2">
             <Logo invert />
             <p className="mt-4 max-w-xs text-sm text-background/55">
-              U.S. mobile devices for consumers, retailers, and wholesale. Real-time supplier inventory,
-              tier-based pricing.
+              {t('U.S. mobile devices for consumers, retailers, and wholesale. Real-time supplier inventory, tier-based pricing.')}
             </p>
             <div className="mt-5 flex gap-2">
               {SOCIALS.map((s) => (
@@ -127,8 +129,8 @@ export function Footer() {
 
       <div className="border-t border-white/10">
         <div className="container flex flex-col gap-2 py-6 text-xs text-background/45 sm:flex-row sm:items-center sm:justify-between">
-          <span>© {new Date().getFullYear()} Order My Phones LLC · All rights reserved.</span>
-          <span>Mockup demo · Tier pricing · Real-time inventory · Dropship-ready</span>
+          <span>© {new Date().getFullYear()} Order My Phones LLC · {t('All rights reserved.')}</span>
+          <span>{t('Mockup demo · Tier pricing · Real-time inventory · Dropship-ready')}</span>
         </div>
       </div>
     </footer>

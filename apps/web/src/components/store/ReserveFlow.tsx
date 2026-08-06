@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 
 /**
  * Simulates the reserve-at-source flow: confirm live stock, cross-check open
@@ -9,14 +10,15 @@ import { cn } from '@/lib/utils';
  * server-side against the supplier network (sources never exposed to the buyer).
  */
 export function ReserveFlow({ units, onComplete }: { units: number; onComplete: () => void }) {
-  const u = `${units} ${units === 1 ? 'unit' : 'units'}`;
+  const { t } = useI18n();
+  const u = `${units} ${units === 1 ? t('unit') : t('units')}`;
   const steps = [
-    'Querying live stock at source',
-    'Confirming availability across the network',
+    t('Querying live stock at source'),
+    t('Confirming availability across the network'),
     `Cross-checking ${u} against open orders`,
     `Reserving ${u} at source`,
-    'Authorizing payment',
-    'Confirming order',
+    t('Authorizing payment'),
+    t('Confirming order'),
   ];
   const [active, setActive] = useState(0);
 

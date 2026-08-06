@@ -1,5 +1,6 @@
 import { useSync } from '@/store';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import { formatInt } from '@/lib/format';
 
 export function PulseDot({
@@ -27,14 +28,15 @@ export function SyncHeartbeat({
   className?: string;
 }) {
   const { secondsAgo, pulse, suppliers, ordersReconciled, skusTracked } = useSync();
-  const last = secondsAgo === 0 ? 'just now' : `${secondsAgo}s ago`;
+  const { t } = useI18n();
+  const last = secondsAgo === 0 ? t('just now') : `${secondsAgo}s ${t('ago')}`;
 
   if (variant === 'compact') {
     return (
       <div className={cn('inline-flex items-center gap-2 text-xs', className)}>
         <PulseDot />
         <span className="text-muted-foreground">
-          Live inventory · synced <span className="font-mono text-foreground">{last}</span>
+          {t('Live inventory · synced')} <span className="font-mono text-foreground">{last}</span>
         </span>
       </div>
     );
@@ -44,8 +46,8 @@ export function SyncHeartbeat({
     <div className={cn('flex items-center gap-x-5 whitespace-nowrap text-xs', className)}>
       <span className="inline-flex items-center gap-2">
         <PulseDot />
-        <span className="font-medium">Inventory bot</span>
-        <span className="text-muted-foreground">re-syncs every 2s · last {last}</span>
+        <span className="font-medium">{t('Inventory bot')}</span>
+        <span className="text-muted-foreground">{t('re-syncs every 2s · last')} {last}</span>
       </span>
       <span className="hidden h-3 w-px bg-border sm:block" />
       {suppliers.map((s) => (
@@ -60,7 +62,7 @@ export function SyncHeartbeat({
         <span key={pulse} className="inline-block animate-count-bump font-mono tabular-nums text-foreground">
           {formatInt(ordersReconciled)}
         </span>{' '}
-        orders reconciled · <span className="font-mono tabular-nums text-foreground">{formatInt(skusTracked)}</span> SKUs tracked
+        {t('orders reconciled')} · <span className="font-mono tabular-nums text-foreground">{formatInt(skusTracked)}</span> {t('SKUs tracked')}
       </span>
     </div>
   );

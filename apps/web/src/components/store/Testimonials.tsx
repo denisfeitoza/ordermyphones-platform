@@ -1,5 +1,6 @@
 import { Quote } from 'lucide-react';
 import { LogoMark } from './Logo';
+import { useI18n } from '@/i18n';
 
 interface Testimonial {
   quote: string;
@@ -40,6 +41,7 @@ const TESTIMONIALS: Testimonial[] = [
 ];
 
 export function Testimonials() {
+  const { t } = useI18n();
   return (
     <section className="relative overflow-hidden border-y border-border bg-muted/30">
       <LogoMark className="pointer-events-none absolute -right-10 -top-10 h-56 w-56 opacity-[0.06]" />
@@ -47,13 +49,13 @@ export function Testimonials() {
         <div className="max-w-2xl">
           <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-brand">
             <LogoMark className="h-4 w-4" />
-            Testimonials
+            {t('Testimonials')}
           </span>
           <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-balance md:text-4xl">
-            Trusted across the wholesale channel
+            {t('Trusted across the wholesale channel')}
           </h2>
           <p className="mt-3 text-muted-foreground">
-            Retailers, marketplaces, and distributors source through Order My Phones every day.
+            {t('Retailers, marketplaces, and distributors source through Order My Phones every day.')}
           </p>
         </div>
 

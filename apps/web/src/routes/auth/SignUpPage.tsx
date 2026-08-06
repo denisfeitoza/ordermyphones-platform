@@ -3,8 +3,10 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/store';
 import { AuthLayout, AuthField, PasswordField } from '@/components/auth/AuthLayout';
 import { Button } from '@/components/ui/Button';
+import { useI18n } from '@/i18n';
 
 export default function SignUpPage() {
+  const { t } = useI18n();
   const { signedIn, signIn } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -25,7 +27,7 @@ export default function SignUpPage() {
         <>
           Already have an account?{' '}
           <Link to="/auth/sign-in" className="font-medium text-brand hover:underline">
-            Sign in
+            {t('Sign in')}
           </Link>
         </>
       }
@@ -45,10 +47,10 @@ export default function SignUpPage() {
         <PasswordField label="Password" required autoComplete="new-password" placeholder="At least 8 characters" />
 
         <Button type="submit" size="lg" className="w-full">
-          Create account
+          {t('Create account')}
         </Button>
         <p className="text-center text-xs text-muted-foreground">
-          Mockup — no account is actually created or stored.
+          {t('Mockup — no account is actually created or stored.')}
         </p>
       </form>
     </AuthLayout>

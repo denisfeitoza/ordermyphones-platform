@@ -4,6 +4,7 @@ import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } fro
 import { ArrowRight } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/Button';
 import { useSync } from '@/store';
+import { useI18n } from '@/i18n';
 import { formatInt } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { PulseDot } from './SyncHeartbeat';
@@ -17,6 +18,7 @@ export function Hero() {
   const tx = useTransform(sx, [-0.5, 0.5], reduce ? [0, 0] : [-22, 22]);
   const ty = useTransform(sy, [-0.5, 0.5], reduce ? [0, 0] : [-14, 14]);
   const { suppliers, skusTracked } = useSync();
+  const { t } = useI18n();
 
   function onMove(e: MouseEvent<HTMLElement>) {
     const r = e.currentTarget.getBoundingClientRect();
@@ -25,10 +27,10 @@ export function Hero() {
   }
 
   const stats = [
-    { value: '4', label: 'Pricing tiers' },
-    { value: String(suppliers.length), label: 'Live suppliers' },
-    { value: formatInt(skusTracked), label: 'SKUs tracked' },
-    { value: '< 2s', label: 'Stock refresh' },
+    { value: '4', label: t('Pricing tiers') },
+    { value: String(suppliers.length), label: t('Live suppliers') },
+    { value: formatInt(skusTracked), label: t('SKUs tracked') },
+    { value: '< 2s', label: t('Stock refresh') },
   ];
 
   return (
@@ -60,7 +62,7 @@ export function Hero() {
             className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium ring-1 ring-white/15 backdrop-blur"
           >
             <PulseDot />
-            Live wholesale &amp; retail inventory
+            {t('Live wholesale & retail inventory')}
           </motion.div>
 
           <motion.h1
@@ -68,7 +70,7 @@ export function Hero() {
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="mt-6 font-display text-[2.7rem] font-semibold leading-[0.98] tracking-tightest text-balance sm:text-6xl md:text-[4.5rem]"
           >
-            Phones, priced for <span className="text-gradient-brand">your tier</span>.
+            {t('Phones, priced for')} <span className="text-gradient-brand">{t('your tier')}</span>.
           </motion.h1>
 
           <motion.p
@@ -76,8 +78,7 @@ export function Hero() {
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="mt-5 max-w-lg text-base text-background/70 text-pretty md:text-lg"
           >
-            From a single iPhone to a 500-unit Galaxy pallet — we aggregate real-time supplier stock
-            and apply the right tier price automatically. No spreadsheets, no back-and-forth.
+            {t('From a single iPhone to a 500-unit Galaxy pallet — we aggregate real-time supplier stock and apply the right tier price automatically. No spreadsheets, no back-and-forth.')}
           </motion.p>
 
           <motion.div
@@ -86,7 +87,7 @@ export function Hero() {
             className="mt-8 flex flex-wrap gap-3"
           >
             <Link to="/catalog" className={buttonVariants({ size: 'lg', variant: 'brand' })}>
-              Shop the catalog
+              {t('Shop the catalog')}
               <ArrowRight className="h-4 w-4" strokeWidth={2} />
             </Link>
             <Link
@@ -96,7 +97,7 @@ export function Hero() {
                 'border-white/25 bg-transparent text-background hover:bg-white/10',
               )}
             >
-              Become a reseller
+              {t('Become a reseller')}
             </Link>
           </motion.div>
 

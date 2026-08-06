@@ -7,6 +7,7 @@ import { useTier } from '@/store';
 import { CatalogFilters, PRICE_BANDS } from '@/components/store/CatalogFilters';
 import { ProductGrid } from '@/components/store/ProductGrid';
 import { Button } from '@/components/ui/Button';
+import { useI18n } from '@/i18n';
 
 const SORTS = [
   { id: 'featured', label: 'Featured' },
@@ -16,6 +17,7 @@ const SORTS = [
 ];
 
 export default function CatalogPage() {
+  const { t } = useI18n();
   const [params, setParams] = useSearchParams();
   const { tier } = useTier();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -74,19 +76,18 @@ export default function CatalogPage() {
     <div className="container py-8 md:py-12">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">{title}</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">{t(title)}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            <span className="font-mono">{items.length}</span> {items.length === 1 ? 'phone' : 'phones'} · live tier
-            pricing &amp; inventory
+            <span className="font-mono">{items.length}</span> {items.length === 1 ? t('phone') : t('phones')} · {t('live tier pricing & inventory')}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="lg:hidden" onClick={() => setMobileOpen(true)}>
             <SlidersHorizontal className="h-4 w-4" strokeWidth={2} />
-            Filters
+            {t('Filters')}
           </Button>
           <label className="relative">
-            <span className="sr-only">Sort by</span>
+            <span className="sr-only">{t('Sort by')}</span>
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
@@ -94,7 +95,7 @@ export default function CatalogPage() {
             >
               {SORTS.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.label}
+                  {t(s.label)}
                 </option>
               ))}
             </select>
@@ -121,11 +122,11 @@ export default function CatalogPage() {
                 <SearchX className="h-7 w-7 text-muted-foreground" strokeWidth={1.5} />
               </div>
               <div>
-                <p className="font-medium">No phones match these filters</p>
-                <p className="mt-1 text-sm text-muted-foreground">Try clearing a filter or broadening your search.</p>
+                <p className="font-medium">{t('No phones match these filters')}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{t('Try clearing a filter or broadening your search.')}</p>
               </div>
               <Button variant="outline" size="sm" onClick={() => setParams({}, { replace: true })}>
-                Clear filters
+                {t('Clear filters')}
               </Button>
             </div>
           )}
@@ -135,7 +136,7 @@ export default function CatalogPage() {
       <AnimatePresence>
         {mobileOpen && (
           <motion.div className="fixed inset-0 z-50 lg:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <button className="absolute inset-0 cursor-default bg-foreground/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} aria-label="Close filters" />
+            <button className="absolute inset-0 cursor-default bg-foreground/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} aria-label={t('Close filters')} />
             <motion.div
               className="absolute left-0 top-0 h-full w-[84%] max-w-xs overflow-y-auto bg-background p-5 shadow-2xl"
               initial={{ x: '-100%' }}
@@ -144,14 +145,14 @@ export default function CatalogPage() {
               transition={{ type: 'spring', stiffness: 260, damping: 30 }}
             >
               <div className="mb-2 flex items-center justify-between">
-                <span className="font-display font-semibold">Filters</span>
+                <span className="font-display font-semibold">{t('Filters')}</span>
                 <button onClick={() => setMobileOpen(false)} className="grid h-9 w-9 place-items-center rounded-full hover:bg-muted" aria-label="Close">
                   <X className="h-5 w-5" />
                 </button>
               </div>
               <CatalogFilters hideTitle />
               <Button className="mt-4 w-full" onClick={() => setMobileOpen(false)}>
-                Show {items.length} results
+                {t('Show')} {items.length} {t('results')}
               </Button>
             </motion.div>
           </motion.div>

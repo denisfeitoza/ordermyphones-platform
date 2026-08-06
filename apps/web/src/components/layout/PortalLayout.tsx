@@ -4,6 +4,7 @@ import { useAccount, useAuth, useTier } from '@/store';
 import { TierBadge } from '@/components/store/TierBadge';
 import { hasApiAccess } from '@/data/inventoryApi';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 
 const portalNav = [
   { to: '/portal', label: 'Overview', end: true },
@@ -30,6 +31,7 @@ export default function PortalLayout() {
   const { tier, code } = useTier();
   const apiUnlocked = hasApiAccess(code);
   const { user, signOut } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
 
   function handleSignOut() {
@@ -47,7 +49,7 @@ export default function PortalLayout() {
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{businessName}</p>
-              <p className="text-xs text-muted-foreground">Business account</p>
+              <p className="text-xs text-muted-foreground">{t('Business account')}</p>
             </div>
           </div>
 
@@ -59,7 +61,7 @@ export default function PortalLayout() {
             to="/admin"
             className="mt-4 inline-flex w-full items-center justify-between rounded-xl border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
-            Admin console
+            {t('Admin console')}
             <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2} />
           </Link>
 
@@ -76,21 +78,21 @@ export default function PortalLayout() {
                   )
                 }
               >
-                {l.label}
-                {l.gated && !apiUnlocked && <Lock className="h-3 w-3 opacity-60" strokeWidth={2} aria-label="Multi-Store and up" />}
+                {t(l.label)}
+                {l.gated && !apiUnlocked && <Lock className="h-3 w-3 opacity-60" strokeWidth={2} aria-label={t('Multi-Store and up')} />}
               </NavLink>
             ))}
           </nav>
 
           <div className="mt-5 border-t border-border pt-4">
-            {user && <p className="truncate px-3 pb-1.5 text-xs text-muted-foreground">Signed in as {user.email}</p>}
+            {user && <p className="truncate px-3 pb-1.5 text-xs text-muted-foreground">{t('Signed in as')} {user.email}</p>}
             <button
               type="button"
               onClick={handleSignOut}
               className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <LogOut className="h-4 w-4" strokeWidth={2} />
-              Sign out
+              {t('Sign out')}
             </button>
           </div>
         </aside>
