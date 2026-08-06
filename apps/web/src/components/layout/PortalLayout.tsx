@@ -79,7 +79,7 @@ export default function PortalLayout() {
                 }
               >
                 {t(l.label)}
-                {l.gated && !apiUnlocked && <Lock className="h-3 w-3 opacity-60" strokeWidth={2} aria-label={t('Multi-Store and up')} />}
+                {l.gated && !apiUnlocked && <Lock className="h-3 w-3 opacity-60" strokeWidth={2} aria-label={t('Wholesale and up')} />}
               </NavLink>
             ))}
           </nav>

@@ -60,7 +60,7 @@ function seedOrder(
   };
 }
 
-// Seeded history → ~47 lifetime units, so the account sits at Retailer with 3 to Multi-Store.
+// Seeded history → ~47 lifetime units, so the account sits at Retailer, 3 units shy of Wholesale.
 // Newest first: placeOrder() prepends live orders, so the whole list stays newest-first.
 const SEED: AccountOrder[] = [
   seedOrder('OMP-71F08', '2026-06-15', 'processing', [SOURCE_LABELS['source-1']], [
