@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" id="root">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OMP · v1.0 — Plano de Execução</title>
+<title>OMP · v1.0 — Execution Plan</title>
 <style>
   :root{
     --bg:#08090c; --bg2:#0f1116; --panel:#12151d; --panel2:#171b24;
@@ -18,13 +18,22 @@
   .wrap{max-width:1060px;margin:0 auto;padding:26px 20px 90px}
   a{color:var(--brand2);text-decoration:none}
 
+  /* language selector — discreet, fixed top-right */
+  .langsel{position:fixed;top:12px;right:14px;z-index:60;display:flex;gap:2px;
+    background:rgba(18,21,29,.88);border:1px solid var(--border2);border-radius:999px;padding:3px;backdrop-filter:blur(8px)}
+  .langsel button{border:0;background:transparent;color:var(--muted);font-size:10.5px;font-weight:800;
+    letter-spacing:.04em;padding:4px 9px;border-radius:999px;cursor:pointer}
+  .langsel button:hover{color:var(--text)}
+  .langsel button.on{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#0a0b0e}
+  .lang{display:none} .lang.on{display:block}
+
   .kicker{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--brand2)}
   h1{font-size:30px;margin:6px 0 8px;letter-spacing:-.02em;font-weight:800}
   h1 .a{background:linear-gradient(90deg,var(--brand),var(--brand2));-webkit-background-clip:text;background-clip:text;color:transparent}
   .lead{color:var(--muted);max-width:76ch;font-size:15px}
 
   nav.toc{position:sticky;top:0;z-index:30;background:rgba(8,9,12,.9);backdrop-filter:blur(9px);
-    border-bottom:1px solid var(--border);margin:20px -20px 8px;padding:10px 20px;display:flex;gap:6px;flex-wrap:wrap}
+    border-bottom:1px solid var(--border);margin:20px -20px 8px;padding:10px 175px 10px 20px;display:flex;gap:6px;flex-wrap:wrap}
   nav.toc a{font-size:11.5px;font-weight:700;color:var(--muted);border:1px solid var(--border2);border-radius:999px;padding:5px 10px;white-space:nowrap}
   nav.toc a:hover{color:var(--text);background:var(--panel2)}
 
@@ -32,28 +41,15 @@
   h2{font-size:21px;letter-spacing:-.01em;margin:0 0 4px;font-weight:800;display:flex;align-items:center;gap:11px}
   h2 .n{font-family:ui-monospace,monospace;font-size:12px;color:#0a0b0e;background:linear-gradient(135deg,var(--brand),var(--brand2));border-radius:9px;padding:3px 9px;font-weight:800}
   .sub{color:var(--muted);font-size:13.5px;margin:0 0 16px;max-width:80ch}
-
-  .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px 18px;margin:10px 0}
-  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:6px 0}
-  th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:8px 10px;border-bottom:1px solid var(--border2)}
-  td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top}
-  tr:last-child td{border-bottom:0}
   code{font-family:ui-monospace,monospace;font-size:12px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:1px 6px;color:#c9d4e6}
-  .chip{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border-radius:999px;padding:2px 8px;white-space:nowrap}
-  .c-ok{background:rgba(34,192,122,.15);color:var(--ok)}
-  .c-warn{background:rgba(242,178,60,.16);color:var(--warn)}
-  .c-hot{background:rgba(255,93,108,.15);color:var(--red)}
-  .c-new{background:rgba(196,107,255,.16);color:var(--brand)}
-  .c-later{background:rgba(139,147,164,.15);color:#aeb6c6}
 
-  /* decisões fechadas */
   .locked{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:11px}
   .lk{background:var(--panel);border:1px solid rgba(34,192,122,.4);border-radius:14px;padding:13px 15px}
-  .lk b{display:flex;gap:8px;align-items:center;font-size:13.5px;margin-bottom:4px}
-  .lk b::before{content:"✓";color:var(--ok);font-weight:800}
+  .lk > b{display:flex;gap:8px;align-items:center;font-size:13.5px;margin-bottom:4px}
+  .lk > b::before{content:"✓";color:var(--ok);font-weight:800}
   .lk span{color:var(--muted);font-size:12.5px;display:block}
+  .lk span b{color:var(--text)}
 
-  /* preço pipeline */
   .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:0;margin:12px 0 2px}
   .step{background:var(--panel2);border:1px solid var(--border2);border-radius:13px;padding:11px 13px;font-size:12.5px;max-width:215px;min-width:158px}
   .step b{display:block;font-size:12.5px;margin-bottom:3px}
@@ -70,13 +66,12 @@
   .half li{margin:4px 0}
   @media(max-width:700px){.split{grid-template-columns:1fr}}
 
-  /* jornadas */
   .fl-h{display:flex;align-items:center;gap:10px;margin:22px 0 10px}
   .fl-h .fid{font-family:ui-monospace,monospace;font-size:11px;font-weight:800;color:#0a0b0e;background:linear-gradient(90deg,var(--brand),var(--brand2));border-radius:7px;padding:2px 8px}
   .fl-h b{font-size:15px}
   .fnote{font-size:12px;color:var(--faint);margin:7px 0 0}
+  .fnote b{color:var(--muted)}
 
-  /* cronograma */
   .wk{display:flex;gap:15px;align-items:flex-start;position:relative;padding-bottom:20px}
   .wk::before{content:"";position:absolute;left:17px;top:38px;bottom:0;width:2px;background:var(--border2)}
   .wk:last-child::before{display:none}
@@ -89,7 +84,6 @@
   .wbody li{margin:3px 0}
   .demoflag{font-size:10px;font-weight:800;letter-spacing:.05em;background:rgba(196,107,255,.18);color:var(--brand);border-radius:999px;padding:2px 9px}
 
-  /* pré-requisitos */
   .pre{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:11px}
   .pr{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:13px 15px}
   .pr .who{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border-radius:999px;padding:2px 9px;display:inline-block;margin-bottom:6px}
@@ -98,133 +92,133 @@
   .pr b{display:block;font-size:13.5px;margin-bottom:3px}
   .pr span{color:var(--muted);font-size:12.5px;display:block}
 
-  /* dúvidas */
-  .q{background:linear-gradient(180deg,rgba(196,107,255,.06),transparent 70%);border:1px solid rgba(196,107,255,.3);border-radius:16px;padding:15px 18px;margin:12px 0}
-  .q .qt{font-weight:800;font-size:14.5px;display:flex;gap:9px;align-items:baseline}
-  .q .qt .qn{color:var(--brand);font-family:ui-monospace,monospace;font-size:12px}
-  .q p{color:#c9cfda;font-size:13px;margin:7px 0}
-  .q .opt{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-  .q .opt span{border:1px dashed var(--border2);border-radius:999px;padding:4px 11px;font-size:12px;color:var(--muted)}
-  .q .opt span.rec{border-style:solid;border-color:rgba(34,192,122,.5);color:var(--ok);font-weight:700}
-  .q .opt span.rec::before{content:"★ ";font-size:10px}
+  .panelgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin:12px 0}
+  .pg{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:12px 14px}
+  .pg b{display:flex;gap:7px;align-items:center;font-size:13px;margin-bottom:4px}
+  .pg span{color:var(--muted);font-size:12px;display:block}
+  .pg .def{font-size:10px;font-weight:800;border-radius:6px;padding:2px 7px;display:inline-block;margin-top:6px}
+  .pg .def.off{background:rgba(139,147,164,.15);color:#aeb6c6}
+  .pg .def.onn{background:rgba(34,192,122,.15);color:var(--ok)}
 
   .callout{background:linear-gradient(180deg,rgba(92,200,255,.06),transparent);border:1px solid rgba(92,200,255,.3);border-radius:14px;padding:13px 16px;font-size:13px;color:#c9cfda;margin:12px 0}
   .callout b{color:var(--brand2)}
   footer{margin-top:46px;border-top:1px solid var(--border);padding-top:16px;color:var(--faint);font-size:12px}
-  @media(max-width:640px){h1{font-size:23px}.step{max-width:none;flex:1}}
+  @media(max-width:640px){h1{font-size:23px}.step{max-width:none;flex:1} nav.toc{padding-right:120px} .langsel{top:8px;right:8px}}
+  @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
 </style>
 </head>
 <body>
-<div class="wrap">
+
+<div class="langsel" role="group" aria-label="Language">
+  <button data-l="pt" class="on">PT</button><button data-l="en">EN</button><button data-l="es">ES</button>
+</div>
+
+<!-- ==================== PT ==================== -->
+<div class="lang on" id="L-pt"><div class="wrap">
 
 <header>
   <div class="kicker">OrderMyPhones · Release 1.0</div>
   <h1>v1.0 — <span class="a">Plano de Execução</span></h1>
   <p class="lead">Versão mínima <b>funcional e manual</b>: banco e login reais, importa/exporta planilha, catálogo com fotos,
-  e clientes <b>convidados por link</b> fazendo pedido pelo portal — sem pagamento online, sem nenhuma API externa, sem bot.
-  Este documento fecha as decisões já tomadas, mostra como o preço funciona <b>sem API</b>, o cronograma de 4 semanas,
-  o que precisamos de cada lado, e as dúvidas que ainda faltam bater o martelo.</p>
+  clientes <b>convidados por link</b> fazendo pedido pelo portal — sem pagamento online, sem nenhuma API externa, sem bot.
+  <b>Todas as decisões estão travadas.</b> Falta só o Supabase limpo pra começar a Semana 1.</p>
 </header>
 
 <nav class="toc">
-  <a href="#s1">1 · Decisões fechadas</a>
-  <a href="#s2">2 · Preço sem API</a>
-  <a href="#s3">3 · Jornadas</a>
-  <a href="#s4">4 · Cronograma</a>
-  <a href="#s5">5 · Pré-requisitos</a>
-  <a href="#s6">6 · Última dúvida (D3)</a>
+  <a href="#pt-s1">1 · Decisões fechadas</a>
+  <a href="#pt-s2">2 · Preço sem API</a>
+  <a href="#pt-s3">3 · Jornadas</a>
+  <a href="#pt-s4">4 · Cronograma</a>
+  <a href="#pt-s5">5 · Painel de admin</a>
+  <a href="#pt-s6">6 · Pré-requisitos</a>
 </nav>
 
-<!-- ========== 1 ========== -->
-<section id="s1">
+<section id="pt-s1">
   <h2><span class="n">1</span> Decisões fechadas ✓</h2>
-  <p class="sub">O que já está batido e não se discute mais nesta versão.</p>
+  <p class="sub">Tudo batido. Nada aqui se rediscute nesta versão.</p>
   <div class="locked">
-    <div class="lk"><b>Preço segue o documento do Pricing Engine</b><span>Nada de modelo inventado: usamos o waterfall do documento oficial (bandas por tier, floors, flags). Detalhe de como ele roda sem API na seção 2.</span></div>
-    <div class="lk"><b>Conta só por convite — você escolhe o tier</b><span>Sem cadastro aberto. Você convida por e-mail, o tier já vai atribuído no convite. Ninguém de fora vê preço nenhum.</span></div>
-    <div class="lk"><b>QPay é cliente normal</b><span>Pede pelo portal como qualquer conta (tier atacado). Sem Excel especial, sem integração, sem foco extra.</span></div>
-    <div class="lk"><b>Zero API externa na v1.0</b><span>Sem bot de e-mail, sem Mannapov, sem APIs de comps, sem Stripe. Estoque entra e sai por planilha; pagamento é faturado por fora.</span></div>
-    <div class="lk"><b>Supabase: você prepara</b><span>Você limpa o projeto Supabase e me passa o acesso. Não crio nada lá antes disso.</span></div>
-    <div class="lk"><b>Interface em inglês · USD</b><span>Consistente com o mockup e com quem opera. Já decidido no mapeamento.</span></div>
-    <div class="lk"><b>Estoque abate na APROVAÇÃO</b><span>O pedido não trava estoque. Na aprovação o sistema valida contra o saldo do momento e abate; se não cobrir, aprova o que dá e o resto fica pendente pra <b>conciliação</b>.</span></div>
-    <div class="lk"><b>Cliente vê quantidade exata — e por local</b><span>Catálogo mostra o total real e, no detalhe, onde está cada unidade (nome de cada estoque: Texas, Flórida…). Transparência total pro comprador.</span></div>
-    <div class="lk"><b>Frete por fora do sistema</b><span>Pedido fecha sem valor de frete — combinado direto com o cliente, como já funciona hoje.</span></div>
-    <div class="lk"><b>O mockup é a base — e vai ser melhorado</b><span>Mesma base de código e mesmo endereço: o mockup evolui pra virar o sistema real, com melhorias de UI no caminho.</span></div>
+    <div class="lk"><b>Preço segue o documento do Pricing Engine</b><span>Nada de modelo inventado: waterfall do documento oficial (bandas por tier, floors, flags). Como roda sem API: seção 2.</span></div>
+    <div class="lk"><b>Conta só por convite — você escolhe o tier</b><span>Sem cadastro aberto. Convite por e-mail com o tier já atribuído. Ninguém de fora vê preço.</span></div>
+    <div class="lk"><b>QPay é cliente normal</b><span>Pede pelo portal como qualquer conta (tier atacado). Sem Excel especial, sem integração.</span></div>
+    <div class="lk"><b>Zero API externa na v1.0</b><span>Sem bot de e-mail, sem Mannapov, sem APIs de comps, sem Stripe. Estoque entra/sai por planilha; pagamento faturado por fora.</span></div>
+    <div class="lk"><b>Supabase: você prepara</b><span>Você limpa o projeto e me passa o acesso. Não crio nada lá antes disso.</span></div>
+    <div class="lk"><b>Interface em inglês · USD</b><span>Consistente com o mockup e com quem opera.</span></div>
+    <div class="lk"><b>Estoque abate na APROVAÇÃO</b><span>O pedido não trava estoque. Na aprovação valida contra o saldo do momento e abate; se não cobrir, aprova o que dá e o resto vai pra <b>conciliação</b>.</span></div>
+    <div class="lk"><b>Cliente vê quantidade exata — e por local</b><span>Total real e, no detalhe, onde está cada unidade (nome de cada estoque: Texas, Flórida…).</span></div>
+    <div class="lk"><b>Frete por fora do sistema</b><span>Pedido fecha sem valor de frete — combinado direto com o cliente, como hoje.</span></div>
+    <div class="lk"><b>O mockup é a base — e vai ser melhorado</b><span>Mesma base de código e mesmo endereço: o mockup evolui pra virar o sistema real.</span></div>
+    <div class="lk"><b>Sem quantidade mínima no carrinho</b><span>Nenhuma trava por padrão: o cliente pede o que quiser e você decide na aprovação. (Era a D3 — resolvida.)</span></div>
+    <div class="lk"><b>Painel de admin COMPLETO</b><span>Toda regra vira configuração sua, sem código: tiers, mínimos/múltiplos (desligados, ligáveis), preço, locais, grades, usuários. Detalhe na seção 5.</span></div>
   </div>
 </section>
 
-<!-- ========== 2 ========== -->
-<section id="s2">
+<section id="pt-s2">
   <h2><span class="n">2</span> Como o preço funciona sem API</h2>
-  <p class="sub">A descoberta que destrava a v1: no documento do engine, <b>os tiers de atacado não dependem de mercado</b> — são custo + banda fixa. E o custo já vem na planilha da HYLA. Ou seja: o preço pros seus clientes atuais (atacado/dealer) sai <b>automático no import</b>, fiel ao documento.</p>
-
+  <p class="sub">A descoberta que destrava a v1: no documento do engine, <b>os tiers de atacado não dependem de mercado</b> — são custo + banda fixa. O custo já vem na planilha da HYLA. O preço pros seus clientes atuais sai <b>automático no import</b>.</p>
   <div class="flow">
     <div class="step"><b>1 · Planilha entra</b><span>Import da HYLA traz o custo real de cada SKU</span></div>
     <div class="arr">→</div>
     <div class="step ok"><b>2 · T3/T4 automático</b><span>Wholesale: custo + $7–15 · Distributor: custo + $3–6 (bandas do documento)</span></div>
     <div class="arr">→</div>
-    <div class="step warn"><b>3 · T1/T2 assistido</b><span>Consumer/Retailer dependem de benchmark — na v1: planilha de comps ou preço manual</span></div>
+    <div class="step warn"><b>3 · T1/T2 assistido</b><span>Consumer/Retailer dependem de benchmark — na v1: planilha de comps ou manual</span></div>
     <div class="arr">→</div>
-    <div class="step"><b>4 · Flags</b><span>Sem margem → sinaliza e não ativa (regra do documento, mantida)</span></div>
+    <div class="step"><b>4 · Flags</b><span>Sem margem → sinaliza e não ativa (regra do documento)</span></div>
     <div class="arr">→</div>
     <div class="step ok"><b>5 · Publicado</b><span>Cada cliente vê só o preço do tier dele</span></div>
   </div>
-
   <div class="split">
     <div class="half auto">
       <b class="t">🟢 Automático desde o dia 1</b>
       <ul>
         <li><b>Tier 3 (Wholesale)</b> e <b>Tier 4 (Distributor)</b> — cost-plus puro, calculado no import</li>
         <li>Floors de margem do documento aplicados</li>
-        <li>Regra de ordem: custo &lt; T4 &lt; T3 sempre validada</li>
+        <li>Ordem validada: custo &lt; T4 &lt; T3 sempre</li>
         <li>É o preço que a QPay e os dealers veem</li>
       </ul>
     </div>
     <div class="half man">
-      <b class="t">🟡 Assistido (até as APIs chegarem na v1.1)</b>
+      <b class="t">🟡 Assistido (até as APIs na v1.1)</b>
       <ul>
-        <li><b>Tier 1 (Consumer)</b> — benchmark por planilha de comps ou valor manual por SKU</li>
+        <li><b>Tier 1 (Consumer)</b> — benchmark por planilha de comps ou valor manual</li>
         <li><b>Tier 2 (Retailer)</b> — derivado do T1 (− $20, regra do documento)</li>
-        <li>Sem comps e sem manual → SKU fica oculto de T1/T2 (nunca chuta preço)</li>
-        <li>Override manual com registro de quem/quando, como no documento</li>
+        <li>Sem comps e sem manual → SKU oculto de T1/T2 (nunca chuta preço)</li>
+        <li>Override manual com registro de quem/quando</li>
       </ul>
     </div>
   </div>
-
-  <div class="callout">💡 Tradução prática: <b>na v1.0 seus clientes de atacado já compram com preço certo automático</b>. O preço de consumidor final (que precisa de mercado) entra assistido agora e vira automático quando as chaves de API forem assinadas — sem mudar nada do que foi construído.</div>
+  <div class="callout">💡 Tradução prática: <b>na v1.0 seus clientes de atacado já compram com preço certo automático</b>. O preço de consumidor entra assistido e vira automático quando as chaves de API chegarem — sem refazer nada.</div>
 </section>
 
-<!-- ========== 3 ========== -->
-<section id="s3">
+<section id="pt-s3">
   <h2><span class="n">3</span> As três jornadas da v1.0</h2>
-  <p class="sub">Todo o sistema se resume a estas três sequências. Amarelo = revisão humana · verde = ação que grava.</p>
+  <p class="sub">Todo o sistema em três sequências. Amarelo = revisão humana · verde = ação que grava.</p>
 
   <div class="fl-h"><span class="fid">J1</span><b>Você convida → cliente cria conta → faz pedido</b></div>
   <div class="flow">
-    <div class="step"><b>1 · Convite</b><span>Admin: e-mail + tier + nome da empresa → sistema envia o link</span></div>
+    <div class="step"><b>1 · Convite</b><span>Admin: e-mail + tier + empresa → sistema envia o link</span></div>
     <div class="arr">→</div>
-    <div class="step"><b>2 · Conta</b><span>Cliente abre o link, define a senha — tier já vem atribuído</span></div>
+    <div class="step"><b>2 · Conta</b><span>Cliente abre o link e define a senha — tier já atribuído</span></div>
     <div class="arr">→</div>
     <div class="step"><b>3 · Catálogo</b><span>Preço DO TIER DELE + quantidade exata, com detalhe por estoque (Texas, Flórida…)</span></div>
     <div class="arr">→</div>
-    <div class="step"><b>4 · Pedido</b><span>Carrinho → endereço de envio → "Enviar pedido" (sem pagamento, sem travar estoque)</span></div>
+    <div class="step"><b>4 · Pedido</b><span>Carrinho → endereço → "Enviar pedido" (sem pagamento, sem travar estoque)</span></div>
     <div class="arr">→</div>
     <div class="step warn"><b>5 · Aguardando 👀</b><span>Pedido nasce "aguardando aprovação" no seu admin</span></div>
   </div>
 
   <div class="fl-h"><span class="fid">J2</span><b>Você aprova → estoque abate → envia</b></div>
   <div class="flow">
-    <div class="step warn"><b>1 · Revisar 👀</b><span>Admin vê o pedido: itens, tier, total, endereço, estoque disponível AGORA</span></div>
+    <div class="step warn"><b>1 · Revisar 👀</b><span>Itens, tier, total, endereço, estoque disponível AGORA</span></div>
     <div class="arr">→</div>
-    <div class="step ok"><b>2 · Aprovar ✓</b><span>Valida contra o saldo do momento e abate (transação) · cliente vê o status mudar</span></div>
+    <div class="step ok"><b>2 · Aprovar ✓</b><span>Valida contra o saldo do momento e abate (transação)</span></div>
     <div class="arr">→</div>
-    <div class="step warn"><b>3 · Divergência? 👀</b><span>Se o saldo não cobre tudo: aprova o que dá, o resto fica pendente pra conciliação</span></div>
+    <div class="step warn"><b>3 · Divergência? 👀</b><span>Saldo não cobre tudo: aprova o que dá, resto pendente pra conciliação</span></div>
     <div class="arr">→</div>
     <div class="step"><b>4 · Separar</b><span>Romaneio de separação/envio com endereço</span></div>
     <div class="arr">→</div>
-    <div class="step"><b>5 · Enviar</b><span>Marca "enviado" (+ tracking manual opcional) · faturamento por fora</span></div>
+    <div class="step"><b>5 · Enviar</b><span>Marca "enviado" (+ tracking manual) · faturamento por fora</span></div>
   </div>
-  <p class="fnote"><b>Recusar</b> também existe: pedido negado só notifica o cliente com motivo — nada foi travado, nada a devolver. <b>Conciliação:</b> a linha pendente aparece numa lista própria até você resolver (chegou estoque → completa · cliente aceita menos → fecha parcial · cancela a linha).</p>
+  <p class="fnote"><b>Recusar</b> só notifica com motivo — nada foi travado. <b>Conciliação:</b> linha pendente fica numa lista própria até resolver (chegou estoque → completa · cliente aceita menos → parcial · cancela).</p>
 
   <div class="fl-h"><span class="fid">J3</span><b>Planilha entra → estoque atualiza → planilha sai</b></div>
   <div class="flow">
@@ -238,101 +232,470 @@
   </div>
 </section>
 
-<!-- ========== 4 ========== -->
-<section id="s4">
+<section id="pt-s4">
   <h2><span class="n">4</span> Cronograma — 4 semanas</h2>
-  <p class="sub">Cada semana fecha com algo demonstrável. A ordem prioriza o que destrava demonstração e clientes reais o quanto antes.</p>
-
-  <div class="wk demo">
-    <div class="wnum">S1</div>
-    <div class="wbody">
-      <div class="mt">Fundação + estoque real <span class="demoflag">🔴 DEMO VIVA</span></div>
-      <ul>
-        <li>Migrations + RLS no Supabase (assim que você liberar o projeto limpo)</li>
-        <li>Login real (admin/staff) — telas do mockup ligadas no Auth</li>
-        <li>Import wizard com a planilha real da HYLA → estoque + custo no banco</li>
-        <li><b>Demo de sexta:</b> logar de verdade e ver 2.6xx SKUs com estoque real na tela</li>
-      </ul>
-    </div>
-  </div>
-  <div class="wk">
-    <div class="wnum">S2</div>
-    <div class="wbody">
-      <div class="mt">Catálogo + preço automático</div>
-      <ul>
-        <li>CRUD de produto: criar/editar, fotos (upload), descrição, publicar</li>
-        <li>Pricing do documento rodando no import: T3/T4 automáticos + flags</li>
-        <li>Tela de preço: ver os 4 tiers por SKU, comps por planilha, override T1/T2</li>
-        <li>Export CSV/Excel round-trip</li>
-      </ul>
-    </div>
-  </div>
-  <div class="wk">
-    <div class="wnum">S3</div>
-    <div class="wbody">
-      <div class="mt">Convites + pedido do cliente</div>
-      <ul>
-        <li>Convite por e-mail com tier atribuído · cliente define senha e entra</li>
-        <li>Catálogo logado com preço do tier · carrinho · endereço · "Enviar pedido"</li>
-        <li>Portal do cliente: meus pedidos + status (telas do mockup, dado real)</li>
-        <li>Admin: fila de pedidos → aprovar (abate) / recusar → romaneio → enviado</li>
-      </ul>
-    </div>
-  </div>
-  <div class="wk">
-    <div class="wnum">S4</div>
-    <div class="wbody">
-      <div class="mt">Fechamento + operação assistida</div>
-      <ul>
-        <li>Configurações: usuários, locais, mapa de grades, parâmetros de preço</li>
-        <li>Auditoria ponta a ponta + testes dos critérios de "pronto" (documento anterior)</li>
-        <li>Convites reais: QPay e primeiros dealers entram</li>
-        <li>Semana de operação acompanhada — eu junto, ajustando o que aparecer</li>
-      </ul>
-    </div>
-  </div>
+  <p class="sub">Cada semana fecha com algo demonstrável.</p>
+  <div class="wk demo"><div class="wnum">S1</div><div class="wbody">
+    <div class="mt">Fundação + estoque real <span class="demoflag">🔴 DEMO VIVA</span></div>
+    <ul>
+      <li>Migrations + RLS no Supabase (assim que você liberar o projeto limpo)</li>
+      <li>Login real (admin/staff) — telas do mockup ligadas no Auth</li>
+      <li>Import wizard com a planilha real da HYLA → estoque + custo no banco</li>
+      <li><b>Demo de sexta:</b> logar de verdade e ver 2.6xx SKUs com estoque real</li>
+    </ul></div></div>
+  <div class="wk"><div class="wnum">S2</div><div class="wbody">
+    <div class="mt">Catálogo + preço automático</div>
+    <ul>
+      <li>CRUD de produto: criar/editar, fotos, descrição, publicar</li>
+      <li>Pricing do documento no import: T3/T4 automáticos + flags</li>
+      <li>Tela de preço: 4 tiers por SKU, comps por planilha, override T1/T2</li>
+      <li>Export CSV/Excel round-trip</li>
+    </ul></div></div>
+  <div class="wk"><div class="wnum">S3</div><div class="wbody">
+    <div class="mt">Convites + pedido do cliente</div>
+    <ul>
+      <li>Convite por e-mail com tier · cliente define senha e entra</li>
+      <li>Catálogo logado com preço do tier · carrinho · endereço · "Enviar pedido"</li>
+      <li>Portal do cliente: meus pedidos + status</li>
+      <li>Admin: fila de pedidos → aprovar (abate) / recusar → conciliação → romaneio → enviado</li>
+    </ul></div></div>
+  <div class="wk"><div class="wnum">S4</div><div class="wbody">
+    <div class="mt">Painel de admin completo + fechamento</div>
+    <ul>
+      <li><b>Painel de configuração completo</b> (seção 5): tiers, regras de quantidade, preço, locais, grades, usuários</li>
+      <li>Auditoria ponta a ponta + testes dos critérios de "pronto"</li>
+      <li>Convites reais: QPay e primeiros dealers entram</li>
+      <li>Semana de operação acompanhada — ajusto o que aparecer</li>
+    </ul></div></div>
 </section>
 
-<!-- ========== 5 ========== -->
-<section id="s5">
-  <h2><span class="n">5</span> Pré-requisitos — quem entrega o quê</h2>
-  <p class="sub">Curto e honesto: o que eu preciso receber de você, e o que já está do meu lado.</p>
+<section id="pt-s5">
+  <h2><span class="n">5</span> Painel de admin — o que você configura sem código</h2>
+  <p class="sub">Seu pedido: nenhuma regra travada por padrão, mas <b>todos os botões existem</b>. Cada card abaixo é uma área do painel; "padrão" mostra como nasce na v1.0.</p>
+  <div class="panelgrid">
+    <div class="pg"><b>🏷️ Tiers</b><span>Nomes, faixas de unidades, bandas/descontos de preço por tier. Editar aqui reprecifica o catálogo.</span><span class="def onn">padrão: 4 tiers do documento</span></div>
+    <div class="pg"><b>🔢 Regras de quantidade</b><span>Mínimo por tier · múltiplo/master pack (5) · modo: desligado, avisar ou barrar.</span><span class="def off">padrão: DESLIGADO (sua decisão)</span></div>
+    <div class="pg"><b>💰 Parâmetros de preço</b><span>Bandas T3/T4, floors de margem, custo de kit, regra T2 = T1 − $20.</span><span class="def onn">padrão: valores do documento</span></div>
+    <div class="pg"><b>🏬 Locais de estoque</b><span>Criar/renomear estoques (Texas, Flórida…), ativar/desativar.</span><span class="def onn">padrão: locais da planilha</span></div>
+    <div class="pg"><b>🎚️ Grades</b><span>Mapa vendor → CTIA → visível pra consumidor. Grade nova cai aqui pra você classificar.</span><span class="def onn">padrão: mapa provado da HYLA</span></div>
+    <div class="pg"><b>👥 Usuários &amp; convites</b><span>Convidar cliente (com tier), convidar staff, desativar, trocar tier de conta existente.</span><span class="def onn">padrão: você admin</span></div>
+    <div class="pg"><b>👁️ Exibição do catálogo</b><span>Quantidade exata vs faixas, mostrar detalhe por local, colunas visíveis.</span><span class="def onn">padrão: exata + por local (sua decisão)</span></div>
+    <div class="pg"><b>📜 Auditoria</b><span>Consulta de tudo que aconteceu: quem, quando, o quê, antes/depois. Só leitura.</span><span class="def onn">sempre ativo</span></div>
+  </div>
+  <div class="callout">🎛️ A alegoria: o painel é a <b>mesa de som</b> do sistema — a v1.0 entrega todos os faders na posição que você decidiu hoje, e mudar de ideia amanhã é mexer no fader, não chamar o técnico.</div>
+</section>
+
+<section id="pt-s6">
+  <h2><span class="n">6</span> Pré-requisitos — quem entrega o quê</h2>
   <div class="pre">
-    <div class="pr"><span class="who you">Você / Abdu</span><b>Projeto Supabase limpo</b><span>Você limpa e me passa acesso (ou o ref do projeto). É o único bloqueio do início da S1.</span></div>
-    <div class="pr"><span class="who you">Você / Abdu</span><b>Planilha HYLA do dia</b><span>Já tenho uma real (provada). Pra operar, o Abdu segue baixando a diária e subindo — 3 min/dia.</span></div>
-    <div class="pr"><span class="who you">Você / Abdu</span><b>Parâmetros de preço confirmados</b><span>As bandas/floors do documento valem como estão? Se o Abdu quiser mexer em algum número, é config — mas melhor fixar antes da S2.</span></div>
+    <div class="pr"><span class="who you">Você / Abdu</span><b>Projeto Supabase limpo</b><span>Você limpa e me passa o acesso. Único bloqueio do início da S1.</span></div>
+    <div class="pr"><span class="who you">Você / Abdu</span><b>Planilha HYLA do dia</b><span>Já tenho uma real (provada). Pra operar, o Abdu segue baixando a diária — 3 min/dia.</span></div>
+    <div class="pr"><span class="who you">Você / Abdu</span><b>Parâmetros de preço confirmados</b><span>As bandas/floors do documento valem como estão? Se quiser mexer, é config — melhor fixar antes da S2.</span></div>
     <div class="pr"><span class="who you">Você / Abdu</span><b>Lista dos primeiros convidados</b><span>E-mail + empresa + tier de cada cliente (QPay inclusa) — usada na S3/S4.</span></div>
     <div class="pr"><span class="who dev">Meu lado</span><b>UI pronta + parser provado</b><span>Mockup completo, leitor da HYLA validado com 2.675 linhas, schema desenhado, deploy no ar.</span></div>
-    <div class="pr"><span class="who dev">Meu lado</span><b>E-mail de convite</b><span>v1 usa o e-mail nativo do Supabase (suficiente pra poucos convites). Remetente próprio bonito fica pra depois.</span></div>
+    <div class="pr"><span class="who dev">Meu lado</span><b>E-mail de convite</b><span>v1 usa o e-mail nativo do Supabase. Remetente próprio bonito fica pra depois.</span></div>
+  </div>
+  <div class="callout">✅ <b>Tudo decidido.</b> Começo a S1 no momento em que o Supabase limpo chegar.</div>
+</section>
+
+<footer>OMP · v1.0 Plano de Execução — decisões travadas: preço = documento do Pricing Engine · convite com tier · QPay cliente comum · zero API · abate na aprovação com conciliação · quantidade exata por local · frete por fora · mockup como base · sem mínimos (configuráveis no painel) · painel de admin completo. Pendente: apenas o Supabase.</footer>
+
+</div></div>
+
+<!-- ==================== EN ==================== -->
+<div class="lang" id="L-en"><div class="wrap">
+
+<header>
+  <div class="kicker">OrderMyPhones · Release 1.0</div>
+  <h1>v1.0 — <span class="a">Execution Plan</span></h1>
+  <p class="lead">The minimum <b>functional, manual</b> version: real database and login, spreadsheet import/export, catalog with photos,
+  and <b>invite-only</b> customers placing orders through the portal — no online payment, no external APIs, no bots.
+  <b>Every decision is locked.</b> All that's missing is the clean Supabase project to start Week 1.</p>
+</header>
+
+<nav class="toc">
+  <a href="#en-s1">1 · Locked decisions</a>
+  <a href="#en-s2">2 · Pricing without APIs</a>
+  <a href="#en-s3">3 · Journeys</a>
+  <a href="#en-s4">4 · Schedule</a>
+  <a href="#en-s5">5 · Admin panel</a>
+  <a href="#en-s6">6 · Prerequisites</a>
+</nav>
+
+<section id="en-s1">
+  <h2><span class="n">1</span> Locked decisions ✓</h2>
+  <p class="sub">All settled. Nothing here gets re-discussed in this release.</p>
+  <div class="locked">
+    <div class="lk"><b>Pricing follows the Pricing Engine document</b><span>No invented model: the official document's waterfall (tier bands, floors, flags). How it runs without APIs: section 2.</span></div>
+    <div class="lk"><b>Invite-only accounts — you pick the tier</b><span>No open signup. E-mail invitation with the tier pre-assigned. Nobody outside sees any price.</span></div>
+    <div class="lk"><b>QPay is a regular customer</b><span>Orders through the portal like any account (wholesale tier). No special Excel, no integration.</span></div>
+    <div class="lk"><b>Zero external APIs in v1.0</b><span>No e-mail bot, no Mannapov, no comps APIs, no Stripe. Stock moves by spreadsheet; billing happens outside.</span></div>
+    <div class="lk"><b>Supabase: prepared by you</b><span>You clean the project and hand me access. I create nothing there before that.</span></div>
+    <div class="lk"><b>English UI · USD</b><span>Consistent with the mockup and with the operators.</span></div>
+    <div class="lk"><b>Stock deducts on APPROVAL</b><span>Orders hold nothing. Approval validates against the live balance and deducts; any shortfall is approved partially and goes to <b>reconciliation</b>.</span></div>
+    <div class="lk"><b>Customers see exact quantities — per location</b><span>The real total and, in detail, where each unit sits (each stock's name: Texas, Florida…).</span></div>
+    <div class="lk"><b>Shipping stays outside the system</b><span>Orders close without a freight value — arranged directly with the customer, as today.</span></div>
+    <div class="lk"><b>The mockup is the base — and will be improved</b><span>Same codebase, same address: the mockup evolves into the real system.</span></div>
+    <div class="lk"><b>No minimum quantity in the cart</b><span>No blocks by default: customers order any quantity and you decide at approval. (That was D3 — resolved.)</span></div>
+    <div class="lk"><b>FULL admin panel</b><span>Every rule becomes your configuration, no code: tiers, minimums/multiples (off, toggleable), pricing, locations, grades, users. Details in section 5.</span></div>
   </div>
 </section>
 
-<!-- ========== 6 ========== -->
-<section id="s6">
-  <h2><span class="n">6</span> Última dúvida — a D3, explicada de novo (mais simples)</h2>
-  <p class="sub">Das 5 dúvidas, você fechou 4 (já estão na seção 1 ✓). Sobrou só esta — e vou explicar melhor, porque da primeira vez ficou confusa.</p>
-
-  <div class="q">
-    <div class="qt"><span class="qn">D3</span> 🛒 O carrinho deve impedir alguma quantidade "errada"?</div>
-    <p>É só isso: quando o cliente estiver montando o pedido, existe alguma quantidade que o sistema deveria <b>barrar ou avisar</b>?</p>
-    <p>Dois exemplos concretos:</p>
-    <p>• Um cliente <b>atacado</b> pede só <b>3 unidades</b> — pedido pequeno demais pra atacado. Deixa passar?<br>
-       • Os aparelhos saem em <b>caixas de 5</b> (master pack). O cliente pede <b>23</b> — não fecha caixa. Deixa passar?</p>
-    <p>Como você decidiu que <b>todo pedido passa pela sua aprovação</b>, nada entra sem você ver — a pergunta é só se o sistema te ajuda ANTES, avisando o cliente na hora do carrinho.</p>
-    <div class="opt">
-      <span class="rec">Avisar sem barrar: "23 não fecha caixas de 5 — sugerimos 25" · o cliente pode mandar assim mesmo, e você decide na aprovação</span>
-      <span>Barrar de verdade: só aceita quantidade certa</span>
-      <span>Liberar tudo: nenhuma regra, você filtra na aprovação</span>
+<section id="en-s2">
+  <h2><span class="n">2</span> How pricing works without APIs</h2>
+  <p class="sub">The insight that unlocks v1: in the engine document, <b>wholesale tiers don't depend on the market</b> — they're cost + fixed band. Cost already arrives in the HYLA spreadsheet. Your current customers' prices come out <b>automatically on import</b>.</p>
+  <div class="flow">
+    <div class="step"><b>1 · Spreadsheet in</b><span>The HYLA import brings each SKU's real cost</span></div>
+    <div class="arr">→</div>
+    <div class="step ok"><b>2 · T3/T4 automatic</b><span>Wholesale: cost + $7–15 · Distributor: cost + $3–6 (document bands)</span></div>
+    <div class="arr">→</div>
+    <div class="step warn"><b>3 · T1/T2 assisted</b><span>Consumer/Retailer need a benchmark — in v1: comps spreadsheet or manual</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>4 · Flags</b><span>No margin → flagged and NOT activated (document rule)</span></div>
+    <div class="arr">→</div>
+    <div class="step ok"><b>5 · Published</b><span>Each customer sees only their tier's price</span></div>
+  </div>
+  <div class="split">
+    <div class="half auto">
+      <b class="t">🟢 Automatic from day 1</b>
+      <ul>
+        <li><b>Tier 3 (Wholesale)</b> and <b>Tier 4 (Distributor)</b> — pure cost-plus, computed on import</li>
+        <li>Margin floors from the document applied</li>
+        <li>Order validated: cost &lt; T4 &lt; T3, always</li>
+        <li>This is the price QPay and the dealers see</li>
+      </ul>
+    </div>
+    <div class="half man">
+      <b class="t">🟡 Assisted (until APIs arrive in v1.1)</b>
+      <ul>
+        <li><b>Tier 1 (Consumer)</b> — benchmark via comps spreadsheet or manual value</li>
+        <li><b>Tier 2 (Retailer)</b> — derived from T1 (− $20, document rule)</li>
+        <li>No comps and no manual value → SKU hidden from T1/T2 (never guesses a price)</li>
+        <li>Manual override with who/when recorded</li>
+      </ul>
     </div>
   </div>
-
-  <div class="callout">✅ Respondida a D3, está <b>tudo travado</b> — começo a S1 no momento em que o Supabase limpo chegar. A resposta pode vir por áudio: "avisa", "barra" ou "libera" já resolve.</div>
+  <div class="callout">💡 In practice: <b>in v1.0 your wholesale customers already buy at automatically correct prices</b>. Consumer pricing starts assisted and becomes automatic once the API keys arrive — nothing gets rebuilt.</div>
 </section>
 
-<footer>
-  OMP · v1.0 Plano de Execução — decisões incorporadas: preço = documento do Pricing Engine · convite com tier · QPay como cliente comum · zero API · abate na aprovação com conciliação · quantidade exata por local · frete por fora · mockup como base. Complementa o Mapeamento v1 (telas, fluxos e critérios de pronto). Pendente: D3.
-</footer>
+<section id="en-s3">
+  <h2><span class="n">3</span> The three journeys of v1.0</h2>
+  <p class="sub">The whole system in three sequences. Amber = human review · green = the action that commits.</p>
 
-</div>
+  <div class="fl-h"><span class="fid">J1</span><b>You invite → customer creates account → places order</b></div>
+  <div class="flow">
+    <div class="step"><b>1 · Invite</b><span>Admin: e-mail + tier + company → system sends the link</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>2 · Account</b><span>Customer opens the link, sets a password — tier pre-assigned</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>3 · Catalog</b><span>THEIR tier's price + exact quantity, detailed per stock (Texas, Florida…)</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>4 · Order</b><span>Cart → shipping address → "Place order" (no payment, no stock hold)</span></div>
+    <div class="arr">→</div>
+    <div class="step warn"><b>5 · Pending 👀</b><span>Order lands as "awaiting approval" in your admin</span></div>
+  </div>
+
+  <div class="fl-h"><span class="fid">J2</span><b>You approve → stock deducts → ship</b></div>
+  <div class="flow">
+    <div class="step warn"><b>1 · Review 👀</b><span>Items, tier, total, address, stock available NOW</span></div>
+    <div class="arr">→</div>
+    <div class="step ok"><b>2 · Approve ✓</b><span>Validates against the live balance and deducts (transaction)</span></div>
+    <div class="arr">→</div>
+    <div class="step warn"><b>3 · Shortfall? 👀</b><span>Balance doesn't cover it all: approve what fits, rest goes to reconciliation</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>4 · Pick</b><span>Picking/shipping sheet with the address</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>5 · Ship</b><span>Mark "shipped" (+ manual tracking) · billing outside</span></div>
+  </div>
+  <p class="fnote"><b>Reject</b> just notifies with a reason — nothing was held. <b>Reconciliation:</b> pending lines sit in their own list until resolved (stock arrives → complete · customer accepts less → partial · cancel).</p>
+
+  <div class="fl-h"><span class="fid">J3</span><b>Spreadsheet in → stock updates → spreadsheet out</b></div>
+  <div class="flow">
+    <div class="step"><b>1 · Upload</b><span>HYLA spreadsheet (or our CSV) into the wizard</span></div>
+    <div class="arr">→</div>
+    <div class="step warn"><b>2 · Dry-run 👀</b><span>Preview with accepted/rejected and per-line reasons</span></div>
+    <div class="arr">→</div>
+    <div class="step ok"><b>3 · Confirm ✓</b><span>Stock + costs updated · T3/T4 repriced instantly</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>4 · Export</b><span>Stock CSV/Excel anytime (round-trip)</span></div>
+  </div>
+</section>
+
+<section id="en-s4">
+  <h2><span class="n">4</span> Schedule — 4 weeks</h2>
+  <p class="sub">Every week closes with something demonstrable.</p>
+  <div class="wk demo"><div class="wnum">W1</div><div class="wbody">
+    <div class="mt">Foundation + real stock <span class="demoflag">🔴 LIVE DEMO</span></div>
+    <ul>
+      <li>Migrations + RLS on Supabase (as soon as you hand over the clean project)</li>
+      <li>Real login (admin/staff) — mockup screens wired to Auth</li>
+      <li>Import wizard with the real HYLA spreadsheet → stock + cost in the database</li>
+      <li><b>Friday demo:</b> log in for real and see 2.6xx SKUs with real stock</li>
+    </ul></div></div>
+  <div class="wk"><div class="wnum">W2</div><div class="wbody">
+    <div class="mt">Catalog + automatic pricing</div>
+    <ul>
+      <li>Product CRUD: create/edit, photos, description, publish</li>
+      <li>Document pricing on import: automatic T3/T4 + flags</li>
+      <li>Pricing screen: 4 tiers per SKU, comps by spreadsheet, T1/T2 override</li>
+      <li>Round-trip CSV/Excel export</li>
+    </ul></div></div>
+  <div class="wk"><div class="wnum">W3</div><div class="wbody">
+    <div class="mt">Invitations + customer ordering</div>
+    <ul>
+      <li>E-mail invitation with tier · customer sets a password and enters</li>
+      <li>Signed-in catalog at tier price · cart · address · "Place order"</li>
+      <li>Customer portal: my orders + status</li>
+      <li>Admin: order queue → approve (deduct) / reject → reconciliation → picking sheet → shipped</li>
+    </ul></div></div>
+  <div class="wk"><div class="wnum">W4</div><div class="wbody">
+    <div class="mt">Full admin panel + closing</div>
+    <ul>
+      <li><b>Complete configuration panel</b> (section 5): tiers, quantity rules, pricing, locations, grades, users</li>
+      <li>End-to-end audit + "done when" criteria tests</li>
+      <li>Real invitations: QPay and the first dealers come in</li>
+      <li>A week of assisted operation — I adjust whatever shows up</li>
+    </ul></div></div>
+</section>
+
+<section id="en-s5">
+  <h2><span class="n">5</span> Admin panel — what you configure without code</h2>
+  <p class="sub">Your request: no rule locked by default, but <b>every switch exists</b>. Each card below is a panel area; "default" shows how v1.0 ships.</p>
+  <div class="panelgrid">
+    <div class="pg"><b>🏷️ Tiers</b><span>Names, unit ranges, price bands/discounts per tier. Editing here reprices the catalog.</span><span class="def onn">default: the document's 4 tiers</span></div>
+    <div class="pg"><b>🔢 Quantity rules</b><span>Minimum per tier · multiple/master pack (5) · mode: off, warn or block.</span><span class="def off">default: OFF (your decision)</span></div>
+    <div class="pg"><b>💰 Pricing parameters</b><span>T3/T4 bands, margin floors, kit cost, T2 = T1 − $20 rule.</span><span class="def onn">default: document values</span></div>
+    <div class="pg"><b>🏬 Stock locations</b><span>Create/rename stocks (Texas, Florida…), enable/disable.</span><span class="def onn">default: spreadsheet locations</span></div>
+    <div class="pg"><b>🎚️ Grades</b><span>Vendor → CTIA map → consumer-visible. New grades land here for you to classify.</span><span class="def onn">default: the proven HYLA map</span></div>
+    <div class="pg"><b>👥 Users &amp; invitations</b><span>Invite customers (with tier), invite staff, deactivate, change an account's tier.</span><span class="def onn">default: you as admin</span></div>
+    <div class="pg"><b>👁️ Catalog display</b><span>Exact quantity vs ranges, per-location detail, visible columns.</span><span class="def onn">default: exact + per location (your decision)</span></div>
+    <div class="pg"><b>📜 Audit</b><span>Everything that happened: who, when, what, before/after. Read-only.</span><span class="def onn">always on</span></div>
+  </div>
+  <div class="callout">🎛️ The analogy: the panel is the system's <b>mixing console</b> — v1.0 ships every fader in the position you chose today, and changing your mind tomorrow means moving a fader, not calling the engineer.</div>
+</section>
+
+<section id="en-s6">
+  <h2><span class="n">6</span> Prerequisites — who delivers what</h2>
+  <div class="pre">
+    <div class="pr"><span class="who you">You / Abdu</span><b>Clean Supabase project</b><span>You clean it and hand me access. The only blocker for W1.</span></div>
+    <div class="pr"><span class="who you">You / Abdu</span><b>The day's HYLA spreadsheet</b><span>I already have a real one (proven). To operate, Abdu keeps downloading the daily file — 3 min/day.</span></div>
+    <div class="pr"><span class="who you">You / Abdu</span><b>Pricing parameters confirmed</b><span>Do the document's bands/floors stand as-is? Changes are configuration — better fixed before W2.</span></div>
+    <div class="pr"><span class="who you">You / Abdu</span><b>First invitees list</b><span>E-mail + company + tier for each customer (QPay included) — used in W3/W4.</span></div>
+    <div class="pr"><span class="who dev">My side</span><b>UI ready + proven parser</b><span>Complete mockup, HYLA reader validated on 2,675 rows, schema designed, deploy live.</span></div>
+    <div class="pr"><span class="who dev">My side</span><b>Invitation e-mail</b><span>v1 uses Supabase's native e-mail. A branded sender comes later.</span></div>
+  </div>
+  <div class="callout">✅ <b>Everything decided.</b> W1 starts the moment the clean Supabase arrives.</div>
+</section>
+
+<footer>OMP · v1.0 Execution Plan — locked: pricing = the Pricing Engine document · invite with tier · QPay as a regular customer · zero APIs · deduct-on-approval with reconciliation · exact quantities per location · shipping outside · mockup as the base · no minimums (panel-configurable) · full admin panel. Pending: only Supabase.</footer>
+
+</div></div>
+
+<!-- ==================== ES ==================== -->
+<div class="lang" id="L-es"><div class="wrap">
+
+<header>
+  <div class="kicker">OrderMyPhones · Release 1.0</div>
+  <h1>v1.0 — <span class="a">Plan de Ejecución</span></h1>
+  <p class="lead">La versión mínima <b>funcional y manual</b>: base de datos y login reales, importación/exportación por planilla, catálogo con fotos,
+  y clientes <b>invitados por enlace</b> haciendo pedidos por el portal — sin pago en línea, sin ninguna API externa, sin bots.
+  <b>Todas las decisiones están cerradas.</b> Solo falta el Supabase limpio para arrancar la Semana 1.</p>
+</header>
+
+<nav class="toc">
+  <a href="#es-s1">1 · Decisiones cerradas</a>
+  <a href="#es-s2">2 · Precio sin API</a>
+  <a href="#es-s3">3 · Recorridos</a>
+  <a href="#es-s4">4 · Cronograma</a>
+  <a href="#es-s5">5 · Panel de admin</a>
+  <a href="#es-s6">6 · Prerrequisitos</a>
+</nav>
+
+<section id="es-s1">
+  <h2><span class="n">1</span> Decisiones cerradas ✓</h2>
+  <p class="sub">Todo acordado. Nada de esto se vuelve a discutir en esta versión.</p>
+  <div class="locked">
+    <div class="lk"><b>El precio sigue el documento del Pricing Engine</b><span>Nada inventado: el waterfall del documento oficial (bandas por tier, pisos, flags). Cómo funciona sin API: sección 2.</span></div>
+    <div class="lk"><b>Cuenta solo por invitación — tú eliges el tier</b><span>Sin registro abierto. Invitación por correo con el tier ya asignado. Nadie de afuera ve precios.</span></div>
+    <div class="lk"><b>QPay es un cliente normal</b><span>Pide por el portal como cualquier cuenta (tier mayorista). Sin Excel especial, sin integración.</span></div>
+    <div class="lk"><b>Cero APIs externas en la v1.0</b><span>Sin bot de correo, sin Mannapov, sin APIs de comps, sin Stripe. El stock entra/sale por planilla; la facturación es por fuera.</span></div>
+    <div class="lk"><b>Supabase: lo preparas tú</b><span>Limpias el proyecto y me pasas el acceso. No creo nada ahí antes de eso.</span></div>
+    <div class="lk"><b>Interfaz en inglés · USD</b><span>Consistente con el mockup y con quienes operan.</span></div>
+    <div class="lk"><b>El stock se descuenta al APROBAR</b><span>El pedido no bloquea stock. La aprobación valida contra el saldo del momento y descuenta; si no alcanza, aprueba lo que hay y el resto va a <b>conciliación</b>.</span></div>
+    <div class="lk"><b>El cliente ve cantidades exactas — y por ubicación</b><span>El total real y, en el detalle, dónde está cada unidad (nombre de cada stock: Texas, Florida…).</span></div>
+    <div class="lk"><b>Envío por fuera del sistema</b><span>El pedido cierra sin valor de flete — se acuerda directo con el cliente, como hoy.</span></div>
+    <div class="lk"><b>El mockup es la base — y se va a mejorar</b><span>Misma base de código y misma dirección: el mockup evoluciona hasta ser el sistema real.</span></div>
+    <div class="lk"><b>Sin cantidad mínima en el carrito</b><span>Ninguna traba por defecto: el cliente pide lo que quiera y tú decides al aprobar. (Era la D3 — resuelta.)</span></div>
+    <div class="lk"><b>Panel de admin COMPLETO</b><span>Toda regla es configuración tuya, sin código: tiers, mínimos/múltiplos (apagados, activables), precios, ubicaciones, grados, usuarios. Detalle en la sección 5.</span></div>
+  </div>
+</section>
+
+<section id="es-s2">
+  <h2><span class="n">2</span> Cómo funciona el precio sin API</h2>
+  <p class="sub">El hallazgo que destraba la v1: en el documento del engine, <b>los tiers mayoristas no dependen del mercado</b> — son costo + banda fija. El costo ya llega en la planilla de HYLA. El precio para tus clientes actuales sale <b>automático en la importación</b>.</p>
+  <div class="flow">
+    <div class="step"><b>1 · Entra la planilla</b><span>La importación de HYLA trae el costo real de cada SKU</span></div>
+    <div class="arr">→</div>
+    <div class="step ok"><b>2 · T3/T4 automático</b><span>Wholesale: costo + $7–15 · Distributor: costo + $3–6 (bandas del documento)</span></div>
+    <div class="arr">→</div>
+    <div class="step warn"><b>3 · T1/T2 asistido</b><span>Consumer/Retailer necesitan benchmark — en v1: planilla de comps o manual</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>4 · Flags</b><span>Sin margen → se marca y NO se activa (regla del documento)</span></div>
+    <div class="arr">→</div>
+    <div class="step ok"><b>5 · Publicado</b><span>Cada cliente ve solo el precio de su tier</span></div>
+  </div>
+  <div class="split">
+    <div class="half auto">
+      <b class="t">🟢 Automático desde el día 1</b>
+      <ul>
+        <li><b>Tier 3 (Wholesale)</b> y <b>Tier 4 (Distributor)</b> — cost-plus puro, calculado al importar</li>
+        <li>Pisos de margen del documento aplicados</li>
+        <li>Orden validado: costo &lt; T4 &lt; T3, siempre</li>
+        <li>Es el precio que ven QPay y los dealers</li>
+      </ul>
+    </div>
+    <div class="half man">
+      <b class="t">🟡 Asistido (hasta que lleguen las APIs en v1.1)</b>
+      <ul>
+        <li><b>Tier 1 (Consumer)</b> — benchmark por planilla de comps o valor manual</li>
+        <li><b>Tier 2 (Retailer)</b> — derivado del T1 (− $20, regla del documento)</li>
+        <li>Sin comps y sin manual → el SKU queda oculto de T1/T2 (nunca adivina precio)</li>
+        <li>Override manual con registro de quién/cuándo</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout">💡 En la práctica: <b>en la v1.0 tus clientes mayoristas ya compran con precio correcto automático</b>. El precio de consumidor arranca asistido y se vuelve automático cuando lleguen las llaves de API — sin rehacer nada.</div>
+</section>
+
+<section id="es-s3">
+  <h2><span class="n">3</span> Los tres recorridos de la v1.0</h2>
+  <p class="sub">Todo el sistema en tres secuencias. Ámbar = revisión humana · verde = la acción que graba.</p>
+
+  <div class="fl-h"><span class="fid">J1</span><b>Tú invitas → el cliente crea su cuenta → hace el pedido</b></div>
+  <div class="flow">
+    <div class="step"><b>1 · Invitación</b><span>Admin: correo + tier + empresa → el sistema envía el enlace</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>2 · Cuenta</b><span>El cliente abre el enlace y define su contraseña — tier ya asignado</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>3 · Catálogo</b><span>Precio de SU tier + cantidad exacta, con detalle por stock (Texas, Florida…)</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>4 · Pedido</b><span>Carrito → dirección → "Enviar pedido" (sin pago, sin bloquear stock)</span></div>
+    <div class="arr">→</div>
+    <div class="step warn"><b>5 · En espera 👀</b><span>El pedido nace "esperando aprobación" en tu admin</span></div>
+  </div>
+
+  <div class="fl-h"><span class="fid">J2</span><b>Tú apruebas → el stock se descuenta → envías</b></div>
+  <div class="flow">
+    <div class="step warn"><b>1 · Revisar 👀</b><span>Ítems, tier, total, dirección, stock disponible AHORA</span></div>
+    <div class="arr">→</div>
+    <div class="step ok"><b>2 · Aprobar ✓</b><span>Valida contra el saldo del momento y descuenta (transacción)</span></div>
+    <div class="arr">→</div>
+    <div class="step warn"><b>3 · ¿Diferencia? 👀</b><span>El saldo no alcanza: aprueba lo que hay, el resto queda pendiente para conciliar</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>4 · Separar</b><span>Hoja de picking/envío con la dirección</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>5 · Enviar</b><span>Marca "enviado" (+ tracking manual) · facturación por fuera</span></div>
+  </div>
+  <p class="fnote"><b>Rechazar</b> solo notifica con motivo — nada quedó bloqueado. <b>Conciliación:</b> la línea pendiente queda en su propia lista hasta resolverse (llega stock → se completa · el cliente acepta menos → parcial · se cancela).</p>
+
+  <div class="fl-h"><span class="fid">J3</span><b>Entra planilla → el stock se actualiza → sale planilla</b></div>
+  <div class="flow">
+    <div class="step"><b>1 · Subir</b><span>Planilla HYLA (o nuestro CSV) al asistente</span></div>
+    <div class="arr">→</div>
+    <div class="step warn"><b>2 · Dry-run 👀</b><span>Vista previa con aceptados/rechazados y motivo por línea</span></div>
+    <div class="arr">→</div>
+    <div class="step ok"><b>3 · Confirmar ✓</b><span>Stock + costos actualizados · T3/T4 repreciados al instante</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>4 · Exportar</b><span>CSV/Excel del stock en cualquier momento (round-trip)</span></div>
+  </div>
+</section>
+
+<section id="es-s4">
+  <h2><span class="n">4</span> Cronograma — 4 semanas</h2>
+  <p class="sub">Cada semana cierra con algo demostrable.</p>
+  <div class="wk demo"><div class="wnum">S1</div><div class="wbody">
+    <div class="mt">Fundación + stock real <span class="demoflag">🔴 DEMO EN VIVO</span></div>
+    <ul>
+      <li>Migraciones + RLS en Supabase (en cuanto liberes el proyecto limpio)</li>
+      <li>Login real (admin/staff) — pantallas del mockup conectadas al Auth</li>
+      <li>Asistente de importación con la planilla real de HYLA → stock + costo en la base</li>
+      <li><b>Demo del viernes:</b> iniciar sesión de verdad y ver 2.6xx SKUs con stock real</li>
+    </ul></div></div>
+  <div class="wk"><div class="wnum">S2</div><div class="wbody">
+    <div class="mt">Catálogo + precio automático</div>
+    <ul>
+      <li>CRUD de producto: crear/editar, fotos, descripción, publicar</li>
+      <li>Pricing del documento al importar: T3/T4 automáticos + flags</li>
+      <li>Pantalla de precios: 4 tiers por SKU, comps por planilla, override T1/T2</li>
+      <li>Exportación CSV/Excel round-trip</li>
+    </ul></div></div>
+  <div class="wk"><div class="wnum">S3</div><div class="wbody">
+    <div class="mt">Invitaciones + pedido del cliente</div>
+    <ul>
+      <li>Invitación por correo con tier · el cliente define su contraseña y entra</li>
+      <li>Catálogo con sesión al precio del tier · carrito · dirección · "Enviar pedido"</li>
+      <li>Portal del cliente: mis pedidos + estado</li>
+      <li>Admin: cola de pedidos → aprobar (descuenta) / rechazar → conciliación → picking → enviado</li>
+    </ul></div></div>
+  <div class="wk"><div class="wnum">S4</div><div class="wbody">
+    <div class="mt">Panel de admin completo + cierre</div>
+    <ul>
+      <li><b>Panel de configuración completo</b> (sección 5): tiers, reglas de cantidad, precios, ubicaciones, grados, usuarios</li>
+      <li>Auditoría de punta a punta + pruebas de los criterios de "listo"</li>
+      <li>Invitaciones reales: entran QPay y los primeros dealers</li>
+      <li>Semana de operación acompañada — ajusto lo que aparezca</li>
+    </ul></div></div>
+</section>
+
+<section id="es-s5">
+  <h2><span class="n">5</span> Panel de admin — lo que configuras sin código</h2>
+  <p class="sub">Tu pedido: ninguna regla fija por defecto, pero <b>todos los interruptores existen</b>. Cada tarjeta es un área del panel; "por defecto" muestra cómo nace la v1.0.</p>
+  <div class="panelgrid">
+    <div class="pg"><b>🏷️ Tiers</b><span>Nombres, rangos de unidades, bandas/descuentos de precio por tier. Editar aquí reprecia el catálogo.</span><span class="def onn">por defecto: los 4 tiers del documento</span></div>
+    <div class="pg"><b>🔢 Reglas de cantidad</b><span>Mínimo por tier · múltiplo/master pack (5) · modo: apagado, avisar o bloquear.</span><span class="def off">por defecto: APAGADO (tu decisión)</span></div>
+    <div class="pg"><b>💰 Parámetros de precio</b><span>Bandas T3/T4, pisos de margen, costo de kit, regla T2 = T1 − $20.</span><span class="def onn">por defecto: valores del documento</span></div>
+    <div class="pg"><b>🏬 Ubicaciones de stock</b><span>Crear/renombrar stocks (Texas, Florida…), activar/desactivar.</span><span class="def onn">por defecto: ubicaciones de la planilla</span></div>
+    <div class="pg"><b>🎚️ Grados</b><span>Mapa vendor → CTIA → visible al consumidor. Un grado nuevo cae aquí para que lo clasifiques.</span><span class="def onn">por defecto: el mapa probado de HYLA</span></div>
+    <div class="pg"><b>👥 Usuarios e invitaciones</b><span>Invitar clientes (con tier), invitar staff, desactivar, cambiar el tier de una cuenta.</span><span class="def onn">por defecto: tú como admin</span></div>
+    <div class="pg"><b>👁️ Vista del catálogo</b><span>Cantidad exacta vs rangos, detalle por ubicación, columnas visibles.</span><span class="def onn">por defecto: exacta + por ubicación (tu decisión)</span></div>
+    <div class="pg"><b>📜 Auditoría</b><span>Todo lo que pasó: quién, cuándo, qué, antes/después. Solo lectura.</span><span class="def onn">siempre activa</span></div>
+  </div>
+  <div class="callout">🎛️ La analogía: el panel es la <b>consola de mezcla</b> del sistema — la v1.0 entrega cada fader en la posición que decidiste hoy, y cambiar de opinión mañana es mover el fader, no llamar al técnico.</div>
+</section>
+
+<section id="es-s6">
+  <h2><span class="n">6</span> Prerrequisitos — quién entrega qué</h2>
+  <div class="pre">
+    <div class="pr"><span class="who you">Tú / Abdu</span><b>Proyecto Supabase limpio</b><span>Lo limpias y me pasas el acceso. El único bloqueo del inicio de la S1.</span></div>
+    <div class="pr"><span class="who you">Tú / Abdu</span><b>La planilla HYLA del día</b><span>Ya tengo una real (probada). Para operar, Abdu sigue bajando la diaria — 3 min/día.</span></div>
+    <div class="pr"><span class="who you">Tú / Abdu</span><b>Parámetros de precio confirmados</b><span>¿Las bandas/pisos del documento quedan como están? Cambiarlos es configuración — mejor fijarlos antes de la S2.</span></div>
+    <div class="pr"><span class="who you">Tú / Abdu</span><b>Lista de los primeros invitados</b><span>Correo + empresa + tier de cada cliente (QPay incluida) — se usa en S3/S4.</span></div>
+    <div class="pr"><span class="who dev">Mi lado</span><b>UI lista + parser probado</b><span>Mockup completo, lector de HYLA validado con 2.675 filas, esquema diseñado, deploy en línea.</span></div>
+    <div class="pr"><span class="who dev">Mi lado</span><b>Correo de invitación</b><span>La v1 usa el correo nativo de Supabase. Un remitente con marca queda para después.</span></div>
+  </div>
+  <div class="callout">✅ <b>Todo decidido.</b> La S1 arranca en cuanto llegue el Supabase limpio.</div>
+</section>
+
+<footer>OMP · v1.0 Plan de Ejecución — cerrado: precio = documento del Pricing Engine · invitación con tier · QPay cliente común · cero APIs · descuento al aprobar con conciliación · cantidades exactas por ubicación · envío por fuera · mockup como base · sin mínimos (configurables en el panel) · panel de admin completo. Pendiente: solo Supabase.</footer>
+
+</div></div>
+
+<script>
+(function(){
+  var KEY='omp_plan_lang';
+  var HTMLLANG={pt:'pt-BR',en:'en',es:'es'};
+  function set(l){
+    document.querySelectorAll('.lang').forEach(function(d){d.classList.toggle('on', d.id==='L-'+l);});
+    document.querySelectorAll('.langsel button').forEach(function(b){b.classList.toggle('on', b.dataset.l===l);});
+    document.documentElement.setAttribute('lang', HTMLLANG[l]||'pt-BR');
+    try{localStorage.setItem(KEY,l);}catch(e){}
+  }
+  document.querySelectorAll('.langsel button').forEach(function(b){
+    b.addEventListener('click',function(){set(b.dataset.l);});
+  });
+  var saved=null; try{saved=localStorage.getItem(KEY);}catch(e){}
+  set(saved==='en'||saved==='es'?saved:'pt');
+})();
+</script>
 </body>
 </html>
