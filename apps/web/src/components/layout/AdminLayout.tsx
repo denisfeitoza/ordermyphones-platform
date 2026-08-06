@@ -1,6 +1,7 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { ArrowUpRight, BarChart3, Bot, Boxes, LayoutDashboard, LogOut, Receipt, ScrollText, Tag, Users } from 'lucide-react';
-import { useAuth } from '@/store';
+import { useAuth, useTier } from '@/store';
+import { TIERS } from '@/data/tiers';
 import { Logo } from '@/components/store/Logo';
 import { PulseDot } from '@/components/store/SyncHeartbeat';
 import { cn } from '@/lib/utils';
@@ -18,7 +19,14 @@ const NAV = [
 
 export default function AdminLayout() {
   const { user, signOut } = useAuth();
+  const { startPreview } = useTier();
   const navigate = useNavigate();
+
+  function viewStoreAs(code: string) {
+    if (!code) return;
+    startPreview(code as (typeof TIERS)[number]['code']);
+    navigate('/');
+  }
 
   return (
     <div className="min-h-dvh bg-muted/20">
@@ -30,6 +38,22 @@ export default function AdminLayout() {
             Admin console
           </span>
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
+            <label className="relative inline-flex items-center">
+              <span className="sr-only">View store as tier</span>
+              <select
+                value=""
+                onChange={(e) => viewStoreAs(e.target.value)}
+                className="h-8 cursor-pointer appearance-none rounded-full border border-white/15 bg-transparent pl-3 pr-7 text-xs font-medium text-background/80 outline-none transition-colors hover:bg-white/10 [&>option]:text-foreground"
+              >
+                <option value="" disabled>View store as…</option>
+                {TIERS.map((tr) => (
+                  <option key={tr.code} value={tr.code}>{tr.short} · {tr.label}</option>
+                ))}
+              </select>
+              <svg className="pointer-events-none absolute right-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-background/50" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </label>
             <Link
               to="/portal"
               className="inline-flex items-center gap-1 rounded-full border border-white/15 px-3 py-1.5 text-xs font-medium text-background/80 transition-colors hover:bg-white/10"

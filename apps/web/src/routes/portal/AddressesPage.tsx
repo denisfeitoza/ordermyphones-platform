@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react';
-import { MapPin, Plus, Check } from 'lucide-react';
+import { useEffect, useState, type FormEvent } from 'react';
+import { MapPin, Plus, Check, Trash2 } from 'lucide-react';
 import { useAccount } from '@/store';
 import { PageHeading, Field } from '@/components/portal/parts';
 import { Button } from '@/components/ui/Button';
@@ -13,12 +13,37 @@ interface Address {
   cityLine: string;
 }
 
+const STORAGE_KEY = 'omp_addresses_v1';
+
 export default function AddressesPage() {
   const { businessName } = useAccount();
-  const [addresses, setAddresses] = useState<Address[]>([
-    { id: 'a1', label: 'Default', recipient: businessName, street: '11816 Inwood Rd #1176', cityLine: 'Dallas, TX 75244' },
-  ]);
+  const [addresses, setAddresses] = useState<Address[]>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Address[];
+        if (Array.isArray(parsed) && parsed.length) return parsed;
+      }
+    } catch {
+      // ignore malformed storage
+    }
+    return [
+      { id: 'a1', label: 'Default', recipient: businessName, street: '11816 Inwood Rd #1176', cityLine: 'Dallas, TX 75244' },
+    ];
+  });
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(addresses));
+    } catch {
+      // storage unavailable — list still works in memory
+    }
+  }, [addresses]);
+
+  function remove(id: string) {
+    setAddresses((prev) => prev.filter((a) => a.id !== id));
+  }
 
   function add(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -31,7 +56,7 @@ export default function AddressesPage() {
     setAddresses((prev) => [
       ...prev,
       {
-        id: `a${prev.length + 1}`,
+        id: `a${Date.now()}`,
         label: `Location ${prev.length + 1}`,
         recipient: businessName,
         street,
@@ -91,6 +116,16 @@ export default function AddressesPage() {
             <p className="mt-3 text-sm font-medium">{a.recipient}</p>
             <p className="text-sm text-muted-foreground">{a.street}</p>
             <p className="text-sm text-muted-foreground">{a.cityLine}</p>
+            {a.label !== 'Default' && (
+              <button
+                type="button"
+                onClick={() => remove(a.id)}
+                className="mt-3 inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-destructive"
+              >
+                <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
+                Remove
+              </button>
+            )}
           </div>
         ))}
       </div>
