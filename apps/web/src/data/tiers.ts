@@ -1,16 +1,17 @@
 import type { PricingTierCode } from '@shared/pricing';
 
 /**
- * The 4 pricing tiers from the contract (Agreement §1.3 / scope §4).
- * Customers are auto-promoted as cumulative purchase volume grows, and a single
- * cart can lift the effective tier above the customer's stored tier.
+ * The 4 pricing tiers (client's official naming, aligned with the Pricing
+ * Engine document): Consumer / Retailer / Wholesale / Distributor.
+ * Tier is assigned per account by the admin — no cart-quantity or cumulative
+ * volume auto-upgrade in v1.
  *
  * `discount` is the mock fraction off MSRP applied at this tier — the real
  * pricing engine (supabase/functions/pricing-engine) owns this server-side.
  */
 export interface TierDef {
   code: PricingTierCode;
-  label: 'Consumer' | 'Retailer' | 'Multi-Store' | 'Wholesale';
+  label: 'Consumer' | 'Retailer' | 'Wholesale' | 'Distributor';
   short: string;
   minUnits: number;
   maxUnits: number | null;
@@ -23,8 +24,8 @@ export interface TierDef {
 export const TIERS: readonly TierDef[] = [
   { code: 'tier_1', label: 'Consumer', short: 'T1', minUnits: 1, maxUnits: 9, discount: 0, tone: '1', rangeLabel: '1–9 units' },
   { code: 'tier_2', label: 'Retailer', short: 'T2', minUnits: 10, maxUnits: 49, discount: 0.055, tone: '2', rangeLabel: '10–49 units' },
-  { code: 'tier_3', label: 'Multi-Store', short: 'T3', minUnits: 50, maxUnits: 400, discount: 0.1, tone: '3', rangeLabel: '50–400 units' },
-  { code: 'tier_4', label: 'Wholesale', short: 'T4', minUnits: 401, maxUnits: null, discount: 0.145, tone: '4', rangeLabel: '401+ units' },
+  { code: 'tier_3', label: 'Wholesale', short: 'T3', minUnits: 50, maxUnits: 399, discount: 0.1, tone: '3', rangeLabel: '50–399 units' },
+  { code: 'tier_4', label: 'Distributor', short: 'T4', minUnits: 400, maxUnits: null, discount: 0.145, tone: '4', rangeLabel: '400+ units' },
 ] as const;
 
 export function tierByCode(code: PricingTierCode): TierDef {

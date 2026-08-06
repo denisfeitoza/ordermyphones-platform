@@ -9,7 +9,7 @@ type Decision = 'approved' | 'rejected';
 
 const PROPOSALS = [
   { id: 'p1', agent: 'pricing', title: 'Reprice iPhone 16 Pro −1.5% across tiers', detail: 'Mannapov landed cost dropped $14/unit. Match to hold target margin on all 4 tiers.' },
-  { id: 'p2', agent: 'tier-classifier', title: 'Promote Bright Wireless LLC → Multi-Store', detail: 'Crossed 50 cumulative units this week (32 → 64). Auto-promotion proposed.' },
+  { id: 'p2', agent: 'tier-classifier', title: 'Promote Bright Wireless LLC → Wholesale', detail: 'Crossed 50 cumulative units this week (32 → 64). Auto-promotion proposed.' },
   { id: 'p3', agent: 'inventory-triage', title: 'Shift iPhone 16 reservations to Mannapov', detail: 'Assurant 73 vs Mannapov 120 units — rebalance to avoid an Assurant stockout.' },
   { id: 'p4', agent: 'customer-support', title: 'Send drafted reply to Coastal Cellular Co', detail: 'Refund-status question on OMP-3A9E2. Draft ready for your approval.' },
 ];

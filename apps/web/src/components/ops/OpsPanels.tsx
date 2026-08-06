@@ -202,7 +202,7 @@ const AGENTS = [
   { name: 'orchestrator', role: 'Routes each intent to the right agent', last: 'Dispatched 3 actions this minute' },
   { name: 'inventory-triage', role: 'Flags stock discrepancies across feeds', last: 'Flagged 2 price gaps · Source B vs Source A' },
   { name: 'pricing', role: 'Re-derives tier prices on cost change', last: 'Refreshed 4 tiers · iPhone 16 Pro' },
-  { name: 'tier-classifier', role: 'Promotes accounts by cumulative volume', last: 'Promoted 1 account → Multi-Store' },
+  { name: 'tier-classifier', role: 'Promotes accounts by cumulative volume', last: 'Promoted 1 account → Wholesale' },
   { name: 'customer-support', role: 'Drafts replies for admin approval', last: 'Drafted 3 replies · awaiting approval' },
 ];
 

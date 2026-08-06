@@ -1,7 +1,4 @@
-import { useSync } from '@/store';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/i18n';
-import { formatInt } from '@/lib/format';
 
 export function PulseDot({
   status = 'online',
@@ -20,50 +17,3 @@ export function PulseDot({
 }
 
 /** The inventory bot heartbeat — "re-syncs every 2s", cross-checking suppliers vs orders. */
-export function SyncHeartbeat({
-  variant = 'compact',
-  className,
-}: {
-  variant?: 'compact' | 'full';
-  className?: string;
-}) {
-  const { secondsAgo, pulse, suppliers, ordersReconciled, skusTracked } = useSync();
-  const { t } = useI18n();
-  const last = secondsAgo === 0 ? t('just now') : `${secondsAgo}s ${t('ago')}`;
-
-  if (variant === 'compact') {
-    return (
-      <div className={cn('inline-flex items-center gap-2 text-xs', className)}>
-        <PulseDot />
-        <span className="text-muted-foreground">
-          {t('Live inventory · synced')} <span className="font-mono text-foreground">{last}</span>
-        </span>
-      </div>
-    );
-  }
-
-  return (
-    <div className={cn('flex items-center gap-x-5 whitespace-nowrap text-xs', className)}>
-      <span className="inline-flex items-center gap-2">
-        <PulseDot />
-        <span className="font-medium">{t('Inventory bot')}</span>
-        <span className="text-muted-foreground">{t('re-syncs every 2s · last')} {last}</span>
-      </span>
-      <span className="hidden h-3 w-px bg-border sm:block" />
-      {suppliers.map((s) => (
-        <span key={s.code} className="inline-flex items-center gap-1.5">
-          <PulseDot status={s.status} />
-          <span className="text-muted-foreground">{s.name}</span>
-          <span className="font-mono tabular-nums text-foreground/70">{s.latencyMs}ms</span>
-        </span>
-      ))}
-      <span className="hidden h-3 w-px bg-border sm:block" />
-      <span className="text-muted-foreground">
-        <span key={pulse} className="inline-block animate-count-bump font-mono tabular-nums text-foreground">
-          {formatInt(ordersReconciled)}
-        </span>{' '}
-        {t('orders reconciled')} · <span className="font-mono tabular-nums text-foreground">{formatInt(skusTracked)}</span> {t('SKUs tracked')}
-      </span>
-    </div>
-  );
-}

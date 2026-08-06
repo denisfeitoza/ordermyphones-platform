@@ -181,7 +181,7 @@ export const PT: Record<string, string> = {
   'Business account': 'Conta empresarial',
   'Sign out': 'Sair',
   'Signed in as': 'Conectado como',
-  'Multi-Store and up': 'Multi-Store ou superior',
+  'Wholesale and up': 'Wholesale ou superior',
   'Your tier': 'Seu tier',
   'Payment methods': 'Formas de pagamento',
   'Where reserved units ship once each supplier dispatches.':
@@ -440,7 +440,7 @@ export const ES: Record<string, string> = {
   'Business account': 'Cuenta empresarial',
   'Sign out': 'Cerrar sesión',
   'Signed in as': 'Conectado como',
-  'Multi-Store and up': 'Multi-Store o superior',
+  'Wholesale and up': 'Wholesale o superior',
   'Your tier': 'Tu nivel',
   'Payment methods': 'Métodos de pago',
   'Where reserved units ship once each supplier dispatches.':

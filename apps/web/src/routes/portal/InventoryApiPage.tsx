@@ -173,9 +173,9 @@ function LockedState() {
         <span className="grid h-11 w-11 place-items-center rounded-full bg-secondary">
           <Lock className="h-5 w-5 text-muted-foreground" strokeWidth={2} />
         </span>
-        <h2 className="mt-4 font-display text-lg font-semibold tracking-tight">Available on Multi-Store and Wholesale</h2>
+        <h2 className="mt-4 font-display text-lg font-semibold tracking-tight">Available on Wholesale and Distributor</h2>
         <p className="mt-2 max-w-prose text-sm text-muted-foreground">
-          Your account is on <TierBadge tier={tier} />. API access is included from Multi-Store upward — you get a live feed
+          Your account is on <TierBadge tier={tier} />. API access is included from Wholesale upward — you get a live feed
           of every device we hold, priced at your account rate, pushed to your system on every stock movement.
         </p>
 
