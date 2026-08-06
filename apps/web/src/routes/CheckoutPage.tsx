@@ -159,7 +159,7 @@ export default function CheckoutPage() {
                   <Check className="h-6 w-6" strokeWidth={3} />
                 </motion.span>
                 <div>
-                  <p className="font-display text-lg font-semibold">Reserved &amp; confirmed</p>
+                  <p className="font-display text-lg font-semibold">{t('Reserved & confirmed')}</p>
                   <p className="font-mono text-sm text-muted-foreground">{orderId}</p>
                 </div>
               </div>
@@ -227,9 +227,9 @@ export default function CheckoutPage() {
             </ul>
 
             <div className="mt-3 space-y-2 border-t border-border pt-4 text-sm">
-              <Row label="Retail subtotal" value={formatUsd(retailSubtotalCents)} muted strike={savingsCents > 0} />
+              <Row label={t("Retail subtotal")} value={formatUsd(retailSubtotalCents)} muted strike={savingsCents > 0} />
               {savingsCents > 0 && <Row label={`Tier savings · ${effectiveTier.label}`} value={`−${formatUsd(savingsCents)}`} accent />}
-              <Row label="Shipping" value="Free" muted />
+              <Row label={t("Shipping")} value={t("Free")} muted />
               <div className="flex items-center justify-between border-t border-border pt-3">
                 <span className="font-medium">{t('Total')}</span>
                 <span className="font-mono text-xl font-semibold tabular-nums">{formatUsd(subtotalCents)}</span>

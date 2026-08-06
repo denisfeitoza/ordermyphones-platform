@@ -5,6 +5,7 @@ import { ChevronRight, PackageCheck } from 'lucide-react';
 import type { AccountOrder, OrderStatus } from '@/store';
 import { formatUsd } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 
 const MotionLink = motion(Link);
 
@@ -27,16 +28,18 @@ const STEPS: { key: OrderStatus; label: string }[] = [
 
 export function StatusPill({ status }: { status: OrderStatus }) {
   const m = STATUS_META[status];
+  const { t } = useI18n();
   return (
     <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium', m.soft)}>
       <span className={cn('h-1.5 w-1.5 rounded-full', m.dot)} />
-      {m.label}
+      {t(m.label)}
     </span>
   );
 }
 
 export function OrderProgress({ status }: { status: OrderStatus }) {
   const cur = STATUS_META[status].step;
+  const { t } = useI18n();
   return (
     <div className="flex items-center">
       {STEPS.map((s, i) => {
@@ -56,7 +59,7 @@ export function OrderProgress({ status }: { status: OrderStatus }) {
                   i === cur ? 'font-medium text-foreground' : reached ? 'text-muted-foreground' : 'text-muted-foreground/50',
                 )}
               >
-                {s.label}
+                {t(s.label)}
               </span>
             </div>
             {i < STEPS.length - 1 && (
@@ -96,6 +99,7 @@ function Thumbs({ lines }: { lines: AccountOrder['lines'] }) {
 }
 
 export function OrderCard({ order, index = 0 }: { order: AccountOrder; index?: number }) {
+  const { t } = useI18n();
   const first = order.lines[0];
   const lineLabel = !first
     ? 'Order'
@@ -134,7 +138,7 @@ export function OrderCard({ order, index = 0 }: { order: AccountOrder; index?: n
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{lineLabel}</p>
           <p className="font-mono text-xs text-muted-foreground">
-            {order.units} {order.units === 1 ? 'unit' : 'units'} · {order.tierLabel}
+            {order.units} {order.units === 1 ? t('unit') : t('units')} · {order.tierLabel}
           </p>
         </div>
         <div className="text-right">
@@ -152,10 +156,10 @@ export function OrderCard({ order, index = 0 }: { order: AccountOrder; index?: n
       <div className="mt-4 flex items-center justify-between gap-2 border-t border-border pt-3 text-xs">
         <span className="flex items-center gap-2 truncate text-muted-foreground">
           <PackageCheck className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-          Reserved at source
+          {t('Reserved at source')}
         </span>
         <span className="inline-flex shrink-0 items-center gap-1 font-medium text-brand">
-          View details &amp; export
+          {t('View details & export')}
           <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" strokeWidth={2} />
         </span>
       </div>

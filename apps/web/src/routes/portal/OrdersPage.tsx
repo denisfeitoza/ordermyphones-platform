@@ -5,15 +5,17 @@ import { OrderCard } from '@/components/portal/OrderCard';
 import { PageHeading } from '@/components/portal/parts';
 import { buttonVariants } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 
 export default function OrdersPage() {
   const { orders } = useAccount();
+  const { t } = useI18n();
 
   return (
     <div className="space-y-6">
       <PageHeading
         title="Orders"
-        subtitle={`${orders.length} ${orders.length === 1 ? 'order' : 'orders'} · tap any order for tracking, reorder & PDF/CSV export`}
+        subtitle={`${orders.length} ${orders.length === 1 ? t('order') : t('orders')} · ${t('tap any order for tracking, reorder & PDF/CSV export')}`}
       />
 
       {orders.length === 0 ? (
@@ -22,8 +24,8 @@ export default function OrdersPage() {
             <ShoppingBag className="h-6 w-6 text-muted-foreground" strokeWidth={1.5} />
           </div>
           <div>
-            <p className="font-medium">No orders yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">Your reserved-at-source orders will land here.</p>
+            <p className="font-medium">{t("No orders yet")}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{t('Your reserved-at-source orders will land here.')}</p>
           </div>
           <Link to="/catalog" className={cn(buttonVariants())}>
             Browse catalog

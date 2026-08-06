@@ -238,6 +238,27 @@ export const PT: Record<string, string> = {
   'The page you’re looking for doesn’t exist on OrderMyPhones — yet.':
     'A página que você procura não existe na OrderMyPhones — ainda.',
   'Back to home': 'Voltar ao início',
+  // Test-drive gap fixes
+  'Best seller': 'Mais vendido',
+  'Value pick': 'Melhor custo-benefício',
+  'Foldable': 'Dobrável',
+  'Color': 'Cor',
+  'Storage': 'Armazenamento',
+  'Catalog': 'Catálogo',
+  'Reserved & confirmed': 'Reservado e confirmado',
+  'Retail subtotal': 'Subtotal varejo',
+  'Free': 'Grátis',
+  'order': 'pedido',
+  'orders': 'pedidos',
+  'tap any order for tracking, reorder & PDF/CSV export': 'toque em um pedido para rastreio, recompra e exportação PDF/CSV',
+  'No orders yet': 'Nenhum pedido ainda',
+  'Your reserved-at-source orders will land here.': 'Seus pedidos reservados na origem vão aparecer aqui.',
+  'Reserved at source': 'Reservado na origem',
+  'View details & export': 'Ver detalhes e exportar',
+  'Reserved': 'Reservado',
+  'Processing': 'Em processamento',
+  'Shipped': 'Enviado',
+  'Delivered': 'Entregue',
 };
 
 export const ES: Record<string, string> = {
@@ -476,4 +497,25 @@ export const ES: Record<string, string> = {
   'The page you’re looking for doesn’t exist on OrderMyPhones — yet.':
     'La página que buscas no existe en OrderMyPhones — todavía.',
   'Back to home': 'Volver al inicio',
+  // Test-drive gap fixes
+  'Best seller': 'Más vendido',
+  'Value pick': 'Mejor valor',
+  'Foldable': 'Plegable',
+  'Color': 'Color',
+  'Storage': 'Almacenamiento',
+  'Catalog': 'Catálogo',
+  'Reserved & confirmed': 'Reservado y confirmado',
+  'Retail subtotal': 'Subtotal minorista',
+  'Free': 'Gratis',
+  'order': 'pedido',
+  'orders': 'pedidos',
+  'tap any order for tracking, reorder & PDF/CSV export': 'toca un pedido para seguimiento, recompra y exportación PDF/CSV',
+  'No orders yet': 'Aún no hay pedidos',
+  'Your reserved-at-source orders will land here.': 'Tus pedidos reservados en origen aparecerán aquí.',
+  'Reserved at source': 'Reservado en origen',
+  'View details & export': 'Ver detalles y exportar',
+  'Reserved': 'Reservado',
+  'Processing': 'En proceso',
+  'Shipped': 'Enviado',
+  'Delivered': 'Entregado',
 };

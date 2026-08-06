@@ -63,7 +63,7 @@ export default function ProductPage() {
   return (
     <div className="container py-6 md:py-10">
       <nav className="mb-6 flex items-center gap-1.5 text-xs text-muted-foreground">
-        <Link to="/catalog" className="hover:text-foreground">Catalog</Link>
+        <Link to="/catalog" className="hover:text-foreground">{t("Catalog")}</Link>
         <ChevronRight className="h-3.5 w-3.5" />
         <Link to={`/catalog?brand=${item.brand}`} className="hover:text-foreground">{item.brand}</Link>
         <ChevronRight className="h-3.5 w-3.5" />
@@ -105,14 +105,14 @@ export default function ProductPage() {
             {retail > unit && (
               <span className="font-mono text-sm text-muted-foreground line-through">{formatUsd(retail)}</span>
             )}
-            <span className="text-sm text-muted-foreground">/ unit</span>
+            <span className="text-sm text-muted-foreground">/ {t("unit")}</span>
             <TierBadge tier={effectiveTier} className="ml-auto" />
           </div>
 
           {/* Color */}
           <div className="mt-6">
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-sm font-medium">Color</span>
+              <span className="text-sm font-medium">{t("Color")}</span>
               <span className="text-sm text-muted-foreground">{color}</span>
             </div>
             <div className="flex flex-wrap gap-2">
