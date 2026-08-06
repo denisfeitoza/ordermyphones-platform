@@ -37,8 +37,13 @@ file → 1 DETECT → 2 MAP → 3 NORMALIZE → 4 VALIDATE → 5 DRY-RUN 👀 �
    (never a silent drop).
 5. **DRY-RUN** — preview: N accepted / M rejected (reason per line), the
    mapping used, price impact summary (how many SKUs would reprice).
-6. **COMMIT** — transactional; writes inventory + a movement ledger entry per
-   change (stock balance = sum of audited movements); triggers repricing.
+6. **COMMIT** — transactional; writes one adjustment movement per changed
+   `(variant, location)` (stock balance = sum of audited movements); triggers
+   repricing. Two modes, chosen at upload (resolved 2026-08-06):
+   **merge** (default — only rows present in the sheet are adjusted) and
+   **replace location** (explicit — zeroes every balance at the chosen
+   location first, then sets the sheet values; both steps are ledger
+   movements, so history survives).
 
 ## Canonical fields
 
