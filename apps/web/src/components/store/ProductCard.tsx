@@ -45,7 +45,7 @@ export function ProductCard({ item }: { item: CatalogItem }) {
         <div className="absolute left-3 top-3 z-10 flex flex-col items-start gap-1.5">
           {item.badges.map((b) => (
             <Badge key={b} tone={badgeTone(b)}>
-              {b}
+              {t(b)}
             </Badge>
           ))}
           <Badge tone="glass">{item.brand}</Badge>
@@ -89,7 +89,7 @@ export function ProductCard({ item }: { item: CatalogItem }) {
           <TierPrice item={item} tier={tier} />
           <div className="grid grid-cols-2 gap-2">
             <Button variant="outline" size="sm" disabled={soldOut} onClick={() => add(item.id)}>
-              Add to cart
+              {t('Add to cart')}
             </Button>
             <Button variant="primary" size="sm" disabled={soldOut} onClick={buyNow}>
               {soldOut ? t('Sold out') : t('Buy now')}

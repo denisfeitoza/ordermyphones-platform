@@ -46,7 +46,7 @@ export function CartDrawer() {
             <header className="flex items-center justify-between border-b border-border px-5 py-4">
               <div className="flex items-center gap-2">
                 <h2 className="font-display text-lg font-semibold tracking-tight">{t('Your cart')}</h2>
-                {unitCount > 0 && <span className="font-mono text-sm text-muted-foreground">{unitCount} units</span>}
+                {unitCount > 0 && <span className="font-mono text-sm text-muted-foreground">{unitCount} {unitCount === 1 ? t('unit') : t('units')}</span>}
               </div>
               <button
                 onClick={() => setOpen(false)}
