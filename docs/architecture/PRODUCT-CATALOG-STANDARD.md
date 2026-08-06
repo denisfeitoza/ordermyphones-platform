@@ -14,7 +14,7 @@ A physical device becomes three nested records. Getting the boundary right is wh
 |---|---|---|---|
 | **Product** | *"What model is this?"* | `products` | `(make, model_number)` |
 | **Variant** | *"Which exact sellable configuration?"* | `product_variants` | `(make, model_number, capacity, color, carrier, lock_status, grade)` |
-| **Inventory offer** | *"How many, at what cost, in which warehouse?"* | `inventory_snapshots` | `(variant_id, supplier_id, warehouse)` |
+| **Inventory offer** | *"How many, at what cost, in which location?"* | `inventory` (balance) + `stock_movements` (ledger) | `(variant_id, location_id)` |
 
 In the source file these three collapse into one flat row. Import **explodes** the row into the three layers; export **flattens** them back. The `Description` column (`Apple / iPhone 11 / A2111 / 256GB / GSM / Black / ATT / UNLOCKED / DLS B`) is exactly the human-readable rendering of the variant natural key + make — it is a *display projection*, never the identity itself.
 
@@ -104,21 +104,24 @@ The `VariantCondition` enum (`new` / `cpo` / `refurbished` / `used_a` / `used_b`
 
 The source carrier column is messy — 16 distinct values with synonyms and regional-generic labels. The standard defines a **canonical set** and a synonym map; the raw value is always retained in `carrier_raw`.
 
-| Canonical `carrier` | Source values folded in |
+| Canonical `carrier` (code) | Source values folded in |
 |---|---|
-| `att` | `ATT` |
-| `verizon` | `VZW`, `Verizon` |
-| `tmobile` | `T-Mobile` |
-| `sprint` | `Sprint` |
-| `boost` | `Boost` |
-| `spectrum` | `Spectrum` |
-| `xfinity` | `Xfinity` |
-| `unlocked` | `UNL`, `Unlocked`, `Generic`, `OTH`, `Other`, `XAA Generic`, `XAG Generic` |
-| `wifi` | `Wi-Fi Only` (wearables/accessories with no cellular radio) |
+| `ATT` | `ATT`, `AT&T` |
+| `VZW` | `VZW`, `Verizon` |
+| `TMO` | `T-Mobile`, `TMO` |
+| `SPR` | `Sprint` |
+| `BST` | `Boost` |
+| `SPC` | `Spectrum` |
+| `XFI` | `Xfinity` |
+| `UNL` | `UNL`, `Unlocked` |
+| `OTH` | `OTH`, `Other`, `Generic`, `XAA Generic`, `XAG Generic`, `Wi-Fi Only` |
+
+> Resolved 2026-08-06 (ingest conflict W-2): canon is the CODE set above,
+> matching SMART-STOCK-IMPORT.md. The synonym map is admin-editable.
 
 `carrier` and `lock_status` are **orthogonal**: a device can be `carrier = att, lock_status = unlocked` (AT&T-branded hardware, SIM-unlocked). Both are part of the variant key because both affect resale value.
 
-An unknown carrier string is **not silently dropped** — it fails validation and surfaces for a human to extend the map. New carriers are additions to one table, never a reason to reject a whole import.
+An unknown carrier string is **accepted as `OTH` with a dry-run warning** (resolved 2026-08-06): the import never blocks on an exotic carrier; the warning invites the admin to extend the synonym map, and the raw value survives in `carrier_raw` so the row can be reclassified later.
 
 ---
 
@@ -128,7 +131,7 @@ The feed carries three warehouses: `W23-ATT` (2,323 rows), `TX1` (347), `TN1` (5
 
 This refines the masking model from [`PARTNER-INVENTORY-API.md`](PARTNER-INVENTORY-API.md): a masked OMP location is keyed **`(supplier_id, warehouse)`**, not one-per-supplier. One supplier legitimately spans several warehouses, and each becomes its own named OMP inventory that partners see (e.g. `TX1` → *"Texas Inventory"*). See the `inventory_locations` refinement in [`DATA-MODEL.md`](DATA-MODEL.md) §5.
 
-Import writes one `inventory_snapshots` row per `(variant, supplier, warehouse)`; the same variant in two warehouses is two inventory rows sharing one variant, never a summed quantity — consistent with the per-location feed contract.
+Import maintains one balance per `(variant, location)` via ledger movements; the same variant in two warehouses is two inventory rows sharing one variant, never a summed quantity — consistent with the per-location feed contract.
 
 ---
 
@@ -164,8 +167,8 @@ Both land in the same normalize → validate → upsert pipeline. A new supplier
 1. All mandatory columns for the row's `category` present and non-empty (§2.1 + §2.2).
 2. `quantity` parses to integer ≥ 0; a trailing `+` sets `qty_is_floor` and is **not** an error.
 3. `unit_cost_cents = Price × 100` is an integer **> 0**. Zero/negative cost rejects the row (never mint free stock).
-4. `carrier` resolves through the synonym map; unmapped → row rejected with `carrier_unknown`.
-5. `grade` matches a known scale/letter; unmapped → `grade_unknown`.
+4. `carrier` resolves through the synonym map; unmapped → **accepted as `OTH`** with a `carrier_unmapped` warning (raw kept in `carrier_raw`).
+5. `grade` matches a known scale/letter; unmapped → **accepted into the grade classification queue**, gated to T3/T4 as CTIA `C` (engine safe default) until the admin classifies it once.
 6. `category ∈ {phones, accessories, wearables}`.
 7. `currency = USD` (until Schedule A.3 multi-currency).
 
@@ -175,9 +178,18 @@ A rejected row is logged to `supplier_sync_runs.rows_failed` with a structured r
 
 - **Product**: upsert on `(make, model_number)`.
 - **Variant**: upsert on the 7-field key; `sku`, `condition`, `grade_scale` recomputed each time (deterministic, so stable).
-- **Inventory**: replace the latest snapshot for `(variant_id, supplier_id, warehouse)` — quantity and cost are *current state*, not an append. This is what makes the [Partner API](PARTNER-INVENTORY-API.md) no-op suppression work: an unchanged daily feed produces zero variant/product writes and zero partner events.
+- **Inventory** (resolved 2026-08-06, ingest conflict W-1): the balance for
+  `(variant_id, location_id)` is **derived from an append-only movement
+  ledger** (`stock_movements`) — balance = sum of audited movements, the same
+  ledger that order approval deducts from. An import computes the DELTA
+  between the sheet value and the current balance and writes one adjustment
+  movement per changed row (`source = import`, linked to the import job).
+  An explicit **"replace this location's stock"** import mode is available:
+  it zeroes every variant balance at that location and sets the sheet values —
+  still expressed as ledger movements, so history is never lost.
 
-Re-importing the same file twice is a no-op. Importing tomorrow's file updates only what moved.
+Re-importing the same file twice produces zero-delta rows → zero movements →
+a no-op. Importing tomorrow's file writes movements only for what moved.
 
 ---
 
@@ -225,7 +237,7 @@ Run against the real `DailyStockReport_260720090810.xls` (2,675 data rows):
 
 ## 10. Related docs
 
-- [`DATA-MODEL.md`](DATA-MODEL.md) — the `products` / `product_variants` / `inventory_snapshots` tables this standard writes into (variant field additions + warehouse/location refinement).
+- [`DATA-MODEL.md`](DATA-MODEL.md) — historical field-level reference (schema is being redesigned per DECISIONS-LOCKED.md; inventory is ledger-based, not snapshots).
 - [`PARTNER-INVENTORY-API.md`](PARTNER-INVENTORY-API.md) — how imported stock is projected, masked, and marked up for partners.
 - [`../integrations/SUPPLIER-SOURCE-1.md`](../integrations/SUPPLIER-SOURCE-1.md) — the Assurant/HYLA adapter that pulls this feed.
 - [`PRICING-ENGINE.md`](PRICING-ENGINE.md) — consumes `condition` and cost to produce customer prices.
