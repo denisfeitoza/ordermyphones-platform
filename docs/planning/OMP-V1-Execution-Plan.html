@@ -132,7 +132,7 @@
   <a href="#s3">3 · Jornadas</a>
   <a href="#s4">4 · Cronograma</a>
   <a href="#s5">5 · Pré-requisitos</a>
-  <a href="#s6">6 · Dúvidas restantes</a>
+  <a href="#s6">6 · Última dúvida (D3)</a>
 </nav>
 
 <!-- ========== 1 ========== -->
@@ -146,6 +146,10 @@
     <div class="lk"><b>Zero API externa na v1.0</b><span>Sem bot de e-mail, sem Mannapov, sem APIs de comps, sem Stripe. Estoque entra e sai por planilha; pagamento é faturado por fora.</span></div>
     <div class="lk"><b>Supabase: você prepara</b><span>Você limpa o projeto Supabase e me passa o acesso. Não crio nada lá antes disso.</span></div>
     <div class="lk"><b>Interface em inglês · USD</b><span>Consistente com o mockup e com quem opera. Já decidido no mapeamento.</span></div>
+    <div class="lk"><b>Estoque abate na APROVAÇÃO</b><span>O pedido não trava estoque. Na aprovação o sistema valida contra o saldo do momento e abate; se não cobrir, aprova o que dá e o resto fica pendente pra <b>conciliação</b>.</span></div>
+    <div class="lk"><b>Cliente vê quantidade exata — e por local</b><span>Catálogo mostra o total real e, no detalhe, onde está cada unidade (nome de cada estoque: Texas, Flórida…). Transparência total pro comprador.</span></div>
+    <div class="lk"><b>Frete por fora do sistema</b><span>Pedido fecha sem valor de frete — combinado direto com o cliente, como já funciona hoje.</span></div>
+    <div class="lk"><b>O mockup é a base — e vai ser melhorado</b><span>Mesma base de código e mesmo endereço: o mockup evolui pra virar o sistema real, com melhorias de UI no caminho.</span></div>
   </div>
 </section>
 
@@ -201,24 +205,26 @@
     <div class="arr">→</div>
     <div class="step"><b>2 · Conta</b><span>Cliente abre o link, define a senha — tier já vem atribuído</span></div>
     <div class="arr">→</div>
-    <div class="step"><b>3 · Catálogo</b><span>Vê produtos publicados com o preço DO TIER DELE (só ele)</span></div>
+    <div class="step"><b>3 · Catálogo</b><span>Preço DO TIER DELE + quantidade exata, com detalhe por estoque (Texas, Flórida…)</span></div>
     <div class="arr">→</div>
-    <div class="step"><b>4 · Pedido</b><span>Carrinho → endereço de envio → "Enviar pedido" (sem pagamento)</span></div>
+    <div class="step"><b>4 · Pedido</b><span>Carrinho → endereço de envio → "Enviar pedido" (sem pagamento, sem travar estoque)</span></div>
     <div class="arr">→</div>
     <div class="step warn"><b>5 · Aguardando 👀</b><span>Pedido nasce "aguardando aprovação" no seu admin</span></div>
   </div>
 
   <div class="fl-h"><span class="fid">J2</span><b>Você aprova → estoque abate → envia</b></div>
   <div class="flow">
-    <div class="step warn"><b>1 · Revisar 👀</b><span>Admin vê o pedido: itens, tier, total, endereço, estoque disponível</span></div>
+    <div class="step warn"><b>1 · Revisar 👀</b><span>Admin vê o pedido: itens, tier, total, endereço, estoque disponível AGORA</span></div>
     <div class="arr">→</div>
-    <div class="step ok"><b>2 · Aprovar ✓</b><span>Estoque abate (transação) · cliente vê status mudar no portal</span></div>
+    <div class="step ok"><b>2 · Aprovar ✓</b><span>Valida contra o saldo do momento e abate (transação) · cliente vê o status mudar</span></div>
     <div class="arr">→</div>
-    <div class="step"><b>3 · Separar</b><span>Romaneio de separação/envio com endereço</span></div>
+    <div class="step warn"><b>3 · Divergência? 👀</b><span>Se o saldo não cobre tudo: aprova o que dá, o resto fica pendente pra conciliação</span></div>
     <div class="arr">→</div>
-    <div class="step"><b>4 · Enviar</b><span>Marca "enviado" (+ tracking manual opcional) · faturamento por fora</span></div>
+    <div class="step"><b>4 · Separar</b><span>Romaneio de separação/envio com endereço</span></div>
+    <div class="arr">→</div>
+    <div class="step"><b>5 · Enviar</b><span>Marca "enviado" (+ tracking manual opcional) · faturamento por fora</span></div>
   </div>
-  <p class="fnote"><b>Recusar</b> também existe: pedido negado devolve qualquer reserva e notifica o cliente com motivo.</p>
+  <p class="fnote"><b>Recusar</b> também existe: pedido negado só notifica o cliente com motivo — nada foi travado, nada a devolver. <b>Conciliação:</b> a linha pendente aparece numa lista própria até você resolver (chegou estoque → completa · cliente aceita menos → fecha parcial · cancela a linha).</p>
 
   <div class="fl-h"><span class="fid">J3</span><b>Planilha entra → estoque atualiza → planilha sai</b></div>
   <div class="flow">
@@ -303,44 +309,28 @@
 
 <!-- ========== 6 ========== -->
 <section id="s6">
-  <h2><span class="n">6</span> Dúvidas restantes — as últimas antes de codar</h2>
-  <p class="sub">Cinco pontos novos que surgiram com as decisões de hoje. Recomendação marcada com ★.</p>
+  <h2><span class="n">6</span> Última dúvida — a D3, explicada de novo (mais simples)</h2>
+  <p class="sub">Das 5 dúvidas, você fechou 4 (já estão na seção 1 ✓). Sobrou só esta — e vou explicar melhor, porque da primeira vez ficou confusa.</p>
 
   <div class="q">
-    <div class="qt"><span class="qn">D1</span> 📦 Quando o estoque abate: no pedido ou na aprovação?</div>
-    <p>Cliente pediu 20 unidades. Se abater só quando você aprovar, dois clientes podem pedir o mesmo estoque ao mesmo tempo. Se reservar já no pedido, o estoque "some" da vitrine até você decidir.</p>
-    <div class="opt"><span class="rec">Reserva no pedido + confirma na aprovação (recusa devolve) — ninguém compra o que já foi pedido</span><span>Abate só na aprovação</span><span>Abate direto no pedido, sem aprovação</span></div>
+    <div class="qt"><span class="qn">D3</span> 🛒 O carrinho deve impedir alguma quantidade "errada"?</div>
+    <p>É só isso: quando o cliente estiver montando o pedido, existe alguma quantidade que o sistema deveria <b>barrar ou avisar</b>?</p>
+    <p>Dois exemplos concretos:</p>
+    <p>• Um cliente <b>atacado</b> pede só <b>3 unidades</b> — pedido pequeno demais pra atacado. Deixa passar?<br>
+       • Os aparelhos saem em <b>caixas de 5</b> (master pack). O cliente pede <b>23</b> — não fecha caixa. Deixa passar?</p>
+    <p>Como você decidiu que <b>todo pedido passa pela sua aprovação</b>, nada entra sem você ver — a pergunta é só se o sistema te ajuda ANTES, avisando o cliente na hora do carrinho.</p>
+    <div class="opt">
+      <span class="rec">Avisar sem barrar: "23 não fecha caixas de 5 — sugerimos 25" · o cliente pode mandar assim mesmo, e você decide na aprovação</span>
+      <span>Barrar de verdade: só aceita quantidade certa</span>
+      <span>Liberar tudo: nenhuma regra, você filtra na aprovação</span>
+    </div>
   </div>
 
-  <div class="q">
-    <div class="qt"><span class="qn">D2</span> 👀 O que o cliente vê de estoque?</div>
-    <p>Mostrar quantidade exata revela seu inventário ao mercado (a QPay veria tudo). Alternativas: faixas ("em estoque / poucas unidades") ou número exato limitado.</p>
-    <div class="opt"><span class="rec">Faixas: "em estoque · restam poucas · esgotado" — sem número exato</span><span>Número exato até um teto (ex.: "50+")</span><span>Número exato sempre</span></div>
-  </div>
-
-  <div class="q">
-    <div class="qt"><span class="qn">D3</span> 🔢 Quantidade mínima e múltiplos por tier?</div>
-    <p>O documento de tiers define faixas (T3: 50–399 un., etc.) e o atacado opera em múltiplos de 5. O portal deve impor isso no carrinho?</p>
-    <div class="opt"><span class="rec">Mínimo por tier sim; múltiplo de 5 como aviso (não trava)</span><span>Tudo trava dura</span><span>Livre, você filtra na aprovação</span></div>
-  </div>
-
-  <div class="q">
-    <div class="qt"><span class="qn">D4</span> 🚚 Frete no pedido?</div>
-    <p>Sem API de frete na v1. O pedido fecha sem valor de frete (combinado por fora, como hoje) ou com um campo manual que você preenche na aprovação?</p>
-    <div class="opt"><span class="rec">Sem frete no sistema na v1 — combinado por fora (como já é hoje)</span><span>Campo manual na aprovação</span></div>
-  </div>
-
-  <div class="q">
-    <div class="qt"><span class="qn">D5</span> 🌐 Onde a v1 roda?</div>
-    <p>Hoje o site público está no Vercel (com o mockup). A v1 real pode subir no mesmo endereço (substituindo o mockup) ou num endereço separado (ex.: <code>app.</code>) mantendo o site de demonstração intacto.</p>
-    <div class="opt"><span class="rec">Mesmo endereço — o mockup VIRA o sistema (é a mesma UI ganhando vida)</span><span>Endereço separado app.ordermyphones…</span></div>
-  </div>
-
-  <div class="callout">✅ Respondidas as 5, começo a S1 no momento em que o Supabase limpo chegar. As respostas podem vir por áudio mesmo — eu atualizo este documento e travo tudo na seção 1.</div>
+  <div class="callout">✅ Respondida a D3, está <b>tudo travado</b> — começo a S1 no momento em que o Supabase limpo chegar. A resposta pode vir por áudio: "avisa", "barra" ou "libera" já resolve.</div>
 </section>
 
 <footer>
-  OMP · v1.0 Plano de Execução — decisões de 27/07 incorporadas (preço = documento do Pricing Engine · convite com tier · QPay como cliente comum · zero API) · complementa o Mapeamento v1 (telas, fluxos e critérios de pronto).
+  OMP · v1.0 Plano de Execução — decisões incorporadas: preço = documento do Pricing Engine · convite com tier · QPay como cliente comum · zero API · abate na aprovação com conciliação · quantidade exata por local · frete por fora · mockup como base. Complementa o Mapeamento v1 (telas, fluxos e critérios de pronto). Pendente: D3.
 </footer>
 
 </div>
