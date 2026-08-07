@@ -11,7 +11,7 @@ export interface ColorOption {
 }
 
 export interface SupplierStock {
-  supplier: SupplierCode; // 'source-1' = Source A · 'source-2' = Source B
+  supplier: SupplierCode; // anonymized source code; real identity lives server-side in public.suppliers (admin/staff RLS)
   availableQty: number;
   unitCostCents: number;
   lead: string;
@@ -41,12 +41,6 @@ const stk = (supplier: SupplierCode, availableQty: number, unitCostCents: number
   unitCostCents,
   lead,
 });
-
-/** Real supplier names — ADMIN-ONLY. Never render these on customer-facing surfaces. */
-export const SUPPLIER_NAMES: Record<SupplierCode, string> = {
-  'source-1': 'Source A',
-  'source-2': 'Source B',
-};
 
 /** Anonymized source labels for any customer-visible surface (suppliers are a trade secret). */
 export const SOURCE_LABELS: Record<SupplierCode, string> = {
