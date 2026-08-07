@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Search, SlidersHorizontal, X, LayoutGrid, Rows3 } from 'lucide-react';
+import { Search, SlidersHorizontal, X, LayoutGrid, Rows3, ClipboardList } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRealCatalog } from '@/data/realCatalog';
 import { RealProductGrid } from './RealProductGrid';
 import { RealCatalogTable } from './RealCatalogTable';
 import { RealCatalogEmpty } from './RealCatalogEmpty';
 import { RealCatalogFilters, facetValueLabel } from './RealCatalogFilters';
+import { QuickOrderDialog } from './QuickOrderDialog';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n';
@@ -61,6 +62,7 @@ export function RealCatalogView() {
   // renders a stale over-large page for a frame.
   const [visibleCount, setVisibleCount] = useState(WINDOW);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [quickOpen, setQuickOpen] = useState(false);
   const [view, setView] = useState<CatalogView>(readView);
 
   function selectView(next: CatalogView) {
@@ -116,6 +118,10 @@ export function RealCatalogView() {
                 {activeFilters.length}
               </span>
             )}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setQuickOpen(true)} title={t('Quick order')}>
+            <ClipboardList className="h-4 w-4" strokeWidth={2} />
+            <span className="hidden sm:inline">{t('Quick order')}</span>
           </Button>
           <label className="relative">
             <span className="sr-only">{t('Search products')}</span>
@@ -285,6 +291,8 @@ export function RealCatalogView() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <QuickOrderDialog open={quickOpen} onClose={() => setQuickOpen(false)} />
     </div>
   );
 }
