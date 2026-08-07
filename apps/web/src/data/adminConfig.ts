@@ -237,6 +237,33 @@ export interface ProfileRow {
   created_at: string;
 }
 
+export interface AccessRequestRow {
+  id: string;
+  full_name: string;
+  business_name: string | null;
+  email: string;
+  phone: string | null;
+  tier_interest: string | null;
+  note: string | null;
+  status: string;
+  created_at: string;
+}
+
+export async function listAccessRequests(): Promise<AccessRequestRow[]> {
+  const { data, error } = await supabase
+    .from('access_requests')
+    .select('id,full_name,business_name,email,phone,tier_interest,note,status,created_at')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as AccessRequestRow[];
+}
+
+export async function setAccessRequestStatus(id: string, status: 'invited' | 'dismissed'): Promise<void> {
+  const { error } = await supabase.rpc('set_access_request_status', { p_id: id, p_status: status });
+  if (error) throw new Error(error.message);
+}
+
 export async function listProfiles(): Promise<ProfileRow[]> {
   const { data, error } = await supabase
     .from('profiles')

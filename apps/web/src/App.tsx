@@ -10,6 +10,7 @@ import ProductPage from '@/routes/ProductPage';
 import CartPage from '@/routes/CartPage';
 import CheckoutPage from '@/routes/CheckoutPage';
 import ContactPage from '@/routes/ContactPage';
+import RequestAccessPage from '@/routes/RequestAccessPage';
 import HelpPage from '@/routes/HelpPage';
 import NotFoundPage from '@/routes/NotFoundPage';
 import OpsPage from '@/routes/OpsPage';
@@ -123,6 +124,7 @@ export default function App() {
           <Route path="cart" element={<CartPage />} />
           <Route path="checkout" element={<CheckoutPage />} />
           <Route path="contact" element={<ContactPage />} />
+          <Route path="request-access" element={<RequestAccessPage />} />
           <Route path="help" element={<HelpPage />} />
 
           {/*

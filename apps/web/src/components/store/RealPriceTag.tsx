@@ -21,8 +21,8 @@ export function RealPriceTag({ priceCents, size = 'md', className }: { priceCent
   }
   if (!signedIn) {
     return (
-      <Link to="/auth/sign-in" className={cn('text-sm font-medium text-brand hover:underline', className)}>
-        {t('Sign in to see your price')}
+      <Link to="/request-access" className={cn('text-sm font-medium text-brand hover:underline', className)}>
+        {t('Request access for pricing')}
       </Link>
     );
   }

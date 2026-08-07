@@ -91,13 +91,13 @@ export function Hero() {
               <ArrowRight className="h-4 w-4" strokeWidth={2} />
             </Link>
             <Link
-              to="/contact"
+              to="/request-access"
               className={cn(
                 buttonVariants({ size: 'lg', variant: 'outline' }),
                 'border-white/25 bg-transparent text-background hover:bg-white/10',
               )}
             >
-              {t('Become a reseller')}
+              {t('Request access')}
             </Link>
           </motion.div>
 
