@@ -1,0 +1,142 @@
+import { useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { RefreshCw } from 'lucide-react';
+import { listTiers, updateTier, repriceAll, type DbTierRow } from '@/data/adminConfig';
+import { useAuth } from '@/store';
+import { Panel } from '@/components/admin/parts';
+import { Button } from '@/components/ui/Button';
+import { formatInt } from '@/lib/format';
+import { AdminOnlyNote, Field, MoneyCentsInput, MutationError, TextInput } from './parts';
+
+interface TierDraft {
+  label: string;
+  min_units: number;
+  max_units: number | null;
+  floor_cents: number;
+}
+
+function toDraft(r: DbTierRow): TierDraft {
+  return { label: r.label, min_units: r.min_units, max_units: r.max_units, floor_cents: r.floor_cents };
+}
+
+function TierCard({ row, canEdit }: { row: DbTierRow; canEdit: boolean }) {
+  const qc = useQueryClient();
+  const [draft, setDraft] = useState<TierDraft>(() => toDraft(row));
+  useEffect(() => setDraft(toDraft(row)), [row]);
+
+  const save = useMutation({
+    mutationFn: () => updateTier(row.code, draft),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['config-tiers'] }),
+  });
+
+  const dirty =
+    draft.label !== row.label || draft.min_units !== row.min_units || draft.max_units !== row.max_units || draft.floor_cents !== row.floor_cents;
+
+  const invalid = draft.min_units < 0 || (draft.max_units !== null && draft.max_units < draft.min_units) || draft.floor_cents < 0 || !draft.label.trim();
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">{row.code}</span>
+        <span className="text-xs text-muted-foreground">position {row.position}</span>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Label">
+          <TextInput value={draft.label} disabled={!canEdit} onChange={(e) => setDraft({ ...draft, label: e.target.value })} />
+        </Field>
+        <Field label="Floor price (min sellable)">
+          <MoneyCentsInput ariaLabel={`${row.code} floor`} cents={draft.floor_cents} disabled={!canEdit} onChange={(c) => setDraft({ ...draft, floor_cents: c })} />
+        </Field>
+        <Field label="Min units">
+          <TextInput
+            type="number"
+            min="0"
+            value={draft.min_units}
+            disabled={!canEdit}
+            onChange={(e) => setDraft({ ...draft, min_units: Math.max(0, Math.floor(Number(e.target.value) || 0)) })}
+          />
+        </Field>
+        <Field label="Max units" help="Blank = unbounded (top tier).">
+          <TextInput
+            type="number"
+            min="0"
+            value={draft.max_units ?? ''}
+            disabled={!canEdit}
+            placeholder="Unbounded"
+            onChange={(e) => {
+              const raw = e.target.value.trim();
+              setDraft({ ...draft, max_units: raw === '' ? null : Math.max(0, Math.floor(Number(raw) || 0)) });
+            }}
+          />
+        </Field>
+      </div>
+      {canEdit && (
+        <div className="mt-3 flex items-center justify-end gap-3">
+          {invalid && <span className="text-xs text-destructive">Check ranges & floor.</span>}
+          <Button size="sm" variant="outline" disabled={!dirty || invalid || save.isPending} onClick={() => save.mutate()}>
+            {save.isPending ? 'Saving…' : save.isSuccess && !dirty ? 'Saved ✓' : 'Save'}
+          </Button>
+        </div>
+      )}
+      <MutationError error={save.error} />
+    </div>
+  );
+}
+
+export default function TiersTab() {
+  const { role } = useAuth();
+  const canEdit = role === 'admin';
+  const qc = useQueryClient();
+  const tiersQ = useQuery({ queryKey: ['config-tiers'], queryFn: listTiers });
+
+  const reprice = useMutation({ mutationFn: repriceAll });
+
+  return (
+    <div className="space-y-6">
+      <AdminOnlyNote show={!canEdit} />
+
+      <Panel
+        title="Reprice everything"
+        action={
+          canEdit && (
+            <Button
+              size="sm"
+              variant="brand"
+              disabled={reprice.isPending}
+              onClick={() => reprice.mutate()}
+            >
+              <RefreshCw className={reprice.isPending ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} strokeWidth={2} />
+              Reprice all
+            </Button>
+          )
+        }
+      >
+        <p className="text-sm text-muted-foreground">
+          Editing a floor or a pricing parameter does <span className="font-medium text-foreground">not</span> retroactively reprice existing
+          variants. Run this after changing floors/params to apply them everywhere.
+        </p>
+        {reprice.isSuccess && (
+          <p className="mt-2 text-sm text-success">Repriced {formatInt(reprice.data)} variant{reprice.data === 1 ? '' : 's'}.</p>
+        )}
+        <MutationError error={reprice.error} />
+      </Panel>
+
+      {tiersQ.isLoading && <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">Loading tiers…</div>}
+      {tiersQ.isError && <MutationError error={tiersQ.error} />}
+
+      {tiersQ.data && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {tiersQ.data.map((row) => (
+            <TierCard key={row.code} row={row} canEdit={canEdit} />
+          ))}
+        </div>
+      )}
+
+      {tiersQ.data && (
+        <button type="button" onClick={() => qc.invalidateQueries({ queryKey: ['config-tiers'] })} className="text-xs text-muted-foreground hover:text-foreground">
+          Refresh
+        </button>
+      )}
+    </div>
+  );
+}

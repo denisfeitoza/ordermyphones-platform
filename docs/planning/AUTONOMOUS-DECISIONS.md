@@ -111,3 +111,42 @@ I'm building Phase 4 as option 1 (flag-guarded) so nothing you share regresses; 
 - Ordering/approval/reconciliation: place_order/approve_order/reject_order/resolve_reconciliation RPCs (server-side price capture from caller's tier, order holds no stock, deduct-on-approval via ledger, partial + reconciliation). Dropped unsafe scaffold insert policies (customer could POST arbitrary prices) — place_order is the only sanctioned write path. Real cart/checkout/portal/admin-approval/reconciliation UI behind the catalog_source flag (mock unchanged). 67 tests.
 - VERIFIED live (rolled back): import 5 → wholesale customer orders 8 → approve → price captured $160 (T3, server-side), inventory 5→0 (ledger −5), status partially_approved, qty_approved 5/8, reconciliation shortfall 3. Full business loop correct.
 ### Progress: Phases 1-6 DONE + verified live. Building Phase 7 (admin config panel + lenses) next, then Phase 8 (observability/QA/launch).
+
+## PHASE 7 BUILT (2026-08-07) — Admin Configuration Panel & Lenses
+Admin → Settings area (`/admin/config`, 10 tabs) reads/writes every config table; migration
+`20260807210000_admin_config.sql` AUTHORED (orchestrator applies via MCP). New RPCs (all SECURITY
+DEFINER, gated, audited to new `admin_audit` table): reprice_all, merge_locations, set_customer_tier,
+set_user_role, resolve_grade_classification, admin_get_customer_profile/orders, admin_log_view_as.
+User-lens route `/admin/view-as/:userId` (admin-only) — the admin's own rights fetch a customer's
+profile+orders via the read RPCs; NO session swap, NO impersonation token; persistent read-only
+banner; one audited `viewed_as` row per open. Build/typecheck green, 80 vitest tests (67 existing + 13
+new pricingSettings validators).
+
+### Deviations & documented follow-ups (autonomous decisions)
+1. **merge_locations does NOT hard-delete the source (deviation from the brief's "removes the
+   source").** The stock ledger is append-only by trigger (`deny_ledger_mutation` fires for the owner
+   too — no `current_user` escape), and `stock_locations` is FK-referenced `on delete restrict` by
+   both `inventory` and `stock_movements`, so hard-delete of a location with any history is
+   impossible without rewriting audited facts. The RPC instead writes compensating ledger movements
+   that carry each balance to the target (reason `manual_adjust`), lifts the target's
+   `unit_cost_cents` to MAX across both locations so the pricing engine's basis cost is unchanged,
+   reprices the moved variants, and sets the source `active = false`. Balance moves + history
+   preserved; the source is retired, not erased.
+2. **The view-as lens cannot show a customer's addresses.** There is no addresses table — portal
+   addresses live client-side in `store/account.tsx` (per TEST-READY-V1 "shipped in the mockup"). The
+   lens shows profile + tier + real orders and states the gap inline. Adding an addresses table was
+   out of scope for this migration; it's a follow-up whenever addresses move server-side.
+3. **Sensitive-action reauth is CLIENT-SIDE only.** `set_user_role`/`set_customer_tier`/
+   `merge_locations` are gated behind a "confirm your password" modal that verifies via
+   `supabase.auth.signInWithPassword` against the admin's own email (a failed attempt leaves the
+   session intact; `reauthenticate()` is OTP/nonce-based and unsuited to a modal confirm). The RPCs
+   themselves cannot verify credential freshness — server-enforced reauth (AAL2/nonce step) is a
+   documented follow-up. The RPCs remain fully authz-gated (`is_admin()`) and audited regardless.
+4. **Enforcement points (item 9) is config-only.** `app_settings.enforcement_points` records WHERE
+   each field (G1 business name, G2 tax cert, shipping address) is required (checkout / approval).
+   Wiring the gate into the checkout/approval flows is a separate change; this tab is the single
+   source of truth it will read.
+5. **Staff console lens is a summary, not a full mirror.** `/admin/view-as/:userId` renders the full
+   read-only portal for a customer; for a staff target it shows a read-only capabilities summary. A
+   full staff-console lens is a follow-up. (`set_user_role` guards against self-demotion and demoting
+   the last admin.)

@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { ArrowUpRight, BarChart3, Bot, Boxes, Flag, LayoutDashboard, LogOut, PackageSearch, Receipt, ScrollText, Tag, UploadCloud, Users } from 'lucide-react';
+import { ArrowUpRight, BarChart3, Bot, Boxes, Flag, LayoutDashboard, LogOut, PackageSearch, Receipt, ScrollText, Settings, Tag, UploadCloud, Users } from 'lucide-react';
 import { useAuth, useTier } from '@/store';
 import { TIERS } from '@/data/tiers';
 import { Logo } from '@/components/store/Logo';
@@ -18,6 +18,7 @@ const NAV = [
   { to: '/admin/api-logs', label: 'API logs', icon: ScrollText },
   { to: '/admin/ai', label: 'AI & bots', icon: Bot },
   { to: '/admin/reports', label: 'Reports', icon: BarChart3 },
+  { to: '/admin/config', label: 'Settings', icon: Settings },
 ];
 
 export default function AdminLayout() {
