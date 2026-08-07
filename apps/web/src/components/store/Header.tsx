@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Search, ShoppingBag, Menu, X, UserRound } from 'lucide-react';
-import { useAuth, useCart, useTier } from '@/store';
+import { useAuth, useCart, useRealCart, useTier } from '@/store';
+import { useCatalogSource } from '@/lib/catalogSource';
 import { useI18n, LangSwitch } from '@/i18n';
 import { Logo } from './Logo';
 import { TierBadge } from './TierBadge';
@@ -16,7 +17,14 @@ const NAV = [
 ];
 
 export function Header() {
-  const { unitCount, setOpen } = useCart();
+  // Source-aware cart badge: real mode reflects/opens the {variant_id, qty}
+  // cart; mock mode is byte-identical to before (source defaults to 'mock').
+  const source = useCatalogSource();
+  const mockCart = useCart();
+  const realCart = useRealCart();
+  const isReal = source === 'real';
+  const unitCount = isReal ? realCart.unitCount : mockCart.unitCount;
+  const openCart = () => (isReal ? realCart.setOpen(true) : mockCart.setOpen(true));
   const { signedIn, role, loading } = useAuth();
   const { tier } = useTier();
   const { t } = useI18n();
@@ -97,7 +105,7 @@ export function Header() {
           )}
           <button
             type="button"
-            onClick={() => setOpen(true)}
+            onClick={openCart}
             className="relative grid h-10 w-10 place-items-center rounded-full border border-border hover:bg-muted"
             aria-label={t("Cart")}
           >

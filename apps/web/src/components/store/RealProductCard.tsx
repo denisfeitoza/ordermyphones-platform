@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge';
 import { formatInt } from '@/lib/format';
 import { PulseDot } from './SyncHeartbeat';
 import { RealPriceTag } from './RealPriceTag';
+import { RealAddToCart } from './RealAddToCart';
 import { useI18n } from '@/i18n';
 
 function gradeTone(grade: PricedRealListing['ctiaGrade']): 'success' | 'dark' | 'neutral' {
@@ -17,11 +18,9 @@ function gradeTone(grade: PricedRealListing['ctiaGrade']): 'success' | 'dark' | 
 /** Real-mode product card — one card per SKU (a grade/carrier/color/capacity
  * combination is a distinct sellable unit; PRODUCT-CATALOG-STANDARD.md §1),
  * not per model, unlike the mock's one-card-per-model-with-swatches shape.
- * Deliberately has no Add to cart / Buy now — apps/web/src/store/cart.tsx's
- * `add()` resolves against the mock CATALOG array by id, so wiring a real
- * SKU into it would either silently no-op or need its own cart data model.
- * That's real-checkout wiring, out of Phase 4's scope (catalog display +
- * canonical export) — this card is read-only: browse, price, stock, detail. */
+ * Phase 6 wired real checkout: <RealAddToCart> pushes {variant_id, qty} into
+ * the dedicated real cart (store/realCart.tsx) and renders only for a signed-in
+ * customer with a visible tier price — everyone else still gets View details. */
 export function RealProductCard({ item }: { item: PricedRealListing }) {
   const { t } = useI18n();
   const image = resolveProductImage(item.model);
@@ -74,6 +73,7 @@ export function RealProductCard({ item }: { item: PricedRealListing }) {
 
         <div className="mt-auto space-y-2 pt-1">
           <RealPriceTag priceCents={item.priceCents} />
+          {!soldOut && <RealAddToCart variantId={item.variantId} priceCents={item.priceCents} />}
           <Link
             to={`/p/${item.sku}`}
             className="block w-full rounded-xl border border-border py-2 text-center text-sm font-medium transition-colors hover:bg-muted"
