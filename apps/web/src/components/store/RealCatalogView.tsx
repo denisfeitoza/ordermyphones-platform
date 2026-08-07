@@ -1,10 +1,21 @@
 import { useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
-import { useRealCatalog, buildDisplayName, type PricedRealListing } from '@/data/realCatalog';
+import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useRealCatalog } from '@/data/realCatalog';
 import { RealProductGrid } from './RealProductGrid';
 import { RealCatalogEmpty } from './RealCatalogEmpty';
+import { RealCatalogFilters, facetValueLabel } from './RealCatalogFilters';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/i18n';
+import {
+  computeFacetedCatalog,
+  emptyFacetState,
+  anyFacetActive,
+  FACET_KEYS,
+  type FacetKey,
+  type FacetState,
+  type Sort,
+} from '@/lib/realCatalogFacets';
 
 const SORTS = [
   { id: 'featured', label: 'Featured' },
@@ -15,50 +26,61 @@ const SORTS = [
 /**
  * How many cards to paint into the DOM per page in real mode. The real HYLA
  * catalog is ~2,675 variants; the *full* filtered+sorted set still powers
- * search/sort and the total-count label, but only this many cards are mounted
- * at once. Load-more appends another WINDOW. Keeps the mock path (12 items)
+ * search/sort/facets and the total-count label, but only this many cards are
+ * mounted at once. Load-more appends another WINDOW. Keeps the mock path
  * untouched — that page never mounts this component.
  */
 const WINDOW = 48;
 
 /**
- * Real-mode catalog page. Deliberately simpler than the mock's
- * <CatalogPage> chrome (no brand/category/price-band sidebar): the real
- * feed's filter axes are grade/carrier/location, not the mock's curated
- * category taxonomy, and Phase 4's scope is display + export, not a new
- * filter model for graded wholesale stock. Search + sort cover the same
- * "find a phone" job at variant granularity.
+ * Real-mode catalog page (M2-P1). Facet filters (make, condition, storage,
+ * carrier, lock, location, price) with live add-this-value counts, computed
+ * client-side over the fetched set via computeFacetedCatalog — no extra
+ * network, exact counts, and the WINDOW render cap is preserved. Desktop shows
+ * a sticky sidebar; mobile opens the same panel in a slide-over. All facet
+ * values are customer-safe (see the masking note in realCatalogFacets.ts).
  */
 export function RealCatalogView() {
   const { t } = useI18n();
   const real = useRealCatalog();
   const [q, setQ] = useState('');
-  const [sort, setSort] = useState<(typeof SORTS)[number]['id']>('featured');
-  // Bounded render window. Reset to the first page inline whenever the search
-  // or sort changes (in the setters below, not a useEffect) so the slice never
+  const [sort, setSort] = useState<Sort>('featured');
+  const [facets, setFacets] = useState<FacetState>(emptyFacetState);
+  // Bounded render window. Reset to the first page whenever search, sort, or a
+  // facet changes (in the handlers below, not a useEffect) so the slice never
   // renders a stale over-large page for a frame.
   const [visibleCount, setVisibleCount] = useState(WINDOW);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  const items = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    let list: PricedRealListing[] = real.items;
-    if (needle) {
-      list = list.filter((i) => {
-        const haystack = `${buildDisplayName(i)} ${i.sku} ${i.color ?? ''}`.toLowerCase();
-        return haystack.includes(needle);
-      });
-    }
-    if (sort === 'price-asc' || sort === 'price-desc') {
-      const sign = sort === 'price-asc' ? 1 : -1;
-      list = [...list].sort((a, b) => sign * ((a.priceCents ?? Number.MAX_SAFE_INTEGER) - (b.priceCents ?? Number.MAX_SAFE_INTEGER)));
-    }
-    return list;
-  }, [real.items, q, sort]);
+  const { filtered, counts } = useMemo(
+    () => computeFacetedCatalog(real.items, facets, q, sort),
+    [real.items, facets, q, sort],
+  );
 
-  // Only this slice is mounted into the DOM; `items` (the full filtered+sorted
-  // set) still drives search, sort and the total-count label above.
-  const visibleItems = items.slice(0, visibleCount);
-  const hasMore = visibleCount < items.length;
+  const resetWindow = () => setVisibleCount(WINDOW);
+
+  function toggleFacet(key: FacetKey, value: string) {
+    setFacets((prev) => {
+      const nextSet = new Set(prev[key]);
+      if (nextSet.has(value)) nextSet.delete(value);
+      else nextSet.add(value);
+      return { ...prev, [key]: nextSet };
+    });
+    resetWindow();
+  }
+
+  function clearAll() {
+    setFacets(emptyFacetState());
+    resetWindow();
+  }
+
+  const activeFilters = FACET_KEYS.flatMap((key) => [...facets[key]].map((value) => ({ key, value })));
+  const hasActiveFilters = anyFacetActive(facets);
+
+  // Only this slice is mounted into the DOM; `filtered` (the full set) still
+  // drives facets, sort and the total-count label.
+  const visibleItems = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
 
   return (
     <div className="container py-8 md:py-12">
@@ -66,10 +88,19 @@ export function RealCatalogView() {
         <div>
           <h1 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">{t('All phones')}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            <span className="font-mono">{items.length}</span> {items.length === 1 ? t('phone') : t('phones')} · {t('live tier pricing & inventory')}
+            <span className="font-mono">{filtered.length}</span> {filtered.length === 1 ? t('phone') : t('phones')} · {t('live tier pricing & inventory')}
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="lg:hidden" onClick={() => setMobileOpen(true)}>
+            <SlidersHorizontal className="h-4 w-4" strokeWidth={2} />
+            {t('Filters')}
+            {hasActiveFilters && (
+              <span className="ml-1 grid h-5 min-w-[20px] place-items-center rounded-full bg-brand px-1 font-mono text-[0.65rem] font-semibold text-white">
+                {activeFilters.length}
+              </span>
+            )}
+          </Button>
           <label className="relative">
             <span className="sr-only">{t('Search products')}</span>
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" strokeWidth={2} />
@@ -78,10 +109,10 @@ export function RealCatalogView() {
               value={q}
               onChange={(e) => {
                 setQ(e.target.value);
-                setVisibleCount(WINDOW);
+                resetWindow();
               }}
               placeholder={t('Search iPhone, Galaxy, SKU…')}
-              className="h-9 w-48 rounded-full border border-border bg-background pl-9 pr-3 text-sm outline-none transition-colors focus:border-brand sm:w-64"
+              className="h-9 w-40 rounded-full border border-border bg-background pl-9 pr-3 text-sm outline-none transition-colors focus:border-brand sm:w-64"
             />
           </label>
           <label className="relative">
@@ -89,8 +120,8 @@ export function RealCatalogView() {
             <select
               value={sort}
               onChange={(e) => {
-                setSort(e.target.value as (typeof SORTS)[number]['id']);
-                setVisibleCount(WINDOW);
+                setSort(e.target.value as Sort);
+                resetWindow();
               }}
               className="h-9 cursor-pointer appearance-none rounded-full border border-border bg-background pl-4 pr-9 text-sm outline-none transition-colors hover:bg-muted focus:border-brand"
             >
@@ -108,40 +139,116 @@ export function RealCatalogView() {
       </div>
 
       {real.isError && (
-        <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+        <div className="mb-6 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           {t('Could not load the live catalog. Please try again shortly.')}
         </div>
       )}
 
-      {real.isLoading ? (
-        <div className="rounded-2xl border border-border bg-card p-16 text-center text-sm text-muted-foreground">
-          {t('Loading catalog…')}
-        </div>
-      ) : items.length > 0 ? (
-        <>
-          <RealProductGrid items={visibleItems} />
-          {hasMore && (
-            <div className="mt-8 flex flex-col items-center gap-3">
-              <p className="text-sm text-muted-foreground">
-                {t('Showing')} <span className="font-mono">{visibleItems.length}</span> {t('of')}{' '}
-                <span className="font-mono">{items.length}</span>
-              </p>
-              <Button
-                variant="outline"
-                className="min-h-11 w-full sm:w-auto sm:min-w-48"
-                onClick={() => setVisibleCount((c) => c + WINDOW)}
-              >
-                {t('Load more')}
-              </Button>
+      <div className="lg:grid lg:grid-cols-[244px_1fr] lg:gap-8">
+        <aside className="hidden lg:block">
+          <div className="sticky top-28 max-h-[calc(100dvh-8rem)] overflow-y-auto pr-1">
+            <RealCatalogFilters
+              counts={counts}
+              facets={facets}
+              onToggle={toggleFacet}
+              onClearAll={clearAll}
+              signedIn={real.signedIn}
+            />
+          </div>
+        </aside>
+
+        <div>
+          {hasActiveFilters && (
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              {activeFilters.map(({ key, value }) => (
+                <button
+                  key={`${key}:${value}`}
+                  type="button"
+                  onClick={() => toggleFacet(key, value)}
+                  className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-border bg-secondary px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  {facetValueLabel(key, value)}
+                  <X className="h-3 w-3 text-muted-foreground" strokeWidth={2.5} />
+                </button>
+              ))}
+              <button onClick={clearAll} className="px-1 text-xs font-medium text-brand hover:underline">
+                {t('Clear all')}
+              </button>
             </div>
           )}
-        </>
-      ) : (
-        <RealCatalogEmpty
-          title={q ? t('No phones match this search') : undefined}
-          subtitle={q ? t('Try a different model, color or SKU.') : undefined}
-        />
-      )}
+
+          {real.isLoading ? (
+            <div className="rounded-2xl border border-border bg-card p-16 text-center text-sm text-muted-foreground">
+              {t('Loading catalog…')}
+            </div>
+          ) : filtered.length > 0 ? (
+            <>
+              <RealProductGrid items={visibleItems} />
+              {hasMore && (
+                <div className="mt-8 flex flex-col items-center gap-3">
+                  <p className="text-sm text-muted-foreground">
+                    {t('Showing')} <span className="font-mono">{visibleItems.length}</span> {t('of')}{' '}
+                    <span className="font-mono">{filtered.length}</span>
+                  </p>
+                  <Button variant="outline" className="min-h-11 w-full sm:w-auto sm:min-w-48" onClick={() => setVisibleCount((c) => c + WINDOW)}>
+                    {t('Load more')}
+                  </Button>
+                </div>
+              )}
+            </>
+          ) : (
+            <RealCatalogEmpty
+              title={q || hasActiveFilters ? t('No phones match these filters') : undefined}
+              subtitle={q || hasActiveFilters ? t('Try clearing a filter or broadening your search.') : undefined}
+              onClear={hasActiveFilters ? clearAll : undefined}
+            />
+          )}
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div className="fixed inset-0 z-50 lg:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <button className="absolute inset-0 cursor-default bg-foreground/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} aria-label={t('Close filters')} />
+            <motion.div
+              className="absolute left-0 top-0 flex h-full w-[86%] max-w-xs flex-col bg-background shadow-2xl"
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', stiffness: 260, damping: 30 }}
+            >
+              <div className="flex items-center justify-between border-b border-border px-5 py-4">
+                <span className="font-display font-semibold">{t('Filters')}</span>
+                <div className="flex items-center gap-3">
+                  {hasActiveFilters && (
+                    <button onClick={clearAll} className="text-xs font-medium text-brand hover:underline">
+                      {t('Clear all')}
+                    </button>
+                  )}
+                  <button onClick={() => setMobileOpen(false)} className="grid h-9 w-9 place-items-center rounded-full hover:bg-muted" aria-label={t('Close')}>
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto px-5 py-4">
+                <RealCatalogFilters
+                  counts={counts}
+                  facets={facets}
+                  onToggle={toggleFacet}
+                  onClearAll={clearAll}
+                  signedIn={real.signedIn}
+                  hideTitle
+                />
+              </div>
+              <div className="border-t border-border p-4">
+                <Button className="w-full" onClick={() => setMobileOpen(false)}>
+                  {t('Show')} {filtered.length} {t('results')}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
