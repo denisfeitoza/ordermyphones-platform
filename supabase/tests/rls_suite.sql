@@ -172,11 +172,89 @@ end $$;
 rollback;
 
 ------------------------------------------------------------------
--- SECTION 2b — positive control: an ADMIN session must be able to read all
--- five tables without a permission error. Without this, a migration that
--- accidentally shipped zero policies (customers AND staff both blocked)
--- would pass Section 2 perfectly — Section 2 alone only proves "nothing
--- readable by anyone," not "staff can actually read it."
+-- SECTION 2a — self-provisioning catalog/inventory isolation (no seeded
+-- users required; mirrors Section 1a). Section 2 above self-skips until
+-- 01-06 seeds real accounts AND until a later plan seeds real catalog rows
+-- — until both exist, a bare "customer reads 0 rows" assertion is vacuous
+-- (an empty table returns 0 rows to EVERY role, RLS working or not). This
+-- section seeds one real row per table as table owner, self-provisions a
+-- customer identity and an admin identity, then asserts BOTH directions for
+-- real: customer sees 0 rows (negative) AND admin sees >=1 row without a
+-- permission error (positive — proves the staff policies actually grant,
+-- not merely that nothing is readable by anyone). Nothing persists; the
+-- whole thing is rolled back.
+------------------------------------------------------------------
+begin;
+do $$
+declare
+  consumer_id uuid := gen_random_uuid();
+  admin_id    uuid := gen_random_uuid();
+  pid uuid; vid uuid; lid uuid;
+  n int;
+  admin_role public.user_role;
+begin
+  -- Seed one real row per table, as table owner (bypasses RLS).
+  insert into public.products (make, model, model_number, category)
+  values ('Section2aMake', 'Section2aModel', 'S2A-001', 'phones') returning id into pid;
+
+  insert into public.product_variants
+    (product_id, capacity, color, carrier, carrier_raw, lock_status, grade, grade_scale, sku)
+  values (pid, '128GB', 'Black', 'ATT', 'AT&T', 'unlocked', 'DLS B', 'DLS', 'S2A-001-128-BLK-ATT-UNL-DLSB')
+  returning id into vid;
+
+  insert into public.stock_locations (code, display_name, region)
+  values ('S2A-LOC', 'Section 2a Location', 'test') returning id into lid;
+
+  insert into public.stock_movements (variant_id, location_id, delta, reason)
+  values (vid, lid, 10, 'seed');
+
+  -- Self-provision a customer identity (real trigger, real default role).
+  insert into auth.users (id, email) values (consumer_id, 'section2a-consumer@example.invalid');
+
+  -- Self-provision an admin identity. The role UPDATE runs here, still as
+  -- table owner (current_user <> 'authenticated'), so the privileged-column
+  -- guard trigger permits it — the same mechanism 01-01's admin seed script
+  -- will use in production.
+  insert into auth.users (id, email) values (admin_id, 'section2a-admin@example.invalid');
+  update public.profiles set role = 'admin' where id = admin_id;
+  select role into admin_role from public.profiles where id = admin_id;
+  if admin_role is distinct from 'admin' then
+    raise exception 'HARNESS BROKEN: admin self-provisioning did not take (got %)', admin_role;
+  end if;
+
+  set local role authenticated;
+
+  -- NEGATIVE: as the customer identity, every base table this plan created
+  -- must return zero rows despite one real row existing in each.
+  perform set_config('request.jwt.claims', json_build_object('sub', consumer_id, 'role','authenticated')::text, true);
+  if current_user <> 'authenticated' then
+    raise exception 'HARNESS BROKEN: current_user is %', current_user;
+  end if;
+
+  select count(*) into n from public.products;         if n <> 0 then raise exception 'FAIL: customer read products (%)', n; end if;
+  select count(*) into n from public.product_variants; if n <> 0 then raise exception 'FAIL: customer read product_variants (%)', n; end if;
+  select count(*) into n from public.inventory;        if n <> 0 then raise exception 'FAIL: customer read inventory (%) — unit_cost_cents exposure', n; end if;
+  select count(*) into n from public.stock_movements;  if n <> 0 then raise exception 'FAIL: customer read stock_movements (%)', n; end if;
+  select count(*) into n from public.stock_locations;  if n <> 0 then raise exception 'FAIL: customer read stock_locations (%)', n; end if;
+
+  -- POSITIVE: swap the JWT claims to the admin identity (same `authenticated`
+  -- Postgres role throughout — auth.uid() re-resolves from the claims GUC on
+  -- every call, no role-membership switch needed or possible mid-transaction).
+  perform set_config('request.jwt.claims', json_build_object('sub', admin_id, 'role','authenticated')::text, true);
+
+  select count(*) into n from public.products;         if n < 1 then raise exception 'FAIL: admin could not read products — staff policy missing/misconfigured'; end if;
+  select count(*) into n from public.product_variants; if n < 1 then raise exception 'FAIL: admin could not read product_variants — staff policy missing/misconfigured'; end if;
+  select count(*) into n from public.inventory;        if n < 1 then raise exception 'FAIL: admin could not read inventory — staff policy missing/misconfigured'; end if;
+  select count(*) into n from public.stock_movements;  if n < 1 then raise exception 'FAIL: admin could not read stock_movements — staff policy missing/misconfigured'; end if;
+  select count(*) into n from public.stock_locations;  if n < 1 then raise exception 'FAIL: admin could not read stock_locations — staff policy missing/misconfigured'; end if;
+end $$;
+rollback;
+
+------------------------------------------------------------------
+-- SECTION 2b — positive control against SEEDED test users (plan 01-06).
+-- Self-skips until then; Section 2a above already proves the same claim
+-- today via self-provisioned identities, so this section's purpose is to
+-- re-confirm against the real invited-admin seed flow once it exists.
 ------------------------------------------------------------------
 begin;
 do $$
@@ -197,9 +275,6 @@ begin
   select count(*) into n from public.inventory;        if n < 0 then raise exception 'unreachable'; end if;
   select count(*) into n from public.stock_movements;  if n < 0 then raise exception 'unreachable'; end if;
   select count(*) into n from public.stock_locations;  if n < 0 then raise exception 'unreachable'; end if;
-exception
-  when insufficient_privilege then
-    raise exception 'FAIL: admin session was denied read access by an RLS policy — staff policy is missing or misconfigured';
 end $$;
 rollback;
 
