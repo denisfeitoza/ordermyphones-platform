@@ -128,6 +128,10 @@ returns jsonb
 language plpgsql
 security definer
 set search_path = ''
+-- Bounded like commit_stock_import (which reprices under a 120s budget): the
+-- reprice pass over the moved variants is unbounded in principle. A timeout
+-- aborts and rolls back the whole merge atomically — the safe failure mode.
+set statement_timeout = '180s'
 as $$
 declare
   v_from          uuid;
@@ -354,6 +358,10 @@ returns jsonb
 language plpgsql
 security definer
 set search_path = ''
+-- Bounded: a common grade label (e.g. "A") can make the reprice set effectively
+-- the whole catalog. A timeout aborts and rolls back atomically, same as
+-- commit_stock_import's 120s reprice budget.
+set statement_timeout = '180s'
 as $$
 declare
   v_vendor_code  text;

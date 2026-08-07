@@ -98,7 +98,20 @@ export function ConfirmPassword({
           )}
 
           <div className="flex justify-end gap-2 pt-1">
-            <Button type="button" variant="outline" size="sm" onClick={onCancel} disabled={verifying || busy}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // Never leave the typed password in state — this component stays
+                // mounted across open/close, so a lingering value would pre-fill
+                // the next sensitive action's reauth prompt.
+                setPassword('');
+                setError(null);
+                onCancel();
+              }}
+              disabled={verifying || busy}
+            >
               Cancel
             </Button>
             <Button type="submit" variant={danger ? 'brand' : 'primary'} size="sm" disabled={verifying || busy || !password}>
