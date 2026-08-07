@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { ArrowUpRight } from 'lucide-react';
 import { useAdminData } from '@/data/admin';
+import { useCatalogSource } from '@/lib/catalogSource';
+import { RealDashboard } from '@/components/admin/RealDashboard';
 import { AgentSwarm, SupplierSyncPanel } from '@/components/ops/OpsPanels';
 import { AdminHeading, StatCard, Table, Td, OrderStatusChip } from '@/components/admin/parts';
 import { tierBg } from '@/lib/tierStyles';
@@ -10,7 +12,11 @@ import { cn } from '@/lib/utils';
 const monthLabel = (m: string) => new Date(`${m}-01T00:00:00`).toLocaleDateString('en-US', { month: 'short' });
 
 export default function DashboardPage() {
+  const source = useCatalogSource();
+  // useAdminData() (mock) is called unconditionally to satisfy the rules of
+  // hooks; its result is unused in real mode where RealDashboard renders.
   const { orders, kpis } = useAdminData();
+  if (source === 'real') return <RealDashboard />;
   const recent = orders.slice(0, 6);
   const maxMonthly = Math.max(...kpis.monthly.map((m) => m.gmvCents), 1);
   const maxTierGmv = Math.max(...kpis.tierMix.map((t) => t.gmvCents), 1);

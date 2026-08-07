@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, X, Bot } from 'lucide-react';
 import { useOpsStream } from '@/components/ops/useOpsStream';
+import { useCatalogSource } from '@/lib/catalogSource';
+import { PreviewNotice } from '@/components/admin/PreviewNotice';
 import { AgentSwarm, LogStream, OrderPipeline, Panel, StockAlerts, SupplierSyncPanel } from '@/components/ops/OpsPanels';
 import { AdminHeading } from '@/components/admin/parts';
 import { SOURCE_LABELS } from '@/data/catalog';
@@ -72,7 +74,23 @@ function AiInbox() {
 }
 
 export default function AiBotsPage() {
+  const source = useCatalogSource();
   const { events, orders } = useOpsStream();
+  if (source === 'real') {
+    return (
+      <PreviewNotice
+        title="AI & bots"
+        subtitle="Autonomous agents acting inside the system."
+        icon={<Bot className="h-6 w-6" strokeWidth={1.75} />}
+        blurb="A swarm of agents — pricing, tier-classification, inventory triage, support drafting — proposing and taking actions for you, with every action logged and reversible. This is a deliberate future milestone, scoped only once you decide to green-light it."
+        bullets={[
+          'Per-agent proposals you approve or reject',
+          'Every native action audited and reversible',
+          'Guardrails against prompt-injection and runaway loops',
+        ]}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">

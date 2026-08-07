@@ -1,5 +1,8 @@
+import { BarChart3 } from 'lucide-react';
 import { useAdminData } from '@/data/admin';
 import { CATALOG, SOURCE_LABELS } from '@/data/catalog';
+import { useCatalogSource } from '@/lib/catalogSource';
+import { PreviewNotice } from '@/components/admin/PreviewNotice';
 import { AdminHeading } from '@/components/admin/parts';
 import { tierBg } from '@/lib/tierStyles';
 import { formatInt, formatUsd } from '@/lib/format';
@@ -17,7 +20,23 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export default function ReportsPage() {
+  const source = useCatalogSource();
   const { orders, kpis } = useAdminData();
+  if (source === 'real') {
+    return (
+      <PreviewNotice
+        title="Reports"
+        subtitle="Sales, tier and supplier analytics."
+        icon={<BarChart3 className="h-6 w-6" strokeWidth={1.75} />}
+        blurb="Reporting builds on real order history. With the store just going live there isn't enough order data to chart yet — this fills in automatically as orders flow, and the full report suite (date ranges, drill-down, export) lands in v1.1."
+        bullets={[
+          'Revenue by month and by tier',
+          'Top products and supplier mix',
+          'Date-range filters, drill-down and CSV/XLSX export',
+        ]}
+      />
+    );
+  }
 
   const maxMonthly = Math.max(...kpis.monthly.map((m) => m.gmvCents), 1);
   const maxTierGmv = Math.max(...kpis.tierMix.map((t) => t.gmvCents), 1);

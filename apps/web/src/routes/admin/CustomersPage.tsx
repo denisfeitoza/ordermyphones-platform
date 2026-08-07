@@ -1,6 +1,8 @@
 import type { PricingTierCode } from '@shared/pricing';
 import { useAdminData } from '@/data/admin';
 import { useTier } from '@/store';
+import { useCatalogSource } from '@/lib/catalogSource';
+import { RealCustomers } from '@/components/admin/RealCustomers';
 import { TIERS } from '@/data/tiers';
 import { AdminHeading, Table, Td, CustomerStatusChip } from '@/components/admin/parts';
 import { InvitePanel } from '@/components/admin/InvitePanel';
@@ -44,7 +46,9 @@ function TierAssign() {
 }
 
 export default function CustomersPage() {
+  const source = useCatalogSource();
   const { customers } = useAdminData();
+  if (source === 'real') return <RealCustomers />;
 
   return (
     <div className="space-y-6">
