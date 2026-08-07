@@ -137,6 +137,15 @@ begin
    where variant_id = new.variant_id
      and location_id = new.location_id;
 
+  -- Guard against silent divergence: if the UPDATE somehow matches zero
+  -- rows (should be impossible given the insert-do-nothing above ensures
+  -- the row exists), the movement would still commit while the balance
+  -- cache stays stale — breaking "balance = sum of audited movements" with
+  -- no error. Fail loudly instead.
+  if not found then
+    raise exception 'inventory row missing for (%, %) — balance cache would diverge from the ledger', new.variant_id, new.location_id;
+  end if;
+
   return new;
 end;
 $$;
@@ -173,8 +182,15 @@ as $$
   where variant_id = p_variant and location_id = p_location
 $$;
 
+-- No grant to authenticated: unlike the four role helpers in 01-01, nothing
+-- in an RLS policy invokes this function, so there is no reason for a
+-- logged-in customer to be able to RPC it directly. It is SECURITY DEFINER
+-- and therefore bypasses RLS entirely — granting it to authenticated would
+-- let any customer read exact per-location stock for any (variant,
+-- location) pair via /rest/v1/rpc/ledger_balance. Tests (rls_suite.sql) and
+-- Phase 6 reconciliation both run as table owner / service_role, which
+-- already bypass RLS and need no grant.
 revoke execute on function public.ledger_balance(uuid, uuid) from public, anon, authenticated;
-grant execute on function public.ledger_balance(uuid, uuid) to authenticated;
 
 ------------------------------------------------------------------
 -- G. RLS — all three tables, this same migration (D15, no exceptions).
