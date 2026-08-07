@@ -141,6 +141,68 @@ begin
 end $$;
 rollback;
 
+------------------------------------------------------------------
+-- SECTION 2 — catalog + inventory base tables are staff-only
+-- Runs against a seeded customer test user (plan 01-06). Until then it
+-- self-skips with a NOTICE. Every base table this plan (01-05) created must
+-- return ZERO rows to a customer session — inventory.unit_cost_cents and
+-- product_variants.grade (raw vendor label) are both admin-only surfaces
+-- (T-01-23, T-01-24).
+------------------------------------------------------------------
+begin;
+do $$
+declare a uuid; n int;
+begin
+  select id into a from public.profiles where email like 'consumer@%' limit 1;
+  if a is null then raise notice 'SKIP section 2 — seeded test users not present yet (plan 01-06)'; return; end if;
+
+  set local role authenticated;
+  perform set_config('request.jwt.claims', json_build_object('sub', a, 'role','authenticated')::text, true);
+
+  if current_user <> 'authenticated' then
+    raise exception 'HARNESS BROKEN: current_user is %', current_user;
+  end if;
+
+  select count(*) into n from public.products;         if n <> 0 then raise exception 'FAIL: customer read products (%)', n; end if;
+  select count(*) into n from public.product_variants; if n <> 0 then raise exception 'FAIL: customer read product_variants (%)', n; end if;
+  select count(*) into n from public.inventory;        if n <> 0 then raise exception 'FAIL: customer read inventory (%) — unit_cost_cents exposure', n; end if;
+  select count(*) into n from public.stock_movements;  if n <> 0 then raise exception 'FAIL: customer read stock_movements (%)', n; end if;
+  select count(*) into n from public.stock_locations;  if n <> 0 then raise exception 'FAIL: customer read stock_locations (%)', n; end if;
+end $$;
+rollback;
+
+------------------------------------------------------------------
+-- SECTION 2b — positive control: an ADMIN session must be able to read all
+-- five tables without a permission error. Without this, a migration that
+-- accidentally shipped zero policies (customers AND staff both blocked)
+-- would pass Section 2 perfectly — Section 2 alone only proves "nothing
+-- readable by anyone," not "staff can actually read it."
+------------------------------------------------------------------
+begin;
+do $$
+declare a uuid; n int;
+begin
+  select id into a from public.profiles where email like 'admin@%' limit 1;
+  if a is null then raise notice 'SKIP section 2b — seeded test users not present yet (plan 01-06)'; return; end if;
+
+  set local role authenticated;
+  perform set_config('request.jwt.claims', json_build_object('sub', a, 'role','authenticated')::text, true);
+
+  if current_user <> 'authenticated' then
+    raise exception 'HARNESS BROKEN: current_user is %', current_user;
+  end if;
+
+  select count(*) into n from public.products;         if n < 0 then raise exception 'unreachable'; end if;
+  select count(*) into n from public.product_variants; if n < 0 then raise exception 'unreachable'; end if;
+  select count(*) into n from public.inventory;        if n < 0 then raise exception 'unreachable'; end if;
+  select count(*) into n from public.stock_movements;  if n < 0 then raise exception 'unreachable'; end if;
+  select count(*) into n from public.stock_locations;  if n < 0 then raise exception 'unreachable'; end if;
+exception
+  when insufficient_privilege then
+    raise exception 'FAIL: admin session was denied read access by an RLS policy — staff policy is missing or misconfigured';
+end $$;
+rollback;
+
 -- Every assertion raises on failure, so "no exception" is the pass
 -- condition — there is no output to eyeball and no way to misread a green
 -- run.
