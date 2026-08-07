@@ -6,6 +6,7 @@ import { useI18n, LangSwitch } from '@/i18n';
 import { Logo } from './Logo';
 import { TierBadge } from './TierBadge';
 import { cn } from '@/lib/utils';
+import { homePathForRole } from '@/lib/roleRoutes';
 
 const NAV = [
   { to: '/catalog', label: 'Shop' },
@@ -16,7 +17,7 @@ const NAV = [
 
 export function Header() {
   const { unitCount, setOpen } = useCart();
-  const { signedIn } = useAuth();
+  const { signedIn, role, loading } = useAuth();
   const { tier } = useTier();
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -75,12 +76,12 @@ export function Header() {
 
         <div className="ml-auto flex items-center gap-2 md:ml-0">
           <LangSwitch className="hidden md:inline-flex" />
-          {signedIn && <TierBadge tier={tier} className="hidden sm:inline-flex" />}
-          {signedIn ? (
+          {signedIn && role === 'customer' && <TierBadge tier={tier} className="hidden sm:inline-flex" />}
+          {signedIn && !loading && role ? (
             <Link
-              to="/admin"
+              to={homePathForRole(role)}
               className="grid h-10 w-10 place-items-center rounded-full border border-border hover:bg-muted"
-              aria-label={t("Admin console")}
+              aria-label={role === 'customer' ? t('Your portal') : t('Admin console')}
             >
               <UserRound className="h-[18px] w-[18px]" strokeWidth={2} />
             </Link>
@@ -141,7 +142,7 @@ export function Header() {
               <span className="px-1 text-xs font-medium text-muted-foreground">{t("Language")}</span>
               <LangSwitch />
             </div>
-            {signedIn && (
+            {signedIn && role === 'customer' && (
               <div className="flex items-center justify-between border-t border-border pt-3 sm:hidden">
                 <span className="px-1 text-xs font-medium text-muted-foreground">{t("Your pricing tier")}</span>
                 <TierBadge tier={tier} />

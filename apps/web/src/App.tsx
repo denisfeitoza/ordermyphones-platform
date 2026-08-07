@@ -51,7 +51,7 @@ export default function App() {
         <Route
           path="admin"
           element={
-            <RequireAuth>
+            <RequireAuth roles={['admin', 'staff']}>
               <AdminLayout />
             </RequireAuth>
           }
@@ -75,10 +75,17 @@ export default function App() {
           <Route path="contact" element={<ContactPage />} />
           <Route path="help" element={<HelpPage />} />
 
+          {/*
+            Gated to 'customer' only — NOT any-authenticated. In v1, admin/staff
+            do not get a live session inside the customer portal; the audited,
+            read-only "view as customer" lens is ADMN-02 (Phase 7). If Phase 7
+            wires that lens through this same route, change this gate
+            deliberately then, not as a side effect of an unrelated edit.
+          */}
           <Route
             path="portal"
             element={
-              <RequireAuth>
+              <RequireAuth roles={['customer']}>
                 <PortalLayout />
               </RequireAuth>
             }
