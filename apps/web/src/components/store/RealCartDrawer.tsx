@@ -2,10 +2,12 @@ import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Minus, Plus, Trash2, X, ArrowRight, ShoppingBag, Smartphone } from 'lucide-react';
-import { useRealCart } from '@/store';
+import { useRealCart, type RealCartAllocation } from '@/store';
 import { useCatalogSource } from '@/lib/catalogSource';
+import { useOrderLocationSelection } from '@/lib/orderSettings';
 import { useRealCatalog, buildDisplayName, type PricedRealListing } from '@/data/realCatalog';
 import { resolveProductImage } from '@/lib/productImage';
+import { CartLineLocations, allocationValid } from './CartLineLocations';
 import { Button } from '@/components/ui/Button';
 import { formatUsd } from '@/lib/format';
 import { useI18n } from '@/i18n';
@@ -13,6 +15,7 @@ import { useI18n } from '@/i18n';
 interface ResolvedLine {
   variantId: string;
   qty: number;
+  allocations?: RealCartAllocation[] | undefined;
   item: PricedRealListing | undefined;
   lineTotalCents: number | null;
 }
@@ -29,8 +32,9 @@ export function RealCartDrawer() {
   const { t } = useI18n();
   const source = useCatalogSource();
   const isReal = source === 'real';
-  const { open, setOpen, lines, unitCount, setQty, remove } = useRealCart();
+  const { open, setOpen, lines, unitCount, setQty, setAllocations, remove } = useRealCart();
   const { items } = useRealCatalog(isReal);
+  const locationSelection = useOrderLocationSelection();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -54,8 +58,12 @@ export function RealCartDrawer() {
   );
 
   const subtotalCents = resolved.reduce((s, l) => s + (l.lineTotalCents ?? 0), 0);
+  // Block checkout only when a line has an in-progress split that doesn't sum to
+  // its qty (all-or-nothing). Lines with no split are always valid.
+  const allocationsValid = resolved.every((l) => allocationValid(l));
 
   function checkout() {
+    if (!allocationsValid) return;
     setOpen(false);
     navigate('/checkout');
   }
@@ -162,6 +170,15 @@ export function RealCartDrawer() {
                               {l.lineTotalCents === null ? '—' : formatUsd(l.lineTotalCents)}
                             </span>
                           </div>
+                          {l.item && (
+                            <CartLineLocations
+                              item={l.item}
+                              qty={l.qty}
+                              allocations={l.allocations}
+                              enabled={locationSelection}
+                              onChange={(a) => setAllocations(l.variantId, a)}
+                            />
+                          )}
                         </div>
                       </li>
                     );
@@ -173,10 +190,13 @@ export function RealCartDrawer() {
                     <span className="text-sm text-muted-foreground">{t('Subtotal')}</span>
                     <span className="font-mono text-xl font-semibold tabular-nums">{formatUsd(subtotalCents)}</span>
                   </div>
-                  <Button variant="primary" size="lg" className="w-full" onClick={checkout}>
+                  <Button variant="primary" size="lg" className="w-full" onClick={checkout} disabled={!allocationsValid}>
                     {t('Review & place order')}
                     <ArrowRight className="h-4 w-4" strokeWidth={2} />
                   </Button>
+                  {!allocationsValid && (
+                    <p className="text-center text-xs text-warning">{t('Finish allocating each line across locations to continue.')}</p>
+                  )}
                   <p className="text-center text-xs text-muted-foreground">
                     {t('Stock is confirmed when our team approves your order — nothing is charged here.')}
                   </p>
