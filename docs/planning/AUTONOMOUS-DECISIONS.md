@@ -162,3 +162,77 @@ new pricingSettings validators).
 - Reauth for sensitive actions is CLIENT-SIDE (confirm-password modal) in v1; server-enforced reauth = follow-up. RPCs remain authz-gated + audited.
 - enforcement_points / catalog_qty_display / catalog_featured are stored but not yet read on storefront/checkout — follow-up wiring flagged (no dead toggle ships silently).
 ### Progress: Phases 1-7 DONE + verified live. Phase 8 (launch readiness: observability/test-hygiene/i18n QA/gate) building. Then final automated test battery.
+
+## PHASE 8 BUILT (2026-08-07) — Launch Readiness
+Migration `20260807220000_test_hygiene.sql` AUTHORED (orchestrator applies via MCP).
+Observability wired behind optional env; trilingual + a11y pass; launch checklist.
+See `docs/planning/LAUNCH-CHECKLIST.md` for the gate status.
+
+### Config-backed / deferred decisions (flip later — no code change)
+- **Observability keys are DEFERRED CONFIG (not secrets in the repo).** Sentry
+  (`@sentry/react`) and PostHog (`posthog-js`) initialize ONLY when
+  `VITE_SENTRY_DSN` / `VITE_POSTHOG_KEY` are set. Unset = complete no-op, so the
+  deployed app is unchanged until Denis adds keys (placeholders + guidance in
+  `apps/web/.env.example`). Sentry `beforeSend` scrubs email/phone/address/token/
+  auth-header/cookie and reduces the user record to its opaque UUID; PostHog
+  identifies by `profiles.id` (UUID) only and `reset()`s on sign-out. When ready:
+  add the two `VITE_*` vars to the Vercel/host env, redeploy. No code change.
+- **`app_settings.reports_include_test` = false (default).** Admin reports exclude
+  `is_test` orders by default; flip to `true` to include them. Consumed by the
+  new `public.orders_reportable` (security_invoker) view. READ SIDE FOLLOW-UP:
+  the current admin `ReportsPage` renders MOCK data (`useAdminData`/`CATALOG`), so
+  it does not yet read the view — same "single source of truth, read side lands
+  when reports move off the mock" posture as Phase 7 items 4/5/6.
+- **Orphan grade `HYLA / 'TPS A-'` classified to CTIA A (DEFAULT).** Matches the
+  `TPS A+` / `TPS A` -> A family (closes gate item LNCH-02, previously routed to
+  `grade_classification_queue` at the safe CTIA C default). Inserted with
+  `on conflict do nothing`, so an admin re-classification in the Phase-7 Grades
+  tab (`resolve_grade_classification`, which upserts the same row) is never
+  clobbered. It is a config-backed default Denis can change any time; seeding the
+  map also means a future real HYLA import resolves the grade directly and never
+  re-queues it. (This adds the literal `'TPS A-'` in a NEW migration file, which
+  is the intended way to close the item — the pricing_scaffold migration's own
+  verify-grep that asserts the row was NOT seeded there is unaffected.)
+- **TEST badge on unset `VITE_ENV` is treated as production (no badge).** The
+  brief said "show when is_test OR VITE_ENV != production". Taken literally, an
+  UNSET `VITE_ENV` (which is how the live storefront ships today) would light the
+  chip for anonymous visitors on the shared demo link — a visible regression. So
+  the badge shows only when the signed-in account is `is_test`, OR `VITE_ENV` is
+  SET to a non-production value (staging/test/preview). Denis opts a whole
+  environment in by setting `VITE_ENV=staging`. Documented on the component.
+
+### Pure judgment calls (no toggle)
+- **`reset_test_data()` reverses inventory via COMPENSATING movements, it does
+  NOT delete ledger rows (deviation from the brief's "delete movements").**
+  `stock_movements` is append-only, enforced by `trg_stock_movements_append_only`
+  (20260806120200 §D) which raises 42501 on UPDATE/DELETE for the table OWNER and
+  service_role too — deliberately. That migration's own comment settles it: "a
+  genuine correction is a compensating movement; a genuine schema repair drops
+  this trigger deliberately in its own migration." This is not a schema repair, so
+  the RPC writes compensating `manual_adjust` movements that restore the balance
+  and cascade-deletes the test orders. Same precedent as Phase 7 `merge_locations`.
+  The RPC takes ZERO parameters and its only row-selecting predicate is
+  `orders.is_test = true`, which is the structural proof it cannot touch real
+  data (no `p_order_ids`, no `p_include_real`). SEMANTIC to know: if the same
+  units were re-imported in replace mode AFTER a test deduction, the compensation
+  can lift `inventory.qty` above the current physical count — the honest reversal
+  of a test action, accepted for a test-data reset (noted on the function comment).
+- **`orders.is_test` is a snapshot, not a join.** It is copied from the profile
+  at `place_order`. `reset_test_data` keys off that column (the safer reading of
+  "tied to is_test profiles"): if Denis later flips a `@test` user to
+  `is_test=false`, their historical orders still carry `is_test=true` and are
+  wiped — arguably correct, called out here so it is a conscious behaviour.
+- **Trilingual scope:** the Phase 4-6 real customer surfaces (Real* catalog/cart/
+  checkout, portal orders, invite/accept) were ALREADY fully wrapped in `t()`;
+  only `'Menu'` and `'Back to orders'` were missing PT/ES entries (added). PT/ES
+  are at exact key-set parity. The MOCK-era pages `ContactPage`/`HelpPage` and
+  several mock portal pages remain largely untranslated — out of the Phase 4-6
+  scope and a larger, deliberate i18n pass; tracked as PENDING in
+  LAUNCH-CHECKLIST rather than rewritten wholesale here.
+- **a11y:** light WCAG-AA pass on customer surfaces — hardcoded English
+  aria-labels on the live cart/header flow now go through `t()`; the OrderCard
+  progress labels dropped the `muted/50` opacity that failed AA contrast. The
+  sweep found NO missing `<img>` alt, NO unlabeled icon buttons on the real
+  surfaces, NO div/span click handlers, and inputs are label-associated. Larger
+  items (full Contact/Help translation, the mock-page contrast micro-checks) are
+  noted in LAUNCH-CHECKLIST.
