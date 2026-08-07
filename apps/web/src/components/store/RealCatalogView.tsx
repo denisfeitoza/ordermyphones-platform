@@ -3,6 +3,7 @@ import { Search } from 'lucide-react';
 import { useRealCatalog, buildDisplayName, type PricedRealListing } from '@/data/realCatalog';
 import { RealProductGrid } from './RealProductGrid';
 import { RealCatalogEmpty } from './RealCatalogEmpty';
+import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/i18n';
 
 const SORTS = [
@@ -10,6 +11,15 @@ const SORTS = [
   { id: 'price-asc', label: 'Price: low to high' },
   { id: 'price-desc', label: 'Price: high to low' },
 ] as const;
+
+/**
+ * How many cards to paint into the DOM per page in real mode. The real HYLA
+ * catalog is ~2,675 variants; the *full* filtered+sorted set still powers
+ * search/sort and the total-count label, but only this many cards are mounted
+ * at once. Load-more appends another WINDOW. Keeps the mock path (12 items)
+ * untouched — that page never mounts this component.
+ */
+const WINDOW = 48;
 
 /**
  * Real-mode catalog page. Deliberately simpler than the mock's
@@ -24,6 +34,10 @@ export function RealCatalogView() {
   const real = useRealCatalog();
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<(typeof SORTS)[number]['id']>('featured');
+  // Bounded render window. Reset to the first page inline whenever the search
+  // or sort changes (in the setters below, not a useEffect) so the slice never
+  // renders a stale over-large page for a frame.
+  const [visibleCount, setVisibleCount] = useState(WINDOW);
 
   const items = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -41,6 +55,11 @@ export function RealCatalogView() {
     return list;
   }, [real.items, q, sort]);
 
+  // Only this slice is mounted into the DOM; `items` (the full filtered+sorted
+  // set) still drives search, sort and the total-count label above.
+  const visibleItems = items.slice(0, visibleCount);
+  const hasMore = visibleCount < items.length;
+
   return (
     <div className="container py-8 md:py-12">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -57,7 +76,10 @@ export function RealCatalogView() {
             <input
               type="text"
               value={q}
-              onChange={(e) => setQ(e.target.value)}
+              onChange={(e) => {
+                setQ(e.target.value);
+                setVisibleCount(WINDOW);
+              }}
               placeholder={t('Search iPhone, Galaxy, SKU…')}
               className="h-9 w-48 rounded-full border border-border bg-background pl-9 pr-3 text-sm outline-none transition-colors focus:border-brand sm:w-64"
             />
@@ -66,7 +88,10 @@ export function RealCatalogView() {
             <span className="sr-only">{t('Sort by')}</span>
             <select
               value={sort}
-              onChange={(e) => setSort(e.target.value as (typeof SORTS)[number]['id'])}
+              onChange={(e) => {
+                setSort(e.target.value as (typeof SORTS)[number]['id']);
+                setVisibleCount(WINDOW);
+              }}
               className="h-9 cursor-pointer appearance-none rounded-full border border-border bg-background pl-4 pr-9 text-sm outline-none transition-colors hover:bg-muted focus:border-brand"
             >
               {SORTS.map((s) => (
@@ -93,7 +118,24 @@ export function RealCatalogView() {
           {t('Loading catalog…')}
         </div>
       ) : items.length > 0 ? (
-        <RealProductGrid items={items} />
+        <>
+          <RealProductGrid items={visibleItems} />
+          {hasMore && (
+            <div className="mt-8 flex flex-col items-center gap-3">
+              <p className="text-sm text-muted-foreground">
+                {t('Showing')} <span className="font-mono">{visibleItems.length}</span> {t('of')}{' '}
+                <span className="font-mono">{items.length}</span>
+              </p>
+              <Button
+                variant="outline"
+                className="min-h-11 w-full sm:w-auto sm:min-w-48"
+                onClick={() => setVisibleCount((c) => c + WINDOW)}
+              >
+                {t('Load more')}
+              </Button>
+            </div>
+          )}
+        </>
       ) : (
         <RealCatalogEmpty
           title={q ? t('No phones match this search') : undefined}
