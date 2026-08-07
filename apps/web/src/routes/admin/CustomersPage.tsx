@@ -3,6 +3,7 @@ import { useAdminData } from '@/data/admin';
 import { useTier } from '@/store';
 import { TIERS } from '@/data/tiers';
 import { AdminHeading, Table, Td, CustomerStatusChip } from '@/components/admin/parts';
+import { InvitePanel } from '@/components/admin/InvitePanel';
 import { TierBadge } from '@/components/store/TierBadge';
 import { tierBg } from '@/lib/tierStyles';
 import { formatInt, formatUsd } from '@/lib/format';
@@ -51,6 +52,9 @@ export default function CustomersPage() {
         title="Customers"
         subtitle={`${customers.length} business accounts · set the live account's tier inline (the customer sees only that tier)`}
       />
+
+      <InvitePanel />
+
       <Table
         minWidth={840}
         columns={[

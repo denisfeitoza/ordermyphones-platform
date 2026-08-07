@@ -16,6 +16,7 @@ import SignInPage from '@/routes/auth/SignInPage';
 import SignUpPage from '@/routes/auth/SignUpPage';
 import ResetPage from '@/routes/auth/ResetPage';
 import CallbackPage from '@/routes/auth/CallbackPage';
+import InvitePage from '@/routes/auth/InvitePage';
 import { RequireAuth } from '@/components/auth/RequireAuth';
 import OverviewPage from '@/routes/portal/OverviewPage';
 import OrdersPage from '@/routes/portal/OrdersPage';
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="sign-up" element={<SignUpPage />} />
           <Route path="reset" element={<ResetPage />} />
           <Route path="callback" element={<CallbackPage />} />
+          <Route path="invite" element={<InvitePage />} />
         </Route>
 
         <Route
