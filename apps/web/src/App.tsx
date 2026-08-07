@@ -32,6 +32,7 @@ import AdminOrdersPage from '@/routes/admin/OrdersPage';
 import InventoryPage from '@/routes/admin/InventoryPage';
 import ImportPage from '@/routes/admin/ImportPage';
 import PricesPage from '@/routes/admin/PricesPage';
+import PricingFlagsPage from '@/routes/admin/PricingFlagsPage';
 import ApiLogsPage from '@/routes/admin/ApiLogsPage';
 import AiBotsPage from '@/routes/admin/AiBotsPage';
 import ReportsPage from '@/routes/admin/ReportsPage';
@@ -63,6 +64,7 @@ export default function App() {
           <Route path="inventory" element={<InventoryPage />} />
           <Route path="import" element={<ImportPage />} />
           <Route path="prices" element={<PricesPage />} />
+          <Route path="pricing-flags" element={<PricingFlagsPage />} />
           <Route path="api-logs" element={<ApiLogsPage />} />
           <Route path="ai" element={<AiBotsPage />} />
           <Route path="reports" element={<ReportsPage />} />
