@@ -521,6 +521,14 @@ begin
   insert into public.prices (variant_id, tier, price_cents, visible) values
     (v_hidden, 'consumer', 19900, false);
 
+  -- One real row each into pricing_flags and grade_classification_queue so
+  -- the "customer reads 0 rows" assertions below are non-vacuous (mirrors
+  -- Section 2a's rationale: an empty table returns 0 rows to EVERY role,
+  -- RLS working or not — a real row must exist first).
+  insert into public.pricing_flags (variant_id, kind) values (v, 'margin');
+  insert into public.grade_classification_queue (vendor_code, vendor_grade)
+    values ('S4VENDOR', 'S4 UNKNOWN GRADE');
+
   insert into auth.users (id, email) values (consumer_id,  'section4-consumer@example.invalid');
   insert into auth.users (id, email) values (wholesale_id, 'section4-wholesale@example.invalid');
   insert into auth.users (id, email) values (admin_id,     'section4-admin@example.invalid');
@@ -552,6 +560,32 @@ begin
   select count(*) into n from public.prices where variant_id = v_hidden;
   if n <> 0 then raise exception 'FAIL(4a): consumer read a visible=false price (% rows)', n; end if;
 
+  -- CONSUMER NEGATIVE: the orchestrator's explicit proof requirement — a
+  -- customer session must read 0 rows of pricing_settings/flags/
+  -- reconciliation (reconciliation_queue is covered by Section 4b).
+  -- pricing_settings is the table T-01-57 calls OMP's entire margin
+  -- structure (floors, bands, kit costs, percentage caps) and carries 16
+  -- real seeded rows from Task 1, so this assertion is non-vacuous today.
+  select count(*) into n from public.pricing_settings;
+  if n <> 0 then raise exception 'FAIL(4a): consumer read % pricing_settings rows — margin structure exposure (T-01-57)', n; end if;
+
+  select count(*) into n from public.pricing_flags;
+  if n <> 0 then raise exception 'FAIL(4a): consumer read % pricing_flags rows', n; end if;
+
+  select count(*) into n from public.grade_classification_queue;
+  if n <> 0 then raise exception 'FAIL(4a): consumer read % grade_classification_queue rows', n; end if;
+
+  -- CONSUMER POSITIVE: tiers and vendor_grade_map are the only `using
+  -- (true)` policies in this plan — storefront product information every
+  -- signed-in session should see. Without this check, the three negatives
+  -- above would be indistinguishable from "this session is blind to
+  -- everything" rather than "RLS is discriminating correctly."
+  select count(*) into n from public.tiers;
+  if n <> 4 then raise exception 'FAIL(4a): consumer saw % tiers rows, expected 4', n; end if;
+
+  select count(*) into n from public.vendor_grade_map where vendor_code = 'HYLA';
+  if n <> 13 then raise exception 'FAIL(4a): consumer saw % HYLA grade-map rows, expected 13', n; end if;
+
   -- WHOLESALE: the gate discriminates, it does not merely restrict
   -- everyone to one hardcoded tier.
   perform set_config('request.jwt.claims', json_build_object('sub', wholesale_id, 'role','authenticated')::text, true);
@@ -571,6 +605,9 @@ begin
   if n <> 4 then raise exception 'FAIL(4c): admin saw % rows on v, expected 4 (all tiers) — staff policy missing/misconfigured', n; end if;
   select count(*) into n from public.prices where variant_id = v_hidden;
   if n <> 1 then raise exception 'FAIL(4c): admin could not see the hidden price row — staff policy missing/misconfigured'; end if;
+
+  select count(*) into n from public.pricing_settings;
+  if n < 1 then raise exception 'FAIL(4c): admin could not read pricing_settings — staff policy missing/misconfigured'; end if;
 end $$;
 rollback;
 
