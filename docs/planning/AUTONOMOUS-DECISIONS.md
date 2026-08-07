@@ -64,3 +64,22 @@ _(populated as phases execute)_
 - **Workaround:** cloned the repo to `/tmp/omp-work` (outside `~/Documents`, TCC-allowed) to keep working from there and push to origin/main.
 - **The 30-second fix for `~/Documents`:** restart the Claude Code app/session for this project (access existed at session start), OR System Settings → Privacy & Security → Full Disk Access → enable for the hosting app, then restart. After that, `git pull` in `~/Documents/OrderMy` absorbs anything pushed from the /tmp clone.
 - Note: `.planning/` is gitignored, so the granular plan files (02-02..02-07 + phases 3-8 contexts) live ONLY in the blocked `~/Documents/.planning` — they are safe there and return when access is restored; the /tmp clone rebuilds plans as needed from `docs/`.
+
+## PROGRESS SNAPSHOT (2026-08-07, autonomous, via /tmp workaround)
+All work below is on origin/main + the live Supabase DB (rdkkbiyugcjyrnkvobrr). Built from /tmp/omp-work because ~/Documents is TCC-blocked.
+
+### DONE + VERIFIED
+- **Phase 1** (11 plans): schema+RLS, real role-routed auth, confidentiality, backdoors gone — COMPLETE, live in prod.
+- **Phase 2 core** (import): import_runs/import_profiles/import_synonyms tables + HYLA synonym seed; helpers (omp_make_sku/fold_carrier/grade_scale/grade_to_ctia); `commit_stock_import` transactional RPC (server-authoritative, merge/replace modes, group-by-(variant,location) last-wins, grade-queue, masked-qty, zero-cost reject) — APPLIED + verified against real DB (idempotency: re-import = 0 movements; carrier synonyms Verizon+VZW collapse to 1 variant; TPS A- → queue). Client pipeline (parse/map/normalize/validate/sku/commit) + 45 vitest tests pass. Admin import wizard (/admin/import, 4 steps, profile zero-click memory) + InventoryPage wired to real inventory — build passes, route gated+deployed.
+  - RESIDUAL: real 2,675-row HYLA E2E deferred (the .xls is in ~/Downloads, TCC-blocked).
+- **Phase 3 core** (pricing): omp_band_add + reprice_variants (cross-location MAX cost, CTIA grade gate, kit, T3/T4 cost-plus bands+caps, floors, tier-order invariant, flags) + pricing_settings seed (15 keys) + variant_price_for_me view (server-side per-tier resolution, cost NEVER exposed to customers — old cost-leaking prices RLS policy dropped) — APPLIED + verified (container-tested by author + live: iPhone11 DLS B → T3 $160/T4 $154, T1/T2 grade-gated hidden). commit_stock_import now auto-reprices touched variants in the same transaction (hook applied, has_hook=true).
+
+### CONFIG-BACKED DECISIONS (defaults seeded; admin-editable in Phase 7)
+- All pricing knobs live in pricing_settings/tiers (bands, floors, caps, kit, retailer_margin, cost_swing 15%) — seeded from the reference pricing_engine.py CONFIG.
+- Import synonym dictionary (header + carrier folds) seeded in import_synonyms — admin-editable later.
+
+### OPEN (needs Denis / later phases)
+- cross_location_spread_threshold_pct + the `spread` flag: NOT seeded/implemented — no value in the ADR/docs; "no invented pricing" → left for Denis to set in Phase 7. (Config-backed once he picks a number.)
+- Phase 3 frontend (T1/T2 admin benchmark entry UI, flag-queue admin UI, storefront price display via variant_price_for_me) — not yet built.
+- Phases 4-8 not started.
+- The commit RPC now hard-depends on pricing_settings/tiers.floor_cents (fail-loud if deleted) and reprice runs inside the 120s commit budget (huge imports could timeout+rollback atomically) — flagged, intentional.
