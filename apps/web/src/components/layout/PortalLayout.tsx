@@ -31,8 +31,9 @@ function initials(name: string): string {
 export default function PortalLayout() {
   const source = useCatalogSource();
   const { businessName: mockName } = useAccount();
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, role, signOut } = useAuth();
   const { tierDef, code } = useEffectiveTier();
+  const isStaff = role === 'admin' || role === 'staff';
   const apiUnlocked = hasApiAccess(code);
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -65,13 +66,15 @@ export default function PortalLayout() {
             </div>
           )}
 
-          <Link
-            to="/admin"
-            className="mt-4 inline-flex w-full items-center justify-between rounded-xl border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            {t('Admin console')}
-            <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2} />
-          </Link>
+          {isStaff && (
+            <Link
+              to="/admin"
+              className="mt-4 inline-flex w-full items-center justify-between rounded-xl border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              {t('Admin console')}
+              <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2} />
+            </Link>
+          )}
 
           <nav className="scrollbar-hide mt-4 flex gap-1 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible">
             {portalNav.map((l) => (

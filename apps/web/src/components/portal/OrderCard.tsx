@@ -13,7 +13,7 @@ export const STATUS_META: Record<
   OrderStatus,
   { label: string; step: number; dot: string; soft: string }
 > = {
-  reserved: { label: 'Reserved at source', step: 0, dot: 'bg-warning', soft: 'bg-warning/10 text-warning' },
+  reserved: { label: 'Reserved', step: 0, dot: 'bg-warning', soft: 'bg-warning/10 text-warning' },
   processing: { label: 'Processing', step: 1, dot: 'bg-brand', soft: 'bg-brand/10 text-brand' },
   shipped: { label: 'Shipped', step: 2, dot: 'bg-brand-2', soft: 'bg-brand-2/10 text-brand-2' },
   delivered: { label: 'Delivered', step: 3, dot: 'bg-success', soft: 'bg-success/10 text-success' },
@@ -158,7 +158,7 @@ export function OrderCard({ order, index = 0 }: { order: AccountOrder; index?: n
       <div className="mt-4 flex items-center justify-between gap-2 border-t border-border pt-3 text-xs">
         <span className="flex items-center gap-2 truncate text-muted-foreground">
           <PackageCheck className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-          {t('Reserved at source')}
+          {t('Reserved')}
         </span>
         <span className="inline-flex shrink-0 items-center gap-1 font-medium text-brand">
           {t('View details & export')}

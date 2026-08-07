@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, X, LayoutGrid, Rows3, ClipboardList } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRealCatalog } from '@/data/realCatalog';
@@ -64,6 +65,29 @@ export function RealCatalogView() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
   const [view, setView] = useState<CatalogView>(readView);
+  const [params] = useSearchParams();
+
+  // Sync the header's category nav (?brand=Apple, ?condition=cpo, ?q=…) into the
+  // facet state. The mock catalog reads these params directly; the real view
+  // uses local facet state, so without this the "iPhone / Samsung / Certified
+  // Pre-Owned" links navigate but never filter. Runs only when the params
+  // change (i.e. a nav click / deep link), so user-picked facets are preserved.
+  useEffect(() => {
+    const brand = params.get('brand');
+    const condition = params.get('condition');
+    const urlQ = params.get('q');
+    if (brand === null && condition === null && urlQ === null) return;
+    const next = emptyFacetState();
+    if (brand) next.make.add(brand);
+    if (condition === 'cpo') {
+      next.grade.add('Certified Pre-Owned');
+      next.grade.add('Certified Pre-Owned · Grade A');
+    }
+    setFacets(next);
+    setQ(urlQ ?? '');
+    setVisibleCount(WINDOW);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params]);
 
   function selectView(next: CatalogView) {
     setView(next);

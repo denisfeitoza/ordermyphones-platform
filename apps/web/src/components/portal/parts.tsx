@@ -19,7 +19,7 @@ export function PageHeading({ title, subtitle, action }: { title: string; subtit
 export function Stat({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: string }) {
   const { t } = useI18n();
   return (
-    <div className="px-4 py-3 first:pl-0">
+    <div className="px-4 py-3">
       <p className="text-xs text-muted-foreground">{t(label)}</p>
       <p className={cn('mt-1 font-mono text-xl font-semibold tabular-nums sm:text-2xl', accent)}>{value}</p>
       {sub && <p className="mt-0.5 text-xs text-muted-foreground">{t(sub)}</p>}

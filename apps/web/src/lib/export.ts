@@ -125,7 +125,7 @@ export async function exportDocPdf(d: ExportDoc) {
   doc.setTextColor(150, 150, 160);
   const footer = d.isTest
     ? 'TEST DATA — not a real order · do not fulfill · not a tax invoice'
-    : 'Stock reserved at source at order time · not a tax invoice';
+    : 'Stock reserved on order approval · not a tax invoice';
   doc.text(footer, 40, H - 30);
 
   // Diagonal TEST watermark across the page, drawn last (on top) at low opacity

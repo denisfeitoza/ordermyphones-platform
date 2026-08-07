@@ -17,7 +17,7 @@ export function Hero() {
   const sy = useSpring(my, { stiffness: 60, damping: 18 });
   const tx = useTransform(sx, [-0.5, 0.5], reduce ? [0, 0] : [-22, 22]);
   const ty = useTransform(sy, [-0.5, 0.5], reduce ? [0, 0] : [-14, 14]);
-  const { suppliers, skusTracked } = useSync();
+  const { skusTracked } = useSync();
   const { t } = useI18n();
 
   function onMove(e: MouseEvent<HTMLElement>) {
@@ -28,7 +28,7 @@ export function Hero() {
 
   const stats = [
     { value: '4', label: t('Pricing tiers') },
-    { value: String(suppliers.length), label: t('Live suppliers') },
+    { value: '3', label: t('U.S. warehouses') },
     { value: formatInt(skusTracked), label: t('SKUs tracked') },
     { value: '< 2s', label: t('Stock refresh') },
   ];
@@ -78,7 +78,7 @@ export function Hero() {
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="mt-5 max-w-lg text-base text-background/70 text-pretty md:text-lg"
           >
-            {t('From a single iPhone to a 500-unit Galaxy pallet — we aggregate real-time supplier stock and apply the right tier price automatically. No spreadsheets, no back-and-forth.')}
+            {t('From a single iPhone to a 500-unit Galaxy pallet — real-time inventory across our U.S. warehouses, with the right tier price applied automatically. No spreadsheets, no back-and-forth.')}
           </motion.p>
 
           <motion.div
