@@ -57,3 +57,10 @@ _(populated as phases execute)_
 - **Phase 1 is now fully closed** per the roadmap's own 5 success criteria — see
   `.planning/phases/01-schema-rls-real-auth/01-11-SUMMARY.md` for the complete evidence trail.
   Next up is planning Phase 2 (Smart Stock Import & HYLA Demo).
+
+## ENVIRONMENT INCIDENT (2026-08-07, autonomous run)
+- **macOS TCC revoked filesystem access to `~/Documents`** mid-run (right after Phase 2 plan 02-01 committed). `stat` sees files but `cat`/`getcwd`/git all return "Operation not permitted" under `~/Documents/OrderMy`. This blocked the GSD executors (which operate in `~/Documents`) and local build/git there.
+- **Nothing lost:** everything through Phase 1 (11 plans) + Phase 2 plan 02-01 is on `origin/main` and in Supabase (rdkkbiyugcjyrnkvobrr). Verified via GitHub API.
+- **Workaround:** cloned the repo to `/tmp/omp-work` (outside `~/Documents`, TCC-allowed) to keep working from there and push to origin/main.
+- **The 30-second fix for `~/Documents`:** restart the Claude Code app/session for this project (access existed at session start), OR System Settings → Privacy & Security → Full Disk Access → enable for the hosting app, then restart. After that, `git pull` in `~/Documents/OrderMy` absorbs anything pushed from the /tmp clone.
+- Note: `.planning/` is gitignored, so the granular plan files (02-02..02-07 + phases 3-8 contexts) live ONLY in the blocked `~/Documents/.planning` — they are safe there and return when access is restored; the /tmp clone rebuilds plans as needed from `docs/`.
