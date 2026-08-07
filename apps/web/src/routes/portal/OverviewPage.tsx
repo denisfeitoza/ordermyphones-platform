@@ -1,14 +1,18 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, BadgePercent } from 'lucide-react';
 import { useAccount, useTier } from '@/store';
+import { useCatalogSource } from '@/lib/catalogSource';
+import { RealPortalOverview } from '@/components/portal/RealPortalOverview';
 import { TierBadge } from '@/components/store/TierBadge';
 import { OrderCard } from '@/components/portal/OrderCard';
 import { PageHeading, Stat } from '@/components/portal/parts';
 import { formatInt, formatUsd } from '@/lib/format';
 
 export default function OverviewPage() {
+  const source = useCatalogSource();
   const { businessName, orders, lifetimeUnits, lifetimeSpentCents } = useAccount();
   const { tier } = useTier();
+  if (source === 'real') return <RealPortalOverview />;
 
   const lifetimeSavings = orders.reduce((s, o) => s + o.savingsCents, 0);
   const activeOrders = orders.filter((o) => o.status !== 'delivered').length;

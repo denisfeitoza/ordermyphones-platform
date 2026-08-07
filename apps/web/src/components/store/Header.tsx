@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Search, ShoppingBag, Menu, X, UserRound } from 'lucide-react';
-import { useAuth, useCart, useRealCart, useTier } from '@/store';
+import { useAuth, useCart, useRealCart } from '@/store';
 import { useCatalogSource } from '@/lib/catalogSource';
+import { useEffectiveTier } from '@/lib/effectiveTier';
 import { useI18n, LangSwitch } from '@/i18n';
 import { Logo } from './Logo';
 import { TierBadge } from './TierBadge';
@@ -26,7 +27,7 @@ export function Header() {
   const unitCount = isReal ? realCart.unitCount : mockCart.unitCount;
   const openCart = () => (isReal ? realCart.setOpen(true) : mockCart.setOpen(true));
   const { signedIn, role, loading } = useAuth();
-  const { tier } = useTier();
+  const { tierDef } = useEffectiveTier();
   const { t } = useI18n();
   const navigate = useNavigate();
   const [q, setQ] = useState('');
@@ -84,7 +85,7 @@ export function Header() {
 
         <div className="ml-auto flex items-center gap-2 md:ml-0">
           <LangSwitch className="hidden md:inline-flex" />
-          {signedIn && role === 'customer' && <TierBadge tier={tier} className="hidden sm:inline-flex" />}
+          {signedIn && role === 'customer' && tierDef && <TierBadge tier={tierDef} className="hidden sm:inline-flex" />}
           {signedIn && !loading && role ? (
             <Link
               to={homePathForRole(role)}
@@ -150,10 +151,10 @@ export function Header() {
               <span className="px-1 text-xs font-medium text-muted-foreground">{t("Language")}</span>
               <LangSwitch />
             </div>
-            {signedIn && role === 'customer' && (
+            {signedIn && role === 'customer' && tierDef && (
               <div className="flex items-center justify-between border-t border-border pt-3 sm:hidden">
                 <span className="px-1 text-xs font-medium text-muted-foreground">{t("Your pricing tier")}</span>
-                <TierBadge tier={tier} />
+                <TierBadge tier={tierDef} />
               </div>
             )}
           </div>

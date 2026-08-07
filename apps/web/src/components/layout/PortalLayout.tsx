@@ -1,6 +1,8 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { ArrowUpRight, Lock, LogOut } from 'lucide-react';
-import { useAccount, useAuth, useTier } from '@/store';
+import { useAccount, useAuth } from '@/store';
+import { useCatalogSource } from '@/lib/catalogSource';
+import { useEffectiveTier } from '@/lib/effectiveTier';
 import { TierBadge } from '@/components/store/TierBadge';
 import { hasApiAccess } from '@/data/inventoryApi';
 import { cn } from '@/lib/utils';
@@ -27,12 +29,16 @@ function initials(name: string): string {
 }
 
 export default function PortalLayout() {
-  const { businessName } = useAccount();
-  const { tier, code } = useTier();
+  const source = useCatalogSource();
+  const { businessName: mockName } = useAccount();
+  const { user, profile, signOut } = useAuth();
+  const { tierDef, code } = useEffectiveTier();
   const apiUnlocked = hasApiAccess(code);
-  const { user, signOut } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
+
+  // Real mode: the actual account identity; mock mode: the demo business.
+  const displayName = source === 'real' ? (profile?.display_name ?? profile?.email ?? 'Account') : mockName;
 
   function handleSignOut() {
     signOut();
@@ -45,17 +51,19 @@ export default function PortalLayout() {
         <aside className="lg:sticky lg:top-28 lg:self-start">
           <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-foreground font-mono text-sm font-semibold text-background">
-              {initials(businessName)}
+              {initials(displayName)}
             </span>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold">{businessName}</p>
+              <p className="truncate text-sm font-semibold">{displayName}</p>
               <p className="text-xs text-muted-foreground">{t('Business account')}</p>
             </div>
           </div>
 
-          <div className="mt-3 px-1">
-            <TierBadge tier={tier} />
-          </div>
+          {tierDef && (
+            <div className="mt-3 px-1">
+              <TierBadge tier={tierDef} />
+            </div>
+          )}
 
           <Link
             to="/admin"
