@@ -1,9 +1,12 @@
-import { Link } from 'react-router-dom';
-import { ArrowUpRight, UploadCloud, Tag, Receipt } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowUpRight, UploadCloud, Tag, Receipt, Eye } from 'lucide-react';
 import { useAdminOrders, useOpenReconciliations } from '@/data/adminOrders';
 import { useRealAdminSummary } from '@/data/adminDashboard';
+import { useTier } from '@/store';
+import { TIERS } from '@/data/tiers';
 import { StatusChip } from '@/routes/admin/RealOrders';
 import { AdminHeading, StatCard, Table, Td } from '@/components/admin/parts';
+import { tierBg } from '@/lib/tierStyles';
 import { formatInt, formatUsd } from '@/lib/format';
 
 /**
@@ -23,11 +26,48 @@ export function RealDashboard() {
   const recent = orders.slice(0, 6);
   const s = summary.data;
 
+  const { startPreview } = useTier();
+  const navigate = useNavigate();
+  function previewAs(code: (typeof TIERS)[number]['code']) {
+    startPreview(code);
+    navigate('/');
+  }
+
   const unitsOf = (o: (typeof orders)[number]) => o.lines.reduce((n, l) => n + l.qtyRequested, 0);
 
   return (
     <div className="space-y-6">
       <AdminHeading title="Dashboard" subtitle="Live operational snapshot — real catalog, orders and stock." />
+
+      {/* Prominent "see the store as a customer" — the fastest way to check what
+          each tier sees, priced for that tier, without logging in and out. */}
+      <section className="rounded-2xl border border-brand/30 bg-brand/5 p-4 sm:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand/15 text-brand">
+              <Eye className="h-5 w-5" strokeWidth={2} />
+            </span>
+            <div>
+              <h2 className="text-sm font-semibold">View the store as a customer</h2>
+              <p className="text-xs text-muted-foreground">Opens the storefront priced for that tier — exactly what the customer sees.</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {TIERS.map((tr) => (
+              <button
+                key={tr.code}
+                type="button"
+                onClick={() => previewAs(tr.code)}
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-2 text-sm font-medium transition-colors hover:border-brand/50 hover:bg-muted"
+              >
+                <span className={`h-2 w-2 rounded-full ${tierBg[tr.tone]}`} />
+                {tr.label}
+                <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2} />
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <StatCard label="SKUs live" value={s ? formatInt(s.skusLive) : '—'} sub="priced & in stock" live />
