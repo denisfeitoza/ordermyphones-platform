@@ -781,3 +781,98 @@ begin
     raise exception 'FAIL: SECURITY DEFINER function(s) without search_path='''': %', bad;
   end if;
 end $$;
+
+------------------------------------------------------------------
+-- SECTION 6 — import-table isolation (plan 02-01; IMPT-01/IMPT-03).
+-- Self-provisioning throughout — mirrors Section 2a/3's shape exactly (real
+-- rows seeded as table owner first so a "customer reads 0 rows" assertion
+-- is non-vacuous, then a throwaway customer identity AND a throwaway admin
+-- identity are self-provisioned inside the same rolled-back transaction;
+-- nothing persists).
+--
+-- Deviation from the plan's literal section numbering, recorded here and in
+-- 02-01-SUMMARY.md: the plan's <must_haves> artifact text calls this
+-- "Section 4", written without visibility into this file's actual state —
+-- Phase 1 plan 01-09 already claimed "SECTION 4" (pricing tier gate,
+-- 4a/4b/4c) and "SECTION 5" (the unconditional phase gate) above. Reusing
+-- "Section 4" here would create two differently-scoped blocks under the
+-- same header in one file, which is strictly worse for a suite later plans
+-- keep appending to. This is the next unused section number; content and
+-- self-provisioning shape match the plan's instruction exactly (Rule 3 —
+-- blocking issue, auto-fixed, no architectural change).
+------------------------------------------------------------------
+begin;
+do $$
+declare
+  consumer_id uuid := gen_random_uuid();
+  admin_id    uuid := gen_random_uuid();
+  sup uuid;
+  run_id uuid; profile_id uuid; synonym_id uuid;
+  n int;
+begin
+  -- Fixtures, as table owner (bypasses RLS) BEFORE dropping to authenticated.
+  select id into sup from public.suppliers limit 1;
+  if sup is null then
+    -- This project's own suppliers table may be empty if scripts/seed-suppliers.mjs
+    -- has never run against it — self-provision a throwaway supplier row too,
+    -- mirroring Section 3's precedent, so this section never depends on that
+    -- gitignored script having executed.
+    insert into public.suppliers (code, legal_name, anon_label, country, kind)
+      values ('s6-test-supplier', 'Section6TestSupplierRealName', 'Section6TestSupplierAnon', 'US', 'other')
+      returning id into sup;
+  end if;
+
+  insert into public.import_runs
+    (supplier_id, mode, source_label, header_fingerprint, rows_total, rows_accepted, rows_rejected)
+  values (sup, 'merge', 'Section6TestFile.xls', 'section6-fingerprint', 10, 9, 1)
+  returning id into run_id;
+
+  insert into public.import_profiles (supplier_id, header_fingerprint, sheet_name, header_row, column_map)
+  values (sup, 'section6-fingerprint', 'Sheet1', 0, '{"Qty":"quantity"}'::jsonb)
+  returning id into profile_id;
+
+  insert into public.import_synonyms (canonical_field, synonym, kind, maps_to)
+  values ('quantity', 'section6-qty-synonym', 'header', null)
+  on conflict (canonical_field, synonym, kind) do update set maps_to = excluded.maps_to
+  returning id into synonym_id;
+
+  -- Self-provision a customer identity and an admin identity (real trigger,
+  -- real default role — mirrors Section 2a).
+  insert into auth.users (id, email) values (consumer_id, 'section6-consumer@example.invalid');
+  insert into auth.users (id, email) values (admin_id,    'section6-admin@example.invalid');
+  update public.profiles set role = 'admin' where id = admin_id;
+
+  set local role authenticated;
+
+  -- NEGATIVE: customer reads 0 rows from the two sensitive tables, despite
+  -- one real row existing in each (non-vacuous).
+  perform set_config('request.jwt.claims', json_build_object('sub', consumer_id, 'role','authenticated')::text, true);
+  if current_user <> 'authenticated' then
+    raise exception 'HARNESS BROKEN: current_user is %', current_user;
+  end if;
+
+  select count(*) into n from public.import_runs where id = run_id;
+  if n <> 0 then raise exception 'FAIL(section6): customer read % import_runs rows', n; end if;
+
+  select count(*) into n from public.import_profiles where id = profile_id;
+  if n <> 0 then raise exception 'FAIL(section6): customer read % import_profiles rows', n; end if;
+
+  -- POSITIVE (intentional exception): import_synonyms is read-all-
+  -- authenticated non-sensitive mapping metadata (T-02-03) — the customer
+  -- session CAN read it, but still reads 0 from the two sensitive tables
+  -- above.
+  select count(*) into n from public.import_synonyms where id = synonym_id;
+  if n <> 1 then raise exception 'FAIL(section6): customer could not read import_synonyms (%) — read-all-authenticated policy missing/misconfigured', n; end if;
+
+  -- POSITIVE CONTROL: an admin identity reads >=1 from both sensitive
+  -- tables without a permission error — proves the staff policies actually
+  -- grant, not merely that nothing is readable by anyone.
+  perform set_config('request.jwt.claims', json_build_object('sub', admin_id, 'role','authenticated')::text, true);
+
+  select count(*) into n from public.import_runs where id = run_id;
+  if n < 1 then raise exception 'FAIL(section6): admin could not read import_runs — staff policy missing/misconfigured'; end if;
+
+  select count(*) into n from public.import_profiles where id = profile_id;
+  if n < 1 then raise exception 'FAIL(section6): admin could not read import_profiles — staff policy missing/misconfigured'; end if;
+end $$;
+rollback;
