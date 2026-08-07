@@ -9,7 +9,7 @@ import { RealPriceTag } from './RealPriceTag';
 import { RealAddToCart } from './RealAddToCart';
 import { useI18n } from '@/i18n';
 
-function gradeTone(grade: PricedRealListing['ctiaGrade']): 'success' | 'dark' | 'neutral' {
+export function gradeTone(grade: PricedRealListing['ctiaGrade']): 'success' | 'dark' | 'neutral' {
   if (grade === 'NEW') return 'success';
   if (grade === 'CPO' || grade === 'A') return 'dark';
   return 'neutral';
