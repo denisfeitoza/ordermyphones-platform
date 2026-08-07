@@ -98,3 +98,11 @@ I'm building Phase 4 as option 1 (flag-guarded) so nothing you share regresses; 
 - Done: Phase 1 (complete) · Phase 2 core (import+wizard; real-file E2E pending TCC) · Phase 3 (complete).
 - Next: Phase 4 (catalog display+export, flag-guarded per above) → 5 (invites/registration) → 6 (ordering/approval) → 7 (admin config panel+lenses) → 8 (launch/observability/QA).
 - All migrations applied to rdkkbiyugcjyrnkvobrr and committed as files. `commit_stock_import` auto-reprices. Test users seeded (password in ~/Documents/scripts/.seed-password.local).
+
+## PHASES 4 & 5 COMPLETE + VERIFIED (2026-08-07)
+- **Phase 4** (catalog display + export): app_settings.catalog_source flag ('mock' default → storefront unchanged/no regression; flip to 'real' after an import); catalog_listing view (anon-safe: canonical name + CTIA consumer label + per-location stock, NEVER cost/vendor-grade/supplier-name); admin canonical CSV/XLSX export (columns match import template → re-import no-op). Applied + verified (anon read ok, view present). 59 tests.
+- **Phase 5** (invites + 3-gate registration): invites table + create_invite/get_invite/redeem_invite RPCs (SECURITY DEFINER); redeem creates a REAL login-capable auth user (bcrypt via extensions.crypt) + identity + applies invited tier, all in one transaction. Storage bucket tax-certificates (owner+admin RLS). G0 accept page (tier-aware, trilingual), G1 checkout contact save, G2 cert upload + completeness meter. Applied + VERIFIED live (rolled back): invite wholesale → redeem → auth_user_exists=1, tier=wholesale, role=customer, has_identity=1, pw_verifies=true, invite=accepted. QPay = a wholesale invite (no special code). 67 tests.
+  - DECISION (per Denis's "make doubtful configurable"): invite EMAIL delivery deferred — invites work via copyable link now; app_settings.invite_email_delivery=false, flip when a transactional sender/service-role is wired.
+
+### Progress: Phases 1-5 DONE + verified live. Building Phase 6 (ordering/approval/reconciliation) next, then 7 (admin config panel + lenses), 8 (launch/observability/QA).
+### NOTE: real ordering (Phase 6) and real catalog display (Phase 4 'real' mode) both light up fully once the real HYLA import runs (blocked on ~/Downloads TCC access). RPCs are built + DB-verified with synthetic data meanwhile.
