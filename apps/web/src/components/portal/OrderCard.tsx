@@ -56,7 +56,9 @@ export function OrderProgress({ status }: { status: OrderStatus }) {
               <span
                 className={cn(
                   'text-[0.65rem]',
-                  i === cur ? 'font-medium text-foreground' : reached ? 'text-muted-foreground' : 'text-muted-foreground/50',
+                  // WCAG 1.4.3: the previous unreached-step colour (muted/50) fell
+                  // below AA contrast. Unreached now uses full muted-foreground.
+                  i === cur ? 'font-medium text-foreground' : reached ? 'text-muted-foreground' : 'text-muted-foreground',
                 )}
               >
                 {t(s.label)}

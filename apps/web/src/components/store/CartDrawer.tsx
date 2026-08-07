@@ -51,7 +51,7 @@ export function CartDrawer() {
               <button
                 onClick={() => setOpen(false)}
                 className="grid h-9 w-9 place-items-center rounded-full hover:bg-muted"
-                aria-label="Close"
+                aria-label={t('Close')}
               >
                 <X className="h-5 w-5" />
               </button>
@@ -94,7 +94,7 @@ export function CartDrawer() {
                           <button
                             onClick={() => remove(l.key)}
                             className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-destructive"
-                            aria-label="Remove"
+                            aria-label={t('Remove')}
                           >
                             <Trash2 className="h-4 w-4" strokeWidth={1.75} />
                           </button>
@@ -104,7 +104,7 @@ export function CartDrawer() {
                             <button
                               onClick={() => setQty(l.key, l.qty - 1)}
                               className="grid h-8 w-8 place-items-center rounded-l-full hover:bg-muted"
-                              aria-label="Decrease"
+                              aria-label={t('Decrease')}
                             >
                               <Minus className="h-3.5 w-3.5" strokeWidth={2} />
                             </button>
@@ -112,7 +112,7 @@ export function CartDrawer() {
                             <button
                               onClick={() => setQty(l.key, l.qty + 1)}
                               className="grid h-8 w-8 place-items-center rounded-r-full hover:bg-muted"
-                              aria-label="Increase"
+                              aria-label={t('Increase')}
                             >
                               <Plus className="h-3.5 w-3.5" strokeWidth={2} />
                             </button>
