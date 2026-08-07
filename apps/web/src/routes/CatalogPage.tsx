@@ -158,7 +158,7 @@ function MockCatalogPage() {
             >
               <div className="mb-2 flex items-center justify-between">
                 <span className="font-display font-semibold">{t('Filters')}</span>
-                <button onClick={() => setMobileOpen(false)} className="grid h-9 w-9 place-items-center rounded-full hover:bg-muted" aria-label="Close">
+                <button onClick={() => setMobileOpen(false)} className="grid h-9 w-9 place-items-center rounded-full hover:bg-muted" aria-label={t('Close')}>
                   <X className="h-5 w-5" />
                 </button>
               </div>

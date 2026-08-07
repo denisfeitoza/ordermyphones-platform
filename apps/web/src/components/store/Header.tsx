@@ -45,7 +45,7 @@ export function Header() {
           type="button"
           className="-ml-2 grid h-10 w-10 place-items-center rounded-full hover:bg-muted lg:hidden"
           onClick={() => setMenuOpen((o) => !o)}
-          aria-label="Menu"
+          aria-label={t('Menu')}
         >
           {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>

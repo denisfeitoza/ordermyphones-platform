@@ -398,6 +398,8 @@ export const PT: Record<string, string> = {
   'Summary': 'Resumo',
   'Ship to': 'Enviar para',
   'Ordered total': 'Total do pedido',
+  'Menu': 'Menu',
+  'Back to orders': 'Voltar aos pedidos',
 };
 
 export const ES: Record<string, string> = {
@@ -796,4 +798,6 @@ export const ES: Record<string, string> = {
   'Summary': 'Resumen',
   'Ship to': 'Enviar a',
   'Ordered total': 'Total del pedido',
+  'Menu': 'Menú',
+  'Back to orders': 'Volver a pedidos',
 };
