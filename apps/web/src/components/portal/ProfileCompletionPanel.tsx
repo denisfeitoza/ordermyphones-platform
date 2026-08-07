@@ -94,11 +94,15 @@ export function ProfileCompletionPanel() {
   const upload = useMutation({
     mutationFn: async (file: File) => {
       if (!user) throw new Error('no session');
-      // Path convention: `${uid}/<filename>` — the first segment is the uid the
-      // storage RLS checks. upsert so re-upload overwrites in place.
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'pdf';
-      const path = `${user.id}/certificate.${ext}`;
-      const { error } = await supabase.storage.from(CERT_BUCKET).upload(path, file, { upsert: true });
+      // Path convention: `${uid}/certificate` — the first segment is the uid the
+      // storage RLS checks. A FIXED key (no extension) makes re-upload genuinely
+      // idempotent: uploading a PDF then a JPG overwrites the same object rather
+      // than leaving two files the Phase 6 approval preview couldn't disambiguate.
+      // Supabase stores contentType metadata, so the file still serves correctly.
+      const path = `${user.id}/certificate`;
+      const { error } = await supabase.storage
+        .from(CERT_BUCKET)
+        .upload(path, file, { upsert: true, contentType: file.type || 'application/octet-stream' });
       if (error) throw error;
     },
     onSuccess: () => {

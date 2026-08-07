@@ -103,6 +103,14 @@ begin
     raise exception 'invalid_email' using errcode = '22023';
   end if;
 
+  -- Reject up front if an account already owns this e-mail — otherwise the
+  -- admin sends a link, the customer fills the whole G0 form, and only
+  -- redeem_invite discovers the collision. Surfaced in the admin UI via the
+  -- mutation error. (Same case-insensitive match GoTrue uses.)
+  if exists (select 1 from auth.users u where lower(u.email) = v_email) then
+    raise exception 'email_taken' using errcode = '23505';
+  end if;
+
   insert into public.invites (email, tier, invited_by)
   values (v_email, p_tier, auth.uid())
   returning * into v_invite;
