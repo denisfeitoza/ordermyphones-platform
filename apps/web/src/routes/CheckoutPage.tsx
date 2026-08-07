@@ -2,7 +2,7 @@ import { useRef, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Check, Lock, PackageCheck, ShoppingBag } from 'lucide-react';
-import { useAccount, useAuth, useCart } from '@/store';
+import { useAccount, useCart } from '@/store';
 import type { AccountOrder } from '@/store';
 import { SOURCE_LABELS } from '@/data/catalog';
 import { Button } from '@/components/ui/Button';
@@ -34,12 +34,10 @@ export default function CheckoutPage() {
   const { t } = useI18n();
   const { lines, unitCount, effectiveTier, subtotalCents, retailSubtotalCents, savingsCents, clear } = useCart();
   const { placeOrder } = useAccount();
-  const { signIn } = useAuth();
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>('review');
   const [orderId] = useState(genOrderId);
   const recorded = useRef(false);
-  const emailRef = useRef('');
 
   if (lines.length === 0 && phase !== 'done') {
     return (
@@ -58,7 +56,6 @@ export default function CheckoutPage() {
 
   function submitReview(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    emailRef.current = String(new FormData(e.currentTarget).get('email') ?? '');
     setPhase('reserving');
   }
 
@@ -87,8 +84,6 @@ export default function CheckoutPage() {
         })),
       };
       placeOrder(order);
-      // Guest checkout links a session, so "Track order" lands in the gated portal.
-      signIn(emailRef.current);
     }
     setPhase('done');
   }

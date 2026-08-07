@@ -12,7 +12,6 @@ import ContactPage from '@/routes/ContactPage';
 import HelpPage from '@/routes/HelpPage';
 import NotFoundPage from '@/routes/NotFoundPage';
 import OpsPage from '@/routes/OpsPage';
-import EnterPage from '@/routes/EnterPage';
 import SignInPage from '@/routes/auth/SignInPage';
 import SignUpPage from '@/routes/auth/SignUpPage';
 import ResetPage from '@/routes/auth/ResetPage';
@@ -41,7 +40,6 @@ export default function App() {
     <AppProviders>
       <Routes>
         <Route path="ops" element={<OpsPage />} />
-        <Route path="enter/:where" element={<EnterPage />} />
 
         <Route path="auth">
           <Route path="sign-in" element={<SignInPage />} />
