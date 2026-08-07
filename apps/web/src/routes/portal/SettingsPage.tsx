@@ -40,11 +40,11 @@ function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
       role="switch"
       aria-checked={on}
       onClick={onClick}
-      className={cn('relative h-6 w-11 shrink-0 rounded-full transition-colors', on ? 'bg-brand' : 'bg-muted')}
+      className={cn('relative h-6 w-11 shrink-0 rounded-full transition-colors', on ? 'bg-brand' : 'bg-muted-foreground/30')}
     >
       <span
         className={cn(
-          'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-soft transition-transform',
+          'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm ring-1 ring-black/15 transition-transform',
           on ? 'translate-x-[22px]' : 'translate-x-0.5',
         )}
       />

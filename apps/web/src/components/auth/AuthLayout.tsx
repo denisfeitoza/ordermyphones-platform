@@ -4,9 +4,9 @@ import { Logo } from '@/components/store/Logo';
 import { useI18n } from '@/i18n';
 
 const POINTS = [
-  { icon: Zap, title: 'Reserve at source', desc: 'Stock is confirmed and held at the supplier before you’re charged.' },
+  { icon: Zap, title: 'Stock held on approval', desc: 'We confirm and hold your stock when your order is approved — nothing is charged before that.' },
   { icon: Layers, title: 'Tier pricing, automatic', desc: 'Your account price is applied at checkout — no codes, no quotes.' },
-  { icon: ShieldCheck, title: 'Two live supplier feeds', desc: 'Anonymized sources, cross-checked every two seconds.' },
+  { icon: ShieldCheck, title: 'Real-time inventory', desc: 'Live availability across our warehouses, updated continuously.' },
 ];
 
 /** Split-screen auth shell: branded value panel (lg+) + the form column. */
@@ -45,7 +45,7 @@ export function AuthLayout({
             ))}
           </ul>
         </div>
-        <p className="relative text-xs text-background/40">{t('Mockup demo')} · Order My Phones LLC</p>
+        <p className="relative text-xs text-background/40">Order My Phones LLC</p>
       </aside>
 
       <main className="flex flex-col justify-center px-5 py-10 sm:px-10">

@@ -13,7 +13,7 @@ export function ReserveFlow({ units, onComplete }: { units: number; onComplete: 
   const { t } = useI18n();
   const u = `${units} ${units === 1 ? t('unit') : t('units')}`;
   const steps = [
-    t('Querying live stock at source'),
+    t('Confirming live stock'),
     t('Confirming availability across the network'),
     `Cross-checking ${u} against open orders`,
     `Reserving ${u} at source`,

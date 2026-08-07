@@ -169,9 +169,9 @@ function MockCheckoutPage() {
 
           {phase === 'reserving' && (
             <div className="rounded-2xl border border-border p-5">
-              <h2 className="font-medium">{t('Reserving your order at source')}</h2>
+              <h2 className="font-medium">{t('Placing your order')}</h2>
               <p className="mb-4 mt-1 text-sm text-muted-foreground">
-                {t('We confirm live stock with each supplier and hold your units before charging.')}
+                {t('We confirm live stock and hold your units — nothing is charged yet.')}
               </p>
               <ReserveFlow units={unitCount} onComplete={handleReserved} />
             </div>
@@ -202,10 +202,10 @@ function MockCheckoutPage() {
               <div className="mt-5 space-y-2 rounded-xl bg-muted/50 p-4 text-sm">
                 <div className="flex items-center gap-2 font-medium">
                   <PackageCheck className="h-4 w-4 text-success" strokeWidth={2} />
-                  {unitCount} {unitCount === 1 ? t('unit') : t('units')} {t('reserved at source')}
+                  {unitCount} {unitCount === 1 ? t('unit') : t('units')} {t('reserved')}
                 </div>
                 <p className="text-muted-foreground">
-                  {t('Reserved across our supplier network, cross-checked against open orders. Tracking posts as each shipment dispatches.')}
+                  {t('Reserved across our warehouses and confirmed against open orders. Tracking posts as each shipment dispatches.')}
                 </p>
               </div>
 

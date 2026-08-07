@@ -53,7 +53,7 @@ export function Toggle({
         checked ? 'bg-brand' : 'bg-muted-foreground/30',
       )}
     >
-      <span className={cn('inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform', checked ? 'translate-x-5' : 'translate-x-0.5')} />
+      <span className={cn('inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-1 ring-black/15 transition-transform', checked ? 'translate-x-5' : 'translate-x-0.5')} />
     </button>
   );
 }
