@@ -5,6 +5,7 @@ import { buildDisplayName, carrierLabel, type PricedRealListing } from '@/data/r
 import { resolveProductImage } from '@/lib/productImage';
 import { Badge } from '@/components/ui/Badge';
 import { RealPriceTag } from './RealPriceTag';
+import { RealAddToCart } from './RealAddToCart';
 import { RealProductGrid } from './RealProductGrid';
 import { PulseDot } from './SyncHeartbeat';
 import { formatInt } from '@/lib/format';
@@ -105,6 +106,10 @@ export function RealProductDetail({ item, related }: { item: PricedRealListing; 
               </ul>
             )}
           </div>
+
+          {!soldOut && (
+            <RealAddToCart variantId={item.variantId} priceCents={item.priceCents} stepper className="mt-6" />
+          )}
 
           <div className="mt-6 grid grid-cols-3 gap-3 text-xs">
             {[

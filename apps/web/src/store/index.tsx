@@ -6,6 +6,7 @@ import { AuthProvider } from './auth';
 import { AccountProvider } from './account';
 import { WishlistProvider } from './wishlist';
 import { CartProvider } from './cart';
+import { RealCartProvider } from './realCart';
 
 export * from './tier';
 export * from './sync';
@@ -13,6 +14,7 @@ export * from './auth';
 export * from './account';
 export * from './wishlist';
 export * from './cart';
+export * from './realCart';
 
 /** Composes the storefront client stores. Order matters: cart & wishlist read tier. */
 export function AppProviders({ children }: { children: ReactNode }) {
@@ -23,7 +25,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
         <AuthProvider>
           <AccountProvider>
             <WishlistProvider>
-              <CartProvider>{children}</CartProvider>
+              <CartProvider>
+                <RealCartProvider>{children}</RealCartProvider>
+              </CartProvider>
             </WishlistProvider>
           </AccountProvider>
         </AuthProvider>
