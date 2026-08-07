@@ -156,3 +156,9 @@ new pricingSettings validators).
    sort still uses the default order). They are the single source of truth those surfaces will read
    when wired — a follow-up, same posture as items 4/5. Not a dead toggle by intent; just unwired on
    the read side this phase.
+
+## PHASE 7 COMPLETE + applied (2026-08-07)
+- Admin Config panel (/admin/config, 10 tabs): tiers/floors, pricing params, quantity rules, stock locations (+merge), grade maps + classification queue, import dictionary/profiles, catalog display + the catalog_source GO-LIVE switch, users & invites (tier/role change reauth-gated), enforcement points, audit log. RPCs (8): reprice_all, merge_locations, set_customer_tier, set_user_role, resolve_grade_classification, admin_get_customer_profile/orders, admin_log_view_as — all admin-gated + audited into new admin_audit table. User lens /admin/view-as/:id (NO impersonation — admin's own rights fetch target data, read-only, audited). 80 tests. Applied + verified (8 RPCs + admin_audit + config keys present).
+- Reauth for sensitive actions is CLIENT-SIDE (confirm-password modal) in v1; server-enforced reauth = follow-up. RPCs remain authz-gated + audited.
+- enforcement_points / catalog_qty_display / catalog_featured are stored but not yet read on storefront/checkout — follow-up wiring flagged (no dead toggle ships silently).
+### Progress: Phases 1-7 DONE + verified live. Phase 8 (launch readiness: observability/test-hygiene/i18n QA/gate) building. Then final automated test battery.
