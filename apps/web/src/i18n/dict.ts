@@ -216,19 +216,18 @@ export const PT: Record<string, string> = {
   'Show password': 'Mostrar senha',
   'Password': 'Senha',
   'Reseller permit': 'Licença de revenda',
-  'Demo — any password works.': 'Demonstração — qualquer senha funciona.',
-  'Optional — unlocks tax-exempt orders once verified.':
-    'Opcional — libera pedidos isentos de imposto após verificação.',
   'One console for your orders, tiers, inventory, and the live bots.':
     'Um console para seus pedidos, tiers, estoque e os bots ao vivo.',
   'New to OrderMyPhones?': 'Novo na OrderMyPhones?',
   'Create an account': 'Criar uma conta',
   'Forgot password?': 'Esqueceu a senha?',
-  'or': 'ou',
-  'Email me a magic link': 'Enviar link mágico por e-mail',
-  'Create account': 'Criar conta',
-  'Mockup — no account is actually created or stored.':
-    'Demonstração — nenhuma conta é criada ou armazenada de verdade.',
+  'Already have an account?': 'Já tem uma conta?',
+  'Accounts are invite-only': 'Contas são apenas por convite',
+  'OrderMyPhones is a closed B2B marketplace — every account is created by the OrderMyPhones team.':
+    'OrderMyPhones é um marketplace B2B fechado — toda conta é criada pela equipe da OrderMyPhones.',
+  'There is no open sign-up. If you sell phones at volume, tell us about your business and we’ll set up your account and tier pricing.':
+    'Não existe cadastro aberto. Se você vende celulares em volume, conte sobre o seu negócio e configuramos sua conta e o preço do seu tier.',
+  'Request an invite': 'Solicitar um convite',
   'Check your inbox': 'Confira sua caixa de entrada',
   'Reset password': 'Redefinir senha',
   'We’ll email you a secure link to set a new password.':
@@ -489,19 +488,18 @@ export const ES: Record<string, string> = {
   'Show password': 'Mostrar contraseña',
   'Password': 'Contraseña',
   'Reseller permit': 'Permiso de revendedor',
-  'Demo — any password works.': 'Demo — cualquier contraseña funciona.',
-  'Optional — unlocks tax-exempt orders once verified.':
-    'Opcional — habilita pedidos exentos de impuestos tras la verificación.',
   'One console for your orders, tiers, inventory, and the live bots.':
     'Una consola para tus pedidos, niveles, inventario y los bots en vivo.',
   'New to OrderMyPhones?': '¿Nuevo en OrderMyPhones?',
   'Create an account': 'Crear una cuenta',
   'Forgot password?': '¿Olvidaste tu contraseña?',
-  'or': 'o',
-  'Email me a magic link': 'Envíame un enlace mágico',
-  'Create account': 'Crear cuenta',
-  'Mockup — no account is actually created or stored.':
-    'Demo — no se crea ni se guarda ninguna cuenta real.',
+  'Already have an account?': '¿Ya tienes una cuenta?',
+  'Accounts are invite-only': 'Las cuentas son solo por invitación',
+  'OrderMyPhones is a closed B2B marketplace — every account is created by the OrderMyPhones team.':
+    'OrderMyPhones es un marketplace B2B cerrado — cada cuenta la crea el equipo de OrderMyPhones.',
+  'There is no open sign-up. If you sell phones at volume, tell us about your business and we’ll set up your account and tier pricing.':
+    'No hay registro abierto. Si vendes celulares por volumen, cuéntanos sobre tu negocio y configuramos tu cuenta y el precio de tu nivel.',
+  'Request an invite': 'Solicitar una invitación',
   'Check your inbox': 'Revisa tu bandeja de entrada',
   'Reset password': 'Restablecer contraseña',
   'We’ll email you a secure link to set a new password.':

@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { Mail } from 'lucide-react';
 import { useAuth } from '@/store';
 import { AuthLayout, AuthField, PasswordField } from '@/components/auth/AuthLayout';
 import { Button } from '@/components/ui/Button';
@@ -12,7 +11,7 @@ export default function SignInPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? '/admin';
-  const [email, setEmail] = useState('ops@downtownmobile.co');
+  const [email, setEmail] = useState('');
 
   if (signedIn) return <Navigate to="/admin" replace />;
 
@@ -45,7 +44,7 @@ export default function SignInPage() {
           onChange={(e) => setEmail(e.target.value)}
         />
         <div>
-          <PasswordField label="Password" required autoComplete="current-password" placeholder="••••••••" hint="Demo — any password works." />
+          <PasswordField label="Password" required autoComplete="current-password" placeholder="••••••••" />
           <div className="mt-1.5 text-right">
             <Link to="/auth/reset" className="text-xs text-muted-foreground hover:text-foreground">
               {t('Forgot password?')}
@@ -57,23 +56,6 @@ export default function SignInPage() {
           {t('Sign in')}
         </Button>
       </form>
-
-      <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
-        <span className="h-px flex-1 bg-border" />
-        {t('or')}
-        <span className="h-px flex-1 bg-border" />
-      </div>
-
-      <Button
-        type="button"
-        variant="outline"
-        size="lg"
-        className="w-full"
-        onClick={() => navigate(`/auth/callback?email=${encodeURIComponent(email)}&from=${encodeURIComponent(from)}`)}
-      >
-        <Mail className="h-4 w-4" strokeWidth={2} />
-        {t('Email me a magic link')}
-      </Button>
     </AuthLayout>
   );
 }
