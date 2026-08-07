@@ -6,19 +6,13 @@ import * as Sentry from '@sentry/react';
 import App from './App';
 import { queryClient } from './lib/queryClient';
 import { initAnalytics } from './lib/analytics';
+import { initSentry } from './lib/sentry';
 import './styles/globals.css';
 
-const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
-if (sentryDsn) {
-  Sentry.init({
-    dsn: sentryDsn,
-    environment: import.meta.env.MODE,
-    tracesSampleRate: 0.1,
-    replaysSessionSampleRate: 0,
-    replaysOnErrorSampleRate: 1.0,
-  });
-}
-
+// Both no-op unless their env keys are set — the deployed app is unaffected
+// until Denis adds VITE_SENTRY_DSN / VITE_POSTHOG_KEY (deferred config, see
+// docs/planning/AUTONOMOUS-DECISIONS.md).
+initSentry();
 initAnalytics();
 
 const rootEl = document.getElementById('root');
