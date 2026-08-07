@@ -39,7 +39,7 @@ and every migration after it uses the CLI-compatible
   plan's threat model explicitly accepts the audit gap until then.
 - **`seed.sql`** — targets the dead `0001`–`0005` schema (inserts into
   `public.tiers`, references suppliers by the old shape) **and** carries the
-  literal supplier names `Assurant` and `Mannapov LLC` in what is a public
+  literal supplier names `Source A` and `Source B` in what is a public
   repository. Relocating it here satisfies both the D14 disposition (dead
   schema) and the D16 confidentiality cleanup (no supplier literals in live,
   tool-reachable SQL). It is reference-only; do not resurrect the literal

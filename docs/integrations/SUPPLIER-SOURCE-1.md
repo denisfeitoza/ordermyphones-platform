@@ -1,8 +1,8 @@
-# Supplier Source #1 — Assurant
+# Supplier Source #1 — Source A
 
 > **Role in the contract:** U.S.-based dropship / lifecycle services partner, one of the two API integrations contemplated by Agreement §1.4 and Schedule A.2.
 >
-> **Real supplier:** **[Assurant](https://www.assurant.com/)** — U.S. enterprise specializing in device protection, trade-in, certified pre-owned and lifecycle services. The exact API surface (sandbox + production) is confirmed during the Phase 1 supplier audit.
+> **Real supplier:** **[Source A](https://www.source-a-supplier.com/)** — U.S. enterprise specializing in device protection, trade-in, certified pre-owned and lifecycle services. The exact API surface (sandbox + production) is confirmed during the Phase 1 supplier audit.
 >
 > **System code:** `source-1` — kept as a contract-level abstraction in [`supabase/migrations/0001_initial_schema.sql`](../../supabase/migrations/0001_initial_schema.sql) so swapping the underlying supplier never requires a schema change. The human-readable name lives in `suppliers.display_name`.
 

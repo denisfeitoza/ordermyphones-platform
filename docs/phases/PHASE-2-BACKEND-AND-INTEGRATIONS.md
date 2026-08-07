@@ -181,7 +181,7 @@ Workstreams W1, W2, W3 start in parallel on Day 1 of Phase 2. W4 begins as soon 
 | Feed emits a full-catalog storm on every cron tick | High | High | `content_hash` no-op suppression is a Phase 2 exit criterion, not an optimization; per-SKU emit-rate limit as a second line. |
 | Partner oversells on stale data after an outage | Medium | High | Availability published net of reservations; mandatory daily full-pull reconciliation written into the partner contract; `degraded` subscriptions raise an admin alert. |
 | Supplier name or cost leaks into a partner payload | Medium | High | Allow-list serializer + two contract tests (key equality, supplier-name absence). Reviewed again in the Phase 4 security pass. |
-| Supplier agreements do not permit white-label resale | Medium | **Critical** | **Legal, not technical.** Confirm resale / no-attribution / data-redistribution terms with Assurant and Mannapov LLC before exposing the feed to a real partner. Raised at the Phase 2 kickoff. |
+| Supplier agreements do not permit white-label resale | Medium | **Critical** | **Legal, not technical.** Confirm resale / no-attribution / data-redistribution terms with Source A and Source B before exposing the feed to a real partner. Raised at the Phase 2 kickoff. |
 | AI agent issues unsafe action (e.g. price = 0) | Low | Critical | Server-side validation on every tool call; agents propose, server validates against business invariants. See [`docs/ai/EVAL-AND-GUARDRAILS.md`](../ai/EVAL-AND-GUARDRAILS.md). |
 
 ---

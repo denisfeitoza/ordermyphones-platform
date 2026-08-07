@@ -1,15 +1,15 @@
-# Supplier Source #2 — Mannapov LLC (with reserved Dubai wholesale slot)
+# Supplier Source #2 — Source B (with reserved Dubai wholesale slot)
 
 > **Role in the contract:** Second of the two API integrations contemplated by Agreement §1.4 and Schedule A.2.
-> **Real supplier — primary feed:** **[Mannapov LLC](https://buy.mannapovllc.com/)** — U.S.-based wholesale / dropship B2B portal.
+> **Real supplier — primary feed:** **[Source B](https://buy.source-b-supplier.com/)** — U.S.-based wholesale / dropship B2B portal.
 > **Reserved second feed:** the Dubai wholesale supplier contemplated by Schedule A.2. **Name pending** — confirmed and wired during the Phase 1 supplier audit. Until then, the routing layer treats the Dubai slot as inactive and never routes orders to it.
-> **System code:** `source-2` — kept as a contract-level abstraction (see [`supabase/migrations/0001_initial_schema.sql`](../../supabase/migrations/0001_initial_schema.sql)). The two underlying feeds live as `source-2-us` (Mannapov) and `source-2-dxb` (reserved).
+> **System code:** `source-2` — kept as a contract-level abstraction (see [`supabase/migrations/0001_initial_schema.sql`](../../supabase/migrations/0001_initial_schema.sql)). The two underlying feeds live as `source-2-us` (Source B) and `source-2-dxb` (reserved).
 
 ## 1. What this integration covers
 
-- Real-time **catalog and inventory** from Mannapov LLC today, with a hot-pluggable second feed for the Dubai wholesale supplier when Phase 1 names it.
+- Real-time **catalog and inventory** from Source B today, with a hot-pluggable second feed for the Dubai wholesale supplier when Phase 1 names it.
 - A **routing layer** that decides, per cart, which feed is fulfilling which line (today: only `source-2-us`; tomorrow: also `source-2-dxb`).
-- A **fulfillment dispatcher** that adapts to each underlying feed's protocol (REST for Mannapov; REST · CSV · manual upload for the Dubai slot, depending on what the partner offers).
+- A **fulfillment dispatcher** that adapts to each underlying feed's protocol (REST for Source B; REST · CSV · manual upload for the Dubai slot, depending on what the partner offers).
 - **Order status updates** from each feed.
 
 ## 2. Why one adapter for two feeds

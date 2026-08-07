@@ -2,7 +2,7 @@
 
 > The canonical shape of an OMP product: which attributes identify it, which are mandatory, which are optional, and how stock is **imported** from suppliers and **exported** out of the Platform.
 >
-> Derived from a real Assurant/HYLA *Daily Stock Report* (2,675 live SKUs across 3 warehouses) and reconciled against the existing [`DATA-MODEL.md`](DATA-MODEL.md). Every rule below was validated against that file — see §9.
+> Derived from a real Source A/HYLA *Daily Stock Report* (2,675 live SKUs across 3 warehouses) and reconciled against the existing [`DATA-MODEL.md`](DATA-MODEL.md). Every rule below was validated against that file — see §9.
 
 ---
 
@@ -76,7 +76,7 @@ The supplier ships these columns empty on every row. We **keep them in the stand
 
 ## 3. Grade → CTIA grade (the canonical condition axis)
 
-The feed uses two vendor grading scales for **pre-owned / trade-in** stock (HYLA/Assurant is reverse-logistics — no factory-new inventory here):
+The feed uses two vendor grading scales for **pre-owned / trade-in** stock (HYLA/Source A is reverse-logistics — no factory-new inventory here):
 
 - **DLS** — `DLS AA+`, `DLS A+`, `DLS A`, `DLS B+`, `DLS B`, `DLS C`
 - **TPS** — `TPS A+`, `TPS A`, `TPS B+`, `TPS B-`, `TPS C+`, `TPS C-`, `TPS D`
@@ -157,7 +157,7 @@ Example: `Apple / iPhone 11 / A2111 / 256GB / … / Black / ATT / UNLOCKED / DLS
 
 | Shape | Use | How |
 |---|---|---|
-| **Supplier feed** (`.xls` / `.xlsx` / `.csv` with the supplier's own columns) | Automated daily sync | A per-supplier **column-mapping profile** maps source headers → OMP fields. The Assurant/HYLA profile is the one derived here. |
+| **Supplier feed** (`.xls` / `.xlsx` / `.csv` with the supplier's own columns) | Automated daily sync | A per-supplier **column-mapping profile** maps source headers → OMP fields. The Source A/HYLA profile is the one derived here. |
 | **OMP canonical CSV** (our columns, §8) | Manual catalog maintenance, bulk edits, re-import of an export | Direct 1:1, no mapping profile needed |
 
 Both land in the same normalize → validate → upsert pipeline. A new supplier is a new mapping profile, not new pipeline code.
@@ -239,6 +239,6 @@ Run against the real `DailyStockReport_260720090810.xls` (2,675 data rows):
 
 - [`DATA-MODEL.md`](DATA-MODEL.md) — historical field-level reference (schema is being redesigned per DECISIONS-LOCKED.md; inventory is ledger-based, not snapshots).
 - [`PARTNER-INVENTORY-API.md`](PARTNER-INVENTORY-API.md) — how imported stock is projected, masked, and marked up for partners.
-- [`../integrations/SUPPLIER-SOURCE-1.md`](../integrations/SUPPLIER-SOURCE-1.md) — the Assurant/HYLA adapter that pulls this feed.
+- [`../integrations/SUPPLIER-SOURCE-1.md`](../integrations/SUPPLIER-SOURCE-1.md) — the Source A/HYLA adapter that pulls this feed.
 - [`PRICING-ENGINE.md`](PRICING-ENGINE.md) — consumes `condition` and cost to produce customer prices.
 - [`../integrations/product-import-template.csv`](../integrations/product-import-template.csv) — blank canonical import/export template.

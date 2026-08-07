@@ -46,7 +46,7 @@
 - **Role model from migration 1:** `admin / staff / customer` + `is_test`,
   RLS on every table, role-based sign-in routing. The `/enter/:where` mockup
   backdoor and checkout auto-login must NOT survive into v1.
-- **Supplier confidentiality:** real supplier names (Assurant, Mannapov LLC)
+- **Supplier confidentiality:** real supplier names (Source A, Source B)
   are server-side only (admin-gated via RLS); customer-facing surfaces and
   the client bundle use anonymized labels (Source A/B, location names).
 - **Admin lenses:** tier preview (shipped in mockup) is re-implemented

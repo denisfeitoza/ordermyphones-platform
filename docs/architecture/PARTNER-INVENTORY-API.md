@@ -8,9 +8,9 @@
 
 ## 1. Business model (why this exists)
 
-Order My Phones aggregates several upstream feeds (Assurant, Mannapov LLC, the reserved DXB slot). Partners do not buy from those suppliers — they buy from **us**. Therefore:
+Order My Phones aggregates several upstream feeds (Source A, Source B, the reserved DXB slot). Partners do not buy from those suppliers — they buy from **us**. Therefore:
 
-1. Upstream suppliers are **never named** in anything a partner can observe. Each supplier is projected as one **OMP inventory location** (e.g. Mannapov LLC → `us-tx` / *"Texas Inventory"*, Assurant → its own location, the reserved DXB feed → its own).
+1. Upstream suppliers are **never named** in anything a partner can observe. Each supplier is projected as one **OMP inventory location** (e.g. Source B → `us-tx` / *"Texas Inventory"*, Source A → its own location, the reserved DXB feed → its own).
 2. **A SKU can live in several locations at once**, with a different quantity in each — 200 units total might be 140 in one inventory and 60 in another. The partner sees our warehouse network, not our supplier list.
 3. Partners never see `unit_cost_cents`. They see **our sell price**, which is upstream cost plus **our margin**.
 4. The feed is a **projection**, not a mirror. What a partner receives is computed by us, per partner, from data they have no other route to.
@@ -217,7 +217,7 @@ A partner-visible payload **must never** contain:
 
 Enforcement is a **serializer allow-list**, not a redaction pass: the outbound DTO is constructed field-by-field from an explicit list. A new column on `inventory_snapshots` can therefore never leak by default. A contract test asserts the emitted JSON keys equal the allow-list exactly, and a second test asserts no supplier `display_name` string appears anywhere in a generated payload.
 
-> ⚠️ **Open item for the Client — legal, not technical.** Reselling upstream inventory under our own brand, with supplier identity masked, has to be permitted by the agreements with Assurant and Mannapov LLC (resale rights, white-label / no-attribution clauses, price-display restrictions, data-redistribution terms). The Platform enforces the masking; it cannot make it lawful. This needs confirming against each supplier contract before the feed is exposed to a real partner. See [`../contract/SOFTWARE_DEVELOPMENT_AGREEMENT.md`](../contract/SOFTWARE_DEVELOPMENT_AGREEMENT.md) §1.4 / Schedule A.2.
+> ⚠️ **Open item for the Client — legal, not technical.** Reselling upstream inventory under our own brand, with supplier identity masked, has to be permitted by the agreements with Source A and Source B (resale rights, white-label / no-attribution clauses, price-display restrictions, data-redistribution terms). The Platform enforces the masking; it cannot make it lawful. This needs confirming against each supplier contract before the feed is exposed to a real partner. See [`../contract/SOFTWARE_DEVELOPMENT_AGREEMENT.md`](../contract/SOFTWARE_DEVELOPMENT_AGREEMENT.md) §1.4 / Schedule A.2.
 
 ---
 
