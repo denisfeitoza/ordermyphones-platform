@@ -106,3 +106,8 @@ I'm building Phase 4 as option 1 (flag-guarded) so nothing you share regresses; 
 
 ### Progress: Phases 1-5 DONE + verified live. Building Phase 6 (ordering/approval/reconciliation) next, then 7 (admin config panel + lenses), 8 (launch/observability/QA).
 ### NOTE: real ordering (Phase 6) and real catalog display (Phase 4 'real' mode) both light up fully once the real HYLA import runs (blocked on ~/Downloads TCC access). RPCs are built + DB-verified with synthetic data meanwhile.
+
+## PHASE 6 COMPLETE + VERIFIED (2026-08-07)
+- Ordering/approval/reconciliation: place_order/approve_order/reject_order/resolve_reconciliation RPCs (server-side price capture from caller's tier, order holds no stock, deduct-on-approval via ledger, partial + reconciliation). Dropped unsafe scaffold insert policies (customer could POST arbitrary prices) — place_order is the only sanctioned write path. Real cart/checkout/portal/admin-approval/reconciliation UI behind the catalog_source flag (mock unchanged). 67 tests.
+- VERIFIED live (rolled back): import 5 → wholesale customer orders 8 → approve → price captured $160 (T3, server-side), inventory 5→0 (ledger −5), status partially_approved, qty_approved 5/8, reconciliation shortfall 3. Full business loop correct.
+### Progress: Phases 1-6 DONE + verified live. Building Phase 7 (admin config panel + lenses) next, then Phase 8 (observability/QA/launch).
