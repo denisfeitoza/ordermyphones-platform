@@ -397,6 +397,7 @@ export const PT: Record<string, string> = {
   'ea': 'un',
   'Summary': 'Resumo',
   'Ship to': 'Enviar para',
+  'Ordered total': 'Total do pedido',
 };
 
 export const ES: Record<string, string> = {
@@ -794,4 +795,5 @@ export const ES: Record<string, string> = {
   'ea': 'c/u',
   'Summary': 'Resumen',
   'Ship to': 'Enviar a',
+  'Ordered total': 'Total del pedido',
 };
