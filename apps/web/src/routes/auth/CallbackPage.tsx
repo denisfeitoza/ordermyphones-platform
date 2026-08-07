@@ -1,24 +1,24 @@
 import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
-import { useAuth } from '@/store';
 import { Logo } from '@/components/store/Logo';
 
-/** Simulates a magic-link / OAuth callback: verify, sign in, then land in the portal. */
+/**
+ * STUB — Plan 01-10 rebuilds this page as the real Supabase PKCE /
+ * PASSWORD_RECOVERY callback handler. For now it creates no session and
+ * ignores query params (an untrusted `?from=` redirect target was a stub-era
+ * open-redirect shape and must not come back): it just returns the visitor to
+ * sign-in.
+ */
 export default function CallbackPage() {
-  const { signIn } = useAuth();
   const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const email = params.get('email') ?? '';
-  const to = params.get('from') || '/admin';
 
   useEffect(() => {
     const t = setTimeout(() => {
-      signIn(email);
-      navigate(to, { replace: true });
-    }, 1600);
+      navigate('/auth/sign-in', { replace: true });
+    }, 1200);
     return () => clearTimeout(t);
-  }, [email, to, signIn, navigate]);
+  }, [navigate]);
 
   return (
     <div className="grid min-h-dvh place-items-center px-5">
@@ -26,8 +26,7 @@ export default function CallbackPage() {
         <Logo />
         <Loader2 className="h-6 w-6 animate-spin text-brand" />
         <div>
-          <p className="font-medium">Verifying your magic link…</p>
-          <p className="mt-1 text-sm text-muted-foreground">{email ? `Signing in ${email}` : 'Signing you in'}</p>
+          <p className="font-medium">Returning you to sign-in…</p>
         </div>
       </div>
     </div>

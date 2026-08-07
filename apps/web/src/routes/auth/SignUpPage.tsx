@@ -1,58 +1,40 @@
-import { useState, type FormEvent } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/store';
-import { AuthLayout, AuthField, PasswordField } from '@/components/auth/AuthLayout';
-import { Button } from '@/components/ui/Button';
+import { Link } from 'react-router-dom';
+import { MailPlus } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { AuthLayout } from '@/components/auth/AuthLayout';
+import { buttonVariants } from '@/components/ui/Button';
 import { useI18n } from '@/i18n';
 
 export default function SignUpPage() {
   const { t } = useI18n();
-  const { signedIn, signIn } = useAuth();
-  const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-
-  if (signedIn) return <Navigate to="/admin" replace />;
-
-  function submit(e: FormEvent) {
-    e.preventDefault();
-    signIn(email);
-    navigate('/admin', { replace: true });
-  }
 
   return (
     <AuthLayout
-      title="Create your business account"
-      subtitle="Tier pricing is applied to your account automatically."
+      title="Accounts are invite-only"
+      subtitle="OrderMyPhones is a closed B2B marketplace — every account is created by the OrderMyPhones team."
       footer={
         <>
-          Already have an account?{' '}
+          {t('Already have an account?')}{' '}
           <Link to="/auth/sign-in" className="font-medium text-brand hover:underline">
             {t('Sign in')}
           </Link>
         </>
       }
     >
-      <form onSubmit={submit} className="space-y-4">
-        <AuthField label="Business name" required autoComplete="organization" placeholder="Downtown Mobile LLC" />
-        <AuthField
-          label="Work email"
-          type="email"
-          required
-          autoComplete="email"
-          placeholder="you@store.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <AuthField label="Reseller permit" hint="Optional — unlocks tax-exempt orders once verified." placeholder="TX-RST-…" />
-        <PasswordField label="Password" required autoComplete="new-password" placeholder="At least 8 characters" />
-
-        <Button type="submit" size="lg" className="w-full">
-          {t('Create account')}
-        </Button>
-        <p className="text-center text-xs text-muted-foreground">
-          {t('Mockup — no account is actually created or stored.')}
+      <div className="space-y-4 rounded-2xl border border-border bg-muted/30 p-5 text-sm text-muted-foreground">
+        <p>
+          {t(
+            'There is no open sign-up. If you sell phones at volume, tell us about your business and we’ll set up your account and tier pricing.',
+          )}
         </p>
-      </form>
+        <Link
+          to="/contact"
+          className={cn(buttonVariants({ size: 'md' }), 'w-full')}
+        >
+          <MailPlus className="h-4 w-4" strokeWidth={2} />
+          {t('Request an invite')}
+        </Link>
+      </div>
     </AuthLayout>
   );
 }
