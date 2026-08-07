@@ -11,8 +11,21 @@ import { TierBadge } from '@/components/store/TierBadge';
 import { ReserveFlow } from '@/components/store/ReserveFlow';
 import { formatUsd } from '@/lib/format';
 import { useI18n } from '@/i18n';
+import { useCatalogSource } from '@/lib/catalogSource';
+import { RealCheckout } from './RealCheckout';
 
 type Phase = 'review' | 'reserving' | 'done';
+
+/** Source-aware checkout. In 'real' mode the {variant_id, qty} cart is placed
+ * via the place_order RPC (RealCheckout). In 'mock' mode this is byte-for-byte
+ * the original reserve-at-source demo flow below — no regression. The branch
+ * sits ABOVE MockCheckoutPage's empty-cart guard, which reads the mock cart
+ * (empty in real mode). */
+export default function CheckoutPage() {
+  const source = useCatalogSource();
+  if (source === 'real') return <RealCheckout />;
+  return <MockCheckoutPage />;
+}
 
 function genOrderId() {
   return 'OMP-' + Math.random().toString(16).slice(2, 8).toUpperCase();
@@ -31,7 +44,7 @@ function Field({ label, ...props }: { label: string } & React.InputHTMLAttribute
   );
 }
 
-export default function CheckoutPage() {
+function MockCheckoutPage() {
   const { t } = useI18n();
   const { lines, unitCount, effectiveTier, subtotalCents, retailSubtotalCents, savingsCents, clear } = useCart();
   const { placeOrder } = useAccount();

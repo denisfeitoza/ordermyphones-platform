@@ -6,8 +6,18 @@ import { PageHeading } from '@/components/portal/parts';
 import { buttonVariants } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n';
+import { useCatalogSource } from '@/lib/catalogSource';
+import { RealOrdersList } from './RealOrders';
 
+/** Source-aware portal orders. Real mode reads the customer's Supabase orders;
+ * mock mode is the unchanged localStorage demo below. */
 export default function OrdersPage() {
+  const source = useCatalogSource();
+  if (source === 'real') return <RealOrdersList />;
+  return <MockOrdersPage />;
+}
+
+function MockOrdersPage() {
   const { orders } = useAccount();
   const { t } = useI18n();
 
