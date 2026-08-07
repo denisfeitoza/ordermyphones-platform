@@ -172,6 +172,11 @@ export function RealOrderDetail() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {order.isTest && (
+            <span className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-100 px-2 py-1 text-[0.65rem] font-bold uppercase tracking-wide text-amber-900 dark:bg-amber-500/15 dark:text-amber-300">
+              TEST
+            </span>
+          )}
           <StatusPill status={order.status} />
           <Button variant="outline" size="sm" onClick={() => void exportDocPdf(realOrderToDoc(order))}>
             <FileDown className="h-4 w-4" strokeWidth={2} aria-hidden />
