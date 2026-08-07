@@ -8,6 +8,8 @@ import { CatalogFilters, PRICE_BANDS } from '@/components/store/CatalogFilters';
 import { ProductGrid } from '@/components/store/ProductGrid';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/i18n';
+import { useCatalogSource } from '@/lib/catalogSource';
+import { RealCatalogView } from '@/components/store/RealCatalogView';
 
 const SORTS = [
   { id: 'featured', label: 'Featured' },
@@ -17,6 +19,16 @@ const SORTS = [
 ];
 
 export default function CatalogPage() {
+  const source = useCatalogSource();
+  if (source === 'real') return <RealCatalogView />;
+  return <MockCatalogPage />;
+}
+
+/** Unchanged mock catalog page — kept as its own component so the 'real'
+ * branch above never mounts a single line of this tree (no wasted renders,
+ * no accidental shared state) and this body is byte-for-byte what shipped
+ * before Phase 4. */
+function MockCatalogPage() {
   const { t } = useI18n();
   const [params, setParams] = useSearchParams();
   const { tier } = useTier();

@@ -294,6 +294,21 @@ export const PT: Record<string, string> = {
   'Processing': 'Em processamento',
   'Shipped': 'Enviado',
   'Delivered': 'Entregue',
+  // Phase 4 — real catalog + canonical export
+  'Could not load the live catalog. Please try again shortly.': 'Não foi possível carregar o catálogo ao vivo. Tente novamente em instantes.',
+  'Loading catalog…': 'Carregando catálogo…',
+  'Loading…': 'Carregando…',
+  'No phones in the live catalog yet': 'Ainda não há aparelhos no catálogo ao vivo',
+  'Stock is imported and priced from the admin console — check back soon.': 'O estoque é importado e precificado pelo console admin — volte em breve.',
+  'No phones match this search': 'Nenhum aparelho corresponde a esta busca',
+  'Try a different model, color or SKU.': 'Tente outro modelo, cor ou SKU.',
+  'View details': 'Ver detalhes',
+  'Sign in to see your price': 'Entre para ver seu preço',
+  'Not priced for your tier': 'Sem preço para o seu tier',
+  'SKU': 'SKU',
+  'Carrier': 'Operadora',
+  'Live stock confirmed, per location': 'Estoque confirmado ao vivo, por local',
+  'More': 'Mais',
 };
 
 export const ES: Record<string, string> = {
@@ -588,4 +603,19 @@ export const ES: Record<string, string> = {
   'Processing': 'En proceso',
   'Shipped': 'Enviado',
   'Delivered': 'Entregado',
+  // Phase 4 — real catalog + canonical export
+  'Could not load the live catalog. Please try again shortly.': 'No se pudo cargar el catálogo en vivo. Inténtalo de nuevo en unos instantes.',
+  'Loading catalog…': 'Cargando catálogo…',
+  'Loading…': 'Cargando…',
+  'No phones in the live catalog yet': 'Aún no hay teléfonos en el catálogo en vivo',
+  'Stock is imported and priced from the admin console — check back soon.': 'El stock se importa y se cotiza desde la consola admin — vuelve pronto.',
+  'No phones match this search': 'Ningún teléfono coincide con esta búsqueda',
+  'Try a different model, color or SKU.': 'Prueba otro modelo, color o SKU.',
+  'View details': 'Ver detalles',
+  'Sign in to see your price': 'Inicia sesión para ver tu precio',
+  'Not priced for your tier': 'Sin precio para tu tier',
+  'SKU': 'SKU',
+  'Carrier': 'Operador',
+  'Live stock confirmed, per location': 'Stock confirmado en vivo, por ubicación',
+  'More': 'Más',
 };
