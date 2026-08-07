@@ -45,13 +45,31 @@ describe('mapColumns — layer 1 (synonym dictionary)', () => {
 
 describe('mapColumns — layer 2 (fuzzy match)', () => {
   it('resolves a near-miss header the exact dictionary does not have', async () => {
-    const headers = ['Make', 'QTY Avail.'];
-    const rows = [{ Make: 'Acme', 'QTY Avail.': '10' }];
+    // "Colour" (British spelling) has no exact synonym and its values ("Red")
+    // have no content shape, so only the fuzzy layer can resolve it → color.
+    const headers = ['Colour'];
+    const rows = [{ Colour: 'Red' }, { Colour: 'Blue' }];
 
     const result = await mapColumns(headers, rows, SYNONYMS);
-    const qtyMapping = result.mappings.find((m) => m.column === 'QTY Avail.');
-    expect(qtyMapping?.field).toBe('quantity');
-    expect(qtyMapping?.layer).toBe('fuzzy');
+    const mapping = result.mappings.find((m) => m.column === 'Colour');
+    expect(mapping?.field).toBe('color');
+    expect(mapping?.layer).toBe('fuzzy');
+  });
+
+  it('never lets a weak fuzzy guess steal a field the real column needs', async () => {
+    // "Device" fuzzy-scores ~0.5 against several fields but its values are
+    // model names (no content shape); "Unit Price" carries the real cost data.
+    // Global assignment must give `cost` to Unit Price, not to Device.
+    const headers = ['Device', 'Unit Price'];
+    const rows = [
+      { Device: 'iPhone 13', 'Unit Price': '$210.00' },
+      { Device: 'Galaxy S23', 'Unit Price': '$305.00' },
+    ];
+    const result = await mapColumns(headers, rows, SYNONYMS);
+    const cost = result.mappings.find((m) => m.field === 'cost');
+    expect(cost?.column).toBe('Unit Price');
+    // Device had no valid proposal → surfaced for manual pick, never mis-mapped.
+    expect(result.unmapped).toContain('Device');
   });
 });
 
