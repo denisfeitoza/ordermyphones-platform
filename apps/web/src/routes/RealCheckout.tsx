@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Check, PackageCheck, ShoppingBag } from 'lucide-react';
 import { useAuth, useRealCart } from '@/store';
 import { supabase } from '@/lib/supabase';
+import { expandCartToOrderItems } from '@/lib/orderItems';
 import { useRealCatalog, buildDisplayName, type PricedRealListing } from '@/data/realCatalog';
 import { Button } from '@/components/ui/Button';
 import { formatUsd } from '@/lib/format';
@@ -125,7 +126,7 @@ export function RealCheckout() {
     // Persist address + phone to the profile for next time (best-effort, non-blocking).
     if (user) void supabase.from('profiles').update({ shipping_address, phone: form.phone.trim() }).eq('id', user.id);
 
-    const p_items = lines.map((l) => ({ variant_id: l.variantId, qty: l.qty }));
+    const p_items = expandCartToOrderItems(lines);
     const { data, error: rpcError } = await supabase.rpc('place_order', {
       p_items,
       p_shipping_address: shipping_address,

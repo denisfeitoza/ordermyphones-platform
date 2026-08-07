@@ -6,6 +6,7 @@ import { useAuth } from '@/store/auth';
 export type CtiaGrade = 'NEW' | 'CPO' | 'A' | 'B' | 'C' | 'D';
 
 export interface RealLocationStock {
+  id: string;
   name: string;
   qty: number;
 }

@@ -15,17 +15,17 @@ function listing(over: Partial<PricedRealListing>): PricedRealListing {
     ctiaGrade: 'A',
     ctiaLabel: 'Grade A',
     totalQty: 5,
-    locations: [{ name: 'TX1', qty: 5 }],
+    locations: [{ id: 'tx', name: 'TX1', qty: 5 }],
     priceCents: 30000,
     ...over,
   };
 }
 
 const SET = [
-  listing({ sku: 'A', make: 'Apple', ctiaLabel: 'Grade A', capacity: '128GB', priceCents: 30000, locations: [{ name: 'TX1', qty: 3 }] }),
-  listing({ sku: 'B', make: 'Apple', ctiaLabel: 'Grade B', capacity: '256GB', priceCents: 60000, locations: [{ name: 'TX1', qty: 2 }, { name: 'TN1', qty: 1 }] }),
-  listing({ sku: 'C', make: 'Samsung', ctiaLabel: 'Grade A', capacity: '128GB', priceCents: 15000, locations: [{ name: 'TN1', qty: 4 }] }),
-  listing({ sku: 'D', make: 'Samsung', ctiaLabel: 'New', capacity: '512GB', priceCents: null, locations: [{ name: 'TX1', qty: 9 }] }),
+  listing({ sku: 'A', make: 'Apple', ctiaLabel: 'Grade A', capacity: '128GB', priceCents: 30000, locations: [{ id: 'tx', name: 'TX1', qty: 3 }] }),
+  listing({ sku: 'B', make: 'Apple', ctiaLabel: 'Grade B', capacity: '256GB', priceCents: 60000, locations: [{ id: 'tx', name: 'TX1', qty: 2 }, { id: 'tn', name: 'TN1', qty: 1 }] }),
+  listing({ sku: 'C', make: 'Samsung', ctiaLabel: 'Grade A', capacity: '128GB', priceCents: 15000, locations: [{ id: 'tn', name: 'TN1', qty: 4 }] }),
+  listing({ sku: 'D', make: 'Samsung', ctiaLabel: 'New', capacity: '512GB', priceCents: null, locations: [{ id: 'tx', name: 'TX1', qty: 9 }] }),
 ];
 
 describe('computeFacetedCatalog', () => {
