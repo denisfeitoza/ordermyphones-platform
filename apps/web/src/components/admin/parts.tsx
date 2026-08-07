@@ -17,6 +17,20 @@ export function AdminHeading({ title, subtitle, action }: { title: string; subti
   );
 }
 
+export function Panel({ title, action, children, className }: { title?: string; action?: ReactNode; children: ReactNode; className?: string }) {
+  return (
+    <section className={cn('rounded-2xl border border-border bg-card', className)}>
+      {(title || action) && (
+        <header className="flex items-center justify-between gap-3 border-b border-border px-5 py-3.5">
+          {title && <h2 className="text-sm font-medium">{title}</h2>}
+          {action}
+        </header>
+      )}
+      <div className="p-5">{children}</div>
+    </section>
+  );
+}
+
 export function StatCard({
   label,
   value,
