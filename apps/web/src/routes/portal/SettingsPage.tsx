@@ -57,7 +57,7 @@ export default function SettingsPage() {
   const [profile] = useState<Profile>(() =>
     load(PROFILE_KEY, {
       businessName,
-      email: 'ops@downtownmobile.co',
+      email: 'billing@downtownmobile.co',
       permit: 'TX-RST-4471902',
       phone: '+1 (469) 214-8830',
     }),
