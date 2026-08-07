@@ -3,6 +3,8 @@ import type { Session } from '@supabase/supabase-js';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import type { AppRole } from '@/lib/roleRoutes';
+import { identifyUser, resetAnalytics } from '@/lib/analytics';
+import { setSentryUser } from '@/lib/sentry';
 
 /**
  * Real Supabase Auth session + a TanStack-Query-backed `profiles` fetch for
@@ -90,6 +92,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // remove, not invalidate — a subsequent different user must never briefly
     // render the previous user's cached profile (T-01-47).
     queryClient.removeQueries({ queryKey: ['profile'] });
+    // Observability cleanup on sign-out (OBSERVABILITY.md §5.7): drop the
+    // PostHog identity and the Sentry user so a later session isn't attributed
+    // to the previous account. No-op when analytics/Sentry are unconfigured.
+    resetAnalytics();
+    setSentryUser(null);
   }, [queryClient]);
 
   const user: AuthUser | null = session ? { id: session.user.id, email: session.user.email ?? '' } : null;
@@ -99,6 +106,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // bounces to sign-in rather than trusting an unknown role (T-01-48).
   const profile = profileQuery.isError ? null : (profileQuery.data ?? null);
   const role = profile?.role ?? null;
+
+  // Identify to PostHog + Sentry by the profile UUID ONLY (never email) once
+  // the profile resolves — per docs/security/DATA-CLASSIFICATION.md §4. Both
+  // calls no-op when their SDK is unconfigured. Sign-out clears them (signOut).
+  useEffect(() => {
+    if (!profile?.id) return;
+    identifyUser(profile.id, { role: profile.role, tier: profile.tier, is_test: profile.is_test });
+    setSentryUser(profile.id);
+  }, [profile?.id, profile?.role, profile?.tier, profile?.is_test]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
