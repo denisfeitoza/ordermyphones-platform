@@ -1,5 +1,5 @@
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { ArrowUpRight, BarChart3, Bot, Boxes, Flag, LayoutDashboard, LogOut, PackageSearch, Receipt, ScrollText, Settings, Tag, UploadCloud, Users } from 'lucide-react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { BarChart3, Bot, Boxes, Flag, LayoutDashboard, LogOut, PackageSearch, Receipt, ScrollText, Settings, Tag, UploadCloud, Users } from 'lucide-react';
 import { useAuth, useTier } from '@/store';
 import { TIERS } from '@/data/tiers';
 import { Logo } from '@/components/store/Logo';
@@ -58,13 +58,6 @@ export default function AdminLayout() {
                 <path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </label>
-            <Link
-              to="/portal"
-              className="inline-flex items-center gap-1 rounded-full border border-white/15 px-3 py-1.5 text-xs font-medium text-background/80 transition-colors hover:bg-white/10"
-            >
-              Customer portal
-              <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2} />
-            </Link>
             {user && <span className="hidden font-mono text-xs text-background/50 md:inline">{user.email}</span>}
             <button
               type="button"

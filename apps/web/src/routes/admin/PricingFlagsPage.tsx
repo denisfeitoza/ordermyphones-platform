@@ -273,6 +273,14 @@ export default function PricingFlagsPage() {
         }
       />
 
+      <div className="rounded-2xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm text-muted-foreground">
+        <b className="text-foreground">What is this?</b> Before a price goes live the system flags anything that looks
+        off — a cost that jumped a lot, a tier that would sell below your profit floor, or a SKU with no benchmark yet.
+        A flagged price is <b className="text-foreground">held back from customers</b> until you decide:
+        <b className="text-foreground"> Override</b> (publish it anyway), <b className="text-foreground">Acknowledge</b> (it’s fine),
+        or <b className="text-foreground">Watch</b> (keep an eye on it). This is the safety net that stops a bad price from ever reaching a buyer.
+      </div>
+
       {query.isError && (
         <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           Could not load flags: {query.error instanceof Error ? query.error.message : 'unknown error'}

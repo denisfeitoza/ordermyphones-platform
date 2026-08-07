@@ -20,6 +20,13 @@ export default function ReconciliationPage() {
     <div className="space-y-6">
       <AdminHeading title="Reconciliation" subtitle={`${list.length} open shortfall${list.length === 1 ? '' : 's'} awaiting stock`} />
 
+      <div className="rounded-2xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm text-muted-foreground">
+        <b className="text-foreground">What is this?</b> When you approve an order the system deducts live stock. If there
+        wasn’t enough on hand, the missing units land here as a <b className="text-foreground">shortfall</b>. When more stock
+        arrives, hit <b className="text-foreground">Fulfill</b> to complete those units; or <b className="text-foreground">Cancel</b> to
+        close the shortfall and leave the order partially filled. Nothing is charged — this only tracks what’s owed.
+      </div>
+
       {resolve.isError && (
         <p className="rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           {(resolve.error as Error)?.message ?? 'Action failed.'}

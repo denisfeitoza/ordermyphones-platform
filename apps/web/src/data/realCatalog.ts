@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { fetchAllPages } from '@/lib/supabasePaginate';
 import { useAuth } from '@/store/auth';
+import { useTier } from '@/store/tier';
 
 export type CtiaGrade = 'NEW' | 'CPO' | 'A' | 'B' | 'C' | 'D';
 
@@ -97,6 +98,20 @@ async function fetchMyPrices(): Promise<Map<string, number>> {
   return new Map(rows.map((r) => [r.variant_id, r.price_cents]));
 }
 
+/** Admin "view store as <tier>": prices for an ARBITRARY tier, read from the
+ * staff-readable prices table (admins have no own tier, so variant_price_for_me
+ * returns nothing for them). Gated to staff by RLS. `tier` is the DB tier name. */
+async function fetchTierPrices(tier: string): Promise<Map<string, number>> {
+  const rows = await fetchAllPages<RawPriceRow>(
+    (from, to) => supabase.from('prices').select('variant_id, price_cents').eq('tier', tier).eq('visible', true).range(from, to),
+    PAGE_SIZE,
+  );
+  return new Map(rows.map((r) => [r.variant_id, r.price_cents]));
+}
+
+/** PricingTierCode (tier_1..4) -> DB customer_tier name. */
+const CODE_TO_DB_TIER: Record<string, string> = { tier_1: 'consumer', tier_2: 'retailer', tier_3: 'wholesale', tier_4: 'distributor' };
+
 export interface UseRealCatalogResult {
   items: PricedRealListing[];
   isLoading: boolean;
@@ -114,12 +129,17 @@ export interface UseRealCatalogResult {
  * (the "zero visual/behavioral change while mock" contract extends to zero
  * network activity, not just zero rendered difference). */
 export function useRealCatalog(enabled = true): UseRealCatalogResult {
-  const { signedIn } = useAuth();
+  const { signedIn, role } = useAuth();
+  const { previewCode } = useTier();
+  // Admin/staff previewing a tier ("view store as…") price the catalog for that
+  // tier; everyone else sees their own server-resolved tier price.
+  const previewTier = (role === 'admin' || role === 'staff') && previewCode ? (CODE_TO_DB_TIER[previewCode] ?? null) : null;
+
   const listingQuery = useQuery({ queryKey: ['catalog-listing'], queryFn: fetchCatalogListing, enabled });
   const priceQuery = useQuery({
-    queryKey: ['my-prices'],
-    queryFn: fetchMyPrices,
-    enabled: enabled && signedIn,
+    queryKey: previewTier ? ['tier-prices', previewTier] : ['my-prices'],
+    queryFn: previewTier ? () => fetchTierPrices(previewTier) : fetchMyPrices,
+    enabled: enabled && (previewTier ? true : signedIn),
   });
 
   const prices = priceQuery.data;
@@ -133,7 +153,7 @@ export function useRealCatalog(enabled = true): UseRealCatalogResult {
     isLoading: listingQuery.isLoading,
     isError: listingQuery.isError,
     error: listingQuery.error,
-    pricesReady: !signedIn || priceQuery.isSuccess || priceQuery.isError,
+    pricesReady: (!signedIn && !previewTier) || priceQuery.isSuccess || priceQuery.isError,
     signedIn,
   };
 }
