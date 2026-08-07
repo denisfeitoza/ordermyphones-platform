@@ -82,6 +82,46 @@ end $$;
 rollback;
 
 ------------------------------------------------------------------
+-- SECTION 1a — self-provisioning self-promotion guard (no seeded users
+-- required; exercises the REAL trg_handle_new_user + guard trigger, not
+-- inspection). Section 1 above self-skips until 01-06 seeds real accounts;
+-- this section stays green from day one and is what 01-11's phase gate can
+-- actually rely on for "self-promotion is provably blocked by an automated
+-- assertion." Inserts a throwaway auth.users row inside this same rolled
+-- back transaction — nothing persists.
+------------------------------------------------------------------
+begin;
+do $$
+declare
+  a uuid := gen_random_uuid();
+  escalated boolean := false;
+  r public.user_role;
+begin
+  insert into auth.users (id, email) values (a, 'guardprobe@example.invalid');
+
+  -- Leg 3: signup trigger must hardcode role='customer', never trust
+  -- client-supplied metadata.
+  select role into r from public.profiles where id = a;
+  if r is distinct from 'customer' then
+    raise exception 'FAIL: handle_new_user did not default role to customer (got %)', r;
+  end if;
+
+  set local role authenticated;
+  perform set_config('request.jwt.claims', json_build_object('sub', a, 'role','authenticated')::text, true);
+
+  -- Legs 1+2: column grant + guard trigger must reject a self-promotion
+  -- attempt on the freshly-created row.
+  begin
+    update public.profiles set role = 'admin' where id = a;
+    escalated := true;
+  exception when others then
+    null;  -- expected: insufficient privilege (42501) from the column grant or the trigger
+  end;
+  if escalated then raise exception 'FAIL: customer promoted itself to admin'; end if;
+end $$;
+rollback;
+
+------------------------------------------------------------------
 -- SECTION 2 — anonymous-role smoke test (no seeded users required)
 -- Confirms the canary and profiles both refuse `anon`, proving `to
 -- authenticated` on every policy actually short-circuits anonymous access
