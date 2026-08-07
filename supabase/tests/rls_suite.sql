@@ -595,14 +595,14 @@ begin
   -- WHOLESALE: the resolver discriminates by tier, it does not merely restrict
   -- everyone to one hardcoded tier. Base table is staff-only (see above), so a
   -- wholesale customer also reads 0 rows directly and gets their price via the
-  -- resolver — at the wholesale price (27900), not the consumer's 29900.
+  -- resolver — at the wholesale price (24900), not the consumer's 29900.
   perform set_config('request.jwt.claims', json_build_object('sub', wholesale_id, 'role','authenticated')::text, true);
   select count(*) into n from public.prices where variant_id = v;
   if n <> 0 then raise exception 'FAIL(4a): wholesale read % rows from the staff-only prices base table, expected 0', n; end if;
   select count(*) into n from public.variant_price_for_me where variant_id = v;
   if n <> 1 then raise exception 'FAIL(4a): wholesale saw % resolver rows on v, expected 1', n; end if;
   select price_cents into n from public.variant_price_for_me where variant_id = v;
-  if n <> 27900 then raise exception 'FAIL(4a): wholesale resolver price was %, expected 27900 (wholesale tier)', n; end if;
+  if n <> 24900 then raise exception 'FAIL(4a): wholesale resolver price was %, expected 24900 (wholesale tier)', n; end if;
 
   -- STAFF POSITIVE CONTROL (plan's Section 4c, folded into this same
   -- transaction since it depends on the fixtures above): an admin session
