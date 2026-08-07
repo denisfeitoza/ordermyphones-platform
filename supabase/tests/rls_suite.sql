@@ -695,3 +695,89 @@ begin
   if n <> 2 then raise exception 'FAIL(4c): admin saw % of 2 order_items — staff policy missing/misconfigured', n; end if;
 end $$;
 rollback;
+
+------------------------------------------------------------------
+-- SECTION 5 — PHASE GATE (schema-level invariants, no session simulation)
+-- These assertions must hold for every phase from here on, not just phase 01.
+--
+-- Assertion 4's regex was calibrated against this project's actual
+-- pg_policies text, not against the plan's first-draft guess. Postgres does
+-- not store policy expressions verbatim — it re-renders them from the parse
+-- tree, stripping schema qualification and adding a column alias, so
+-- `(select public.is_admin_or_staff())` comes back as
+-- `( SELECT is_admin_or_staff() AS is_admin_or_staff)`. Confirmed by reading
+-- `select tablename, policyname, qual, with_check from pg_policies where
+-- schemaname = 'public'` directly against rdkkbiyugcjyrnkvobrr (2026-08-07)
+-- before writing the pattern below.
+--
+-- The "good" shape check (`~* '\(\s*select\s+[a-z_.]*is_admin(_or_staff)?\s*\('`)
+-- was proven to fire on a known-bad input: in a rolled-back transaction,
+-- `create policy "_probe" on public.suppliers for select to authenticated
+-- using (public.is_admin());` was created, the assertion query below raised
+-- `FAIL: policy(ies) call a role helper without (select ...) wrapping:
+-- suppliers._probe`, and the probe policy was confirmed gone afterward
+-- (`pg_policies` readback on `suppliers` shows only the two real policies).
+-- See 01-11-SUMMARY.md for the full transcript.
+------------------------------------------------------------------
+do $$
+declare bad text; n int;
+begin
+  -- 1. RLS on every base table in public (roadmap criterion 1)
+  select string_agg(c.relname, ', ') into bad
+    from pg_class c join pg_namespace ns on ns.oid = c.relnamespace
+   where ns.nspname = 'public' and c.relkind = 'r' and c.relrowsecurity = false;
+  if bad is not null then
+    raise exception 'FAIL(criterion 1): table(s) without RLS: %', bad;
+  end if;
+
+  -- 2. Every RLS-enabled table has at least one policy (RLS with zero policies denies all,
+  --    which passes every negative test while silently breaking the feature)
+  select string_agg(c.relname, ', ') into bad
+    from pg_class c join pg_namespace ns on ns.oid = c.relnamespace
+   where ns.nspname = 'public' and c.relkind = 'r' and c.relrowsecurity
+     and c.relname <> 'rls_harness_canary'          -- the canary is intentionally policy-free
+     and not exists (select 1 from pg_policies p
+                      where p.schemaname = 'public' and p.tablename = c.relname);
+  if bad is not null then
+    raise exception 'FAIL: RLS enabled but no policies on: % (denies all — likely unintended)', bad;
+  end if;
+
+  -- 3. No forbidden column reachable through any *_public projection (criterion 3/4)
+  select string_agg(table_name || '.' || column_name, ', ') into bad
+    from information_schema.columns
+   where table_schema = 'public' and table_name like '%\_public'
+     and column_name in ('unit_cost_cents','source_import_id','legal_name','notes',
+                         'supplier_id','grade','carrier_raw','basis_cost_cents');
+  if bad is not null then
+    raise exception 'FAIL(criterion 3/4): forbidden column(s) exposed via a public view: %', bad;
+  end if;
+
+  -- 4. No policy calls a role helper unwrapped (per-row evaluation instead of an InitPlan).
+  --    Pattern calibrated against this project's observed normalized form (see header comment
+  --    above) and proven to fire on a deliberately unwrapped probe policy.
+  select string_agg(tablename || '.' || policyname, ', ') into bad
+    from pg_policies
+   where schemaname = 'public'
+     and (coalesce(qual,'') || coalesce(with_check,'')) ~* 'is_admin(_or_staff)?\s*\('
+     and (coalesce(qual,'') || coalesce(with_check,'')) !~* '\(\s*select\s+[a-z_.]*is_admin(_or_staff)?\s*\(';
+  if bad is not null then
+    raise exception 'FAIL: policy(ies) call a role helper without (select ...) wrapping: %', bad;
+  end if;
+
+  -- 5. Every SECURITY DEFINER function in public pins an empty search_path.
+  --    Postgres renders `set search_path = ''` in pg_proc.proconfig as the
+  --    literal string `search_path=""` (quoted empty value), not
+  --    `search_path=` (bare) — the plan's first-draft pattern used the bare
+  --    form and flagged every correctly-pinned function in this project as a
+  --    false positive. Confirmed by reading `select proname, proconfig from
+  --    pg_proc where pronamespace = 'public'::regnamespace and prosecdef`
+  --    directly (2026-08-07); accepts both renderings for portability.
+  select string_agg(p.proname, ', ') into bad
+    from pg_proc p join pg_namespace ns on ns.oid = p.pronamespace
+   where ns.nspname = 'public' and p.prosecdef
+     and not exists (select 1 from unnest(coalesce(p.proconfig, '{}')) cfg
+                      where cfg in ('search_path=', 'search_path=""'));
+  if bad is not null then
+    raise exception 'FAIL: SECURITY DEFINER function(s) without search_path='''': %', bad;
+  end if;
+end $$;
