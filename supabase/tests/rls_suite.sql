@@ -278,6 +278,185 @@ begin
 end $$;
 rollback;
 
+------------------------------------------------------------------
+-- SECTION 3 — supplier + cost confidentiality (FOUND-02, criterion 3/4)
+-- Self-provisioning (no seeded test users required — mirrors Section 2a;
+-- plan 01-06 has not run yet at the time this section was written, and this
+-- section must not depend on it). Seeds a throwaway product / variant /
+-- location / movement / supplier AND a throwaway customer identity, inside
+-- its own rolled-back transaction. A view that returns zero rows because
+-- the database is empty proves nothing, so every table probed here gets a
+-- real row first.
+------------------------------------------------------------------
+begin;
+do $$
+declare
+  consumer_id uuid := gen_random_uuid();
+  p uuid; v uuid; l uuid; sup uuid; n int;
+begin
+  -- Fixtures, created as table owner (bypasses RLS) BEFORE dropping to authenticated.
+  insert into public.products (make, model, model_number, category)
+    values ('Apple','iPhone 11','A2111-TEST','phones') returning id into p;
+  insert into public.product_variants (product_id, capacity, color, carrier, carrier_raw,
+                                       lock_status, grade, grade_scale, sku)
+    values (p, '256GB', 'Black', 'ATT', 'AT&T', 'unlocked', 'DLS B+', 'DLS',
+            'APPLE-A2111-TEST-256GB-BLACK-ATT-UNLOCKED-DBP') returning id into v;
+  insert into public.stock_locations (code, display_name, region)
+    values ('S3-TESTLOC','Section 3 Texas','US-South') returning id into l;
+  insert into public.stock_movements (variant_id, location_id, delta, reason, unit_cost_cents)
+    values (v, l, 38, 'seed', 12700);
+  update public.inventory set unit_cost_cents = 12700 where variant_id = v and location_id = l;
+
+  -- A throwaway supplier row too, self-provisioned rather than relying on
+  -- scripts/seed-suppliers.mjs having been run against this project — Section
+  -- 3 must be non-vacuous on a project where that gitignored script has
+  -- never executed.
+  insert into public.suppliers (code, legal_name, anon_label, country, kind)
+    values ('s3-test-supplier', 'Section3TestSupplierRealName', 'Section3TestSupplierAnon', 'US', 'other')
+    returning id into sup;
+  update public.stock_locations set supplier_id = sup where id = l;
+
+  -- Self-provision a customer identity (real trigger, real default role) — mirrors Section 2a.
+  insert into auth.users (id, email) values (consumer_id, 'section3-consumer@example.invalid');
+
+  set local role authenticated;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', consumer_id, 'role','authenticated')::text, true);
+  if current_user <> 'authenticated' then
+    raise exception 'HARNESS BROKEN: current_user is %', current_user;
+  end if;
+
+  -- NEGATIVE: no supplier identity, at all
+  select count(*) into n from public.suppliers;
+  if n <> 0 then raise exception 'FAIL(criterion 3): customer read % supplier rows', n; end if;
+
+  -- NEGATIVE: no cost, via the base table
+  select count(*) into n from public.inventory;
+  if n <> 0 then raise exception 'FAIL(criterion 3): customer read % inventory rows (unit_cost_cents exposure)', n; end if;
+
+  -- POSITIVE: the customer CAN see stock through the masking view (else the catalog is dead)
+  select count(*) into n from public.inventory_public where variant_id = v;
+  if n <> 1 then raise exception 'FAIL: inventory_public returned % rows for a customer — masking view is over-restrictive (security_invoker regression?)', n; end if;
+
+  select count(*) into n from public.product_variants_public where id = v;
+  if n <> 1 then raise exception 'FAIL: product_variants_public returned % rows', n; end if;
+
+  select count(*) into n from public.stock_locations_public where id = l;
+  if n <> 1 then raise exception 'FAIL: stock_locations_public returned % rows', n; end if;
+
+  -- NEGATIVE: stock_locations_public never carries supplier_id, even though
+  -- this fixture explicitly linked location l to supplier sup above — the
+  -- forbidden-column guard (Section 3b) asserts this generically; row-level
+  -- confirmation that the customer session cannot correlate via the view:
+  select count(*) into n
+    from information_schema.columns
+   where table_schema = 'public' and table_name = 'stock_locations_public' and column_name = 'supplier_id';
+  if n <> 0 then raise exception 'FAIL: stock_locations_public exposes supplier_id'; end if;
+end $$;
+rollback;
+
+------------------------------------------------------------------
+-- SECTION 3 (continued) — suppliers_public row-level positive/negative,
+-- kept as its own DO block for a cleaner declare list than the block above.
+------------------------------------------------------------------
+begin;
+do $$
+declare
+  consumer_id uuid := gen_random_uuid();
+  sup uuid;
+  n int;
+begin
+  insert into public.suppliers (code, legal_name, anon_label, country, kind)
+    values ('s3b-test-supplier', 'Section3bTestSupplierRealName', 'Section3bTestSupplierAnon', 'US', 'other')
+    returning id into sup;
+
+  insert into auth.users (id, email) values (consumer_id, 'section3b-consumer@example.invalid');
+
+  set local role authenticated;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', consumer_id, 'role','authenticated')::text, true);
+  if current_user <> 'authenticated' then
+    raise exception 'HARNESS BROKEN: current_user is %', current_user;
+  end if;
+
+  -- POSITIVE: the anon_label is reachable through the view for this exact row.
+  select count(*) into n from public.suppliers_public where id = sup;
+  if n <> 1 then raise exception 'FAIL: suppliers_public returned % rows for a known-active supplier', n; end if;
+
+  -- NEGATIVE: suppliers_public never carries legal_name as a column at all
+  -- (schema-level; the forbidden-column guard below also asserts this
+  -- generically). Confirm no row-level way to reach it either, e.g. via a
+  -- customer directly selecting the base table by id.
+  select count(*) into n from public.suppliers where id = sup;
+  if n <> 0 then raise exception 'FAIL: customer read the base suppliers row directly (%)', n; end if;
+end $$;
+rollback;
+
+------------------------------------------------------------------
+-- SECTION 3a — anon-role confidentiality + fail-closed masking check.
+-- Confirms the `anon` grant this migration introduced on the five masking
+-- views doesn't leak the base tables, while the masking views themselves
+-- still work for a fully anonymous (unauthenticated) request — the
+-- fail-closed property the migration's comments claim.
+------------------------------------------------------------------
+begin;
+do $$
+declare sup uuid; n int;
+begin
+  insert into public.suppliers (code, legal_name, anon_label, country, kind)
+    values ('s3a-test-supplier', 'Section3aTestSupplierRealName', 'Section3aTestSupplierAnon', 'US', 'other')
+    returning id into sup;
+
+  set local role anon;
+
+  -- The migration explicitly `revoke select on public.suppliers from anon`
+  -- (belt-and-braces against a future blanket schema grant), which makes
+  -- anon's direct query fail with insufficient_privilege (42501) rather than
+  -- silently returning zero rows via RLS — a stricter, equally acceptable
+  -- fail-closed outcome. Accept either.
+  begin
+    select count(*) into n from public.suppliers;
+    if n <> 0 then raise exception 'FAIL: anon read % supplier rows', n; end if;
+  exception when insufficient_privilege then
+    null; -- expected: explicit revoke on suppliers from anon
+  end;
+
+  select count(*) into n from public.inventory; if n <> 0 then raise exception 'FAIL: anon read % inventory rows', n; end if;
+
+  select count(*) into n from public.suppliers_public where id = sup;
+  if n <> 1 then raise exception 'FAIL: anon could not read suppliers_public for a known-active row — anon grant on masking views regressed'; end if;
+end $$;
+rollback;
+
+------------------------------------------------------------------
+-- SECTION 3b — schema-level forbidden-column guard (FOUND-02).
+-- Outside any session simulation: catches a future column being added to a
+-- base table and silently flowing into a masking view — the exact failure
+-- mode `select *` would cause. Runs unconditionally, every suite execution.
+------------------------------------------------------------------
+do $$
+declare bad text;
+begin
+  select string_agg(table_name || '.' || column_name, ', ') into bad
+    from information_schema.columns
+   where table_schema = 'public'
+     and table_name like '%\_public'
+     and column_name in ('unit_cost_cents','source_import_id','legal_name','notes',
+                         'supplier_id','grade','carrier_raw');
+  if bad is not null then
+    raise exception 'FAIL(FOUND-02): forbidden column(s) exposed through a public view: %', bad;
+  end if;
+end $$;
+
 -- Every assertion raises on failure, so "no exception" is the pass
 -- condition — there is no output to eyeball and no way to misread a green
 -- run.
+--
+-- The security_invoker sabotage demonstration (proving this suite would
+-- catch someone applying the Supabase linter's security_invoker=true
+-- suggestion to a masking view) was run once as a scratch, rolled-back
+-- transaction during plan 01-07's execution and is NOT part of this file —
+-- see 01-07-SUMMARY.md for the transcript. It is not re-run automatically
+-- on every suite execution because it mutates view options mid-batch, which
+-- is a heavier and riskier operation than a read-only assertion belongs to
+-- be in a suite that other plans append to and run routinely.

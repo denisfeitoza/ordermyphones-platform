@@ -32,13 +32,19 @@ const PROJECT_REF = 'rdkkbiyugcjyrnkvobrr';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_FILE = path.join(__dirname, '.suppliers.local.json');
 
-const token = process.env.SUPABASE_ACCESS_TOKEN;
+let token = process.env.SUPABASE_ACCESS_TOKEN;
 if (!token) {
   console.error(
     'SUPABASE_ACCESS_TOKEN is required (Supabase Management API personal access token). ' +
       "Get it from the macOS Keychain: security find-generic-password -s 'Supabase CLI' -a supabase -w"
   );
   process.exit(1);
+}
+// The Supabase CLI's macOS Keychain entry is itself go-keyring-base64-wrapped
+// (`go-keyring-base64:<base64>`) — decode it here so callers can pipe the
+// raw `security find-generic-password` output straight into this script.
+if (token.startsWith('go-keyring-base64:')) {
+  token = Buffer.from(token.slice('go-keyring-base64:'.length), 'base64').toString('utf8');
 }
 
 let suppliers;
