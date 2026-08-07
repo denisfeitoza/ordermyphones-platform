@@ -1,7 +1,7 @@
 # Supplier Source #2 — Source B (with reserved Dubai wholesale slot)
 
 > **Role in the contract:** Second of the two API integrations contemplated by Agreement §1.4 and Schedule A.2.
-> **Real supplier — primary feed:** **[Source B](https://example.invalid/)** — U.S.-based wholesale / dropship B2B portal.
+> **Real supplier — primary feed:** **[Source B](https://buy.source-b-supplier.com/)** — U.S.-based wholesale / dropship B2B portal.
 > **Reserved second feed:** the Dubai wholesale supplier contemplated by Schedule A.2. **Name pending** — confirmed and wired during the Phase 1 supplier audit. Until then, the routing layer treats the Dubai slot as inactive and never routes orders to it.
 > **System code:** `source-2` — kept as a contract-level abstraction (see [`supabase/migrations/0001_initial_schema.sql`](../../supabase/migrations/0001_initial_schema.sql)). The two underlying feeds live as `source-2-us` (Source B) and `source-2-dxb` (reserved).
 

@@ -18,9 +18,9 @@ on conflict (code) do update
 -- name lives in `display_name` + `notes`.
 insert into public.suppliers (code, display_name, country, kind, is_active, notes) values
   ('source-1', 'Source A', 'US', 'dropship', true,
-   'U.S.-based dropship / lifecycle services partner. Source: https://example.invalid/ Sandbox + production credentials confirmed during the Phase 1 supplier audit.'),
+   'U.S.-based dropship / lifecycle services partner. Source: https://www.source-a-supplier.com. Sandbox + production credentials confirmed during the Phase 1 supplier audit.'),
   ('source-2', 'Source B (+ reserved DXB wholesale slot)', 'US', 'dropship', true,
-   'Primary feed: Source B, U.S.-based wholesale/dropship portal — https://example.invalid/ The adapter also carries a reserved feed slot for the Dubai wholesale supplier contemplated by Agreement §1.4 / Schedule A.2, to be named during the Phase 1 supplier audit.')
+   'Primary feed: Source B, U.S.-based wholesale/dropship portal — https://buy.source-b-supplier.com. The adapter also carries a reserved feed slot for the Dubai wholesale supplier contemplated by Agreement §1.4 / Schedule A.2, to be named during the Phase 1 supplier audit.')
 on conflict (code) do update
   set display_name = excluded.display_name,
       country = excluded.country,

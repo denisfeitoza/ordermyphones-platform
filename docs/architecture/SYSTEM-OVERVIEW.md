@@ -43,7 +43,7 @@
                 │                              │
                 ▼                              ▼
         Supplier API #1 — Source A      Supplier API #2 — Source B
-        https://example.invalid/         https://example.invalid/
+        https://www.source-a-supplier.com         https://buy.source-b-supplier.com
 
 Observability: Sentry (errors) + PostHog (product analytics)
 Hosting: Docker on dedicated VPS, Caddy/Traefik reverse proxy

@@ -1,6 +1,6 @@
 # services/supplier-source-1 — Source A Adapter
 
-Adapter for **Supplier API #1 — [Source A](https://example.invalid/)** (Agreement §1.4, Schedule A.2). Implemented as a Python service that talks REST first and uses [Scrapling](https://github.com/D4Vinci/Scrapling) as an adaptive fallback when Source A exposes only HTML or a field is missing from the REST response.
+Adapter for **Supplier API #1 — [Source A](https://www.source-a-supplier.com/)** (Agreement §1.4, Schedule A.2). Implemented as a Python service that talks REST first and uses [Scrapling](https://github.com/D4Vinci/Scrapling) as an adaptive fallback when Source A exposes only HTML or a field is missing from the REST response.
 
 > **System code:** `source-1`. The folder name and code stay contract-abstract so swapping the supplier never requires a code-wide rename — the human-readable name lives in `suppliers.display_name` (currently `Source A`).
 

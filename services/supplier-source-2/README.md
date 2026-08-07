@@ -1,6 +1,6 @@
 # services/supplier-source-2 — Source B Adapter (with reserved DXB slot)
 
-Adapter for **Supplier API #2 — [Source B](https://example.invalid/)** (Agreement §1.4, Schedule A.2). Distinct from `source-1`: this single integration is built to host **two feeds** — Source B (US wholesale/dropship, active today) and the Dubai wholesale supplier contemplated by Schedule A.2 (reserved slot, name pending Phase 1 audit) — behind one logical source. The contract counts **two API integrations** for **up to three feeds**; the consolidation is what keeps that promise honest.
+Adapter for **Supplier API #2 — [Source B](https://buy.source-b-supplier.com/)** (Agreement §1.4, Schedule A.2). Distinct from `source-1`: this single integration is built to host **two feeds** — Source B (US wholesale/dropship, active today) and the Dubai wholesale supplier contemplated by Schedule A.2 (reserved slot, name pending Phase 1 audit) — behind one logical source. The contract counts **two API integrations** for **up to three feeds**; the consolidation is what keeps that promise honest.
 
 > **System codes:** `source-2-us` (Source B), `source-2-dxb` (reserved). Until the Dubai supplier is named in Phase 1, the routing layer treats the `source-2-dxb` slot as inactive.
 
