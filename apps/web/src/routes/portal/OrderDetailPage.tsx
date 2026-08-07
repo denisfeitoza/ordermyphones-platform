@@ -8,6 +8,8 @@ import { Button, buttonVariants } from '@/components/ui/Button';
 import { exportDocCsv, exportDocPdf, type ExportDoc } from '@/lib/export';
 import { formatUsd } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { useCatalogSource } from '@/lib/catalogSource';
+import { RealOrderDetail } from './RealOrders';
 
 function orderToDoc(order: AccountOrder, business: string): ExportDoc {
   return {
@@ -100,7 +102,14 @@ function Timeline({ order }: { order: AccountOrder }) {
   );
 }
 
+/** Source-aware portal order detail. Real mode reads Supabase; mock is below. */
 export default function OrderDetailPage() {
+  const source = useCatalogSource();
+  if (source === 'real') return <RealOrderDetail />;
+  return <MockOrderDetailPage />;
+}
+
+function MockOrderDetailPage() {
   const { id } = useParams();
   const { orders, businessName } = useAccount();
   const { add, setOpen } = useCart();

@@ -473,6 +473,47 @@ insert into public.app_settings (key, value)
 values ('cart_quantity_rules', '{"mode":"off"}'::jsonb)
 on conflict (key) do nothing;
 
+------------------------------------------------------------------
+-- I. my_order_items — customer-safe order-line display.
+------------------------------------------------------------------
+-- order_items only carries variant_id; product_variants/products are
+-- staff-only (no customer policy), and an ORDERED variant may now be out of
+-- stock and therefore absent from public.catalog_listing — so a customer
+-- cannot resolve its own order lines' names through any existing path. This
+-- definer view joins the safe display fields (make/model/capacity/color/
+-- carrier/lock/sku — never cost, grade, carrier_raw or supplier identity) and
+-- scopes rows to the caller's own orders (staff see all), mirroring the
+-- variant_price_for_me pattern (NOT security_invoker — that would return zero
+-- rows since the base tables have no customer SELECT policy).
+create view public.my_order_items
+with (security_invoker = false) as
+  select oi.id,
+         oi.order_id,
+         oi.variant_id,
+         oi.qty_requested,
+         oi.qty_approved,
+         oi.unit_price_cents,
+         oi.tier,
+         oi.location_id,
+         pv.sku,
+         p.make,
+         p.model,
+         pv.capacity,
+         pv.color,
+         pv.carrier      as carrier_code,
+         pv.lock_status
+    from public.order_items oi
+    join public.product_variants pv on pv.id = oi.variant_id
+    join public.products p          on p.id  = pv.product_id
+    join public.orders o            on o.id  = oi.order_id
+   where o.customer_id = (select auth.uid()) or (select public.is_admin_or_staff());
+
+comment on view public.my_order_items is
+  'Customer-safe order-line display: joins order_items to safe variant/product fields (make/model/capacity/color/carrier/lock/sku), scoped to the caller''s own orders. Definer view (NOT security_invoker) — the base tables have no customer SELECT policy, so security_invoker would return zero rows. Exposes no cost, grade, carrier_raw or supplier identity.';
+
+revoke all on public.my_order_items from public, anon;
+grant select on public.my_order_items to authenticated;
+
 -- RLS note: orders / order_items already carry owner-read + staff-read/update
 -- policies, and reconciliation_queue is staff-read-only, all from the Phase 1
 -- scaffold — exactly deliverable 1's RLS requirement. No new policies are
