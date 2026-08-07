@@ -2,8 +2,9 @@ import { useRef, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Check, Lock, PackageCheck, ShoppingBag } from 'lucide-react';
-import { useAccount, useCart } from '@/store';
+import { useAccount, useAuth, useCart } from '@/store';
 import type { AccountOrder } from '@/store';
+import { supabase } from '@/lib/supabase';
 import { SOURCE_LABELS } from '@/data/catalog';
 import { Button } from '@/components/ui/Button';
 import { TierBadge } from '@/components/store/TierBadge';
@@ -34,6 +35,7 @@ export default function CheckoutPage() {
   const { t } = useI18n();
   const { lines, unitCount, effectiveTier, subtotalCents, retailSubtotalCents, savingsCents, clear } = useCart();
   const { placeOrder } = useAccount();
+  const { signedIn, role, user } = useAuth();
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>('review');
   const [orderId] = useState(genOrderId);
@@ -56,6 +58,23 @@ export default function CheckoutPage() {
 
   function submitReview(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    // Gate G1 (REGISTRATION-FIELDS.md): shipping address + phone are captured
+    // here and saved to the profile — but ONLY for a real customer session.
+    // The mock reserve flow proceeds regardless; persistence is best-effort and
+    // never blocks checkout (real order placement is Phase 6).
+    if (signedIn && role === 'customer' && user) {
+      const fd = new FormData(e.currentTarget);
+      const shipping_address = {
+        street: String(fd.get('street') ?? '').trim(),
+        city: String(fd.get('city') ?? '').trim(),
+        state: String(fd.get('state') ?? '').trim(),
+        zip: String(fd.get('zip') ?? '').trim(),
+      };
+      const phone = String(fd.get('phone') ?? '').trim();
+      // Fire-and-forget: RLS scopes the row to self; the column grant in
+      // 20260807191000 permits shipping_address + phone for the owner.
+      void supabase.from('profiles').update({ shipping_address, phone }).eq('id', user.id);
+    }
     setPhase('reserving');
   }
 
@@ -103,16 +122,24 @@ export default function CheckoutPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Work email" name="email" type="email" required placeholder="you@store.com" />
                   <Field label="Business name" required placeholder="Downtown Mobile LLC" />
+                  <Field
+                    label="Phone number"
+                    name="phone"
+                    type="tel"
+                    required
+                    autoComplete="tel"
+                    placeholder="+1 (469) 214-8830"
+                  />
                 </div>
               </section>
 
               <section className="space-y-4 rounded-2xl border border-border p-5">
                 <h2 className="font-medium">{t('Shipping address')}</h2>
-                <Field label="Street address" required placeholder="11816 Inwood Rd #1176" />
+                <Field label="Street address" name="street" required autoComplete="street-address" placeholder="11816 Inwood Rd #1176" />
                 <div className="grid gap-4 sm:grid-cols-3">
-                  <Field label="City" required placeholder="Dallas" />
-                  <Field label="State" required placeholder="TX" />
-                  <Field label="ZIP" required placeholder="75244" inputMode="numeric" />
+                  <Field label="City" name="city" required autoComplete="address-level2" placeholder="Dallas" />
+                  <Field label="State" name="state" required autoComplete="address-level1" placeholder="TX" />
+                  <Field label="ZIP" name="zip" required inputMode="numeric" autoComplete="postal-code" placeholder="75244" />
                 </div>
               </section>
 

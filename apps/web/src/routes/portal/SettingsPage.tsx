@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Check } from 'lucide-react';
 import { useAccount } from '@/store';
 import { PageHeading, Panel, Field } from '@/components/portal/parts';
+import { ProfileCompletionPanel } from '@/components/portal/ProfileCompletionPanel';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
@@ -101,6 +102,8 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <PageHeading title="Settings" subtitle="Business profile and notification preferences." />
+
+      <ProfileCompletionPanel />
 
       <Panel title="Business profile">
         <form onSubmit={saveProfile}>
