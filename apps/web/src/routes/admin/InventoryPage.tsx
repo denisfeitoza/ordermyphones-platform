@@ -1,4 +1,4 @@
-import { CATALOG, totalAvailable, type CatalogItem } from '@/data/catalog';
+import { CATALOG, SOURCE_LABELS, totalAvailable, type CatalogItem } from '@/data/catalog';
 import { useSync } from '@/store';
 import { AdminHeading, StatCard, Table, Td } from '@/components/admin/parts';
 import { formatInt } from '@/lib/format';
@@ -24,7 +24,7 @@ export default function InventoryPage() {
     <div className="space-y-6">
       <AdminHeading
         title="Inventory"
-        subtitle={`Aggregated across Assurant & Mannapov · synced ${secondsAgo === 0 ? 'just now' : `${secondsAgo}s ago`}`}
+        subtitle={`Aggregated across all sources · synced ${secondsAgo === 0 ? 'just now' : `${secondsAgo}s ago`}`}
       />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -39,8 +39,8 @@ export default function InventoryPage() {
         columns={[
           { key: 'model', label: 'Model' },
           { key: 'condition', label: 'Condition' },
-          { key: 'assurant', label: 'Assurant', align: 'right' },
-          { key: 'mannapov', label: 'Mannapov', align: 'right' },
+          { key: 'source-1', label: SOURCE_LABELS['source-1'], align: 'right' },
+          { key: 'source-2', label: SOURCE_LABELS['source-2'], align: 'right' },
           { key: 'total', label: 'Total', align: 'right' },
           { key: 'status', label: 'Status' },
         ]}

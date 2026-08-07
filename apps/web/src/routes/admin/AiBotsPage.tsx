@@ -3,14 +3,15 @@ import { Check, X } from 'lucide-react';
 import { useOpsStream } from '@/components/ops/useOpsStream';
 import { AgentSwarm, LogStream, OrderPipeline, Panel, StockAlerts, SupplierSyncPanel } from '@/components/ops/OpsPanels';
 import { AdminHeading } from '@/components/admin/parts';
+import { SOURCE_LABELS } from '@/data/catalog';
 import { cn } from '@/lib/utils';
 
 type Decision = 'approved' | 'rejected';
 
 const PROPOSALS = [
-  { id: 'p1', agent: 'pricing', title: 'Reprice iPhone 16 Pro −1.5% across tiers', detail: 'Mannapov landed cost dropped $14/unit. Match to hold target margin on all 4 tiers.' },
+  { id: 'p1', agent: 'pricing', title: 'Reprice iPhone 16 Pro −1.5% across tiers', detail: `${SOURCE_LABELS['source-2']} landed cost dropped $14/unit. Match to hold target margin on all 4 tiers.` },
   { id: 'p2', agent: 'tier-classifier', title: 'Promote Bright Wireless LLC → Wholesale', detail: 'Crossed 50 cumulative units this week (32 → 64). Auto-promotion proposed.' },
-  { id: 'p3', agent: 'inventory-triage', title: 'Shift iPhone 16 reservations to Mannapov', detail: 'Assurant 73 vs Mannapov 120 units — rebalance to avoid an Assurant stockout.' },
+  { id: 'p3', agent: 'inventory-triage', title: `Shift iPhone 16 reservations to ${SOURCE_LABELS['source-2']}`, detail: `${SOURCE_LABELS['source-1']} 73 vs ${SOURCE_LABELS['source-2']} 120 units — rebalance to avoid a ${SOURCE_LABELS['source-1']} stockout.` },
   { id: 'p4', agent: 'customer-support', title: 'Send drafted reply to Coastal Cellular Co', detail: 'Refund-status question on OMP-3A9E2. Draft ready for your approval.' },
 ];
 

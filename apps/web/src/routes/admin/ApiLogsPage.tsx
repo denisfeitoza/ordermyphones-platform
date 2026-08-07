@@ -1,12 +1,13 @@
 import { useOpsStream } from '@/components/ops/useOpsStream';
 import { LogStream, Panel } from '@/components/ops/OpsPanels';
 import { AdminHeading, StatCard } from '@/components/admin/parts';
+import { SOURCE_LABELS } from '@/data/catalog';
 import { cn } from '@/lib/utils';
 
 const WEBHOOKS: { source: string; event: string; code: number; ago: string }[] = [
   { source: 'Stripe', event: 'payment_intent.succeeded', code: 200, ago: '12s' },
-  { source: 'Assurant', event: 'inventory.delta', code: 200, ago: '1s' },
-  { source: 'Mannapov', event: 'inventory.delta', code: 200, ago: '2s' },
+  { source: SOURCE_LABELS['source-1'], event: 'inventory.delta', code: 200, ago: '1s' },
+  { source: SOURCE_LABELS['source-2'], event: 'inventory.delta', code: 200, ago: '2s' },
   { source: 'AI orchestrator', event: 'price.reprice.applied', code: 200, ago: '38s' },
   { source: 'Stripe', event: 'charge.refunded', code: 200, ago: '3m' },
   { source: 'AI orchestrator', event: 'tier.promote.proposed', code: 202, ago: '1m' },

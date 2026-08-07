@@ -1,5 +1,5 @@
 import { useAdminData } from '@/data/admin';
-import { CATALOG } from '@/data/catalog';
+import { CATALOG, SOURCE_LABELS } from '@/data/catalog';
 import { AdminHeading } from '@/components/admin/parts';
 import { tierBg } from '@/lib/tierStyles';
 import { formatInt, formatUsd } from '@/lib/format';
@@ -38,8 +38,8 @@ export default function ReportsPage() {
   for (const item of CATALOG) for (const s of item.stock) supplier[s.supplier] += s.availableQty;
   const supTotal = supplier['source-1'] + supplier['source-2'] || 1;
   const SUP = [
-    { name: 'Assurant', units: supplier['source-1'] },
-    { name: 'Mannapov LLC', units: supplier['source-2'] },
+    { name: SOURCE_LABELS['source-1'], units: supplier['source-1'] },
+    { name: SOURCE_LABELS['source-2'], units: supplier['source-2'] },
   ];
 
   return (
