@@ -4,11 +4,11 @@
 --
 -- ORCHESTRATOR OVERRIDE (D16, 2026-08-06): the repo is PUBLIC. Unlike the
 -- plan's literal Task 1 text, this migration does NOT insert the two real
--- supplier legal names ('Assurant', 'Mannapov LLC'). Only the table shape,
--- RLS, and the masking views are committed here. The two real rows are
--- inserted separately, live-DB-only, by the gitignored scripts/seed-suppliers.mjs
--- reading a gitignored scripts/.suppliers.local.json — never by this file.
--- See 01-07-SUMMARY.md for the full rationale and the git-grep proof.
+-- supplier legal names. Only the table shape, RLS, and the masking views
+-- are committed here. The two real rows are inserted separately, live-DB-
+-- only, by the gitignored scripts/seed-suppliers.mjs reading a gitignored
+-- scripts/.suppliers.local.json — never by this file. See 01-07-SUMMARY.md
+-- for the full rationale and the git-grep proof.
 
 ------------------------------------------------------------------
 -- A. public.suppliers — admin/staff-only. No customer policy at all.

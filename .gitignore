@@ -82,6 +82,11 @@ pids/
 .preview/
 .vercel
 
+# Real supplier legal names (D16) — never in the public repo. Only the
+# seed script (scripts/seed-suppliers.mjs) is committed; the data it reads
+# is gitignored.
+scripts/.suppliers.local.json
+
 # Internal strategy — never in the public repo
 docs/planning/PRICING-ANALYSIS-INTERNAL.md
 docs/planning/OMP-Scope-vs-Contract.md
