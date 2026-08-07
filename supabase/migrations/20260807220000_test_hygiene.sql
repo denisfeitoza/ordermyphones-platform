@@ -146,6 +146,10 @@ where o.is_test = false
 comment on view public.orders_reportable is
   'Reporting projection over public.orders that excludes is_test orders unless app_settings.reports_include_test is true. security_invoker so the caller''s RLS on orders still applies. Single source of truth for the reports read side once it moves off the mock ReportsPage.';
 
+-- anon gets no default table privilege in this project (see the app_settings
+-- grant comment, 20260807180000); revoke explicitly anyway so the posture is
+-- stated, not inherited — a reporting projection must never be anon-readable.
+revoke all on public.orders_reportable from anon;
 grant select on public.orders_reportable to authenticated;
 
 ------------------------------------------------------------------
