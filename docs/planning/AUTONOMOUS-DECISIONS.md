@@ -83,3 +83,18 @@ All work below is on origin/main + the live Supabase DB (rdkkbiyugcjyrnkvobrr). 
 - Phase 3 frontend (T1/T2 admin benchmark entry UI, flag-queue admin UI, storefront price display via variant_price_for_me) — not yet built.
 - Phases 4-8 not started.
 - The commit RPC now hard-depends on pricing_settings/tiers.floor_cents (fail-loud if deleted) and reprice runs inside the 120s commit budget (huge imports could timeout+rollback atomically) — flagged, intentional.
+
+## PHASE 3 COMPLETE (2026-08-07) + a Phase-4 product decision for Denis
+- **Phase 3 pricing is now COMPLETE + fully verified live**: T3/T4 auto at import; admin `set_consumer_benchmark` → T1 visible + T2 derives (verified: cost $300 → T1 $400 / T2 $380 / T3 $312 / T4 $305, invariant holds); admin Prices page (real) + Flag Queue page + set_consumer_benchmark/resolve_pricing_flag RPCs (applied). Sub-A grade gate + tier-order + floors all enforced server-side.
+
+### ⚠️ DECISION FOR DENIS — Phase 4 catalog source (I did NOT decide this blindly)
+The deployed storefront currently shows the **mock catalog (12 polished fake products)** — great for sharing the link. Phase 4 wires the storefront to the REAL DB catalog. But the real catalog is EMPTY until the real HYLA .xls is imported (that file is in ~/Downloads, currently TCC-blocked). So wiring to real data now would make the shared storefront look EMPTY. Two sensible options — pick one and I'll wire it as a config flag (`app_settings.catalog_source`):
+  1. **KEEP the mock storefront until the first real import** (default I'd lean to): the shareable demo stays polished; the moment a real HYLA import runs, flip the flag and it shows real products+prices. Zero regression to the link you share.
+  2. **Wire to real now + seed a small representative REAL catalog** (~10 popular models) via a persisted import so the storefront shows real products with real tier prices immediately (fully end-to-end), later merged/replaced by the real HYLA file. Slightly "dirtier" (synthetic rows in prod) but demonstrably real.
+I'm building Phase 4 as option 1 (flag-guarded) so nothing you share regresses; flipping to real data is one setting once the HYLA file is importable. Tell me if you prefer option 2.
+
+### RESUME POINTER (for the next context window / after TCC fix)
+- Working copy: /tmp/omp-work (origin/main is source of truth; `git pull` in ~/Documents once TCC access returns).
+- Done: Phase 1 (complete) · Phase 2 core (import+wizard; real-file E2E pending TCC) · Phase 3 (complete).
+- Next: Phase 4 (catalog display+export, flag-guarded per above) → 5 (invites/registration) → 6 (ordering/approval) → 7 (admin config panel+lenses) → 8 (launch/observability/QA).
+- All migrations applied to rdkkbiyugcjyrnkvobrr and committed as files. `commit_stock_import` auto-reprices. Test users seeded (password in ~/Documents/scripts/.seed-password.local).
