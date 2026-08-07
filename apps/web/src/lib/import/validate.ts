@@ -70,7 +70,7 @@ export function validateRow(
     warnings.push('grade_unmapped');
   }
 
-  const sku = makeSku(model, capacity, color, vendorGrade, carrier, lockStatus);
+  const sku = makeSku(model, modelNumber, capacity, color, vendorGrade, carrier, lockStatus);
 
   const normalized: NormalizedRow = {
     rowNumber,
