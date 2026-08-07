@@ -29,10 +29,14 @@ export default function SignInPage() {
   // Navigate on the render *after* the profile resolves — `role` is not
   // populated on the same tick `signIn()` resolves, so this must not be done
   // inside the submit handler. Hardcoding '/admin' would send every seeded
-  // customer into the admin console.
-  if (!loading && signedIn) {
+  // customer into the admin console. Requiring a resolved `role` (not just
+  // `signedIn`) also stops a broken-profile session (T-01-48) from
+  // ping-ponging with RequireAuth's own null-role bounce back to this page.
+  if (!loading && signedIn && role) {
     return <Navigate to={from ?? homePathForRole(role)} replace />;
   }
+
+  const brokenProfile = !loading && signedIn && !role;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -88,9 +92,9 @@ export default function SignInPage() {
           </div>
         </div>
 
-        {error && (
+        {(error || brokenProfile) && (
           <p role="alert" className="text-sm text-destructive">
-            {t(error)}
+            {t(error ?? 'Your account could not be loaded. Please try again or contact support.')}
           </p>
         )}
 

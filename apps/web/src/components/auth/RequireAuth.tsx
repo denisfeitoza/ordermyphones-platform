@@ -27,7 +27,16 @@ export function RequireAuth({ children, roles }: { children: ReactNode; roles?: 
     return <Navigate to="/auth/sign-in" state={{ from: location.pathname + location.search }} replace />;
   }
 
-  if (roles && (!role || !roles.includes(role))) {
+  // A session whose profile failed to load is a broken account, not a
+  // permissive one (T-01-48) — treat a null role as unauthorized. No `from`
+  // state here: SignInPage's own guard requires a resolved `role` before
+  // navigating away, so passing `from` back to this same broken account would
+  // otherwise ping-pong between the two guards.
+  if (!role) {
+    return <Navigate to="/auth/sign-in" replace />;
+  }
+
+  if (roles && !roles.includes(role)) {
     return <Navigate to={homePathForRole(role)} replace />;
   }
 
