@@ -1,15 +1,22 @@
 /**
- * MAP stage (SMART-STOCK-IMPORT.md stage 2) — three layers, in order:
+ * MAP stage (SMART-STOCK-IMPORT.md stage 2) — three evidence layers scored per
+ * column, then a SINGLE global greedy assignment by confidence:
  *   1. Synonym dictionary (public.import_synonyms, kind='header') — exact,
- *      case/space/accent-insensitive.
+ *      case/space/accent-insensitive → confidence 1.
  *   2. Fuzzy header match — token overlap + edit distance against the same
- *      dictionary, for headers layer 1 missed (e.g. "QTY Avail." -> quantity).
- *   3. Content inference — sample values in unmapped columns and classify by
- *      shape (capacity, lock_status, carrier, grade, cost, quantity, make,
- *      warehouse).
+ *      dictionary (e.g. "Colour" -> color), gated at FUZZY_MIN.
+ *   3. Content inference — sample the column's values and classify by shape
+ *      (capacity, lock_status, carrier, grade, cost, quantity, make,
+ *      model_number).
  *
- * Each mapping carries a confidence score; below CONFIDENCE_THRESHOLD it is
- * surfaced to a human mapping screen instead of applied silently.
+ * Every (column → field) proposal from all three layers competes in one pool;
+ * we assign strongest-first, so a genuine content match (e.g. a "$210" cost
+ * column at 1.00) always wins its field over a weak fuzzy header guess (0.50),
+ * regardless of which column appears first in the sheet. This kills the
+ * slot-stealing where an early weak match locked a field the real column needed.
+ * A column whose best proposal is below CONFIDENCE_THRESHOLD is surfaced for a
+ * human to confirm; a column with no proposal is surfaced as unmapped. Nothing
+ * is ever silently guessed or dropped.
  */
 import { supabase } from '@/lib/supabase';
 import { CARRIER_CODES } from './types';
@@ -54,6 +61,14 @@ export interface MapResult {
 }
 
 export const CONFIDENCE_THRESHOLD = 0.75;
+
+/**
+ * Minimum fuzzy header score to even PROPOSE a mapping. Below this a fuzzy
+ * guess is noise (e.g. "Device" scoring 0.50 against "cost") and must not
+ * claim a field — content inference or a manual remap handles that column
+ * instead. Genuine near-spellings ("Colour"→color ≈ 0.83) clear it easily.
+ */
+export const FUZZY_MIN = 0.72;
 
 function normalize(s: string): string {
   return s
@@ -122,6 +137,11 @@ const GRADE_RE = /^\s*(dls|tps)\s*[a-d]{1,2}[+-]?\s*$/i;
 const MONEY_RE = /^\s*\$?\s*-?\d{1,3}(,\d{3})*(\.\d{1,2})?\s*$/;
 const QTY_RE = /^\s*\d+\s*\+?\s*$/;
 const KNOWN_MAKES = new Set(['apple', 'samsung', 'google', 'motorola', 'lg', 'oneplus', 'nokia']);
+// Distinctive OEM part-number shapes: Apple A2482, Samsung SM-S911U, Google
+// GX7AS, Motorola XT2201, plus a conservative 2-letter+4-digit generic. Kept
+// tight so it won't swallow model names, capacities, or grades (all classified
+// earlier and returned first).
+const MODELNO_RE = /^(a\d{4}|sm-[a-z]\d{2,4}[a-z0-9]*|g[a-z0-9]{4,}|xt\d{3,4}([- ]?\d+)?|[a-z]{2}\d{4})$/i;
 
 function classifyByContent(values: unknown[]): { field: CanonicalField; confidence: number } | null {
   const sample = values
@@ -163,6 +183,9 @@ function classifyByContent(values: unknown[]): { field: CanonicalField; confiden
   const makeHit = sample.filter((v) => KNOWN_MAKES.has(v.toLowerCase())).length / sample.length;
   if (makeHit >= 0.6) return { field: 'make', confidence: makeHit };
 
+  const modelNoHit = hitRate(MODELNO_RE);
+  if (modelNoHit >= 0.6) return { field: 'model_number', confidence: modelNoHit };
+
   return null;
 }
 
@@ -176,58 +199,69 @@ export async function mapColumns(
   synonyms?: Map<string, CanonicalField>,
 ): Promise<MapResult> {
   const dict = synonyms ?? (await fetchHeaderSynonyms());
-  const mappings: ColumnMapping[] = [];
-  const claimedFields = new Set<CanonicalField>();
-  const remaining: string[] = [];
-
-  // Layer 1: exact synonym match.
-  for (const col of headers) {
-    const norm = normalize(col);
-    const field = dict.get(norm);
-    if (field && !claimedFields.has(field)) {
-      mappings.push({ column: col, field, confidence: 1, layer: 'synonym' });
-      claimedFields.add(field);
-    } else {
-      remaining.push(col);
-    }
-  }
-
-  // Layer 2: fuzzy match against the same dictionary's synonym strings.
-  const stillRemaining: string[] = [];
   const dictEntries = Array.from(dict.entries());
-  for (const col of remaining) {
+
+  // Phase 1 — SCORE: collect every (column → field) proposal from all three
+  // layers into one pool. No field is claimed yet; a column can propose from
+  // several layers and the strongest proposal per column is kept.
+  interface Candidate extends ColumnMapping {
+    colIndex: number;
+  }
+  const candidates: Candidate[] = [];
+
+  headers.forEach((col, colIndex) => {
     const norm = normalize(col);
-    let bestField: CanonicalField | null = null;
-    let bestScore = 0;
+    const perCol: ColumnMapping[] = [];
+
+    // Layer 1: exact synonym → confidence 1.
+    const exact = dict.get(norm);
+    if (exact) perCol.push({ column: col, field: exact, confidence: 1, layer: 'synonym' });
+
+    // Layer 2: best fuzzy match over the dictionary, gated at FUZZY_MIN.
+    let fuzzyField: CanonicalField | null = null;
+    let fuzzyScore = 0;
     for (const [syn, field] of dictEntries) {
-      if (claimedFields.has(field)) continue;
       const score = Math.max(tokenOverlapScore(norm, syn), editSimilarity(norm, syn));
-      if (score > bestScore) {
-        bestScore = score;
-        bestField = field;
+      if (score > fuzzyScore) {
+        fuzzyScore = score;
+        fuzzyField = field;
       }
     }
-    if (bestField && bestScore >= 0.5) {
-      mappings.push({ column: col, field: bestField, confidence: bestScore, layer: 'fuzzy' });
-      claimedFields.add(bestField);
-    } else {
-      stillRemaining.push(col);
+    if (fuzzyField && fuzzyScore >= FUZZY_MIN) {
+      perCol.push({ column: col, field: fuzzyField, confidence: fuzzyScore, layer: 'fuzzy' });
     }
+
+    // Layer 3: content inference on this column's values.
+    const guess = classifyByContent(rows.map((r) => r[col]));
+    if (guess) perCol.push({ column: col, field: guess.field, confidence: guess.confidence, layer: 'content' });
+
+    for (const m of perCol) candidates.push({ ...m, colIndex });
+  });
+
+  // Phase 2 — ASSIGN: strongest proposal first. Ties broken by layer trust
+  // (synonym > content > fuzzy) then by original column order, so assignment is
+  // deterministic. A proposal is taken only if neither its column nor its field
+  // is already claimed — so the real cost column wins `cost` over a weak fuzzy
+  // guess, and the loser falls through to its next-best proposal or to unmapped.
+  const layerRank: Record<MapLayer, number> = { synonym: 0, content: 1, fuzzy: 2 };
+  candidates.sort(
+    (a, b) =>
+      b.confidence - a.confidence ||
+      layerRank[a.layer] - layerRank[b.layer] ||
+      a.colIndex - b.colIndex,
+  );
+
+  const mappings: ColumnMapping[] = [];
+  const claimedFields = new Set<CanonicalField>();
+  const claimedCols = new Set<string>();
+  for (const c of candidates) {
+    if (claimedCols.has(c.column) || claimedFields.has(c.field)) continue;
+    mappings.push({ column: c.column, field: c.field, confidence: c.confidence, layer: c.layer });
+    claimedCols.add(c.column);
+    claimedFields.add(c.field);
   }
 
-  // Layer 3: content inference on whatever is left.
-  const unmapped: string[] = [];
-  for (const col of stillRemaining) {
-    const values = rows.map((r) => r[col]);
-    const guess = classifyByContent(values);
-    if (guess && !claimedFields.has(guess.field)) {
-      mappings.push({ column: col, field: guess.field, confidence: guess.confidence, layer: 'content' });
-      claimedFields.add(guess.field);
-    } else {
-      unmapped.push(col);
-    }
-  }
-
+  const unmapped = headers.filter((h) => !claimedCols.has(h));
   const needsReview = mappings.filter((m) => m.confidence < CONFIDENCE_THRESHOLD);
 
   return { mappings, unmapped, needsReview };
