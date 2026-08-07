@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { CATALOG, SUPPLIER_NAMES, unitPriceCents } from '@/data/catalog';
+import { CATALOG, SOURCE_LABELS, unitPriceCents } from '@/data/catalog';
 import { resolveTierByUnits, TIERS, type TierDef } from '@/data/tiers';
 import { useAccount, type AccountOrder, type OrderStatus } from '@/store';
 
@@ -76,7 +76,7 @@ function mkOrder(id: string, customer: string, placedAt: string, status: OrderSt
   const tier = resolveTierByUnits(qty);
   const unit = unitPriceCents(item, tier.code);
   const retail = unitPriceCents(item, 'tier_1');
-  const suppliers = item.stock.filter((s) => s.availableQty > 0).map((s) => SUPPLIER_NAMES[s.supplier]);
+  const suppliers = item.stock.filter((s) => s.availableQty > 0).map((s) => SOURCE_LABELS[s.supplier]);
   return {
     id,
     customer,
@@ -86,7 +86,7 @@ function mkOrder(id: string, customer: string, placedAt: string, status: OrderSt
     subtotalCents: unit * qty,
     savingsCents: (retail - unit) * qty,
     status,
-    suppliers: suppliers.length ? suppliers : [SUPPLIER_NAMES['source-1']],
+    suppliers: suppliers.length ? suppliers : [SOURCE_LABELS['source-1']],
     model: item.model,
   };
 }
