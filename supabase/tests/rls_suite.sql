@@ -494,7 +494,6 @@ declare
   wholesale_id uuid := gen_random_uuid();
   admin_id     uuid := gen_random_uuid();
   n int;
-  seen_tier public.customer_tier;
 begin
   -- Fixtures, as table owner (bypasses RLS) before dropping to authenticated.
   insert into public.products (make, model, model_number, category)
@@ -538,17 +537,24 @@ begin
 
   set local role authenticated;
 
-  -- CONSUMER: exactly one visible row on v, and it is the consumer-tier row.
+  -- CONSUMER: the base prices table is staff-only now (20260807150000 dropped
+  -- the "prices own tier read" customer policy). A customer reads 0 rows here
+  -- directly; their own-tier visible price comes through the SECURITY DEFINER
+  -- resolver public.variant_price_for_me, which exposes price_cents only (never
+  -- basis_cost_cents/flag_reason/source — no cost/margin leak).
   perform set_config('request.jwt.claims', json_build_object('sub', consumer_id, 'role','authenticated')::text, true);
   if current_user <> 'authenticated' then raise exception 'HARNESS BROKEN: current_user is %', current_user; end if;
 
   select count(*) into n from public.prices where variant_id = v;
-  if n <> 1 then raise exception 'FAIL(4a): consumer saw % price rows on v, expected 1', n; end if;
+  if n <> 0 then raise exception 'FAIL(4a): consumer read % rows from the staff-only prices base table, expected 0', n; end if;
 
-  select tier into seen_tier from public.prices where variant_id = v;
-  if seen_tier is distinct from 'consumer' then
-    raise exception 'FAIL(4a): consumer''s one visible row was tier %, expected consumer', seen_tier;
-  end if;
+  -- POSITIVE via the resolver: exactly one row for v, and it is the consumer
+  -- tier's price (29900) — proving server-side tier resolution discriminated
+  -- correctly (the resolver has no tier column; price_cents is the tier proof).
+  select count(*) into n from public.variant_price_for_me where variant_id = v;
+  if n <> 1 then raise exception 'FAIL(4a): consumer saw % resolver rows on v, expected 1', n; end if;
+  select price_cents into n from public.variant_price_for_me where variant_id = v;
+  if n <> 29900 then raise exception 'FAIL(4a): consumer resolver price was %, expected 29900 (consumer tier)', n; end if;
 
   -- Deliberate attempt to widen the query to a different tier — the
   -- assertion that a customer cannot read another tier's price by asking
@@ -584,17 +590,19 @@ begin
   if n <> 4 then raise exception 'FAIL(4a): consumer saw % tiers rows, expected 4', n; end if;
 
   select count(*) into n from public.vendor_grade_map where vendor_code = 'HYLA';
-  if n <> 13 then raise exception 'FAIL(4a): consumer saw % HYLA grade-map rows, expected 13', n; end if;
+  if n <> 14 then raise exception 'FAIL(4a): consumer saw % HYLA grade-map rows, expected 14', n; end if;
 
-  -- WHOLESALE: the gate discriminates, it does not merely restrict
-  -- everyone to one hardcoded tier.
+  -- WHOLESALE: the resolver discriminates by tier, it does not merely restrict
+  -- everyone to one hardcoded tier. Base table is staff-only (see above), so a
+  -- wholesale customer also reads 0 rows directly and gets their price via the
+  -- resolver — at the wholesale price (27900), not the consumer's 29900.
   perform set_config('request.jwt.claims', json_build_object('sub', wholesale_id, 'role','authenticated')::text, true);
   select count(*) into n from public.prices where variant_id = v;
-  if n <> 1 then raise exception 'FAIL(4a): wholesale saw % price rows on v, expected 1', n; end if;
-  select tier into seen_tier from public.prices where variant_id = v;
-  if seen_tier is distinct from 'wholesale' then
-    raise exception 'FAIL(4a): wholesale''s one visible row was tier %, expected wholesale', seen_tier;
-  end if;
+  if n <> 0 then raise exception 'FAIL(4a): wholesale read % rows from the staff-only prices base table, expected 0', n; end if;
+  select count(*) into n from public.variant_price_for_me where variant_id = v;
+  if n <> 1 then raise exception 'FAIL(4a): wholesale saw % resolver rows on v, expected 1', n; end if;
+  select price_cents into n from public.variant_price_for_me where variant_id = v;
+  if n <> 27900 then raise exception 'FAIL(4a): wholesale resolver price was %, expected 27900 (wholesale tier)', n; end if;
 
   -- STAFF POSITIVE CONTROL (plan's Section 4c, folded into this same
   -- transaction since it depends on the fixtures above): an admin session
