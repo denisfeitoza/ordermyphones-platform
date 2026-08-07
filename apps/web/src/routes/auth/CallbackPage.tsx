@@ -49,6 +49,10 @@ export default function CallbackPage() {
 
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       // SYNCHRONOUS ONLY (Pitfall 4) — no awaited Supabase calls in this callback.
+      // Deliberately unconditional (no `if (settled.current) return`): a genuine
+      // PASSWORD_RECOVERY event always wins, even after the timeout below has
+      // already moved the page to the error state — a slow-but-valid exchange
+      // must still land the user on the form rather than get stuck on "expired".
       if (event === 'PASSWORD_RECOVERY') {
         settled.current = true;
         setPhase('recovery');
