@@ -4,14 +4,41 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, MailCheck } from 'lucide-react';
 import { AuthLayout, AuthField } from '@/components/auth/AuthLayout';
 import { Button } from '@/components/ui/Button';
+import { supabase } from '@/lib/supabase';
+import { useI18n } from '@/i18n';
+
+/** GoTrue's rate-limit error is the only failure mode worth surfacing — everything
+ *  else (including "user not found", which GoTrue itself does not distinguish) gets
+ *  the identical success panel so the form cannot be used to enumerate accounts
+ *  (T-01-59). */
+function isRateLimited(error: { status?: number | undefined; message?: string | undefined } | null): boolean {
+  if (!error) return false;
+  if (error.status === 429) return true;
+  return /rate limit/i.test(error.message ?? '');
+}
 
 export default function ResetPage() {
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function submit(e: FormEvent) {
+  async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!email.trim() || pending) return;
+    setPending(true);
+    setError(null);
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/auth/callback`,
+    });
+    setPending(false);
+    if (isRateLimited(resetError)) {
+      setError('Too many requests — please wait a few minutes and try again.');
+      return;
+    }
+    // Any other error (including "user not found") is swallowed: same success
+    // panel whether or not the address has an account.
     setSent(true);
   }
 
@@ -22,7 +49,7 @@ export default function ResetPage() {
       footer={
         <Link to="/auth/sign-in" className="inline-flex items-center gap-1.5 font-medium text-brand hover:underline">
           <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2} />
-          Back to sign in
+          {t('Back to sign in')}
         </Link>
       }
     >
@@ -37,10 +64,8 @@ export default function ResetPage() {
             <MailCheck className="h-5 w-5" strokeWidth={2} />
           </span>
           <div>
-            <p className="text-sm font-medium">Link sent to {email}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Open it on this device to continue. Mockup — no email is actually sent.
-            </p>
+            <p className="text-sm font-medium">{t('Link sent to')} {email}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{t('Open it on this device to continue.')}</p>
           </div>
         </motion.div>
       ) : (
@@ -54,8 +79,13 @@ export default function ResetPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          <Button type="submit" size="lg" className="w-full">
-            Send reset link
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {t(error)}
+            </p>
+          )}
+          <Button type="submit" size="lg" className="w-full" disabled={pending}>
+            {pending ? t('Sending…') : t('Send reset link')}
           </Button>
         </form>
       )}
