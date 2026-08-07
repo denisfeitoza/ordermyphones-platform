@@ -39,7 +39,7 @@ const FILTERS: { key: AdminOrderStatus | 'all'; label: string }[] = [
 
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-function StatusChip({ status }: { status: AdminOrderStatus }) {
+export function StatusChip({ status }: { status: AdminOrderStatus }) {
   return (
     <span className={cn('inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium', STATUS_CLS[status])}>
       {STATUS_LABEL[status]}

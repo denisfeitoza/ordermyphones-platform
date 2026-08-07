@@ -15,11 +15,11 @@ const NAV = [
   { to: '/admin/import', label: 'Import', icon: UploadCloud },
   { to: '/admin/prices', label: 'Prices', icon: Tag },
   { to: '/admin/pricing-flags', label: 'Flag queue', icon: Flag },
-  { to: '/admin/api-logs', label: 'API logs', icon: ScrollText },
-  { to: '/admin/ai', label: 'AI & bots', icon: Bot },
-  { to: '/admin/reports', label: 'Reports', icon: BarChart3 },
+  { to: '/admin/reports', label: 'Reports', icon: BarChart3, soon: true },
+  { to: '/admin/api-logs', label: 'API logs', icon: ScrollText, soon: true },
+  { to: '/admin/ai', label: 'AI & bots', icon: Bot, soon: true },
   { to: '/admin/config', label: 'Settings', icon: Settings },
-];
+] as const;
 
 export default function AdminLayout() {
   const { user, signOut } = useAuth();
@@ -89,7 +89,7 @@ export default function AdminLayout() {
               <NavLink
                 key={l.to}
                 to={l.to}
-                end={l.end ?? false}
+                end={'end' in l ? l.end : false}
                 className={({ isActive }) =>
                   cn(
                     'inline-flex min-h-[42px] items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm transition-colors',
@@ -99,6 +99,9 @@ export default function AdminLayout() {
               >
                 <l.icon className="h-4 w-4" strokeWidth={2} />
                 {l.label}
+                {'soon' in l && l.soon && (
+                  <span className="ml-auto rounded-full bg-brand/10 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-brand">soon</span>
+                )}
               </NavLink>
             ))}
           </nav>

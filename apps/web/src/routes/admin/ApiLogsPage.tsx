@@ -1,5 +1,8 @@
+import { ScrollText } from 'lucide-react';
 import { useOpsStream } from '@/components/ops/useOpsStream';
 import { LogStream, Panel } from '@/components/ops/OpsPanels';
+import { useCatalogSource } from '@/lib/catalogSource';
+import { PreviewNotice } from '@/components/admin/PreviewNotice';
 import { AdminHeading, StatCard } from '@/components/admin/parts';
 import { SOURCE_LABELS } from '@/data/catalog';
 import { cn } from '@/lib/utils';
@@ -14,7 +17,23 @@ const WEBHOOKS: { source: string; event: string; code: number; ago: string }[] =
 ];
 
 export default function ApiLogsPage() {
+  const source = useCatalogSource();
   const { events } = useOpsStream();
+  if (source === 'real') {
+    return (
+      <PreviewNotice
+        title="API logs"
+        subtitle="Webhook deliveries and integration traffic."
+        icon={<ScrollText className="h-6 w-6" strokeWidth={1.75} />}
+        blurb="A live feed of webhook deliveries (Stripe, supplier feeds, integrations) with status codes, latency and retries. The integrations that produce this traffic are wired incrementally — the log view turns on with them in v1.1."
+        bullets={[
+          'Per-event status, latency and payload',
+          'Retry and replay a failed delivery',
+          'Filter by source and error state',
+        ]}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
