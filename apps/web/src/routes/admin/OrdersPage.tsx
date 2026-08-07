@@ -4,8 +4,18 @@ import { AdminHeading, Table, Td, OrderStatusChip } from '@/components/admin/par
 import type { OrderStatus } from '@/store';
 import { formatInt, formatUsd } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { useCatalogSource } from '@/lib/catalogSource';
+import { RealAdminOrders } from './RealOrders';
 
 const fmtDate = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+/** Source-aware admin order queue. Real mode is the live approve/reject queue;
+ * mock mode is the unchanged reserve-at-source demo table below. */
+export default function AdminOrdersPage() {
+  const source = useCatalogSource();
+  if (source === 'real') return <RealAdminOrders />;
+  return <MockAdminOrdersPage />;
+}
 
 const FILTERS: { key: OrderStatus | 'all'; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -15,7 +25,7 @@ const FILTERS: { key: OrderStatus | 'all'; label: string }[] = [
   { key: 'delivered', label: 'Delivered' },
 ];
 
-export default function AdminOrdersPage() {
+function MockAdminOrdersPage() {
   const { orders } = useAdminData();
   const [filter, setFilter] = useState<OrderStatus | 'all'>('all');
   const shown = filter === 'all' ? orders : orders.filter((o) => o.status === filter);

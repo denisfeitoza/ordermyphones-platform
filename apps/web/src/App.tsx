@@ -30,6 +30,7 @@ import SettingsPage from '@/routes/portal/SettingsPage';
 import DashboardPage from '@/routes/admin/DashboardPage';
 import AdminCustomersPage from '@/routes/admin/CustomersPage';
 import AdminOrdersPage from '@/routes/admin/OrdersPage';
+import ReconciliationPage from '@/routes/admin/ReconciliationPage';
 import InventoryPage from '@/routes/admin/InventoryPage';
 import ImportPage from '@/routes/admin/ImportPage';
 import PricesPage from '@/routes/admin/PricesPage';
@@ -63,6 +64,7 @@ export default function App() {
           <Route index element={<DashboardPage />} />
           <Route path="customers" element={<AdminCustomersPage />} />
           <Route path="orders" element={<AdminOrdersPage />} />
+          <Route path="reconciliation" element={<ReconciliationPage />} />
           <Route path="inventory" element={<InventoryPage />} />
           <Route path="import" element={<ImportPage />} />
           <Route path="prices" element={<PricesPage />} />
