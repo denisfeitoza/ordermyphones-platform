@@ -1,12 +1,22 @@
 import { useMemo, useState } from 'react';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { Search, SlidersHorizontal, X, LayoutGrid, Rows3 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRealCatalog } from '@/data/realCatalog';
 import { RealProductGrid } from './RealProductGrid';
+import { RealCatalogTable } from './RealCatalogTable';
 import { RealCatalogEmpty } from './RealCatalogEmpty';
 import { RealCatalogFilters, facetValueLabel } from './RealCatalogFilters';
 import { Button } from '@/components/ui/Button';
+import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n';
+
+type CatalogView = 'grid' | 'table';
+const VIEW_KEY = 'omp_catalog_view';
+
+function readView(): CatalogView {
+  if (typeof window === 'undefined') return 'grid';
+  return window.localStorage.getItem(VIEW_KEY) === 'table' ? 'table' : 'grid';
+}
 import {
   computeFacetedCatalog,
   emptyFacetState,
@@ -51,6 +61,12 @@ export function RealCatalogView() {
   // renders a stale over-large page for a frame.
   const [visibleCount, setVisibleCount] = useState(WINDOW);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [view, setView] = useState<CatalogView>(readView);
+
+  function selectView(next: CatalogView) {
+    setView(next);
+    if (typeof window !== 'undefined') window.localStorage.setItem(VIEW_KEY, next);
+  }
 
   const { filtered, counts } = useMemo(
     () => computeFacetedCatalog(real.items, facets, q, sort),
@@ -115,6 +131,26 @@ export function RealCatalogView() {
               className="h-9 w-40 rounded-full border border-border bg-background pl-9 pr-3 text-sm outline-none transition-colors focus:border-brand sm:w-64"
             />
           </label>
+          <div className="hidden items-center rounded-full border border-border p-0.5 sm:inline-flex" role="group" aria-label={t('View')}>
+            <button
+              type="button"
+              onClick={() => selectView('grid')}
+              className={cn('grid h-8 w-8 place-items-center rounded-full transition-colors', view === 'grid' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground')}
+              aria-label={t('Grid view')}
+              aria-pressed={view === 'grid'}
+            >
+              <LayoutGrid className="h-4 w-4" strokeWidth={2} />
+            </button>
+            <button
+              type="button"
+              onClick={() => selectView('table')}
+              className={cn('grid h-8 w-8 place-items-center rounded-full transition-colors', view === 'table' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground')}
+              aria-label={t('Table view')}
+              aria-pressed={view === 'table'}
+            >
+              <Rows3 className="h-4 w-4" strokeWidth={2} />
+            </button>
+          </div>
           <label className="relative">
             <span className="sr-only">{t('Sort by')}</span>
             <select
@@ -183,7 +219,7 @@ export function RealCatalogView() {
             </div>
           ) : filtered.length > 0 ? (
             <>
-              <RealProductGrid items={visibleItems} />
+              {view === 'table' ? <RealCatalogTable items={visibleItems} /> : <RealProductGrid items={visibleItems} />}
               {hasMore && (
                 <div className="mt-8 flex flex-col items-center gap-3">
                   <p className="text-sm text-muted-foreground">

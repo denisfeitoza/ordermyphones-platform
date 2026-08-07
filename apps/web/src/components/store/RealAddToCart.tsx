@@ -5,22 +5,35 @@ import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
 
+export type AddToCartLayout = 'button' | 'stepper' | 'row';
+
+/** The single source of truth for "can this account order this SKU": a
+ * signed-in customer with a visible tier price. Admin/staff have no tier and
+ * place no orders (server enforces this in place_order; the UI just hides the
+ * affordance). Exported so the table view can decide, without drift, whether
+ * to render the order control or a "View details" fallback. */
+export function canOrder(signedIn: boolean, role: string | null | undefined, priceCents: number | null): boolean {
+  return signedIn && role === 'customer' && priceCents !== null;
+}
+
 /**
  * Real-mode add-to-cart. Only a signed-in CUSTOMER with a visible tier price
- * can order — admin/staff have no tier and place no orders (server enforces
- * this in place_order; this just hides the affordance). No quantity is
- * blocked here: ordering above live stock is legal (D5 — the order holds no
- * stock; approval deducts what's available and reconciles the rest).
+ * can order (see canOrder). No quantity is blocked here: ordering above live
+ * stock is legal (D5 — the order holds no stock; approval deducts what's
+ * available and reconciles the rest). Three layouts: `button` (card),
+ * `stepper` (product detail, large), `row` (dense table, compact).
  */
 export function RealAddToCart({
   variantId,
   priceCents,
   stepper = false,
+  layout,
   className,
 }: {
   variantId: string;
   priceCents: number | null;
   stepper?: boolean;
+  layout?: AddToCartLayout;
   className?: string;
 }) {
   const { t } = useI18n();
@@ -29,16 +42,45 @@ export function RealAddToCart({
   const [qty, setQty] = useState(1);
   const [justAdded, setJustAdded] = useState(false);
 
-  // Not orderable: signed out, not a customer, or no price for this tier.
-  if (!signedIn || role !== 'customer' || priceCents === null) return null;
+  const mode: AddToCartLayout = layout ?? (stepper ? 'stepper' : 'button');
+  const withQty = mode !== 'button';
+
+  if (!canOrder(signedIn, role, priceCents)) return null;
 
   function addToCart() {
-    add(variantId, stepper ? qty : 1);
+    add(variantId, withQty ? qty : 1);
     setJustAdded(true);
     setTimeout(() => setJustAdded(false), 1400);
   }
 
-  if (!stepper) {
+  // Compact inline control for dense table rows: small stepper + icon add.
+  if (mode === 'row') {
+    return (
+      <div className={cn('flex items-center gap-1.5', className)}>
+        <div className="inline-flex items-center rounded-full border border-border">
+          <button type="button" onClick={() => setQty((n) => Math.max(1, n - 1))} className="grid h-9 w-9 place-items-center rounded-l-full hover:bg-muted" aria-label={t('Decrease')}>
+            <Minus className="h-3.5 w-3.5" strokeWidth={2} />
+          </button>
+          <input
+            type="number"
+            min={1}
+            value={qty}
+            onChange={(e) => setQty(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
+            className="h-9 w-11 border-x border-border bg-transparent text-center font-mono text-sm tabular-nums outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+            aria-label={t('Quantity')}
+          />
+          <button type="button" onClick={() => setQty((n) => n + 1)} className="grid h-9 w-9 place-items-center rounded-r-full hover:bg-muted" aria-label={t('Increase')}>
+            <Plus className="h-3.5 w-3.5" strokeWidth={2} />
+          </button>
+        </div>
+        <Button variant="primary" size="sm" className="h-9 px-3" onClick={addToCart} aria-label={t('Add to cart')}>
+          {justAdded ? <Check className="h-4 w-4" strokeWidth={2.5} /> : <ShoppingBag className="h-4 w-4" strokeWidth={2} />}
+        </Button>
+      </div>
+    );
+  }
+
+  if (mode === 'button') {
     return (
       <Button variant="primary" size="md" className={cn('w-full', className)} onClick={addToCart}>
         {justAdded ? <Check className="h-4 w-4" strokeWidth={2.5} /> : <ShoppingBag className="h-4 w-4" strokeWidth={2} />}
