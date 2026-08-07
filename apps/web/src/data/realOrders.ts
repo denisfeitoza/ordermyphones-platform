@@ -31,6 +31,7 @@ export interface RealOrder {
   decisionReason: string | null;
   notes: string | null;
   shippingAddress: { street?: string; city?: string; state?: string; zip?: string } | null;
+  isTest: boolean;
   lines: RealOrderLine[];
 }
 
@@ -44,6 +45,7 @@ interface RawOrderRow {
   decision_reason: string | null;
   notes: string | null;
   shipping_address: RealOrder['shippingAddress'];
+  is_test: boolean;
 }
 
 interface RawItemRow {
@@ -86,7 +88,7 @@ function mapLine(r: RawItemRow): RealOrderLine {
 async function fetchMyOrders(): Promise<RealOrder[]> {
   const { data: orders, error } = await supabase
     .from('orders')
-    .select('id, status, tier_at_order, subtotal_cents, placed_at, decided_at, decision_reason, notes, shipping_address')
+    .select('id, status, tier_at_order, subtotal_cents, placed_at, decided_at, decision_reason, notes, shipping_address, is_test')
     .order('placed_at', { ascending: false });
   if (error) throw new Error(error.message);
   const rows = (orders ?? []) as RawOrderRow[];
@@ -115,6 +117,7 @@ async function fetchMyOrders(): Promise<RealOrder[]> {
     decisionReason: o.decision_reason,
     notes: o.notes,
     shippingAddress: o.shipping_address,
+    isTest: o.is_test ?? false,
     lines: byOrder.get(o.id) ?? [],
   }));
 }

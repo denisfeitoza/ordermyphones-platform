@@ -1,12 +1,35 @@
 import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ShoppingBag, PackageCheck, Clock, XCircle, AlertTriangle, Ban } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, PackageCheck, Clock, XCircle, AlertTriangle, Ban, FileDown, FileText } from 'lucide-react';
 import { useMyOrders, type RealOrder, type RealOrderLine, type RealOrderStatus } from '@/data/realOrders';
 import { PageHeading } from '@/components/portal/parts';
-import { buttonVariants } from '@/components/ui/Button';
+import { Button, buttonVariants } from '@/components/ui/Button';
+import { exportDocCsv, exportDocPdf, type ExportDoc } from '@/lib/export';
 import { formatUsd, formatInt } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n';
+
+/** Build the printable/export doc for a real order. isTest carries through so
+ *  a rehearsal order is stamped TEST on the PDF/CSV (TEST-READY-V1 §4). */
+function realOrderToDoc(o: RealOrder): ExportDoc {
+  return {
+    title: 'Order',
+    reference: o.id.slice(0, 8).toUpperCase(),
+    business: '',
+    tierLabel: o.tier.charAt(0).toUpperCase() + o.tier.slice(1),
+    dateLabel: fmtDate(o.placedAt),
+    lines: o.lines.map((l) => ({
+      model: l.model,
+      variant: `${l.capacity} · ${l.lockStatus === 'unlocked' ? 'Unlocked' : `${l.carrier} Locked`}`,
+      qty: l.qtyRequested,
+      unitPriceCents: l.unitPriceCents,
+      lineTotalCents: l.lineTotalCents,
+    })),
+    subtotalCents: o.subtotalCents,
+    savingsCents: 0,
+    isTest: o.isTest,
+  };
+}
 
 const STATUS: Record<RealOrderStatus, { label: string; cls: string; icon: typeof Clock }> = {
   pending: { label: 'Pending approval', cls: 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300', icon: Clock },
@@ -148,7 +171,17 @@ export function RealOrderDetail() {
             {t('Placed')} {fmtDate(order.placedAt)} · {units(order)} {units(order) === 1 ? t('unit') : t('units')}
           </p>
         </div>
-        <StatusPill status={order.status} />
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusPill status={order.status} />
+          <Button variant="outline" size="sm" onClick={() => void exportDocPdf(realOrderToDoc(order))}>
+            <FileDown className="h-4 w-4" strokeWidth={2} aria-hidden />
+            {t('PDF')}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => exportDocCsv(realOrderToDoc(order))}>
+            <FileText className="h-4 w-4" strokeWidth={2} aria-hidden />
+            {t('CSV')}
+          </Button>
+        </div>
       </div>
 
       {order.status === 'rejected' && order.decisionReason && (

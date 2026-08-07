@@ -19,6 +19,10 @@ export interface ExportDoc {
   lines: ExportLine[];
   subtotalCents: number;
   savingsCents: number;
+  /** True for an is_test order — stamps a TEST watermark / note so a rehearsal
+   *  order can never be mistaken for a real one on a picking sheet or export
+   *  (TEST-READY-V1 §4). */
+  isTest?: boolean;
 }
 
 const BRAND: [number, number, number] = [196, 42, 237]; // logo magenta · #C42AED
@@ -39,6 +43,7 @@ function downloadBlob(filename: string, content: string, type: string) {
 export function exportDocCsv(d: ExportDoc) {
   const esc = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
   const rows: (string | number)[][] = [
+    ...(d.isTest ? [['*** TEST DATA — NOT FOR FULFILLMENT ***'] as (string | number)[], [] as (string | number)[]] : []),
     ['Reference', d.reference],
     ['Business', d.business],
     ['Pricing tier', d.tierLabel],
@@ -118,7 +123,24 @@ export async function exportDocPdf(d: ExportDoc) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(150, 150, 160);
-  doc.text('Mockup demo · stock reserved at source at order time · not a tax invoice', 40, H - 30);
+  const footer = d.isTest
+    ? 'TEST DATA — not a real order · do not fulfill · not a tax invoice'
+    : 'Stock reserved at source at order time · not a tax invoice';
+  doc.text(footer, 40, H - 30);
+
+  // Diagonal TEST watermark across the page, drawn last (on top) at low opacity
+  // so it reads without obscuring the line items. GState is guarded — older
+  // jsPDF builds without it still emit the (opaque) watermark rather than throw.
+  if (d.isTest) {
+    const withGState = doc as unknown as { GState?: new (o: { opacity: number }) => unknown; setGState?: (g: unknown) => void };
+    const canDim = typeof withGState.GState === 'function' && typeof withGState.setGState === 'function';
+    if (canDim) withGState.setGState!(new withGState.GState!({ opacity: 0.1 }));
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(90);
+    doc.setTextColor(220, 38, 38);
+    doc.text('TEST', W / 2, H / 2, { align: 'center', angle: 32 });
+    if (canDim) withGState.setGState!(new withGState.GState!({ opacity: 1 }));
+  }
 
   doc.save(`${d.reference}.pdf`);
 }

@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
 import { AppProviders } from '@/store';
+import TestEnvBadge from '@/components/layout/TestEnvBadge';
 import RootLayout from '@/components/layout/RootLayout';
 import PortalLayout from '@/components/layout/PortalLayout';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -54,6 +55,7 @@ import ViewAsPage from '@/routes/admin/ViewAsPage';
 export default function App() {
   return (
     <AppProviders>
+      <TestEnvBadge />
       <Routes>
         <Route path="ops" element={<OpsPage />} />
 
