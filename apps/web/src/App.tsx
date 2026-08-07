@@ -38,6 +38,18 @@ import PricingFlagsPage from '@/routes/admin/PricingFlagsPage';
 import ApiLogsPage from '@/routes/admin/ApiLogsPage';
 import AiBotsPage from '@/routes/admin/AiBotsPage';
 import ReportsPage from '@/routes/admin/ReportsPage';
+import ConfigLayout from '@/routes/admin/config/ConfigLayout';
+import CatalogTab from '@/routes/admin/config/CatalogTab';
+import TiersTab from '@/routes/admin/config/TiersTab';
+import PricingTab from '@/routes/admin/config/PricingTab';
+import QuantityRulesTab from '@/routes/admin/config/QuantityRulesTab';
+import LocationsTab from '@/routes/admin/config/LocationsTab';
+import GradesTab from '@/routes/admin/config/GradesTab';
+import ImportDictTab from '@/routes/admin/config/ImportDictTab';
+import UsersTab from '@/routes/admin/config/UsersTab';
+import EnforcementTab from '@/routes/admin/config/EnforcementTab';
+import AuditTab from '@/routes/admin/config/AuditTab';
+import ViewAsPage from '@/routes/admin/ViewAsPage';
 
 export default function App() {
   return (
@@ -72,7 +84,35 @@ export default function App() {
           <Route path="api-logs" element={<ApiLogsPage />} />
           <Route path="ai" element={<AiBotsPage />} />
           <Route path="reports" element={<ReportsPage />} />
+          <Route path="config" element={<ConfigLayout />}>
+            <Route index element={<CatalogTab />} />
+            <Route path="tiers" element={<TiersTab />} />
+            <Route path="pricing" element={<PricingTab />} />
+            <Route path="quantity" element={<QuantityRulesTab />} />
+            <Route path="locations" element={<LocationsTab />} />
+            <Route path="grades" element={<GradesTab />} />
+            <Route path="import" element={<ImportDictTab />} />
+            <Route path="users" element={<UsersTab />} />
+            <Route path="enforcement" element={<EnforcementTab />} />
+            <Route path="audit" element={<AuditTab />} />
+          </Route>
         </Route>
+
+        {/*
+          The read-only "view as customer/staff" lens (ADMN-02). Admin-only —
+          the admin's own rights fetch the data via SECURITY DEFINER read RPCs;
+          there is NO session swap and NO impersonation token. It renders full
+          screen (not inside AdminLayout) with a persistent read-only banner,
+          and every entry is audited to admin_audit.
+        */}
+        <Route
+          path="admin/view-as/:userId"
+          element={
+            <RequireAuth roles={['admin']}>
+              <ViewAsPage />
+            </RequireAuth>
+          }
+        />
 
         <Route element={<RootLayout />}>
           <Route index element={<HomePage />} />
