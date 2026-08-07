@@ -150,3 +150,9 @@ new pricingSettings validators).
    read-only portal for a customer; for a staff target it shows a read-only capabilities summary. A
    full staff-console lens is a follow-up. (`set_user_role` guards against self-demotion and demoting
    the last admin.)
+6. **`catalog_qty_display` and `catalog_featured` are written but not yet read.** The Catalog tab
+   persists the exact-vs-ranges toggle and the Featured SKU/model pins to `app_settings`, but no
+   storefront reader consumes them yet (the per-location breakdown still renders exact qty; Featured
+   sort still uses the default order). They are the single source of truth those surfaces will read
+   when wired — a follow-up, same posture as items 4/5. Not a dead toggle by intent; just unwired on
+   the read side this phase.
