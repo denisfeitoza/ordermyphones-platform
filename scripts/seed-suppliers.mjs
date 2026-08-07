@@ -11,9 +11,16 @@
 // 1. Create scripts/.suppliers.local.json (gitignored — see .gitignore),
 //    shaped like:
 //    [
-//      { "code": "source-1", "legal_name": "...", "anon_label": "Source A", "country": "US", "kind": "reverse_logistics" },
-//      { "code": "source-2", "legal_name": "...", "anon_label": "Source B", "country": "US", "kind": "wholesale" }
+//      { "code": "source-1", "legal_name": "...", "anon_label": "Source A", "country": "US", "kind": "reverse_logistics", "vendor_code": "..." },
+//      { "code": "source-2", "legal_name": "...", "anon_label": "Source B", "country": "US", "kind": "wholesale", "vendor_code": null }
 //    ]
+//
+//    `vendor_code` (Phase 2 Plan 02-01, added to public.suppliers by
+//    20260807130000_import_tables.sql) keys vendor_grade_map /
+//    grade_classification_queue for imports — e.g. the real source-1 value.
+//    Optional per row (omit or set null for a supplier with no vendor-grade
+//    mapping yet); read from the local JSON exactly like legal_name/code,
+//    never hardcoded in this committed file.
 //
 // 2. Run with a Supabase Management API personal access token (the same
 //    one the linked `supabase` CLI stores in the macOS Keychain under
@@ -70,20 +77,21 @@ const values = suppliers
     (s) =>
       `(${esc(s.code)}, ${esc(s.legal_name)}, ${esc(s.anon_label)}, ${esc(s.country)}, ${esc(
         s.kind
-      )}, true)`
+      )}, true, ${esc(s.vendor_code ?? null)})`
   )
   .join(',\n  ');
 
 const query = `
-insert into public.suppliers (code, legal_name, anon_label, country, kind, active)
+insert into public.suppliers (code, legal_name, anon_label, country, kind, active, vendor_code)
 values
   ${values}
 on conflict (code) do update
-  set legal_name = excluded.legal_name,
+  set legal_name  = excluded.legal_name,
       anon_label  = excluded.anon_label,
       country     = excluded.country,
       kind        = excluded.kind,
-      active      = excluded.active;
+      active      = excluded.active,
+      vendor_code = excluded.vendor_code;
 `;
 
 const res = await fetch(`https://api.supabase.com/v1/projects/${PROJECT_REF}/database/query`, {
