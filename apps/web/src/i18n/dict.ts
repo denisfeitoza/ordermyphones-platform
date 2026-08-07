@@ -79,6 +79,9 @@ export const PT: Record<string, string> = {
   'Close filters': 'Fechar filtros',
   'Show': 'Mostrar',
   'results': 'resultados',
+  'Load more': 'Ver mais',
+  'Showing': 'Mostrando',
+  'of': 'de',
   'Phones': 'Celulares',
   // Product card / page
   'Remove from wishlist': 'Remover da lista de desejos',
@@ -479,6 +482,9 @@ export const ES: Record<string, string> = {
   'Close filters': 'Cerrar filtros',
   'Show': 'Mostrar',
   'results': 'resultados',
+  'Load more': 'Ver más',
+  'Showing': 'Mostrando',
+  'of': 'de',
   'Phones': 'Celulares',
   // Product card / page
   'Remove from wishlist': 'Quitar de la lista de deseos',
