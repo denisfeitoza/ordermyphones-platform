@@ -460,3 +460,201 @@ end $$;
 -- on every suite execution because it mutates view options mid-batch, which
 -- is a heavier and riskier operation than a read-only assertion belongs to
 -- be in a suite that other plans append to and run routinely.
+
+------------------------------------------------------------------
+-- SECTION 4 — pricing tier gate + order isolation (plan 01-09; PRICE-01's
+-- server-side tier invariant, T-01-50 through T-01-55). Self-provisioning
+-- throughout — mirrors Section 2a/3's shape (fixtures created as table
+-- owner before dropping to `authenticated`, current_user guard on every
+-- claims switch, everything rolled back) rather than depending on 01-06's
+-- seeded test users, per this plan's explicit instruction.
+--
+-- Deviation from the plan's literal narrative, recorded here and in
+-- 01-09-SUMMARY.md: the plan text describes "a variant plus four prices
+-- rows... [plus] a fifth row with visible = false for the consumer tier"
+-- all on the SAME variant, then later asserts "count(*) from prices where
+-- variant_id = v returns 5". public.prices carries `unique (variant_id,
+-- tier)` (Task 1, locked) — a second consumer-tier row on the same variant
+-- is a constraint violation, not a valid fixture, so five rows cannot
+-- co-exist on one variant_id. Section 4a below uses a second variant
+-- (v_hidden) for the hidden row instead; this is the schema-consistent
+-- form of the same assertion ("a hidden price never reaches a customer,
+-- even at their own tier, even when a real visible price exists for that
+-- tier elsewhere") and the staff positive control checks both variants.
+------------------------------------------------------------------
+
+------------------------------------------------------------------
+-- SECTION 4a — per-tier price gate (PRICE-01) + staff positive control.
+------------------------------------------------------------------
+begin;
+do $$
+declare
+  pid uuid; v uuid; v_hidden uuid;
+  consumer_id  uuid := gen_random_uuid();
+  wholesale_id uuid := gen_random_uuid();
+  admin_id     uuid := gen_random_uuid();
+  n int;
+  seen_tier public.customer_tier;
+begin
+  -- Fixtures, as table owner (bypasses RLS) before dropping to authenticated.
+  insert into public.products (make, model, model_number, category)
+    values ('Section4Make', 'Section4Model', 'S4-001', 'phones') returning id into pid;
+
+  insert into public.product_variants
+    (product_id, capacity, color, carrier, carrier_raw, lock_status, grade, grade_scale, sku)
+  values (pid, '256GB', 'Black', 'ATT', 'AT&T', 'unlocked', 'DLS B', 'DLS', 'S4-001-256-BLK-ATT-UNL-DLSB')
+  returning id into v;
+
+  insert into public.product_variants
+    (product_id, capacity, color, carrier, carrier_raw, lock_status, grade, grade_scale, sku)
+  values (pid, '128GB', 'Black', 'ATT', 'AT&T', 'unlocked', 'DLS B', 'DLS', 'S4-002-128-BLK-ATT-UNL-DLSB')
+  returning id into v_hidden;
+
+  insert into public.prices (variant_id, tier, price_cents, visible) values
+    (v, 'consumer',    29900, true),
+    (v, 'retailer',    27900, true),
+    (v, 'wholesale',   24900, true),
+    (v, 'distributor', 22900, true);
+
+  -- The hidden row — see the deviation note above for why this lives on a
+  -- second variant rather than a second row on v.
+  insert into public.prices (variant_id, tier, price_cents, visible) values
+    (v_hidden, 'consumer', 19900, false);
+
+  insert into auth.users (id, email) values (consumer_id,  'section4-consumer@example.invalid');
+  insert into auth.users (id, email) values (wholesale_id, 'section4-wholesale@example.invalid');
+  insert into auth.users (id, email) values (admin_id,     'section4-admin@example.invalid');
+  update public.profiles set tier = 'consumer'  where id = consumer_id;
+  update public.profiles set tier = 'wholesale' where id = wholesale_id;
+  update public.profiles set role = 'admin'     where id = admin_id;
+
+  set local role authenticated;
+
+  -- CONSUMER: exactly one visible row on v, and it is the consumer-tier row.
+  perform set_config('request.jwt.claims', json_build_object('sub', consumer_id, 'role','authenticated')::text, true);
+  if current_user <> 'authenticated' then raise exception 'HARNESS BROKEN: current_user is %', current_user; end if;
+
+  select count(*) into n from public.prices where variant_id = v;
+  if n <> 1 then raise exception 'FAIL(4a): consumer saw % price rows on v, expected 1', n; end if;
+
+  select tier into seen_tier from public.prices where variant_id = v;
+  if seen_tier is distinct from 'consumer' then
+    raise exception 'FAIL(4a): consumer''s one visible row was tier %, expected consumer', seen_tier;
+  end if;
+
+  -- Deliberate attempt to widen the query to a different tier — the
+  -- assertion that a customer cannot read another tier's price by asking
+  -- for it (PRICE-01: "never from a URL param or cookie").
+  select count(*) into n from public.prices where variant_id = v and tier = 'distributor';
+  if n <> 0 then raise exception 'FAIL(4a): consumer read the distributor-tier price by requesting it (% rows)', n; end if;
+
+  -- A hidden row at the consumer's own tier must still not appear.
+  select count(*) into n from public.prices where variant_id = v_hidden;
+  if n <> 0 then raise exception 'FAIL(4a): consumer read a visible=false price (% rows)', n; end if;
+
+  -- WHOLESALE: the gate discriminates, it does not merely restrict
+  -- everyone to one hardcoded tier.
+  perform set_config('request.jwt.claims', json_build_object('sub', wholesale_id, 'role','authenticated')::text, true);
+  select count(*) into n from public.prices where variant_id = v;
+  if n <> 1 then raise exception 'FAIL(4a): wholesale saw % price rows on v, expected 1', n; end if;
+  select tier into seen_tier from public.prices where variant_id = v;
+  if seen_tier is distinct from 'wholesale' then
+    raise exception 'FAIL(4a): wholesale''s one visible row was tier %, expected wholesale', seen_tier;
+  end if;
+
+  -- STAFF POSITIVE CONTROL (plan's Section 4c, folded into this same
+  -- transaction since it depends on the fixtures above): an admin session
+  -- sees strictly more than any customer session — all four tier rows on
+  -- v, plus the hidden row on v_hidden that no customer session can reach.
+  perform set_config('request.jwt.claims', json_build_object('sub', admin_id, 'role','authenticated')::text, true);
+  select count(*) into n from public.prices where variant_id = v;
+  if n <> 4 then raise exception 'FAIL(4c): admin saw % rows on v, expected 4 (all tiers) — staff policy missing/misconfigured', n; end if;
+  select count(*) into n from public.prices where variant_id = v_hidden;
+  if n <> 1 then raise exception 'FAIL(4c): admin could not see the hidden price row — staff policy missing/misconfigured'; end if;
+end $$;
+rollback;
+
+------------------------------------------------------------------
+-- SECTION 4b — cross-customer order isolation, self-approval negative
+-- control, and staff positive control (T-01-51, T-01-52).
+------------------------------------------------------------------
+begin;
+do $$
+declare
+  pid uuid; v uuid;
+  a_id     uuid := gen_random_uuid();  -- consumer A
+  b_id     uuid := gen_random_uuid();  -- retailer B
+  admin_id uuid := gen_random_uuid();
+  order_a uuid; order_b uuid;
+  n int;
+  status_after public.order_status;
+begin
+  insert into public.products (make, model, model_number, category)
+    values ('Section4bMake', 'Section4bModel', 'S4B-001', 'phones') returning id into pid;
+
+  insert into public.product_variants
+    (product_id, capacity, color, carrier, carrier_raw, lock_status, grade, grade_scale, sku)
+  values (pid, '64GB', 'Black', 'ATT', 'AT&T', 'unlocked', 'DLS B', 'DLS', 'S4B-001-64-BLK-ATT-UNL-DLSB')
+  returning id into v;
+
+  insert into auth.users (id, email) values (a_id,     'section4b-consumer@example.invalid');
+  insert into auth.users (id, email) values (b_id,     'section4b-retailer@example.invalid');
+  insert into auth.users (id, email) values (admin_id, 'section4b-admin@example.invalid');
+  update public.profiles set tier = 'consumer' where id = a_id;
+  update public.profiles set tier = 'retailer'  where id = b_id;
+  update public.profiles set role = 'admin'     where id = admin_id;
+
+  -- Fixtures: one pending order per customer, as table owner (bypasses RLS).
+  insert into public.orders (customer_id, tier_at_order) values (a_id, 'consumer') returning id into order_a;
+  insert into public.orders (customer_id, tier_at_order) values (b_id, 'retailer')  returning id into order_b;
+  insert into public.order_items (order_id, variant_id, qty_requested, unit_price_cents, tier)
+    values (order_a, v, 2, 29900, 'consumer');
+  insert into public.order_items (order_id, variant_id, qty_requested, unit_price_cents, tier)
+    values (order_b, v, 20, 24900, 'retailer');
+
+  set local role authenticated;
+  perform set_config('request.jwt.claims', json_build_object('sub', a_id, 'role','authenticated')::text, true);
+  if current_user <> 'authenticated' then raise exception 'HARNESS BROKEN: current_user is %', current_user; end if;
+
+  -- Own order readable.
+  select count(*) into n from public.orders where id = order_a;
+  if n <> 1 then raise exception 'FAIL(4b): A could not read its own order'; end if;
+
+  -- B's order not readable.
+  select count(*) into n from public.orders where id = order_b;
+  if n <> 0 then raise exception 'FAIL(4b): A read B''s order (%)', n; end if;
+
+  -- B's order_items not readable.
+  select count(*) into n from public.order_items where order_id = order_b;
+  if n <> 0 then raise exception 'FAIL(4b): A read B''s order_items (%)', n; end if;
+
+  -- Negative write: A cannot approve its own order. A filtered UPDATE
+  -- affects zero rows and raises nothing, so assert on the resulting
+  -- STATE (still 'pending'), never on catching an exception alone.
+  begin
+    update public.orders set status = 'approved' where id = order_a;
+  exception when others then
+    null;
+  end;
+  select status into status_after from public.orders where id = order_a;
+  if status_after is distinct from 'pending' then
+    raise exception 'FAIL(4b): A''s order status changed to % via a self-issued UPDATE — customer self-approval succeeded', status_after;
+  end if;
+
+  -- reconciliation_queue and audit_log: zero rows for a customer session.
+  select count(*) into n from public.reconciliation_queue;
+  if n <> 0 then raise exception 'FAIL(4b): customer read % reconciliation_queue rows', n; end if;
+  select count(*) into n from public.audit_log;
+  if n <> 0 then raise exception 'FAIL(4b): customer read % audit_log rows', n; end if;
+
+  -- STAFF POSITIVE CONTROL (plan's Section 4c, folded in here): an admin
+  -- session sees both orders and both order_items rows without a
+  -- permission error — proving staff visibility is genuinely broader, not
+  -- that the policies simply block everyone.
+  perform set_config('request.jwt.claims', json_build_object('sub', admin_id, 'role','authenticated')::text, true);
+  select count(*) into n from public.orders where id in (order_a, order_b);
+  if n <> 2 then raise exception 'FAIL(4c): admin saw % of 2 orders — staff policy missing/misconfigured', n; end if;
+  select count(*) into n from public.order_items where order_id in (order_a, order_b);
+  if n <> 2 then raise exception 'FAIL(4c): admin saw % of 2 order_items — staff policy missing/misconfigured', n; end if;
+end $$;
+rollback;
