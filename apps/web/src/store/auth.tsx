@@ -1,62 +1,117 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import type { Session } from '@supabase/supabase-js';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import type { AppRole } from '@/lib/roleRoutes';
 
 /**
- * Mock session for the demo — no backend, no real credentials. Any email "signs
- * in" to the single seeded business account (Downtown Mobile LLC, owned by
- * AccountProvider). Persisted to localStorage so the gate survives reloads.
+ * Real Supabase Auth session + a TanStack-Query-backed `profiles` fetch for
+ * role/tier. Replaces the old browser-storage mock entirely — there is no
+ * fallback path, a wrong password never signs anyone in.
  */
+export interface Profile {
+  id: string;
+  email: string;
+  role: AppRole;
+  tier: 'consumer' | 'retailer' | 'wholesale' | 'distributor' | null;
+  is_test: boolean;
+  display_name: string | null;
+}
+
 export interface AuthUser {
+  id: string;
   email: string;
 }
 
 interface AuthContextValue {
+  session: Session | null;
   user: AuthUser | null;
+  profile: Profile | null;
+  role: AppRole | null;
+  loading: boolean;
   signedIn: boolean;
-  signIn: (email: string) => void;
-  signOut: () => void;
+  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signOut: () => Promise<void>;
 }
 
-const STORAGE_KEY = 'omp_auth_v1';
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function loadUser(): AuthUser | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as AuthUser;
-      if (parsed && typeof parsed.email === 'string') return parsed;
-    }
-  } catch {
-    // ignore malformed storage
-  }
-  return null;
+/** Maps GoTrue's raw error message to a single generic string — never surfaced verbatim,
+ *  so a failed sign-in cannot be used as an account-existence oracle (T-01-43). */
+function toGenericSignInError(): string {
+  return 'Email or password is incorrect';
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(() => loadUser());
+  const [session, setSession] = useState<Session | null | undefined>(undefined); // undefined = still loading
+  const queryClient = useQueryClient();
 
-  const signIn = useCallback((email: string) => {
-    const next: AuthUser = { email: email.trim() || 'ops@downtownmobile.co' };
-    setUser(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      // storage may be unavailable (private mode) — session still holds in memory
-    }
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+      // SYNCHRONOUS ONLY — never await inside this callback (Pitfall 4 / T-01-46):
+      // the client holds an internal lock while dispatching it, and an awaited
+      // Supabase call here can deadlock the auth client.
+      setSession(s);
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    });
+
+    return () => sub.subscription.unsubscribe();
+  }, [queryClient]);
+
+  const profileQuery = useQuery({
+    queryKey: ['profile', session?.user.id],
+    enabled: !!session?.user.id,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id,email,role,tier,is_test,display_name')
+        .eq('id', session!.user.id)
+        .single();
+      if (error) throw error;
+      return data as Profile;
+    },
+  });
+
+  // `undefined` = getSession() hasn't resolved yet; `null` = resolved, no session.
+  // Collapsing those two into one nullable value is what causes the refresh flicker (Pitfall 3).
+  const loading = session === undefined || (!!session && profileQuery.isPending);
+
+  const signIn = useCallback(async (email: string, password: string): Promise<{ error: string | null }> => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error: toGenericSignInError() };
+    return { error: null };
   }, []);
 
-  const signOut = useCallback(() => {
-    setUser(null);
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // non-fatal
-    }
-  }, []);
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
+    // remove, not invalidate — a subsequent different user must never briefly
+    // render the previous user's cached profile (T-01-47).
+    queryClient.removeQueries({ queryKey: ['profile'] });
+  }, [queryClient]);
+
+  const user: AuthUser | null = session ? { id: session.user.id, email: session.user.email ?? '' } : null;
+
+  // A session whose profile row failed to load (e.g. missing row) is a broken
+  // account, not a permissive one — expose no profile/role so RequireAuth
+  // bounces to sign-in rather than trusting an unknown role (T-01-48).
+  const profile = profileQuery.isError ? null : (profileQuery.data ?? null);
+  const role = profile?.role ?? null;
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, signedIn: user !== null, signIn, signOut }),
-    [user, signIn, signOut],
+    () => ({
+      session: session ?? null,
+      user,
+      profile,
+      role,
+      loading,
+      signedIn: !!session,
+      signIn,
+      signOut,
+    }),
+    [session, user, profile, role, loading, signIn, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
