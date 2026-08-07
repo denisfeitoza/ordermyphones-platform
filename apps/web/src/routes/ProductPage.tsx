@@ -10,11 +10,53 @@ import { Stars } from '@/components/ui/Stars';
 import { TierBadge } from '@/components/store/TierBadge';
 import { PulseDot } from '@/components/store/SyncHeartbeat';
 import { ProductGrid } from '@/components/store/ProductGrid';
+import { RealProductDetail } from '@/components/store/RealProductDetail';
 import { formatInt, formatUsd } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n';
+import { useCatalogSource } from '@/lib/catalogSource';
+import { useRealCatalog } from '@/data/realCatalog';
 
 export default function ProductPage() {
+  const source = useCatalogSource();
+  if (source === 'real') return <RealProductPage />;
+  return <MockProductPage />;
+}
+
+/** Real-mode product detail: looks up the SKU (the real-mode "slug") within
+ * the already-fetched, React-Query-cached catalog listing rather than a
+ * second dedicated fetch — the list is small enough per page load and this
+ * avoids a second query key / loading state to keep in sync with the grid. */
+function RealProductPage() {
+  const { t } = useI18n();
+  const { slug } = useParams<{ slug: string }>();
+  const real = useRealCatalog();
+  const item = real.items.find((i) => i.sku === slug);
+  const related = useMemo(
+    () => (item ? real.items.filter((i) => i.make === item.make && i.model === item.model && i.sku !== item.sku).slice(0, 3) : []),
+    [real.items, item],
+  );
+
+  if (real.isLoading) {
+    return <div className="container py-24 text-center text-sm text-muted-foreground">{t('Loading…')}</div>;
+  }
+
+  if (!item) {
+    return (
+      <div className="container flex flex-col items-center gap-4 py-24 text-center">
+        <h1 className="font-display text-2xl font-semibold">{t('Phone not found')}</h1>
+        <p className="text-muted-foreground">{t('That model isn’t in the catalog.')}</p>
+        <Link to="/catalog" className="text-sm font-medium text-brand hover:underline">
+          {t('Back to catalog')}
+        </Link>
+      </div>
+    );
+  }
+
+  return <RealProductDetail item={item} related={related} />;
+}
+
+function MockProductPage() {
   const { t } = useI18n();
   const { slug } = useParams<{ slug: string }>();
   const item = slug ? getItemBySlug(slug) : undefined;

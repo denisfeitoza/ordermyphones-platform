@@ -1,11 +1,13 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { PackageSearch, UploadCloud } from 'lucide-react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Download, PackageSearch, UploadCloud } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { AdminHeading, Panel, StatCard, Table, Td } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
 import { formatInt, formatUsd } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { downloadCanonicalExport } from '@/lib/canonicalExport';
 
 /** Raw shape of the nested PostgREST select — supabase-js has no generated Database types here, so this mirrors the query below by hand. */
 interface RawInventoryRow {
@@ -113,6 +115,56 @@ function status(qty: number): { label: string; dot: string; text: string } {
   return { label: 'Healthy', dot: 'bg-success', text: 'text-muted-foreground' };
 }
 
+/** Admin/staff-only canonical export (PRODUCT-CATALOG-STANDARD.md §8) — the
+ * full internal inventory including cost/warehouse/carrier_raw/grade, in
+ * the exact column order the import synonym dictionary recognizes, so
+ * export → edit → re-import an unmodified file is a no-op. This page is
+ * already gated to admin/staff by the /admin route's <RequireAuth
+ * roles={['admin','staff']}> wrapper (App.tsx) — no extra role check here. */
+function ExportMenu() {
+  const [open, setOpen] = useState(false);
+  const mutation = useMutation({
+    mutationFn: (format: 'csv' | 'xlsx') => downloadCanonicalExport(format),
+    onSuccess: () => setOpen(false),
+  });
+
+  return (
+    <div className="relative">
+      <Button variant="outline" size="sm" onClick={() => setOpen((o) => !o)} disabled={mutation.isPending}>
+        <Download className="h-4 w-4" strokeWidth={2} />
+        {mutation.isPending ? 'Exporting…' : 'Export'}
+      </Button>
+      {open && (
+        <>
+          <button
+            type="button"
+            aria-label="Close export menu"
+            className="fixed inset-0 z-10 cursor-default"
+            onClick={() => setOpen(false)}
+          />
+          <div className="absolute right-0 z-20 mt-2 w-40 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
+            {(['csv', 'xlsx'] as const).map((fmt) => (
+              <button
+                key={fmt}
+                type="button"
+                onClick={() => mutation.mutate(fmt)}
+                className="block w-full px-4 py-2.5 text-left text-sm hover:bg-muted"
+              >
+                {fmt.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      {mutation.isError && (
+        <p className="absolute right-0 top-full mt-1 w-56 text-right text-xs text-destructive">
+          Export failed: {mutation.error instanceof Error ? mutation.error.message : 'unknown error'}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function InventoryPage() {
   const query = useQuery({ queryKey: ['admin-inventory'], queryFn: fetchInventory });
   const rows = query.data ?? [];
@@ -138,12 +190,15 @@ export default function InventoryPage() {
             : 'From stock imports'
         }
         action={
-          <Link to="/admin/import">
-            <Button variant="outline" size="sm">
-              <UploadCloud className="h-4 w-4" strokeWidth={2} />
-              Run import
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <ExportMenu />
+            <Link to="/admin/import">
+              <Button variant="outline" size="sm">
+                <UploadCloud className="h-4 w-4" strokeWidth={2} />
+                Run import
+              </Button>
+            </Link>
+          </div>
         }
       />
 
