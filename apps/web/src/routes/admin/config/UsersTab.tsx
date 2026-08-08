@@ -47,6 +47,11 @@ export default function UsersTab() {
 
   return (
     <div className="space-y-6">
+      <div className="rounded-2xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm text-muted-foreground">
+        <b className="text-foreground">{t('Who can do what')}:</b>{' '}
+        {t('Roles decide what someone can do — admin runs everything, staff helps operate day-to-day (no sensitive pricing or settings), and customer shops. A customer’s tier sets which prices they see.')}
+      </div>
+
       <InvitePanel />
 
       <Panel title={t('Accounts')}>
@@ -66,7 +71,7 @@ export default function UsersTab() {
               { key: 'role', label: t('Role') },
               { key: 'tier', label: t('Tier') },
               { key: 'flags', label: t('Flags') },
-              { key: 'view', label: t('Lens'), align: 'right' },
+              { key: 'view', label: t('View as'), align: 'right' },
             ]}
           >
             {q.data.map((u) => (
