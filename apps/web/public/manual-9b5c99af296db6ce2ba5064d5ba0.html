@@ -1,0 +1,427 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow,noarchive"><meta name="referrer" content="no-referrer"><title>OrderMyPhones — Manual</title></head><body><style>
+  :root{
+    --bg:#fbfbfd; --surface:#ffffff; --surface-2:#f4f4f8;
+    --text:#15141b; --muted:#6a6976; --border:#e6e5ee;
+    --accent:#6d5cf5; --accent-soft:#efecff;
+    --t1:#3b82f6; --t2:#10b981; --t3:#f59e0b; --t4:#8b5cf6;
+    --beta:#3b82f6; --beta-bg:#eaf1ff; --soon:#a855f7; --soon-bg:#f6ecff;
+    --shadow:0 1px 2px rgba(20,18,40,.04),0 8px 24px -12px rgba(20,18,40,.10);
+    --radius:16px;
+    --sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0d0c11; --surface:#161520; --surface-2:#1e1d29;
+      --text:#f2f1f7; --muted:#9c9aab; --border:#282734;
+      --accent:#8f80ff; --accent-soft:#221f38;
+      --beta-bg:#152238; --soon-bg:#241733;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px -14px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="light"]{--bg:#fbfbfd;--surface:#ffffff;--surface-2:#f4f4f8;--text:#15141b;--muted:#6a6976;--border:#e6e5ee;--accent:#6d5cf5;--accent-soft:#efecff;--beta-bg:#eaf1ff;--soon-bg:#f6ecff;--shadow:0 1px 2px rgba(20,18,40,.04),0 8px 24px -12px rgba(20,18,40,.10)}
+  :root[data-theme="dark"]{--bg:#0d0c11;--surface:#161520;--surface-2:#1e1d29;--text:#f2f1f7;--muted:#9c9aab;--border:#282734;--accent:#8f80ff;--accent-soft:#221f38;--beta-bg:#152238;--soon-bg:#241733;--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px -14px rgba(0,0,0,.6)}
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+  .wrap{max-width:940px;margin:0 auto;padding:0 24px}
+
+  header.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+  .top .wrap{display:flex;align-items:center;gap:14px;height:60px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:680;letter-spacing:-.02em}
+  .mark{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#8b5cf6,#3b82f6);flex:none;box-shadow:0 2px 8px -2px rgba(109,92,245,.6)}
+  .logo small{color:var(--muted);font-weight:500;border-left:1px solid var(--border);padding-left:10px}
+  .spacer{flex:1}
+  .seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2)}
+  .seg button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:13px;font-weight:600;padding:5px 12px;border-radius:8px;cursor:pointer;transition:.15s}
+  .seg button.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+  .ghost{border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:10px;padding:6px 11px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+
+  .hero{padding:52px 0 18px}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  h1{font-size:clamp(30px,5vw,44px);line-height:1.05;letter-spacing:-.03em;margin:12px 0 10px;text-wrap:balance}
+  .lede{font-size:18px;color:var(--muted);max-width:62ch;margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+  .tag{font-size:12.5px;font-weight:600;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:5px 12px}
+
+  nav.toc{position:sticky;top:60px;z-index:15;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);margin-top:24px}
+  .toc .wrap{display:flex;gap:6px;overflow-x:auto;padding-top:12px;padding-bottom:12px;scrollbar-width:none}
+  .toc .wrap::-webkit-scrollbar{display:none}
+  .toc a{white-space:nowrap;font-size:13.5px;font-weight:600;color:var(--muted);text-decoration:none;padding:7px 13px;border-radius:9px;transition:.15s}
+  .toc a:hover{color:var(--text);background:var(--surface-2)}
+
+  section.doc{padding:42px 0;border-bottom:1px solid var(--border);scroll-margin-top:120px}
+  .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:8px}
+  .num{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:8px;padding:3px 8px;flex:none}
+  h2{font-size:24px;letter-spacing:-.02em;margin:0}
+  .sec-sub{color:var(--muted);margin:2px 0 22px;font-size:15.5px}
+  .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:30px;align-items:start}
+  @media (max-width:820px){.grid{grid-template-columns:1fr;gap:22px}}
+
+  .subhead{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:20px 0 9px}
+  .subhead:first-child{margin-top:0}
+  .kv{display:flex;flex-direction:column;gap:9px}
+  .kv .item{font-size:14.5px;line-height:1.5;padding-left:14px;position:relative}
+  .kv .item::before{content:"";position:absolute;left:0;top:9px;width:5px;height:5px;border-radius:99px;background:var(--accent);opacity:.7}
+  .kv .item b{color:var(--text);font-weight:650}
+  .kv .item .s{color:var(--soon);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em;border:1px solid color-mix(in srgb,var(--soon) 40%,transparent);border-radius:999px;padding:0 6px;margin-left:5px}
+  .note{margin-top:16px;font-size:13.5px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:10px 13px}
+
+  .render{position:sticky;top:130px;display:flex;flex-direction:column;gap:16px}
+  @media (max-width:820px){.render{position:static}}
+  .cap{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .cap::before{content:"";width:14px;height:14px;border-radius:4px;background:var(--accent-soft);border:1px solid var(--accent);opacity:.5}
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  .bar{display:flex;align-items:center;gap:6px;padding:9px 12px;border-bottom:1px solid var(--border);background:var(--surface-2)}
+  .bar.dark{background:#141019;border-color:#241d2e}.bar.dark .bt{color:#c9c4d6}
+  .tl{display:flex;gap:5px}.tl i{width:9px;height:9px;border-radius:99px;background:var(--border)}
+  .bt{font-size:12px;color:var(--muted);font-weight:600}
+  .body{padding:14px}
+
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
+  .b-beta{color:var(--beta);background:var(--beta-bg)}.b-soon{color:var(--soon);background:var(--soon-bg)}
+  .tierdot{width:8px;height:8px;border-radius:99px;display:inline-block}
+  .navlist{display:flex;flex-direction:column;gap:3px}
+  .navrow{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);padding:6px 9px;border-radius:8px}
+  .navrow.act{background:var(--accent-soft);color:var(--text);font-weight:650}
+  .navrow .ic{width:13px;height:13px;border-radius:4px;background:currentColor;opacity:.45;flex:none}.navrow .rt{margin-left:auto}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .kpi{border:1px solid var(--border);border-radius:11px;padding:10px}.kpi .k{font-size:10.5px;color:var(--muted)}.kpi .v{font-size:19px;font-weight:720;letter-spacing:-.02em;margin-top:3px;font-family:var(--mono)}.kpi .v.warn{color:var(--t3)}
+  .pcard{border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  .pimg{height:70px;background:linear-gradient(135deg,var(--surface-2),color-mix(in srgb,var(--accent) 10%,var(--surface-2)));display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px}
+  .prow{padding:10px 11px}.price{font-size:19px;font-weight:730;letter-spacing:-.02em;font-family:var(--mono)}.save{font-size:11px;color:var(--t2);font-weight:650}
+  .stepper{display:inline-flex;align-items:center;border:1px solid var(--border);border-radius:99px;overflow:hidden;font-family:var(--mono);font-size:12px}
+  .stepper span{padding:5px 9px}.stepper b{padding:5px 8px;border-left:1px solid var(--border);border-right:1px solid var(--border)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:12.5px;font-weight:650;border-radius:9px;padding:8px 12px}
+  .btn.primary{background:var(--accent);color:#fff}.btn.dark{background:#111;color:#fff}
+  .filt{display:flex;flex-direction:column;gap:7px}.filt .fr{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}.filt .fr .c{font-family:var(--mono);font-size:11px;background:var(--surface-2);border-radius:6px;padding:1px 6px}
+  .line{height:1px;background:var(--border);margin:11px 0}
+  .flow{display:flex;flex-direction:column}
+  .step{display:flex;gap:11px;align-items:flex-start}.step .n{width:22px;height:22px;border-radius:99px;background:var(--accent);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}.step .tx{font-size:13px;padding-bottom:14px}.step .tx b{display:block;font-size:13.5px;margin-bottom:1px}
+  .conn{width:2px;background:var(--border);margin-left:10px;height:14px}
+  .row{display:flex;align-items:center;gap:9px;font-size:12.5px;padding:8px 0;border-top:1px solid var(--border)}.row:first-child{border-top:0}
+  .status{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px}
+  .s-pend{color:var(--t3);background:color-mix(in srgb,var(--t3) 14%,transparent)}.s-ok{color:var(--t2);background:color-mix(in srgb,var(--t2) 14%,transparent)}
+  .muted{color:var(--muted)}.mono{font-family:var(--mono)}
+
+  /* logins */
+  .warn{display:flex;gap:11px;background:color-mix(in srgb,var(--t3) 12%,var(--surface));border:1px solid color-mix(in srgb,var(--t3) 42%,var(--border));border-radius:12px;padding:12px 14px;font-size:13.5px;margin-bottom:18px}
+  .warn .wi{width:18px;height:18px;border-radius:5px;background:var(--t3);flex:none;margin-top:1px}
+  .warn b{color:var(--text)}
+  .logintable{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  .logintable th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:9px 12px;border-bottom:1px solid var(--border);background:var(--surface-2)}
+  .logintable td{padding:10px 12px;border-bottom:1px solid var(--border)}
+  .logintable tr:last-child td{border-bottom:0}
+  .logintable td.m{font-family:var(--mono);font-size:12.5px}
+  .rolechip{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
+  .r-admin{color:var(--accent);background:var(--accent-soft)}.r-staff{color:var(--t2);background:color-mix(in srgb,var(--t2) 14%,transparent)}.r-cust{color:var(--muted);background:var(--surface-2)}
+  .pwbox{margin-top:14px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:14px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+  .pwbox code{font-family:var(--mono);font-size:14px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-weight:600}
+
+  footer{padding:34px 0 60px;color:var(--muted);font-size:13px;text-align:center}
+
+  @media print{
+    header.top,nav.toc,.ghost{position:static}
+    nav.toc,.print-hide{display:none}
+    section.doc{break-inside:avoid;border-bottom:1px solid #ddd}
+    .render{position:static}
+    body{background:#fff}
+  }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <span class="logo"><span class="mark"></span>OrderMyPhones <small data-pt="Manual do sistema" data-en="System manual"></small></span>
+    <span class="spacer"></span>
+    <div class="seg" role="group" aria-label="Language"><button id="pt" class="on" onclick="setLang('pt')">PT</button><button id="en" onclick="setLang('en')">EN</button></div>
+    <button class="ghost print-hide" onclick="window.print()" data-pt="Imprimir / PDF" data-en="Print / PDF"></button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="eyebrow" data-pt="Guia completo · v1" data-en="Full guide · v1"></div>
+    <h1 data-pt="Como o OrderMyPhones funciona" data-en="How OrderMyPhones works"></h1>
+    <p class="lede" data-pt="Um passeio por cada parte do sistema — criação de conta, catálogo, o portal do cliente e o console do admin — detalhando o que cada aba faz, com uma prévia visual. No fim, todos os logins de teste." data-en="A tour of every part of the system — account creation, catalog, the customer portal and the admin console — detailing what each tab does, with a visual preview. At the end, all the test logins."></p>
+    <div class="meta">
+      <span class="tag" data-pt="Contas por convite" data-en="Invite-only accounts"></span>
+      <span class="tag" data-pt="Preço por tier" data-en="Tier pricing"></span>
+      <span class="tag" data-pt="Estoque real em armazéns" data-en="Real warehouse inventory"></span>
+      <span class="tag" data-pt="EN · PT · ES" data-en="EN · PT · ES"></span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc">
+  <div class="wrap">
+    <a href="#conta" data-pt="1 · Criação de conta" data-en="1 · Account creation"></a>
+    <a href="#catalogo" data-pt="2 · Catálogo" data-en="2 · Catalog"></a>
+    <a href="#portal" data-pt="3 · Portal do cliente" data-en="3 · Customer portal"></a>
+    <a href="#admin" data-pt="4 · Console do admin" data-en="4 · Admin console"></a>
+    <a href="#logins" data-pt="5 · Logins" data-en="5 · Logins"></a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- 1 ACCOUNT -->
+  <section class="doc" id="conta">
+    <div class="sec-head"><span class="num">01</span><h2 data-pt="Criação de conta" data-en="Account creation"></h2></div>
+    <p class="sec-sub" data-pt="Acesso é por convite — o cliente só vê preços depois de aprovado." data-en="Access is invite-only — a customer sees prices only after approval."></p>
+    <div class="grid">
+      <div>
+        <div class="subhead" data-pt="O fluxo" data-en="The flow"></div>
+        <div class="kv">
+          <div class="item" data-pt="<b>Pedir acesso:</b> na home, o visitante abre “Pedir acesso” e envia nome, empresa, e-mail, telefone, tier de interesse e uma observação — sem ver preço." data-en="<b>Request access:</b> on the home page the visitor opens “Request access” and submits name, business, e-mail, phone, tier of interest and a note — with no prices shown."></div>
+          <div class="item" data-pt="<b>Aprovação:</b> o pedido cai em Clientes → “Solicitações de acesso”; o admin marca como convidado ou descarta." data-en="<b>Approval:</b> the request lands in Customers → “Access requests”; the admin marks it invited or dismisses it."></div>
+          <div class="item" data-pt="<b>Convite:</b> gerado com o <b>tier e o e-mail já embutidos</b>; link copiável. O envio por e-mail está desligado nesta versão (chave <span class='mono'>invite_email_delivery</span>) — você copia e manda." data-en="<b>Invite:</b> created with the <b>tier and e-mail attached</b>; copyable link. E-mail delivery is off in this build (<span class='mono'>invite_email_delivery</span>) — you copy and send it."></div>
+          <div class="item" data-pt="<b>Cadastro rápido:</b> o cliente abre o link, define nome e senha (menos de 1 min) e entra direto no portal." data-en="<b>Fast sign-up:</b> the customer opens the link, sets a name and password (under a minute) and lands in the portal."></div>
+        </div>
+        <div class="subhead" data-pt="Depois de entrar" data-en="Once signed in"></div>
+        <div class="kv">
+          <div class="item" data-pt="<b>Preço e quantidade aparecem:</b> só logado e com um tier o cliente vê valores e disponibilidade." data-en="<b>Prices and quantities appear:</b> only signed in with a tier does the customer see values and availability."></div>
+          <div class="item" data-pt="<b>Papéis:</b> cliente (compra), staff (opera o console) e admin (tudo)." data-en="<b>Roles:</b> customer (shops), staff (operates the console) and admin (everything)."></div>
+          <div class="item" data-pt="<b>Idioma:</b> seletor EN / PT / ES em todo o site e no console." data-en="<b>Language:</b> EN / PT / ES selector across the site and the console."></div>
+        </div>
+      </div>
+      <div class="render">
+        <div>
+          <div class="cap" data-pt="Fluxo de acesso" data-en="Access flow"></div>
+          <div class="frame"><div class="body">
+            <div class="flow">
+              <div class="step"><span class="n">1</span><span class="tx"><b data-pt="Pedir acesso" data-en="Request access"></b><span class="muted" data-pt="visitante envia dados" data-en="visitor submits details"></span></span></div>
+              <div class="conn"></div>
+              <div class="step"><span class="n">2</span><span class="tx"><b data-pt="Admin aprova + convida" data-en="Admin approves + invites"></b><span class="muted" data-pt="convite carrega o tier" data-en="invite carries the tier"></span></span></div>
+              <div class="conn"></div>
+              <div class="step"><span class="n">3</span><span class="tx"><b data-pt="Login → vê preços" data-en="Log in → sees prices"></b><span class="muted" data-pt="nome + senha, pronto" data-en="name + password, done"></span></span></div>
+            </div>
+            <div class="line"></div>
+            <div style="display:flex;gap:8px;align-items:center"><span class="btn dark" style="flex:1" data-pt="Entrar" data-en="Sign in"></span><span class="seg" style="background:var(--surface-2)"><button class="on">PT</button><button>EN</button><button>ES</button></span></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 CATALOG -->
+  <section class="doc" id="catalogo">
+    <div class="sec-head"><span class="num">02</span><h2 data-pt="Catálogo" data-en="Catalog"></h2></div>
+    <p class="sec-sub" data-pt="Onde o cliente monta o pedido — no preço do tier dele." data-en="Where the customer builds an order — at their tier price."></p>
+    <div class="grid">
+      <div>
+        <div class="subhead" data-pt="Navegar & filtrar" data-en="Browse & filter"></div>
+        <div class="kv">
+          <div class="item" data-pt="<b>Busca</b> por modelo, capacidade ou SKU; ordenação (incl. “Destaque”, curado no admin)." data-en="<b>Search</b> by model, capacity or SKU; sorting (incl. “Featured”, curated in admin)."></div>
+          <div class="item" data-pt="<b>Filtros com contagem ao vivo:</b> marca, condição/grade, carrier, lock, capacidade, local e faixa de preço — com “Limpar tudo”." data-en="<b>Filters with live counts:</b> brand, condition/grade, carrier, lock, capacity, location and price range — with “Clear all”."></div>
+          <div class="item" data-pt="<b>Duas visões:</b> cartões ou tabela densa (com stepper de quantidade por linha)." data-en="<b>Two views:</b> cards or a dense table (with a per-row quantity stepper)."></div>
+        </div>
+        <div class="subhead" data-pt="Preço & carrinho" data-en="Pricing & cart"></div>
+        <div class="kv">
+          <div class="item" data-pt="<b>Preço do tier automático;</b> deslogado vê “pedir acesso pra preço”." data-en="<b>Automatic tier price;</b> signed out shows “request access for pricing”."></div>
+          <div class="item" data-pt="<b>Grade gate:</b> grades abaixo de A ficam ocultas pros tiers de consumidor." data-en="<b>Grade gate:</b> grades below A are hidden from consumer tiers."></div>
+          <div class="item" data-pt="<b>Adicionar ao carrinho</b> com pop-up de quantidade (de 1 a milhares)." data-en="<b>Add to cart</b> with a quantity pop-up (from 1 to thousands)."></div>
+          <div class="item" data-pt="<b>Pedido rápido:</b> digita o modelo → escolhe a variante → quantidade → monta a lista → adiciona tudo." data-en="<b>Quick order:</b> type the model → pick the variant → quantity → build the list → add it all."></div>
+        </div>
+        <div class="subhead" data-pt="Checkout" data-en="Checkout"></div>
+        <div class="kv">
+          <div class="item" data-pt="<b>Endereço salvo pré-selecionado</b> (ou cadastra um novo e salva pra próxima)." data-en="<b>Saved address pre-selected</b> (or add a new one and save it for next time)."></div>
+          <div class="item" data-pt="<b>Nada é cobrado:</b> ao finalizar, a equipe entra em contato pra alinhar pagamento e envio; o pedido vai pra aprovação." data-en="<b>Nothing is charged:</b> on placing, the team reaches out to align payment and shipping; the order goes to approval."></div>
+        </div>
+      </div>
+      <div class="render">
+        <div>
+          <div class="cap" data-pt="Cartão de produto + filtros" data-en="Product card + filters"></div>
+          <div class="frame">
+            <div class="bar"><span class="tl"><i></i><i></i><i></i></span><span class="bt">/catalog</span></div>
+            <div class="body" style="display:grid;grid-template-columns:1fr 1.1fr;gap:12px">
+              <div class="filt">
+                <div class="fr"><span data-pt="Marca" data-en="Brand"></span><span class="c">12</span></div>
+                <div class="fr"><span>Grade A</span><span class="c">340</span></div>
+                <div class="fr"><span>Unlocked</span><span class="c">198</span></div>
+                <div class="fr"><span data-pt="Capacidade" data-en="Capacity"></span><span class="c">6</span></div>
+                <div class="fr"><span data-pt="Local" data-en="Location"></span><span class="c">3</span></div>
+              </div>
+              <div class="pcard">
+                <div class="pimg">iPhone 15 Pro</div>
+                <div class="prow">
+                  <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span class="tierdot" style="background:var(--t3)"></span><span class="muted" style="font-size:11px" data-pt="Atacado" data-en="Wholesale"></span></div>
+                  <div class="price">$1,041</div>
+                  <div class="save" data-pt="Economize $92 / un" data-en="You save $92 / unit"></div>
+                  <div style="display:flex;gap:6px;margin-top:9px;align-items:center"><span class="stepper"><span>−</span><b>300</b><span>+</span></span><span class="btn primary" style="flex:1" data-pt="Adicionar" data-en="Add"></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 PORTAL -->
+  <section class="doc" id="portal">
+    <div class="sec-head"><span class="num">03</span><h2 data-pt="Portal do cliente" data-en="Customer portal"></h2></div>
+    <p class="sec-sub" data-pt="A área logada do cliente — cada aba do menu lateral." data-en="The customer's signed-in area — each tab in the side menu."></p>
+    <div class="grid">
+      <div>
+        <div class="kv">
+          <div class="item" data-pt="<b>Visão geral:</b> resumo da conta, tier atual e atalhos." data-en="<b>Overview:</b> account summary, current tier and shortcuts."></div>
+          <div class="item" data-pt="<b>Pedidos:</b> histórico com status (pendente, aprovado, parcial) e acompanhamento; abre o detalhe de cada pedido." data-en="<b>Orders:</b> history with status (pending, approved, partial) and tracking; opens each order's detail."></div>
+          <div class="item" data-pt="<b>Lista de desejos:</b> modelos salvos + alertas de reposição." data-en="<b>Wishlist:</b> saved models + restock alerts."></div>
+          <div class="item" data-pt="<b>Tier:</b> mostra o nível do cliente e o que ele desbloqueia." data-en="<b>Tier:</b> shows the customer's level and what it unlocks."></div>
+          <div class="item" data-pt="<b>Endereços:</b> catálogo salvo — criar, editar, remover e marcar o padrão (pré-selecionado no checkout)." data-en="<b>Addresses:</b> saved book — create, edit, remove and set the default (pre-selected at checkout)."></div>
+          <div class="item" data-pt="<b>Inventory API:</b> acesso programático ao estoque. <span class='s'>Em breve</span>" data-en="<b>Inventory API:</b> programmatic stock access. <span class='s'>Soon</span>"></div>
+          <div class="item" data-pt="<b>Pagamento:</b> métodos e dados de faturamento." data-en="<b>Payment:</b> methods and billing details."></div>
+          <div class="item" data-pt="<b>Configurações:</b> perfil + medidor de completude (nome, telefone, endereço, certificado fiscal) e idioma." data-en="<b>Settings:</b> profile + completeness meter (name, phone, address, tax certificate) and language."></div>
+        </div>
+      </div>
+      <div class="render">
+        <div>
+          <div class="cap" data-pt="Portal + status do pedido" data-en="Portal + order status"></div>
+          <div class="frame">
+            <div class="bar"><span class="tl"><i></i><i></i><i></i></span><span class="bt">/portal</span><span style="margin-left:auto" class="chip"><span class="tierdot" style="background:var(--t3)"></span>Wholesale</span></div>
+            <div class="body" style="display:grid;grid-template-columns:.9fr 1.4fr;gap:12px">
+              <div class="navlist">
+                <div class="navrow act"><span class="ic"></span><span data-pt="Visão geral" data-en="Overview"></span></div>
+                <div class="navrow"><span class="ic"></span><span data-pt="Pedidos" data-en="Orders"></span></div>
+                <div class="navrow"><span class="ic"></span><span data-pt="Endereços" data-en="Addresses"></span></div>
+                <div class="navrow"><span class="ic"></span><span data-pt="Lista de desejos" data-en="Wishlist"></span></div>
+                <div class="navrow"><span class="ic"></span><span data-pt="Configurações" data-en="Settings"></span></div>
+              </div>
+              <div>
+                <div class="row"><span class="mono muted">40ec28f2</span><span>Galaxy S23 ×50</span><span class="status s-pend" style="margin-left:auto" data-pt="Pendente" data-en="Pending"></span></div>
+                <div class="row"><span class="mono muted">9c49c3f3</span><span>iPhone 13 ×70</span><span class="status s-ok" style="margin-left:auto" data-pt="Aprovado" data-en="Approved"></span></div>
+                <div class="row"><span class="mono muted">0c87951e</span><span>Galaxy S25 ×3</span><span class="status s-pend" style="margin-left:auto" data-pt="Pendente" data-en="Pending"></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 ADMIN -->
+  <section class="doc" id="admin">
+    <div class="sec-head"><span class="num">04</span><h2 data-pt="Console do admin" data-en="Admin console"></h2></div>
+    <p class="sec-sub" data-pt="Onde o negócio é operado, sem código. Cada item é uma aba do menu." data-en="Where the business is run, no code. Each item is a menu tab."></p>
+    <div class="grid">
+      <div>
+        <div class="subhead" data-pt="Operação do dia a dia" data-en="Day-to-day operation"></div>
+        <div class="kv">
+          <div class="item" data-pt="<b>Painel:</b> KPIs ao vivo (SKUs, clientes, pedidos, a aprovar, conciliações, flags) + “ver a loja como” cada tier + pedidos recentes." data-en="<b>Dashboard:</b> live KPIs (SKUs, customers, orders, to-approve, reconciliations, flags) + “view the store as” each tier + recent orders."></div>
+          <div class="item" data-pt="<b>Clientes:</b> contas registradas, mudar tier na hora, fila de solicitações de acesso e painel de convites. Sub-aba <b>Usuários &amp; roles</b> muda papel/tier com senha." data-en="<b>Customers:</b> registered accounts, change tier inline, access-request queue and invite panel. <b>Users &amp; roles</b> sub-tab changes role/tier with a password."></div>
+          <div class="item" data-pt="<b>Pedidos:</b> aprovar/rejeitar — a aprovação baixa o estoque; se faltar, o restante abre uma conciliação. Exporta a lista." data-en="<b>Orders:</b> approve/reject — approval deducts stock; a shortfall opens a reconciliation. Exports the list."></div>
+          <div class="item" data-pt="<b>Pedido manual:</b> gerar pedido em nome do cliente + planilha. <span class='s'>Em breve</span>" data-en="<b>Manual order:</b> place an order for a customer + spreadsheet. <span class='s'>Soon</span>"></div>
+          <div class="item" data-pt="<b>Conciliação:</b> faltas em aberto — “Atender” quando o estoque chega, ou “Fechar pendência”." data-en="<b>Reconciliation:</b> open shortfalls — “Fulfill” when stock arrives, or “Close shortfall”."></div>
+          <div class="item" data-pt="<b>Inventário:</b> saldo por local, custo unitário, alertas de estoque baixo/zerado." data-en="<b>Inventory:</b> balance per location, unit cost, low/out-of-stock alerts."></div>
+        </div>
+        <div class="subhead" data-pt="Catálogo & preço" data-en="Catalog & pricing"></div>
+        <div class="kv">
+          <div class="item" data-pt="<b>Importar:</b> wizard em 4 passos (upload → mapear colunas → simular → gravar). Sub-abas: <b>Dicionário</b> (sinônimos/unificação de modelos) e <b>Grade maps</b> (grade do fornecedor → sua grade)." data-en="<b>Import:</b> 4-step wizard (upload → map columns → dry-run → commit). Sub-tabs: <b>Dictionary</b> (synonyms/model unification) and <b>Grade maps</b> (supplier grade → your grade)."></div>
+          <div class="item" data-pt="<b>Preços:</b> <b>Bancada</b> (custo por local → preço por tier, com botões de preencher), <b>Tiers &amp; pisos</b> (faixas e piso de cada tier) e <b>Regras</b> (tetos, bandas, multiplicadores)." data-en="<b>Prices:</b> <b>Workbench</b> (cost per location → price per tier, with fill buttons), <b>Tiers &amp; floors</b> (each tier's ranges and floor) and <b>Rules</b> (caps, bands, multipliers)."></div>
+          <div class="item" data-pt="<b>Fila de sinalização:</b> preços suspeitos segurados pra sua decisão (margem, ordem de tiers, estoque zerado…)." data-en="<b>Flag queue:</b> suspicious prices held for your call (margin, tier-order, zero stock…)."></div>
+          <div class="item" data-pt="<b>Relatórios:</b> GMV, receita por mês, GMV por tier e produtos mais vendidos — do livro de pedidos real." data-en="<b>Reports:</b> GMV, revenue by month, GMV by tier and top products — from the live order book."></div>
+        </div>
+        <div class="subhead" data-pt="Sistema & controle" data-en="System & control"></div>
+        <div class="kv">
+          <div class="item" data-pt="<b>Configurações:</b> <b>Go-live &amp; loja</b> (liga o catálogo real, exibição de quantidade, destaques), <b>Enforcement</b> (guarda-corpos) e <b>Log de auditoria</b>." data-en="<b>Settings:</b> <b>Go-live &amp; storefront</b> (turn on the real catalog, quantity display, featured), <b>Enforcement</b> (guardrails) and <b>Audit log</b>."></div>
+          <div class="item" data-pt="<b>Ver como cliente:</b> lente só-leitura pra ver o que uma conta enxerga (auditada)." data-en="<b>View as customer:</b> read-only lens to see what an account sees (audited)."></div>
+          <div class="item" data-pt="<b>Logs de API / IA &amp; bots.</b> <span class='s'>Em breve</span>" data-en="<b>API logs / AI &amp; bots.</b> <span class='s'>Soon</span>"></div>
+          <div class="item" data-pt="<b>Segurança:</b> ações sensíveis (tier, papel, go-live, merge) pedem senha e ficam na auditoria." data-en="<b>Security:</b> sensitive actions (tier, role, go-live, merge) require a password and are audited."></div>
+        </div>
+      </div>
+      <div class="render">
+        <div>
+          <div class="cap" data-pt="Console (painel)" data-en="Console (dashboard)"></div>
+          <div class="frame">
+            <div class="bar dark"><span class="mark" style="width:16px;height:16px"></span><span class="bt" data-pt="Console admin" data-en="Admin console"></span><span style="margin-left:auto" class="seg"><button class="on" style="font-size:11px;padding:3px 8px">PT</button><button style="font-size:11px;padding:3px 8px">EN</button></span></div>
+            <div class="body" style="display:grid;grid-template-columns:.85fr 1.5fr;gap:12px">
+              <div class="navlist">
+                <div class="navrow act"><span class="ic"></span><span data-pt="Painel" data-en="Dashboard"></span></div>
+                <div class="navrow"><span class="ic"></span><span data-pt="Clientes" data-en="Customers"></span></div>
+                <div class="navrow"><span class="ic"></span><span data-pt="Pedidos" data-en="Orders"></span></div>
+                <div class="navrow"><span class="ic"></span><span data-pt="Pedido manual" data-en="Manual order"></span><span class="chip b-soon rt">SOON</span></div>
+                <div class="navrow"><span class="ic"></span><span data-pt="Preços" data-en="Prices"></span><span class="chip b-beta rt">BETA</span></div>
+                <div class="navrow"><span class="ic"></span><span data-pt="Importar" data-en="Import"></span></div>
+              </div>
+              <div>
+                <div class="kpis">
+                  <div class="kpi"><div class="k" data-pt="SKUs ativos" data-en="SKUs live"></div><div class="v">2,674</div></div>
+                  <div class="kpi"><div class="k" data-pt="Pedidos" data-en="Orders"></div><div class="v">4</div></div>
+                  <div class="kpi"><div class="k" data-pt="A aprovar" data-en="To approve"></div><div class="v warn">2</div></div>
+                </div>
+                <div class="line"></div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  <span class="chip" style="border:1px solid var(--border)"><span class="tierdot" style="background:var(--t1)"></span>Consumer</span>
+                  <span class="chip" style="border:1px solid var(--border)"><span class="tierdot" style="background:var(--t2)"></span>Retailer</span>
+                  <span class="chip" style="border:1px solid var(--border)"><span class="tierdot" style="background:var(--t3)"></span>Wholesale</span>
+                  <span class="chip" style="border:1px solid var(--border)"><span class="tierdot" style="background:var(--t4)"></span>Distributor</span>
+                </div>
+                <div class="muted" style="font-size:11px;margin-top:8px" data-pt="“Ver a loja como” cada tier" data-en="“View the store as” each tier"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="cap" data-pt="Importação — 4 passos" data-en="Import — 4 steps"></div>
+          <div class="frame"><div class="body">
+            <div style="display:flex;gap:6px;align-items:center;font-size:12px;font-weight:650;flex-wrap:wrap">
+              <span class="btn dark" style="padding:5px 10px">1 Upload</span>
+              <span class="muted">→</span><span class="muted" data-pt="2 Mapear" data-en="2 Map"></span>
+              <span class="muted">→</span><span class="muted" data-pt="3 Simular" data-en="3 Dry-run"></span>
+              <span class="muted">→</span><span class="muted" data-pt="4 Gravar" data-en="4 Commit"></span>
+            </div>
+            <div class="note" style="margin-top:11px" data-pt="Nada mexe no estoque até o último passo — a simulação só mostra o que mudaria." data-en="Nothing touches stock until the last step — the dry-run only previews what would change."></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 LOGINS -->
+  <section class="doc" id="logins">
+    <div class="sec-head"><span class="num">05</span><h2 data-pt="Logins de teste" data-en="Test logins"></h2></div>
+    <p class="sec-sub" data-pt="Contas semeadas pra testar cada visão do sistema." data-en="Seeded accounts to test each view of the system."></p>
+    <div class="warn">
+      <span class="wi"></span>
+      <span data-pt="<b>Confidencial.</b> São contas de teste — a <b>admin@test dá acesso real de administrador</b> ao projeto. Mantenha este documento privado e <b>troque a senha antes de abrir pra clientes reais</b>." data-en="<b>Confidential.</b> These are test accounts — <b>admin@test grants real administrator access</b> to the project. Keep this document private and <b>rotate the password before opening to real customers</b>."></span>
+    </div>
+    <table class="logintable">
+      <thead><tr>
+        <th data-pt="E-mail" data-en="E-mail"></th>
+        <th data-pt="Papel" data-en="Role"></th>
+        <th data-pt="Tier / acesso" data-en="Tier / access"></th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="m">admin@test</td><td><span class="rolechip r-admin">Admin</span></td><td data-pt="Tudo — configurações, preços, finanças" data-en="Everything — settings, pricing, finance"></td></tr>
+        <tr><td class="m">staff@test</td><td><span class="rolechip r-staff">Staff</span></td><td data-pt="Opera o console (sem config/finanças)" data-en="Operates the console (no config/finance)"></td></tr>
+        <tr><td class="m">consumer@test</td><td><span class="rolechip r-cust">Customer</span></td><td><span class="tierdot" style="background:var(--t1)"></span> Consumer · T1</td></tr>
+        <tr><td class="m">retailer@test</td><td><span class="rolechip r-cust">Customer</span></td><td><span class="tierdot" style="background:var(--t2)"></span> Retailer · T2</td></tr>
+        <tr><td class="m">wholesale@test</td><td><span class="rolechip r-cust">Customer</span></td><td><span class="tierdot" style="background:var(--t3)"></span> Wholesale · T3</td></tr>
+        <tr><td class="m">distributor@test</td><td><span class="rolechip r-cust">Customer</span></td><td><span class="tierdot" style="background:var(--t4)"></span> Distributor · T4</td></tr>
+      </tbody>
+    </table>
+    <div class="pwbox">
+      <span data-pt="Senha (todas as contas):" data-en="Password (all accounts):"></span>
+      <code>— senha entregue à parte / password shared separately —</code>
+      <span class="muted" data-pt="· Site: ordermyphones.vercel.app" data-en="· Site: ordermyphones.vercel.app"></span>
+    </div>
+  </section>
+
+  <footer><span data-pt="OrderMyPhones · Manual da versão 1 · confidencial." data-en="OrderMyPhones · Version 1 manual · confidential."></span></footer>
+</div>
+
+<script>
+  function setLang(l){
+    document.querySelectorAll('[data-pt]').forEach(function(el){
+      var v = l==='en' ? el.getAttribute('data-en') : el.getAttribute('data-pt');
+      if(v==null) return;
+      if(/[<&]/.test(v)) el.innerHTML = v; else el.textContent = v;
+    });
+    document.getElementById('pt').classList.toggle('on', l==='pt');
+    document.getElementById('en').classList.toggle('on', l==='en');
+    document.documentElement.lang = l==='en'?'en':'pt-BR';
+    try{ localStorage.setItem('omp_manual_lang', l); }catch(e){}
+  }
+  (function(){ var s='pt'; try{ s=localStorage.getItem('omp_manual_lang')||'pt'; }catch(e){} setLang(s); })();
+</script>
+</body></html>
