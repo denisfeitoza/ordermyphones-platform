@@ -289,7 +289,7 @@ export default function PricingFlagsPage() {
       />
 
       <div className="rounded-2xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm text-muted-foreground">
-        <b className="text-foreground">{t('What is this?')}</b> {t('Before a price goes live the system flags anything that looks off — a cost that jumped a lot, a tier that would sell below your profit floor, or a SKU with no benchmark yet. A flagged price is')} <b className="text-foreground">{t('held back from customers')}</b> {t('until you decide:')} <b className="text-foreground">{t('Override')}</b> {t('(publish it anyway),')} <b className="text-foreground">{t('Acknowledge')}</b> {t('(it’s fine),')} {t('or')} <b className="text-foreground">{t('Watch')}</b> {t('(keep an eye on it). This is the safety net that stops a bad price from ever reaching a buyer.')}
+        <b className="text-foreground">{t('What is this?')}</b> {t('Before a price goes live the system flags anything that looks off — a cost that jumped a lot, a tier that would sell below your profit floor, or tiers priced out of order. A flagged price is')} <b className="text-foreground">{t('held back from customers')}</b> {t('until you decide:')} <b className="text-foreground">{t('Override')}</b> {t('(publish it anyway),')} <b className="text-foreground">{t('Acknowledge')}</b> {t('(it’s fine),')} {t('or')} <b className="text-foreground">{t('Watch')}</b> {t('(keep an eye on it). This is the safety net that stops a bad price from ever reaching a buyer.')}
       </div>
 
       {query.isError && (
