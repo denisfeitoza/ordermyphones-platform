@@ -31,23 +31,29 @@ export function SectionTabs({ tabs }: { tabs: SectionTab[] }) {
 
   return (
     <div className="space-y-6">
-      <nav className="scrollbar-hide -mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
-        {tabs.map((tab) => (
-          <NavLink
-            key={tab.to}
-            to={tab.to}
-            end={tab.end ?? false}
-            className={({ isActive }) =>
-              cn(
-                'inline-flex min-h-[40px] shrink-0 items-center whitespace-nowrap rounded-xl px-3.5 py-2 text-sm transition-colors active:scale-[0.98]',
-                isActive ? 'bg-secondary font-medium text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-              )
-            }
-          >
-            {t(tab.label)}
-          </NavLink>
-        ))}
-      </nav>
+      {/* Segmented switcher: an enclosed group with a raised active segment, so
+          it reads unmistakably as "these are tabs you click to switch view". */}
+      <div className="scrollbar-hide -mx-1 overflow-x-auto px-1 py-0.5">
+        <nav className="inline-flex items-center gap-1 rounded-xl border border-border bg-muted/60 p-1">
+          {tabs.map((tab) => (
+            <NavLink
+              key={tab.to}
+              to={tab.to}
+              end={tab.end ?? false}
+              className={({ isActive }) =>
+                cn(
+                  'inline-flex min-h-[34px] shrink-0 items-center whitespace-nowrap rounded-lg px-4 py-1.5 text-sm transition-all active:scale-[0.97]',
+                  isActive
+                    ? 'bg-background font-semibold text-foreground shadow-sm ring-1 ring-border/70'
+                    : 'text-muted-foreground hover:text-foreground',
+                )
+              }
+            >
+              {t(tab.label)}
+            </NavLink>
+          ))}
+        </nav>
+      </div>
 
       {active?.title && <AdminHeading title={active.title} {...(active.subtitle ? { subtitle: active.subtitle } : {})} />}
 

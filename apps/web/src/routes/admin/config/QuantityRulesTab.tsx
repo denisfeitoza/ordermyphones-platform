@@ -30,6 +30,30 @@ function ruleFor(rules: QtyRules, tier: DbTier): TierRule {
   return rules.tiers?.[tier] ?? { min: 1, multiple: 1 };
 }
 
+/** A live, human example of what a min/multiple rule actually allows. */
+function ExampleLine({ rule, t }: { rule: TierRule; t: (s: string) => string }) {
+  const min = Math.max(1, rule.min);
+  const mult = Math.max(1, rule.multiple);
+  if (mult === 1 && min === 1) {
+    return <p className="mt-2 rounded-lg bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground">{t('No limit — any quantity is allowed.')}</p>;
+  }
+  if (mult === 1) {
+    return (
+      <p className="mt-2 rounded-lg bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground">
+        <span className="font-medium text-foreground/70">{t('Example')}:</span> {t('any quantity of')} {min}+ · {t('an order of')} {min - 1} {t('is not allowed')}
+      </p>
+    );
+  }
+  const first = Math.ceil(min / mult) * mult;
+  const allowed = [0, 1, 2, 3].map((i) => first + i * mult);
+  const bad = first + 1;
+  return (
+    <p className="mt-2 rounded-lg bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground">
+      <span className="font-medium text-foreground/70">{t('Example')}:</span> {t('allowed')} {allowed.join(', ')}… · {t('an order of')} {bad} {t('is not allowed')}
+    </p>
+  );
+}
+
 export default function QuantityRulesTab() {
   const { t } = useI18n();
   const qc = useQueryClient();
@@ -104,6 +128,7 @@ export default function QuantityRulesTab() {
                     />
                   </Field>
                 </div>
+                {draft.mode !== 'off' && <ExampleLine rule={rule} t={t} />}
               </div>
             );
           })}
