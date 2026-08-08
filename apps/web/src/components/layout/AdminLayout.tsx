@@ -3,6 +3,7 @@ import { BarChart3, Bot, Boxes, Flag, LayoutDashboard, LogOut, PackageSearch, Re
 import { useAuth, useTier } from '@/store';
 import { TIERS } from '@/data/tiers';
 import { Logo } from '@/components/store/Logo';
+import { LangSwitch } from '@/i18n';
 import { PulseDot } from '@/components/store/SyncHeartbeat';
 import { cn } from '@/lib/utils';
 
@@ -10,11 +11,11 @@ const NAV = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/customers', label: 'Customers', icon: Users },
   { to: '/admin/orders', label: 'Orders', icon: Receipt },
-  { to: '/admin/reconciliation', label: 'Reconciliation', icon: PackageSearch },
+  { to: '/admin/reconciliation', label: 'Reconciliation', icon: PackageSearch, beta: true },
   { to: '/admin/inventory', label: 'Inventory', icon: Boxes },
   { to: '/admin/import', label: 'Import', icon: UploadCloud },
-  { to: '/admin/prices', label: 'Prices', icon: Tag },
-  { to: '/admin/pricing-flags', label: 'Flag queue', icon: Flag },
+  { to: '/admin/prices', label: 'Prices', icon: Tag, beta: true },
+  { to: '/admin/pricing-flags', label: 'Flag queue', icon: Flag, beta: true },
   { to: '/admin/reports', label: 'Reports', icon: BarChart3, soon: true },
   { to: '/admin/api-logs', label: 'API logs', icon: ScrollText, soon: true },
   { to: '/admin/ai', label: 'AI & bots', icon: Bot, soon: true },
@@ -58,6 +59,7 @@ export default function AdminLayout() {
                 <path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </label>
+            <LangSwitch tone="dark" />
             {user && <span className="hidden font-mono text-xs text-background/50 md:inline">{user.email}</span>}
             <button
               type="button"
@@ -94,6 +96,9 @@ export default function AdminLayout() {
                 {l.label}
                 {'soon' in l && l.soon && (
                   <span className="ml-auto rounded-full bg-brand/10 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-brand">soon</span>
+                )}
+                {'beta' in l && l.beta && (
+                  <span className="ml-auto rounded-full bg-sky-500/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-sky-600 dark:text-sky-300">beta</span>
                 )}
               </NavLink>
             ))}

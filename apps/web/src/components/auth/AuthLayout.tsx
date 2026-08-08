@@ -1,7 +1,7 @@
 import { useState, type InputHTMLAttributes, type ReactNode } from 'react';
 import { Eye, EyeOff, Layers, ShieldCheck, Zap } from 'lucide-react';
 import { Logo } from '@/components/store/Logo';
-import { useI18n } from '@/i18n';
+import { useI18n, LangSwitch } from '@/i18n';
 
 const POINTS = [
   { icon: Zap, title: 'Stock held on approval', desc: 'We confirm and hold your stock when your order is approved — nothing is charged before that.' },
@@ -48,7 +48,10 @@ export function AuthLayout({
         <p className="relative text-xs text-background/40">Order My Phones LLC</p>
       </aside>
 
-      <main className="flex flex-col justify-center px-5 py-10 sm:px-10">
+      <main className="relative flex flex-col justify-center px-5 py-10 sm:px-10">
+        <div className="absolute right-5 top-5 sm:right-8 sm:top-6">
+          <LangSwitch />
+        </div>
         <div className="mx-auto w-full max-w-sm">
           <div className="mb-8 lg:hidden">
             <Logo />

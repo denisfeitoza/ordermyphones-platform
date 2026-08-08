@@ -69,13 +69,18 @@ const LANGS: readonly { code: Lang; label: string }[] = [
 ] as const;
 
 /** Discreet language pill — lives at the right edge of the header. */
-export function LangSwitch({ className }: { className?: string }) {
+export function LangSwitch({ className, tone = 'light' }: { className?: string; tone?: 'light' | 'dark' }) {
   const { lang, setLang } = useI18n();
+  const dark = tone === 'dark';
   return (
     <div
       role="group"
       aria-label="Language"
-      className={cn('inline-flex items-center rounded-full border border-border bg-muted/40 p-0.5', className)}
+      className={cn(
+        'inline-flex items-center rounded-full border p-0.5',
+        dark ? 'border-white/15 bg-white/5' : 'border-border bg-muted/40',
+        className,
+      )}
     >
       {LANGS.map((l) => (
         <button
@@ -85,7 +90,13 @@ export function LangSwitch({ className }: { className?: string }) {
           aria-pressed={lang === l.code}
           className={cn(
             'rounded-full px-2 py-1 text-[0.65rem] font-bold tracking-wide transition-colors',
-            lang === l.code ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground',
+            lang === l.code
+              ? dark
+                ? 'bg-white text-foreground'
+                : 'bg-foreground text-background'
+              : dark
+                ? 'text-background/60 hover:text-background'
+                : 'text-muted-foreground hover:text-foreground',
           )}
         >
           {l.label}
