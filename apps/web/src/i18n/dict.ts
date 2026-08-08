@@ -536,6 +536,11 @@ export const PT: Record<string, string> = {
   'an order of': 'um pedido de',
   'is not allowed': 'não é permitido',
   'allowed': 'permitidos',
+  'When each detail is required': 'Quando cada informação é obrigatória',
+  'Turn on where a customer must provide each detail: before they can check out, before you approve their order, or both. Example: require the tax certificate at approval so no business order is fulfilled without one on file.':
+    'Ligue onde o cliente precisa informar cada dado: antes de finalizar a compra, antes de você aprovar o pedido, ou ambos. Exemplo: exija o certificado fiscal na aprovação para que nenhum pedido empresarial seja atendido sem um no cadastro.',
+  'This is the setting the checkout and approval flows read; it does not block anything on its own until those flows are wired to it.':
+    'Esta é a configuração que o checkout e a aprovação leem; por si só ela não bloqueia nada até esses fluxos serem conectados a ela.',
   'registered accounts': 'contas cadastradas',
   'change a tier inline': 'altere o tier direto na lista',
   'manage tiers & roles in the Users & roles tab': 'gerencie tiers e roles na aba Usuários & roles',
@@ -1534,6 +1539,11 @@ export const ES: Record<string, string> = {
   'an order of': 'un pedido de',
   'is not allowed': 'no se permite',
   'allowed': 'permitidos',
+  'When each detail is required': 'Cuándo se exige cada dato',
+  'Turn on where a customer must provide each detail: before they can check out, before you approve their order, or both. Example: require the tax certificate at approval so no business order is fulfilled without one on file.':
+    'Activa dónde el cliente debe proporcionar cada dato: antes de finalizar la compra, antes de que apruebes su pedido, o ambos. Ejemplo: exige el certificado fiscal en la aprobación para que ningún pedido de empresa se cumpla sin uno registrado.',
+  'This is the setting the checkout and approval flows read; it does not block anything on its own until those flows are wired to it.':
+    'Esta es la configuración que leen el checkout y la aprobación; por sí sola no bloquea nada hasta que esos flujos se conecten a ella.',
   'registered accounts': 'cuentas registradas',
   'change a tier inline': 'cambia el tier directo en la lista',
   'manage tiers & roles in the Users & roles tab': 'gestiona tiers y roles en la pestaña Usuarios y roles',
