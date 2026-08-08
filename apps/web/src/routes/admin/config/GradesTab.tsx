@@ -192,9 +192,14 @@ function MapSection({ canEdit }: { canEdit: boolean }) {
 export default function GradesTab() {
   const { role } = useAuth();
   const canEdit = role === 'admin';
+  const { t } = useI18n();
   return (
     <div className="space-y-6">
       <AdminOnlyNote show={!canEdit} />
+      <div className="rounded-2xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm text-muted-foreground">
+        <b className="text-foreground">{t('What are grades?')}</b>{' '}
+        {t('Every supplier describes phone condition in their own words — “B+”, “Grade A”, “DLS B”. Here you map each of those to your one standard scale (NEW, CPO, A–D) so pricing and who-sees-what stay consistent. Example: supplier DLS says “B+” → you file it as B.')}
+      </div>
       <QueueSection canResolve={canEdit} />
       <MapSection canEdit={canEdit} />
     </div>
