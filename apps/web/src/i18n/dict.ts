@@ -3,6 +3,26 @@
  * A missing key silently falls back to English — safe by design.
  */
 export const PT: Record<string, string> = {
+  // #06 Address book
+  'Edit': 'Editar',
+  'Default': 'Padrão',
+  'Set default': 'Definir como padrão',
+  'Use a new address': 'Usar um novo endereço',
+  'Saved address': 'Endereço salvo',
+  'Recipient (optional)': 'Destinatário (opcional)',
+  'Label (optional)': 'Apelido (opcional)',
+  'Phone (optional)': 'Telefone (opcional)',
+  'Main warehouse': 'Armazém principal',
+  'Save this address for next time': 'Salvar este endereço para a próxima',
+  'Save the places you ship to once — the default is pre-selected at checkout.':
+    'Salve uma vez os lugares para onde você envia — o padrão já vem pré-selecionado no checkout.',
+  'No saved addresses yet. Add one and it’s ready the next time you check out.':
+    'Nenhum endereço salvo ainda. Adicione um e ele já fica pronto no próximo checkout.',
+  'Please choose or enter a complete shipping address.': 'Escolha ou preencha um endereço de entrega completo.',
+  'Nothing is charged here. Once you place the order, our team reaches out to align payment and shipping, and confirms stock before anything is charged.':
+    'Nada é cobrado aqui. Depois que você faz o pedido, nossa equipe entra em contato para alinhar pagamento e envio, e confirma o estoque antes de qualquer cobrança.',
+  'Our team reviews stock and reaches out to align payment and shipping. Track its status any time in your portal.':
+    'Nossa equipe revisa o estoque e entra em contato para alinhar pagamento e envio. Acompanhe o status quando quiser no seu portal.',
   // Header / nav
   'Shop': 'Loja',
   'Certified Pre-Owned': 'Seminovo Certificado',
@@ -435,6 +455,26 @@ export const PT: Record<string, string> = {
 };
 
 export const ES: Record<string, string> = {
+  // #06 Address book
+  'Edit': 'Editar',
+  'Default': 'Predeterminada',
+  'Set default': 'Marcar como predeterminada',
+  'Use a new address': 'Usar una dirección nueva',
+  'Saved address': 'Dirección guardada',
+  'Recipient (optional)': 'Destinatario (opcional)',
+  'Label (optional)': 'Etiqueta (opcional)',
+  'Phone (optional)': 'Teléfono (opcional)',
+  'Main warehouse': 'Almacén principal',
+  'Save this address for next time': 'Guardar esta dirección para la próxima',
+  'Save the places you ship to once — the default is pre-selected at checkout.':
+    'Guarda una vez los lugares a los que envías — la predeterminada se preselecciona en el checkout.',
+  'No saved addresses yet. Add one and it’s ready the next time you check out.':
+    'Aún no hay direcciones guardadas. Agrega una y estará lista en tu próximo checkout.',
+  'Please choose or enter a complete shipping address.': 'Elige o ingresa una dirección de envío completa.',
+  'Nothing is charged here. Once you place the order, our team reaches out to align payment and shipping, and confirms stock before anything is charged.':
+    'Aquí no se cobra nada. Cuando realizas el pedido, nuestro equipo se comunica para coordinar el pago y el envío, y confirma el stock antes de cualquier cobro.',
+  'Our team reviews stock and reaches out to align payment and shipping. Track its status any time in your portal.':
+    'Nuestro equipo revisa el stock y se comunica para coordinar el pago y el envío. Sigue el estado cuando quieras en tu portal.',
   // Header / nav
   'Shop': 'Tienda',
   'Certified Pre-Owned': 'Seminuevo Certificado',
