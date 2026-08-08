@@ -1,10 +1,11 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Wand2 } from 'lucide-react';
 import {
   listSynonyms,
   addSynonym,
   deleteSynonym,
+  applyModelAliases,
   listImportProfiles,
   deleteImportProfile,
   type SynonymRow,
@@ -125,6 +126,103 @@ function SynonymSection({ canEdit }: { canEdit: boolean }) {
   );
 }
 
+function ModelAliasSection({ canEdit }: { canEdit: boolean }) {
+  const qc = useQueryClient();
+  const q = useQuery({ queryKey: ['config-synonyms'], queryFn: listSynonyms });
+  const [raw, setRaw] = useState('');
+  const [canonical, setCanonical] = useState('');
+  const [applied, setApplied] = useState<number | null>(null);
+
+  const aliases = useMemo(() => (q.data ?? []).filter((r) => r.kind === 'model_value'), [q.data]);
+
+  const add = useMutation({
+    mutationFn: (row: Omit<SynonymRow, 'id'>) => addSynonym(row),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['config-synonyms'] }),
+  });
+  const remove = useMutation({
+    mutationFn: (id: string) => deleteSynonym(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['config-synonyms'] }),
+  });
+  const apply = useMutation({
+    mutationFn: () => applyModelAliases(),
+    onSuccess: (n) => setApplied(n),
+  });
+
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    const s = raw.trim();
+    const c = canonical.trim();
+    if (!s || !c) return;
+    add.mutate(
+      { canonical_field: 'model', synonym: s.toLowerCase(), kind: 'model_value', maps_to: c },
+      { onSuccess: () => { setRaw(''); setCanonical(''); } },
+    );
+  }
+
+  return (
+    <Panel
+      title="Model aliases"
+      action={
+        canEdit ? (
+          <Button size="sm" variant="outline" disabled={apply.isPending || aliases.length === 0} onClick={() => apply.mutate()}>
+            <Wand2 className="h-3.5 w-3.5" strokeWidth={2} />
+            {apply.isPending ? 'Applying…' : 'Apply to catalog'}
+          </Button>
+        ) : undefined
+      }
+    >
+      <p className="mb-4 text-sm text-muted-foreground">
+        Unify how the same phone is named across suppliers — map a raw name (<span className="font-mono">IP15</span>, <span className="font-mono">Apple iPhone 15</span>) to one
+        canonical model (<span className="font-mono">iPhone 15</span>), so you never get two listings of the same model. New imports fold automatically;
+        <b className="text-foreground"> Apply to catalog</b> re-names existing products now.
+      </p>
+
+      {canEdit && (
+        <form onSubmit={submit} className="mb-5 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+          <Field label="Raw / supplier name">
+            <TextInput value={raw} onChange={(e) => setRaw(e.target.value)} placeholder="IP15" className="h-10" />
+          </Field>
+          <Field label="Canonical model">
+            <TextInput value={canonical} onChange={(e) => setCanonical(e.target.value)} placeholder="iPhone 15" className="h-10" />
+          </Field>
+          <Button type="submit" size="sm" disabled={add.isPending || !raw.trim() || !canonical.trim()}>Add alias</Button>
+        </form>
+      )}
+      <MutationError error={add.error ?? remove.error ?? apply.error} />
+      {applied !== null && (
+        <p className="mb-3 text-sm text-success">Renamed {applied} product{applied === 1 ? '' : 's'} to their canonical model.</p>
+      )}
+
+      {q.isLoading && <p className="text-sm text-muted-foreground">Loading aliases…</p>}
+      {q.data && aliases.length === 0 && <p className="text-sm text-muted-foreground">No aliases yet. Add one above when a supplier names a model differently.</p>}
+      {aliases.length > 0 && (
+        <Table
+          minWidth={480}
+          columns={[
+            { key: 'raw', label: 'Raw / alias' },
+            { key: 'canonical', label: 'Canonical model' },
+            { key: 'action', label: '', align: 'right' },
+          ]}
+        >
+          {aliases.map((r) => (
+            <tr key={r.id} className="hover:bg-muted/40">
+              <Td className="font-mono text-xs">{r.synonym}</Td>
+              <Td className="font-medium">{r.maps_to ?? '—'}</Td>
+              <Td align="right">
+                {canEdit && (
+                  <button type="button" aria-label={`Delete alias ${r.synonym}`} onClick={() => remove.mutate(r.id)} className="text-muted-foreground hover:text-destructive">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
+              </Td>
+            </tr>
+          ))}
+        </Table>
+      )}
+    </Panel>
+  );
+}
+
 function ProfileSection() {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ['config-import-profiles'], queryFn: listImportProfiles });
@@ -176,6 +274,7 @@ export default function ImportDictTab() {
   return (
     <div className="space-y-6">
       <AdminOnlyNote show={role !== 'admin'} />
+      <ModelAliasSection canEdit={role === 'admin'} />
       <SynonymSection canEdit={role === 'admin'} />
       <ProfileSection />
     </div>

@@ -63,6 +63,16 @@ export async function commitStockImport(args: CommitStockImportArgs): Promise<Co
   });
 
   if (error) throw error;
+
+  // Fold freshly-imported model names to their canonical form via the model-
+  // alias dictionary (#01). Best-effort: the import already committed, so a
+  // fold failure must never fail the import.
+  try {
+    await supabase.rpc('apply_model_aliases');
+  } catch {
+    /* non-fatal */
+  }
+
   return data as CommitStockImportResult;
 }
 

@@ -178,7 +178,7 @@ export interface SynonymRow {
   id: string;
   canonical_field: string;
   synonym: string;
-  kind: 'header' | 'carrier_value';
+  kind: 'header' | 'carrier_value' | 'model_value';
   maps_to: string | null;
 }
 
@@ -186,6 +186,14 @@ export async function listSynonyms(): Promise<SynonymRow[]> {
   const { data, error } = await supabase.from('import_synonyms').select('id,canonical_field,synonym,kind,maps_to').order('canonical_field').order('synonym');
   if (error) throw new Error(error.message);
   return (data ?? []) as SynonymRow[];
+}
+
+/** Re-canonicalize existing products through the model-alias dictionary. Returns
+ * how many product names changed. */
+export async function applyModelAliases(): Promise<number> {
+  const { data, error } = await supabase.rpc('apply_model_aliases');
+  if (error) throw new Error(error.message);
+  return (data as number) ?? 0;
 }
 
 export async function addSynonym(row: Omit<SynonymRow, 'id'>): Promise<void> {
