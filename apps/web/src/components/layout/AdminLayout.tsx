@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { BarChart3, Bot, Boxes, Flag, LayoutDashboard, LogOut, PackageSearch, Receipt, ScrollText, Settings, Tag, UploadCloud, Users } from 'lucide-react';
+import { BarChart3, Bot, Boxes, FilePlus2, Flag, LayoutDashboard, LogOut, PackageSearch, Receipt, ScrollText, Settings, Tag, UploadCloud, Users } from 'lucide-react';
 import { useAuth, useTier } from '@/store';
 import { TIERS } from '@/data/tiers';
 import { Logo } from '@/components/store/Logo';
@@ -14,6 +14,7 @@ const NAV = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true, beta: true },
   { to: '/admin/customers', label: 'Customers', icon: Users, beta: true },
   { to: '/admin/orders', label: 'Orders', icon: Receipt, beta: true },
+  { to: '/admin/manual-order', label: 'Manual order', icon: FilePlus2, soon: true },
   { to: '/admin/reconciliation', label: 'Reconciliation', icon: PackageSearch, beta: true },
   { to: '/admin/inventory', label: 'Inventory', icon: Boxes, beta: true },
   { to: '/admin/import', label: 'Import', icon: UploadCloud, beta: true },

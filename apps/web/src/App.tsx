@@ -36,6 +36,7 @@ import ReconciliationPage from '@/routes/admin/ReconciliationPage';
 import InventoryPage from '@/routes/admin/InventoryPage';
 import ImportPage from '@/routes/admin/ImportPage';
 import PricingWorkbenchPage from '@/routes/admin/PricingWorkbenchPage';
+import ManualOrderPage from '@/routes/admin/ManualOrderPage';
 import PricingFlagsPage from '@/routes/admin/PricingFlagsPage';
 import ApiLogsPage from '@/routes/admin/ApiLogsPage';
 import AiBotsPage from '@/routes/admin/AiBotsPage';
@@ -128,6 +129,7 @@ export default function App() {
             <Route path="limits" element={<QuantityRulesTab />} />
           </Route>
 
+          <Route path="manual-order" element={<ManualOrderPage />} />
           <Route path="reconciliation" element={<ReconciliationPage />} />
 
           <Route path="inventory" element={<SectionTabs tabs={INVENTORY_TABS} />}>
