@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight, Inbox } from 'lucide-react';
-import { listProfiles, listAccessRequests, setAccessRequestStatus } from '@/data/adminConfig';
-import { DB_TIER_LABELS } from '@/lib/invites';
+import { listProfiles, listAccessRequests, setAccessRequestStatus, setCustomerTier, type ProfileRow } from '@/data/adminConfig';
+import { DB_TIERS, DB_TIER_LABELS, type DbTier } from '@/lib/invites';
+import { useAuth } from '@/store';
 import { InvitePanel } from '@/components/admin/InvitePanel';
+import { ConfirmPassword } from '@/components/admin/ConfirmPassword';
 import { AdminHeading, Panel, Table, Td } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
 
@@ -62,14 +65,28 @@ function AccessRequestsPanel() {
  * sensitive, re-auth-gated surface) — this is the read + invite view.
  */
 export function RealCustomers() {
+  const qc = useQueryClient();
+  const { role } = useAuth();
+  const isAdmin = role === 'admin';
   const q = useQuery({ queryKey: ['config-profiles'], queryFn: listProfiles });
   const customers = (q.data ?? []).filter((p) => p.role === 'customer');
+
+  // Inline tier change is a sensitive action → confirm with password (same gate
+  // as Settings → Users), then apply. Only admins may change a tier server-side.
+  const [pending, setPending] = useState<{ user: ProfileRow; tier: DbTier } | null>(null);
+  const setTier = useMutation({
+    mutationFn: ({ userId, tier }: { userId: string; tier: DbTier }) => setCustomerTier(userId, tier, 'admin console'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['config-profiles'] });
+      setPending(null);
+    },
+  });
 
   return (
     <div className="space-y-6">
       <AdminHeading
         title="Customers"
-        subtitle={`${customers.length} registered account${customers.length === 1 ? '' : 's'} · manage tiers & roles in Settings → Users`}
+        subtitle={`${customers.length} registered account${customers.length === 1 ? '' : 's'}${isAdmin ? ' · change a tier inline' : ' · manage tiers & roles in Settings → Users'}`}
       />
 
       <AccessRequestsPanel />
@@ -98,9 +115,29 @@ export function RealCustomers() {
                 <span className="block truncate text-xs text-muted-foreground">{c.email}</span>
               </Td>
               <Td>
-                <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium capitalize">
-                  {c.tier ? DB_TIER_LABELS[c.tier] : 'No tier'}
-                </span>
+                {isAdmin ? (
+                  <div className="relative inline-block">
+                    <select
+                      value={c.tier ?? ''}
+                      disabled={setTier.isPending}
+                      onChange={(e) => setPending({ user: c, tier: e.target.value as DbTier })}
+                      aria-label={`Tier for ${c.email}`}
+                      className="h-8 cursor-pointer appearance-none rounded-full border border-border bg-background py-0 pl-3 pr-7 text-xs font-medium capitalize outline-none transition-colors hover:bg-muted focus:border-brand disabled:opacity-50"
+                    >
+                      {!c.tier && <option value="" disabled>No tier</option>}
+                      {DB_TIERS.map((t) => (
+                        <option key={t} value={t}>{DB_TIER_LABELS[t]}</option>
+                      ))}
+                    </select>
+                    <svg className="pointer-events-none absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" viewBox="0 0 24 24" fill="none" aria-hidden>
+                      <path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                ) : (
+                  <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium capitalize">
+                    {c.tier ? DB_TIER_LABELS[c.tier] : 'No tier'}
+                  </span>
+                )}
               </Td>
               <Td className="text-muted-foreground">{fmtDate(c.created_at)}</Td>
               <Td align="right">
@@ -116,6 +153,22 @@ export function RealCustomers() {
           No customers registered yet. Send an invite above — the buyer signs up with the tier you choose already attached.
         </div>
       )}
+
+      {setTier.error && (
+        <p className="rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          {(setTier.error as Error).message}
+        </p>
+      )}
+
+      <ConfirmPassword
+        open={!!pending}
+        title={pending ? `Change ${pending.user.display_name ?? pending.user.email} to ${DB_TIER_LABELS[pending.tier]}?` : ''}
+        description="This changes the tier — and the prices — the customer sees, effective immediately. Confirm your password to proceed."
+        actionLabel="Change tier"
+        busy={setTier.isPending}
+        onCancel={() => setPending(null)}
+        onConfirmed={() => pending && setTier.mutate({ userId: pending.user.id, tier: pending.tier })}
+      />
     </div>
   );
 }
