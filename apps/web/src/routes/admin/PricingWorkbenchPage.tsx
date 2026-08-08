@@ -40,13 +40,12 @@ function WorkbenchRow({ row }: { row: PricingBreakdownRow }) {
     wholesale: centsToStr(row.price_wholesale),
     distributor: centsToStr(row.price_distributor),
   });
-  const [basis, setBasis] = useState<'avg' | 'max'>('max');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const basisCost = basis === 'avg' ? row.avg_cost : row.max_cost;
-
-  function fillFromCost() {
+  // Auto-price every tier from a chosen cost basis (avg or highest) × the tier
+  // markup. Two explicit buttons below drive this — no basis toggle to flip.
+  function fillFrom(basisCost: number | null) {
     if (!basisCost) return;
     setEdits({
       consumer: (Math.round(basisCost * TIER_MARKUP.consumer) / 100).toFixed(2),
@@ -75,25 +74,9 @@ function WorkbenchRow({ row }: { row: PricingBreakdownRow }) {
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-medium">{name(row)}</p>
-          <p className="font-mono text-xs text-muted-foreground">{row.sku} · {row.ctia_grade} · {row.total_qty} in stock</p>
-        </div>
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-muted-foreground">{t('Cost basis')}</span>
-          <div className="inline-flex rounded-full border border-border p-0.5">
-            {(['avg', 'max'] as const).map((b) => (
-              <button
-                key={b}
-                onClick={() => setBasis(b)}
-                className={cn('rounded-full px-2.5 py-1 font-medium transition-colors', basis === b ? 'bg-secondary text-foreground' : 'text-muted-foreground')}
-              >
-                {b === 'avg' ? t('Average') : t('Highest')}
-              </button>
-            ))}
-          </div>
-        </div>
+      <div className="min-w-0">
+        <p className="font-medium">{name(row)}</p>
+        <p className="font-mono text-xs text-muted-foreground">{row.sku} · {row.ctia_grade} · {row.total_qty} in stock</p>
       </div>
 
       {/* Cost per inventory location */}
@@ -131,12 +114,18 @@ function WorkbenchRow({ row }: { row: PricingBreakdownRow }) {
         ))}
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-3">
-        <Button size="sm" variant="outline" onClick={fillFromCost} disabled={!basisCost}>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Button size="sm" variant="outline" onClick={() => fillFrom(row.avg_cost)} disabled={!row.avg_cost} title={row.avg_cost ? formatUsd(row.avg_cost) : undefined}>
           <Wand2 className="h-3.5 w-3.5" strokeWidth={2} />
-          {basis === 'avg' ? t('Fill from average cost') : t('Fill from highest cost')}
+          {t('Fill from average cost')}
+          {row.avg_cost ? <span className="font-mono text-xs text-muted-foreground">· {formatUsd(row.avg_cost)}</span> : null}
         </Button>
-        <Button size="sm" variant="primary" onClick={save} disabled={!dirty || saving}>
+        <Button size="sm" variant="outline" onClick={() => fillFrom(row.max_cost)} disabled={!row.max_cost} title={row.max_cost ? formatUsd(row.max_cost) : undefined}>
+          <Wand2 className="h-3.5 w-3.5" strokeWidth={2} />
+          {t('Fill from highest cost')}
+          {row.max_cost ? <span className="font-mono text-xs text-muted-foreground">· {formatUsd(row.max_cost)}</span> : null}
+        </Button>
+        <Button size="sm" variant="primary" className="ml-auto" onClick={save} disabled={!dirty || saving}>
           {saved ? <Check className="h-4 w-4" strokeWidth={2.5} /> : null}
           {saving ? t('Saving…') : saved ? t('Saved') : t('Save prices')}
         </Button>
@@ -156,7 +145,7 @@ export default function PricingWorkbenchPage() {
       <AdminHeading title="Prices" subtitle="See what you pay in each inventory, then set the sell price per tier." />
 
       <div className="rounded-2xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm text-muted-foreground">
-        <b className="text-foreground">{t('How this works:')}</b> {t('search a model, see its cost in each warehouse, and set each tier’s price. Use')} <b className="text-foreground">{t('Fill from cost')}</b> {t('to auto-price from the average or highest cost plus a margin — then tweak any number. Saved prices go live immediately for that tier.')}
+        <b className="text-foreground">{t('How this works:')}</b> {t('search a model, see its cost in each warehouse, and set each tier’s price. Use')} <b className="text-foreground">{t('the fill buttons')}</b> {t('to auto-price from the average or highest cost plus a margin — then tweak any number. Saved prices go live immediately for that tier.')}
       </div>
 
       <label className="relative block max-w-md">
