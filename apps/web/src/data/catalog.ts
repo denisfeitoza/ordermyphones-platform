@@ -42,10 +42,12 @@ const stk = (supplier: SupplierCode, availableQty: number, unitCostCents: number
   lead,
 });
 
-/** Anonymized source labels for any customer-visible surface (suppliers are a trade secret). */
+/** Anonymized inventory labels for any customer-visible surface: buyers must
+ * see only "our stock, different locations" — never that external suppliers
+ * exist (a trade secret). Framed as our own warehouses, not sources/feeds. */
 export const SOURCE_LABELS: Record<SupplierCode, string> = {
-  'source-1': 'Source A',
-  'source-2': 'Source B',
+  'source-1': 'Warehouse 1',
+  'source-2': 'Warehouse 2',
 };
 
 export const CATALOG: CatalogItem[] = [

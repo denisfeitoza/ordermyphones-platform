@@ -56,15 +56,15 @@ export default function OpsPage() {
         <div>
           <h1 className="font-display text-xl font-semibold tracking-tight">Inventory bot · live operations</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Aggregating live sources every 2 seconds, cross-checking open orders, and reserving stock at
-            source. Simulated for the mockup — no live supplier calls.
+            Syncing our warehouses every 2 seconds, cross-checking open orders, and reserving stock across
+            locations. Simulated for the mockup — no live calls.
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           <Kpi label="Orders reconciled" value={formatInt(ordersReconciled)} sub="last 24h" />
-          <Kpi label="SKUs tracked" value={formatInt(skusTracked)} sub="across 2 feeds" />
-          <Kpi label="Units held" value={formatInt(held)} sub="reserved at source" accent="text-warning" />
+          <Kpi label="SKUs tracked" value={formatInt(skusTracked)} sub="across warehouses" />
+          <Kpi label="Units held" value={formatInt(held)} sub="reserved on approval" accent="text-warning" />
           <Kpi label="Sync uptime" value="99.94%" sub="30-day" accent="text-success" />
           <Kpi label="Open alerts" value={String(alertCount)} sub="stock & price" accent={alertCount > 0 ? 'text-destructive' : 'text-foreground'} />
         </div>

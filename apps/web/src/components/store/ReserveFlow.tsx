@@ -5,18 +5,18 @@ import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n';
 
 /**
- * Simulates the reserve-at-source flow: confirm live stock, cross-check open
- * orders, hold the units, then authorize. UI-only — the real adapters do this
- * server-side against the supplier network (sources never exposed to the buyer).
+ * Simulates the reserve flow: confirm live stock, cross-check open orders, hold
+ * the units, then authorize. UI-only — the real adapters do this server-side
+ * across our warehouses (buyers only ever see "our stock, different locations").
  */
 export function ReserveFlow({ units, onComplete }: { units: number; onComplete: () => void }) {
   const { t } = useI18n();
   const u = `${units} ${units === 1 ? t('unit') : t('units')}`;
   const steps = [
     t('Confirming live stock'),
-    t('Confirming availability across the network'),
+    t('Confirming availability across our warehouses'),
     `Cross-checking ${u} against open orders`,
-    `Reserving ${u} at source`,
+    `Reserving ${u} across warehouses`,
     t('Authorizing payment'),
     t('Confirming order'),
   ];
