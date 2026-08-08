@@ -41,6 +41,7 @@ export function RealAddToCart({
   const { add } = useRealCart();
   const [qty, setQty] = useState(1);
   const [justAdded, setJustAdded] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   const mode: AddToCartLayout = layout ?? (stepper ? 'stepper' : 'button');
   const withQty = mode !== 'button';
@@ -49,6 +50,16 @@ export function RealAddToCart({
 
   function addToCart() {
     add(variantId, withQty ? qty : 1);
+    setJustAdded(true);
+    setTimeout(() => setJustAdded(false), 1400);
+  }
+
+  // Card popover: confirm a quantity (default 1, editable to any amount) before
+  // adding, so a buyer can drop 300 units from the grid without opening detail.
+  function confirmFromPopover() {
+    add(variantId, qty);
+    setPopoverOpen(false);
+    setQty(1);
     setJustAdded(true);
     setTimeout(() => setJustAdded(false), 1400);
   }
@@ -82,10 +93,42 @@ export function RealAddToCart({
 
   if (mode === 'button') {
     return (
-      <Button variant="primary" size="md" className={cn('w-full', className)} onClick={addToCart}>
-        {justAdded ? <Check className="h-4 w-4" strokeWidth={2.5} /> : <ShoppingBag className="h-4 w-4" strokeWidth={2} />}
-        {justAdded ? t('Added') : t('Add to cart')}
-      </Button>
+      <div className={cn('relative', className)}>
+        <Button variant="primary" size="md" className="w-full" onClick={() => setPopoverOpen((o) => !o)} aria-expanded={popoverOpen}>
+          {justAdded ? <Check className="h-4 w-4" strokeWidth={2.5} /> : <ShoppingBag className="h-4 w-4" strokeWidth={2} />}
+          {justAdded ? t('Added') : t('Add to cart')}
+        </Button>
+        {popoverOpen && (
+          <>
+            <button type="button" aria-hidden className="fixed inset-0 z-40 cursor-default" onClick={() => setPopoverOpen(false)} tabIndex={-1} />
+            <div className="absolute bottom-full left-0 right-0 z-50 mb-2 rounded-xl border border-border bg-background p-2 shadow-card-hover">
+              <div className="flex items-center gap-2">
+                <div className="inline-flex flex-1 items-center rounded-full border border-border">
+                  <button type="button" onClick={() => setQty((n) => Math.max(1, n - 1))} className="grid h-9 w-9 shrink-0 place-items-center rounded-l-full hover:bg-muted" aria-label={t('Decrease')}>
+                    <Minus className="h-3.5 w-3.5" strokeWidth={2} />
+                  </button>
+                  <input
+                    type="number"
+                    min={1}
+                    autoFocus
+                    value={qty}
+                    onChange={(e) => setQty(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
+                    onKeyDown={(e) => e.key === 'Enter' && confirmFromPopover()}
+                    className="h-9 w-full min-w-0 border-x border-border bg-transparent text-center font-mono text-sm tabular-nums outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+                    aria-label={t('Quantity')}
+                  />
+                  <button type="button" onClick={() => setQty((n) => n + 1)} className="grid h-9 w-9 shrink-0 place-items-center rounded-r-full hover:bg-muted" aria-label={t('Increase')}>
+                    <Plus className="h-3.5 w-3.5" strokeWidth={2} />
+                  </button>
+                </div>
+                <Button variant="primary" size="sm" className="h-9 shrink-0" onClick={confirmFromPopover}>
+                  {t('Add')} {qty}
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
     );
   }
 
