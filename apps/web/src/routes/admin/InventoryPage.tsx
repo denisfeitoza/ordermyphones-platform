@@ -189,8 +189,8 @@ export default function InventoryPage() {
         title="Inventory"
         subtitle={
           query.isSuccess
-            ? `${formatInt(rows.length)} location balances${rows.length >= ROW_LIMIT ? ` (capped at ${formatInt(ROW_LIMIT)})` : ''} · from stock imports`
-            : 'From stock imports'
+            ? `${formatInt(rows.length)} ${t('location balances')}${rows.length >= ROW_LIMIT ? ` (${t('capped at')} ${formatInt(ROW_LIMIT)})` : ''} · ${t('from stock imports')}`
+            : t('From stock imports')
         }
         action={
           <div className="flex items-center gap-2">

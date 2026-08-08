@@ -90,9 +90,9 @@ export function InvitePanel() {
   return (
     <Panel title={t('Invite a customer')}>
       <p className="mb-4 text-sm text-muted-foreground">
-        Accounts are invite-only. Create an invite, then copy the link and send it to the customer — email delivery is
-        off in this build (toggle <code className="rounded bg-muted px-1">invite_email_delivery</code>). The link carries
-        the tier and email; the customer only sets a name and password.
+        {t('Accounts are invite-only. Create an invite, then copy the link and send it to the customer — email delivery is off in this build (toggle')}{' '}
+        <code className="rounded bg-muted px-1">invite_email_delivery</code>
+        {t('). The link carries the tier and email; the customer only sets a name and password.')}
       </p>
 
       <form onSubmit={submit} className="flex flex-col gap-3 sm:flex-row sm:items-end">

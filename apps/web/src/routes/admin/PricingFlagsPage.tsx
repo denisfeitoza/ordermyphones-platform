@@ -271,8 +271,8 @@ export default function PricingFlagsPage() {
         title="Flag queue"
         subtitle={
           query.isSuccess
-            ? `${rows.length} open pricing flag${rows.length === 1 ? '' : 's'} — override, acknowledge, watch, or resolve each one`
-            : 'Pricing engine flags waiting on an admin decision'
+            ? `${rows.length} ${t('open pricing flags')} — ${t('override, acknowledge, watch, or resolve each one')}`
+            : t('Pricing engine flags waiting on an admin decision')
         }
       />
 

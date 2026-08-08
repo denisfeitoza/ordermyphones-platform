@@ -531,6 +531,21 @@ export const PT: Record<string, string> = {
   'in stock': 'em estoque',
   'Save': 'Salvar',
   'You save': 'Economize',
+  'registered accounts': 'contas cadastradas',
+  'change a tier inline': 'altere o tier direto na lista',
+  'manage tiers & roles in the Users & roles tab': 'gerencie tiers e roles na aba Usuários & roles',
+  'location balances': 'saldos por local',
+  'capped at': 'limitado a',
+  'from stock imports': 'das importações de estoque',
+  'From stock imports': 'Das importações de estoque',
+  'open pricing flags': 'sinalizações de preço abertas',
+  'override, acknowledge, watch, or resolve each one': 'sobreponha, reconheça, monitore ou resolva cada uma',
+  'Pricing engine flags waiting on an admin decision': 'Sinalizações do motor de preço aguardando decisão do admin',
+  'open shortfalls awaiting stock': 'pendências abertas aguardando estoque',
+  'Accounts are invite-only. Create an invite, then copy the link and send it to the customer — email delivery is off in this build (toggle':
+    'Contas são apenas por convite. Crie um convite, copie o link e envie ao cliente — o envio de e-mail está desligado nesta versão (chave',
+  '). The link carries the tier and email; the customer only sets a name and password.':
+    '). O link já carrega o tier e o e-mail; o cliente só define nome e senha.',
   'per unit': 'por unidade',
   'Retail · buy more to unlock tier pricing': 'Varejo · compre mais para desbloquear preço de tier',
   // Filters / catalog
@@ -1442,6 +1457,21 @@ export const ES: Record<string, string> = {
   'in stock': 'en stock',
   'Save': 'Guardar',
   'You save': 'Ahorra',
+  'registered accounts': 'cuentas registradas',
+  'change a tier inline': 'cambia el tier directo en la lista',
+  'manage tiers & roles in the Users & roles tab': 'gestiona tiers y roles en la pestaña Usuarios y roles',
+  'location balances': 'saldos por ubicación',
+  'capped at': 'limitado a',
+  'from stock imports': 'de las importaciones de stock',
+  'From stock imports': 'De las importaciones de stock',
+  'open pricing flags': 'señales de precio abiertas',
+  'override, acknowledge, watch, or resolve each one': 'anula, reconoce, vigila o resuelve cada una',
+  'Pricing engine flags waiting on an admin decision': 'Señales del motor de precios esperando una decisión del admin',
+  'open shortfalls awaiting stock': 'faltantes abiertos esperando stock',
+  'Accounts are invite-only. Create an invite, then copy the link and send it to the customer — email delivery is off in this build (toggle':
+    'Las cuentas son solo por invitación. Crea una invitación, copia el enlace y envíaselo al cliente — el envío de correo está desactivado en esta versión (clave',
+  '). The link carries the tier and email; the customer only sets a name and password.':
+    '). El enlace ya lleva el tier y el correo; el cliente solo define nombre y contraseña.',
   'per unit': 'por unidad',
   'Retail · buy more to unlock tier pricing': 'Minorista · compra más para desbloquear precio por nivel',
   // Filters / catalog
