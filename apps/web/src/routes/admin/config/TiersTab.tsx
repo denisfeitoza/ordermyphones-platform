@@ -5,7 +5,9 @@ import { listTiers, updateTier, repriceAll, type DbTierRow } from '@/data/adminC
 import { useAuth } from '@/store';
 import { Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
-import { formatInt } from '@/lib/format';
+import { formatInt, formatUsd } from '@/lib/format';
+import { tierBg } from '@/lib/tierStyles';
+import { cn } from '@/lib/utils';
 import { AdminOnlyNote, Field, MoneyCentsInput, MutationError, TextInput } from './parts';
 
 interface TierDraft {
@@ -18,6 +20,8 @@ interface TierDraft {
 function toDraft(r: DbTierRow): TierDraft {
   return { label: r.label, min_units: r.min_units, max_units: r.max_units, floor_cents: r.floor_cents };
 }
+
+const TONE: Record<string, '1' | '2' | '3' | '4'> = { consumer: '1', retailer: '2', wholesale: '3', distributor: '4' };
 
 function TierCard({ row, canEdit }: { row: DbTierRow; canEdit: boolean }) {
   const qc = useQueryClient();
@@ -33,21 +37,25 @@ function TierCard({ row, canEdit }: { row: DbTierRow; canEdit: boolean }) {
     draft.label !== row.label || draft.min_units !== row.min_units || draft.max_units !== row.max_units || draft.floor_cents !== row.floor_cents;
 
   const invalid = draft.min_units < 0 || (draft.max_units !== null && draft.max_units < draft.min_units) || draft.floor_cents < 0 || !draft.label.trim();
+  const range = `${formatInt(draft.min_units)}${draft.max_units === null ? '+' : `–${formatInt(draft.max_units)}`} units`;
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">{row.code}</span>
-        <span className="text-xs text-muted-foreground">position {row.position}</span>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <span className="flex items-center gap-2 font-semibold">
+          <span className={cn('h-2.5 w-2.5 rounded-full', tierBg[TONE[row.code] ?? '1'])} />
+          {draft.label || row.label}
+        </span>
+        <span className="rounded-full bg-secondary px-2.5 py-0.5 font-mono text-xs tabular-nums text-muted-foreground">{range}</span>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Label">
+        <Field label="Tier name" help="What customers see for their pricing.">
           <TextInput value={draft.label} disabled={!canEdit} onChange={(e) => setDraft({ ...draft, label: e.target.value })} />
         </Field>
-        <Field label="Floor price (min sellable)">
+        <Field label="Minimum price" help={`Never sell below ${formatUsd(draft.floor_cents)} at this tier.`}>
           <MoneyCentsInput ariaLabel={`${row.code} floor`} cents={draft.floor_cents} disabled={!canEdit} onChange={(c) => setDraft({ ...draft, floor_cents: c })} />
         </Field>
-        <Field label="Min units">
+        <Field label="Qualifies from (units)" help="Buyers ordering at least this many get this tier.">
           <TextInput
             type="number"
             min="0"
@@ -56,13 +64,13 @@ function TierCard({ row, canEdit }: { row: DbTierRow; canEdit: boolean }) {
             onChange={(e) => setDraft({ ...draft, min_units: Math.max(0, Math.floor(Number(e.target.value) || 0)) })}
           />
         </Field>
-        <Field label="Max units" help="Blank = unbounded (top tier).">
+        <Field label="Up to (units)" help="Leave blank for the top tier (no upper limit).">
           <TextInput
             type="number"
             min="0"
             value={draft.max_units ?? ''}
             disabled={!canEdit}
-            placeholder="Unbounded"
+            placeholder="No limit"
             onChange={(e) => {
               const raw = e.target.value.trim();
               setDraft({ ...draft, max_units: raw === '' ? null : Math.max(0, Math.floor(Number(raw) || 0)) });
@@ -72,7 +80,7 @@ function TierCard({ row, canEdit }: { row: DbTierRow; canEdit: boolean }) {
       </div>
       {canEdit && (
         <div className="mt-3 flex items-center justify-end gap-3">
-          {invalid && <span className="text-xs text-destructive">Check ranges & floor.</span>}
+          {invalid && <span className="text-xs text-destructive">Check the price and unit range.</span>}
           <Button size="sm" variant="outline" disabled={!dirty || invalid || save.isPending} onClick={() => save.mutate()}>
             {save.isPending ? 'Saving…' : save.isSuccess && !dirty ? 'Saved ✓' : 'Save'}
           </Button>
