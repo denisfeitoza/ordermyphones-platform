@@ -56,6 +56,18 @@
   .kv .item::before{content:"";position:absolute;left:0;top:9px;width:5px;height:5px;border-radius:99px;background:var(--accent);opacity:.7}
   .kv .item b{color:var(--text);font-weight:650}
   .kv .item .s{color:var(--soon);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em;border:1px solid color-mix(in srgb,var(--soon) 40%,transparent);border-radius:999px;padding:0 6px;margin-left:5px}
+  /* Per-tab cards (admin console breakdown) */
+  .tablist{display:flex;flex-direction:column;gap:11px;margin-top:4px}
+  .tab{border:1px solid var(--border);border-radius:14px;padding:13px 15px 14px;background:var(--surface)}
+  .tab h3{font-size:15.5px;margin:0 0 4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;letter-spacing:-.01em}
+  .tab h3 .badge{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-radius:999px;padding:1px 7px}
+  .tab h3 .b-beta{color:var(--beta);background:var(--beta-bg)}
+  .tab h3 .b-soon{color:var(--soon);background:var(--soon-bg)}
+  .tab h3 .sub{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0}
+  .tab p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.5}
+  .tab p b{color:var(--text);font-weight:600}
+  .tab .ex{margin-top:9px;font-size:12.5px;background:var(--accent-soft);border-radius:10px;padding:8px 11px;line-height:1.45;color:var(--text)}
+  .tab .ex b{color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:10.5px;margin-right:3px}
   .note{margin-top:16px;font-size:13.5px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:10px 13px}
 
   .render{position:sticky;top:130px;display:flex;flex-direction:column;gap:16px}
@@ -295,44 +307,91 @@
   <!-- 4 ADMIN -->
   <section class="doc" id="admin">
     <div class="sec-head"><span class="num">04</span><h2 data-pt="Console do admin" data-en="Admin console"></h2></div>
-    <p class="sec-sub" data-pt="Onde o negócio é operado, sem código. Cada item é uma aba do menu." data-en="Where the business is run, no code. Each item is a menu tab."></p>
-    <div class="grid">
-      <div>
-        <div class="subhead" data-pt="Operação do dia a dia" data-en="Day-to-day operation"></div>
-        <div class="kv">
-          <div class="item" data-pt="<b>Painel:</b> KPIs ao vivo (SKUs, clientes, pedidos, a aprovar, conciliações, flags) + “ver a loja como” cada tier + pedidos recentes." data-en="<b>Dashboard:</b> live KPIs (SKUs, customers, orders, to-approve, reconciliations, flags) + “view the store as” each tier + recent orders."></div>
-          <div class="item" data-pt="<b>Clientes:</b> contas registradas, mudar tier na hora, fila de solicitações de acesso e painel de convites. Sub-aba <b>Usuários &amp; roles</b> muda papel/tier com senha." data-en="<b>Customers:</b> registered accounts, change tier inline, access-request queue and invite panel. <b>Users &amp; roles</b> sub-tab changes role/tier with a password."></div>
-          <div class="item" data-pt="<b>Pedidos:</b> aprovar/rejeitar — a aprovação baixa o estoque; se faltar, o restante abre uma conciliação. Exporta a lista." data-en="<b>Orders:</b> approve/reject — approval deducts stock; a shortfall opens a reconciliation. Exports the list."></div>
-          <div class="item" data-pt="<b>Pedido manual:</b> gerar pedido em nome do cliente + planilha. <span class='s'>Em breve</span>" data-en="<b>Manual order:</b> place an order for a customer + spreadsheet. <span class='s'>Soon</span>"></div>
-          <div class="item" data-pt="<b>Conciliação:</b> faltas em aberto — “Atender” quando o estoque chega, ou “Fechar pendência”." data-en="<b>Reconciliation:</b> open shortfalls — “Fulfill” when stock arrives, or “Close shortfall”."></div>
-          <div class="item" data-pt="<b>Inventário:</b> saldo por local, custo unitário, alertas de estoque baixo/zerado." data-en="<b>Inventory:</b> balance per location, unit cost, low/out-of-stock alerts."></div>
-        </div>
-        <div class="subhead" data-pt="Catálogo & preço" data-en="Catalog & pricing"></div>
-        <div class="kv">
-          <div class="item" data-pt="<b>Importar:</b> wizard em 4 passos (upload → mapear colunas → simular → gravar). Sub-abas: <b>Dicionário</b> (sinônimos/unificação de modelos) e <b>Grade maps</b> (grade do fornecedor → sua grade)." data-en="<b>Import:</b> 4-step wizard (upload → map columns → dry-run → commit). Sub-tabs: <b>Dictionary</b> (synonyms/model unification) and <b>Grade maps</b> (supplier grade → your grade)."></div>
-          <div class="item" data-pt="<b>Preços:</b> <b>Bancada</b> (custo por local → preço por tier, com botões de preencher), <b>Tiers &amp; pisos</b> (faixas e piso de cada tier) e <b>Regras</b> (tetos, bandas, multiplicadores)." data-en="<b>Prices:</b> <b>Workbench</b> (cost per location → price per tier, with fill buttons), <b>Tiers &amp; floors</b> (each tier's ranges and floor) and <b>Rules</b> (caps, bands, multipliers)."></div>
-          <div class="item" data-pt="<b>Fila de sinalização:</b> preços suspeitos segurados pra sua decisão (margem, ordem de tiers, estoque zerado…)." data-en="<b>Flag queue:</b> suspicious prices held for your call (margin, tier-order, zero stock…)."></div>
-          <div class="item" data-pt="<b>Relatórios:</b> GMV, receita por mês, GMV por tier e produtos mais vendidos — do livro de pedidos real." data-en="<b>Reports:</b> GMV, revenue by month, GMV by tier and top products — from the live order book."></div>
-        </div>
-        <div class="subhead" data-pt="Sistema & controle" data-en="System & control"></div>
-        <div class="kv">
-          <div class="item" data-pt="<b>Configurações:</b> <b>Go-live &amp; loja</b> (liga o catálogo real, exibição de quantidade, destaques), <b>Enforcement</b> (guarda-corpos) e <b>Log de auditoria</b>." data-en="<b>Settings:</b> <b>Go-live &amp; storefront</b> (turn on the real catalog, quantity display, featured), <b>Enforcement</b> (guardrails) and <b>Audit log</b>."></div>
-          <div class="item" data-pt="<b>Ver como cliente:</b> lente só-leitura pra ver o que uma conta enxerga (auditada)." data-en="<b>View as customer:</b> read-only lens to see what an account sees (audited)."></div>
-          <div class="item" data-pt="<b>Logs de API / IA &amp; bots.</b> <span class='s'>Em breve</span>" data-en="<b>API logs / AI &amp; bots.</b> <span class='s'>Soon</span>"></div>
-          <div class="item" data-pt="<b>Segurança:</b> ações sensíveis (tier, papel, go-live, merge) pedem senha e ficam na auditoria." data-en="<b>Security:</b> sensitive actions (tier, role, go-live, merge) require a password and are audited."></div>
-        </div>
+    <p class="sec-sub" data-pt="Onde o negócio é operado, sem código. Uma parte para cada aba do menu — o que faz e um exemplo prático." data-en="Where the business is run, no code. One block per menu tab — what it does and a practical example."></p>
+    <div class="tablist">
+      <div class="tab">
+        <h3><span data-pt="Painel" data-en="Dashboard"></span><span class="badge b-beta">Beta</span></h3>
+        <p data-pt="Um retrato ao vivo do negócio: cartões de KPI (SKUs ativos, clientes, pedidos, a aprovar, conciliações em aberto, flags de preço), o seletor “ver a loja como” cada tier e os pedidos mais recentes." data-en="A live snapshot of the business: KPI cards (SKUs live, customers, orders, to-approve, open reconciliations, price flags), the “view the store as” tier switcher and the most recent orders."></p>
+        <div class="ex"><b data-pt="Exemplo" data-en="Example"></b><span data-pt="“A aprovar: 2” significa dois clientes esperando — clique para ir aos Pedidos e decidir." data-en="“To approve: 2” means two customers are waiting — click through to Orders to decide."></span></div>
       </div>
+      <div class="tab">
+        <h3><span data-pt="Clientes" data-en="Customers"></span><span class="badge b-beta">Beta</span></h3>
+        <p data-pt="Todas as contas registradas. Muda o tier na hora, trabalha a fila de solicitações de acesso e envia convites. A sub-aba <b>Usuários &amp; roles</b> muda papel e tier (confirmado por senha)." data-en="Every registered account. Change tier inline, work the access-request queue and send invites. The <b>Users &amp; roles</b> sub-tab changes role and tier (password-confirmed)."></p>
+        <div class="ex"><b data-pt="Exemplo" data-en="Example"></b><span data-pt="Um lojista pede preço de atacado → mude o tier dele para Wholesale; no próximo login ele vê os preços de atacado." data-en="A retailer asks for wholesale pricing → change their tier to Wholesale; on next login they see wholesale prices."></span></div>
+      </div>
+      <div class="tab">
+        <h3><span data-pt="Pedidos" data-en="Orders"></span><span class="badge b-beta">Beta</span></h3>
+        <p data-pt="A fila de pedidos. Abra qualquer pedido para <b>Aprovar</b>, <b>Rejeitar</b> ou <b>Editar por completo</b>. A aprovação baixa o estoque; se faltar, o restante abre uma conciliação. A edição permite mudar quantidades e preços, adicionar ou remover itens e corrigir o endereço — cada mudança entra num <b>Histórico do pedido</b> que você e o cliente veem." data-en="The order queue. Open any order to <b>Approve</b>, <b>Reject</b> or <b>fully Edit</b> it. Approval deducts stock; a shortfall opens a reconciliation. Editing lets you change quantities and prices, add or remove items and fix the address — every change lands in an <b>Order history</b> both you and the customer see."></p>
+        <div class="ex"><b data-pt="Exemplo" data-en="Example"></b><span data-pt="Cliente pediu 10 mas você só tem 8 → abra o pedido, Editar, ajuste para 8 e escreva o motivo; o cliente vê “10 → 8” com a sua nota." data-en="Customer ordered 10 but you only have 8 → open the order, Edit, set qty to 8 and write a reason; the customer sees “10 → 8” with your note."></span></div>
+      </div>
+      <div class="tab">
+        <h3><span data-pt="Pedido manual" data-en="Manual order"></span><span class="badge b-soon">Soon</span></h3>
+        <p data-pt="Lançar um pedido em nome do cliente e gerar a planilha correspondente." data-en="Place an order on a customer’s behalf and generate the matching spreadsheet."></p>
+        
+      </div>
+      <div class="tab">
+        <h3><span data-pt="Conciliação" data-en="Reconciliation"></span><span class="badge b-beta">Beta</span></h3>
+        <p data-pt="Faltas em aberto vindas de aprovações parciais. <b>Atender</b> quando o estoque chega, ou <b>Fechar pendência</b>." data-en="Open shortfalls from partial approvals. <b>Fulfill</b> when stock arrives, or <b>Close shortfall</b>."></p>
+        <div class="ex"><b data-pt="Exemplo" data-en="Example"></b><span data-pt="Você aprovou 10 mas só havia 7 → uma falta de 3 fica aqui até você repor ou fechar." data-en="You approved 10 but only 7 were in stock → a shortfall of 3 sits here until you restock or close it."></span></div>
+      </div>
+      <div class="tab">
+        <h3><span data-pt="Inventário" data-en="Inventory"></span><span class="badge b-beta">Beta</span></h3>
+        <p data-pt="Saldo de estoque por local, com custo unitário e alertas de estoque baixo/zerado. A sub-aba <b>Locais</b> gerencia seus armazéns." data-en="Stock balance per location, with unit cost and low/out-of-stock alerts. The <b>Locations</b> sub-tab manages your warehouses."></p>
+        <div class="ex"><b data-pt="Exemplo" data-en="Example"></b><span data-pt="iPhone 13 mostra 4 em Miami e 0 em Orlando → reponha Orlando ou direcione os pedidos para Miami." data-en="iPhone 13 shows 4 at Miami and 0 at Orlando → restock Orlando or route orders to Miami."></span></div>
+      </div>
+      <div class="tab">
+        <h3><span data-pt="Importar" data-en="Import"></span><span class="badge b-beta">Beta</span></h3>
+        <p data-pt="Wizard de 4 passos (upload → mapear colunas → simular → gravar). Nada mexe no estoque até gravar. Sub-abas: <b>Dicionário</b> (ensina sinônimos de coluna/modelo) e <b>Grade maps</b> (grade do fornecedor → sua grade)." data-en="A 4-step wizard (upload → map columns → dry-run → commit). Nothing touches stock until commit. Sub-tabs: <b>Dictionary</b> (teaches column/model synonyms) and <b>Grade maps</b> (supplier grade → your grade)."></p>
+        <div class="ex"><b data-pt="Exemplo" data-en="Example"></b><span data-pt="A planilha do fornecedor chama de “Cap.” → a simulação mostra que foi mapeado para Capacidade antes de você gravar." data-en="A supplier’s sheet calls it “Cap.” → the dry-run shows it mapped to Capacity before you commit."></span></div>
+      </div>
+      <div class="tab">
+        <h3><span data-pt="Preços" data-en="Prices"></span><span class="badge b-beta">Beta</span></h3>
+        <p data-pt="<b>Bancada</b> (transforma custo por local em preço por tier com um clique), <b>Tiers &amp; pisos</b> (faixas e preço mínimo de cada tier) e <b>Regras</b> (tetos, bandas e multiplicadores do preço automático)." data-en="<b>Workbench</b> (turns cost-per-location into a price per tier with one click), <b>Tiers &amp; floors</b> (each tier’s ranges and lowest price) and <b>Rules</b> (caps, bands and multipliers the auto-pricer uses)."></p>
+        <div class="ex"><b data-pt="Exemplo" data-en="Example"></b><span data-pt="“Preencher pelo custo médio” define o preço de todos os tiers a partir do custo num clique; depois você ajusta." data-en="“Fill from average cost” sets every tier’s price from cost in one click; then you tweak."></span></div>
+      </div>
+      <div class="tab">
+        <h3><span data-pt="Fila de sinalização" data-en="Flag queue"></span><span class="badge b-beta">Beta</span></h3>
+        <p data-pt="Preços suspeitos segurados pra sua decisão — margem apertada, tiers fora de ordem, estoque zerado. Aprove ou corrija cada um." data-en="Suspicious prices held for your call — thin margin, tiers out of order, zero stock. Approve or fix each one."></p>
+        <div class="ex"><b data-pt="Exemplo" data-en="Example"></b><span data-pt="O Wholesale saiu mais caro que o Retail → é sinalizado aqui pra um cliente nunca ver a inversão." data-en="Wholesale ended up pricier than Retail → it’s flagged here so a customer never sees the inversion."></span></div>
+      </div>
+      <div class="tab">
+        <h3><span data-pt="Relatórios" data-en="Reports"></span><span class="badge b-beta">Beta</span></h3>
+        <p data-pt="GMV, receita por mês, GMV por tier e produtos mais vendidos — direto do livro de pedidos real." data-en="GMV, revenue by month, GMV by tier and top products — straight from the live order book."></p>
+        <div class="ex"><b data-pt="Exemplo" data-en="Example"></b><span data-pt="Se o Distributor gerou 60% do GMV no mês → priorize as reposições dele." data-en="If Distributor drove 60% of GMV last month → prioritize their restocks."></span></div>
+      </div>
+      <div class="tab">
+        <h3><span data-pt="Ver como cliente" data-en="View as customer"></span><span class="badge b-beta">Beta</span></h3>
+        <p data-pt="Lente só-leitura para ver exatamente o que uma conta enxerga, sem trocar de sessão. Cada acesso é auditado." data-en="A read-only lens to see exactly what an account sees, without switching sessions. Every access is audited."></p>
+        <div class="ex"><b data-pt="Exemplo" data-en="Example"></b><span data-pt="Um cliente diz que “o preço está errado” → abra a loja como ele e confira o que ele realmente vê." data-en="A customer says “the price is wrong” → open the store as them and check what they actually see."></span></div>
+      </div>
+      <div class="tab">
+        <h3><span data-pt="Configurações" data-en="Settings"></span><span class="badge b-beta">Beta</span></h3>
+        <p data-pt="<b>Go-live &amp; loja</b> (liga o catálogo real, exibição de quantidade, destaques), <b>Enforcement</b> (guarda-corpos que bloqueiam ações arriscadas) e <b>Log de auditoria</b> (quem mudou o quê)." data-en="<b>Go-live &amp; storefront</b> (turn on the real catalog, quantity display, featured products), <b>Enforcement</b> (guardrails that block risky actions) and <b>Audit log</b> (who changed what)."></p>
+        <div class="ex"><b data-pt="Exemplo" data-en="Example"></b><span data-pt="Ative o Go-live e a loja troca de demo para o estoque real do seu armazém." data-en="Flip Go-live and the storefront switches from demo to your real warehouse inventory."></span></div>
+      </div>
+      <div class="tab">
+        <h3><span data-pt="Logs de API" data-en="API logs"></span><span class="badge b-soon">Soon</span></h3>
+        <p data-pt="Registro das chamadas de API e integrações." data-en="A record of API calls and integrations."></p>
+        
+      </div>
+      <div class="tab">
+        <h3><span data-pt="IA &amp; bots" data-en="AI &amp; bots"></span><span class="badge b-soon">Soon</span></h3>
+        <p data-pt="Agentes que executam ações no sistema por você." data-en="Agents that run actions in the system for you."></p>
+        
+      </div>
+    </div>
+    <div class="note" style="margin-top:14px" data-pt="<b>Segurança:</b> ações sensíveis (mudar tier, papel, go-live, merge de locais) pedem senha e ficam registradas no log de auditoria." data-en="<b>Security:</b> sensitive actions (change tier, role, go-live, merge locations) require a password and are recorded in the audit log."></div>
+    <div class="grid" style="margin-top:20px">
       <div class="render">
         <div>
           <div class="cap" data-pt="Console (painel)" data-en="Console (dashboard)"></div>
           <div class="frame">
-            <div class="bar dark"><span class="mark" style="width:16px;height:16px"></span><span class="bt" data-pt="Console admin" data-en="Admin console"></span><span style="margin-left:auto" class="seg"><button class="on" style="font-size:11px;padding:3px 8px">PT</button><button style="font-size:11px;padding:3px 8px">EN</button></span></div>
+            <div class="bar dark"><span class="mark" style="width:16px;height:16px"></span><span class="bt" data-pt="Console admin" data-en="Admin console"></span></div>
             <div class="body" style="display:grid;grid-template-columns:.85fr 1.5fr;gap:12px">
               <div class="navlist">
                 <div class="navrow act"><span class="ic"></span><span data-pt="Painel" data-en="Dashboard"></span></div>
                 <div class="navrow"><span class="ic"></span><span data-pt="Clientes" data-en="Customers"></span></div>
                 <div class="navrow"><span class="ic"></span><span data-pt="Pedidos" data-en="Orders"></span></div>
-                <div class="navrow"><span class="ic"></span><span data-pt="Pedido manual" data-en="Manual order"></span><span class="chip b-soon rt">SOON</span></div>
                 <div class="navrow"><span class="ic"></span><span data-pt="Preços" data-en="Prices"></span><span class="chip b-beta rt">BETA</span></div>
                 <div class="navrow"><span class="ic"></span><span data-pt="Importar" data-en="Import"></span></div>
               </div>
@@ -354,6 +413,24 @@
             </div>
           </div>
         </div>
+        <div>
+          <div class="cap" data-pt="Pedido — editar &amp; histórico" data-en="Order — edit &amp; history"></div>
+          <div class="frame"><div class="body">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:650">
+              <span>iPhone 13 · 128GB</span><span class="muted" data-pt="qtd 10 → 8" data-en="qty 10 → 8"></span>
+            </div>
+            <div class="line" style="margin:9px 0"></div>
+            <div style="display:flex;gap:8px;align-items:flex-start;font-size:11.5px">
+              <span class="tierdot" style="background:var(--accent);margin-top:3px"></span>
+              <div>
+                <div style="font-weight:650" data-pt="Pedido editado" data-en="Order edited"></div>
+                <div class="muted" data-pt="“Reduzido de 10 para 8 após conferência de estoque” — visível para o cliente." data-en="“Reduced from 10 to 8 after a stock check” — visible to the customer."></div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+      <div class="render">
         <div>
           <div class="cap" data-pt="Importação — 4 passos" data-en="Import — 4 steps"></div>
           <div class="frame"><div class="body">
