@@ -1,16 +1,22 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Check, PackageCheck, ShoppingBag } from 'lucide-react';
+import { Check, MapPin, PackageCheck, Plus, ShoppingBag } from 'lucide-react';
 import { useAuth, useRealCart } from '@/store';
 import { supabase } from '@/lib/supabase';
 import { expandCartToOrderItems } from '@/lib/orderItems';
+import { listAddresses, createAddress, type AddressRow } from '@/data/addresses';
 import { useRealCatalog, buildDisplayName, type PricedRealListing } from '@/data/realCatalog';
 import { Button } from '@/components/ui/Button';
 import { formatUsd } from '@/lib/format';
 import { useI18n } from '@/i18n';
+import { cn } from '@/lib/utils';
 
 type Phase = 'review' | 'placing' | 'done';
+
+/** Sentinel selection meaning "type a fresh address" instead of a saved one. */
+const NEW = '__new__';
 
 interface ShippingForm {
   street: string;
@@ -55,7 +61,7 @@ function Field({ label, ...props }: { label: string } & React.InputHTMLAttribute
 export function RealCheckout() {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { lines, clear } = useRealCart();
   const { items } = useRealCatalog(true);
 
@@ -63,8 +69,23 @@ export function RealCheckout() {
   const [orderId, setOrderId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<ShippingForm>({ street: '', city: '', state: '', zip: '', phone: '' });
+  // Which saved address is chosen, or NEW to type one. null until the book loads.
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [saveNew, setSaveNew] = useState(true);
 
-  // Prefill shipping from the profile (Phase 5 G1). Best-effort; RLS scopes to self.
+  // The saved address book (#06). Default first — we pre-select it so a returning
+  // buyer never re-types ("não perguntar de novo").
+  const { data: addresses = [], isLoading: addressesLoading } = useQuery({ queryKey: ['addresses'], queryFn: listAddresses, enabled: !!user });
+
+  // Once the book resolves, pre-select the default (or the first). With an empty
+  // book, fall back to the typed-address form.
+  useEffect(() => {
+    if (addressesLoading || selectedId !== null) return;
+    setSelectedId(addresses.length ? (addresses.find((a) => a.is_default)?.id ?? addresses[0].id) : NEW);
+  }, [addressesLoading, addresses, selectedId]);
+
+  // Prefill the "new address" form from the profile (Phase 5 G1). Best-effort;
+  // RLS scopes to self. Only matters when the buyer types a fresh address.
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -88,6 +109,9 @@ export function RealCheckout() {
       cancelled = true;
     };
   }, [user]);
+
+  const usingNew = selectedId === NEW || selectedId === null;
+  const selectedAddress: AddressRow | undefined = usingNew ? undefined : addresses.find((a) => a.id === selectedId);
 
   const byVariant = useMemo(() => new Map(items.map((i) => [i.variantId, i])), [items]);
   const resolved = useMemo(
@@ -120,11 +144,29 @@ export function RealCheckout() {
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+
+    // Resolve the ship-to from the chosen saved address or the typed form. The
+    // order snapshot stays {street,city,state,zip} — place_order and the admin
+    // order view are unchanged (advisor point 5).
+    const src = selectedAddress ?? form;
+    const shipping_address = { street: src.street.trim(), city: src.city.trim(), state: src.state.trim(), zip: src.zip.trim() };
+    const phone = (selectedAddress?.phone ?? form.phone ?? '').trim();
+    if (!shipping_address.street || !shipping_address.city || !shipping_address.state || !shipping_address.zip) {
+      setError(t('Please choose or enter a complete shipping address.'));
+      return;
+    }
     setPhase('placing');
 
-    const shipping_address = { street: form.street.trim(), city: form.city.trim(), state: form.state.trim(), zip: form.zip.trim() };
-    // Persist address + phone to the profile for next time (best-effort, non-blocking).
-    if (user) void supabase.from('profiles').update({ shipping_address, phone: form.phone.trim() }).eq('id', user.id);
+    // Mirror into profiles.shipping_address + phone so the profile-completeness
+    // meter stays honest (advisor point 1). Best-effort, non-blocking.
+    if (user) void supabase.from('profiles').update({ shipping_address, phone }).eq('id', user.id);
+
+    // Save a freshly-typed address to the book for next time, if the buyer opted in.
+    if (user && usingNew && saveNew) {
+      void createAddress(user.id, { recipient: profile?.display_name ?? null, ...shipping_address, phone: phone || null }).catch(() => {
+        /* non-fatal: the order still goes through */
+      });
+    }
 
     const p_items = expandCartToOrderItems(lines);
     const { data, error: rpcError } = await supabase.rpc('place_order', {
@@ -157,29 +199,87 @@ export function RealCheckout() {
             <form onSubmit={submit} className="space-y-6">
               <section className="space-y-4 rounded-2xl border border-border p-5">
                 <h2 className="font-medium">{t('Shipping address')}</h2>
-                <Field
-                  label="Street address"
-                  required
-                  autoComplete="street-address"
-                  value={form.street}
-                  onChange={(e) => setForm((f) => ({ ...f, street: e.target.value }))}
-                />
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <Field label="City" required value={form.city} onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))} />
-                  <Field label="State" required value={form.state} onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))} />
-                  <Field label="ZIP" required inputMode="numeric" value={form.zip} onChange={(e) => setForm((f) => ({ ...f, zip: e.target.value }))} />
-                </div>
-                <Field
-                  label="Phone number"
-                  type="tel"
-                  autoComplete="tel"
-                  value={form.phone}
-                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                />
+
+                {/* Saved-address picker (#06): default pre-selected so a returning
+                    buyer just confirms. "Use a new address" reveals the form. */}
+                {addresses.length > 0 && (
+                  <div className="grid gap-2">
+                    {addresses.map((a) => {
+                      const active = selectedId === a.id;
+                      return (
+                        <button
+                          key={a.id}
+                          type="button"
+                          onClick={() => setSelectedId(a.id)}
+                          className={cn(
+                            'flex items-start gap-3 rounded-xl border p-3.5 text-left transition-colors',
+                            active ? 'border-brand bg-brand/5' : 'border-border hover:bg-muted/50',
+                          )}
+                        >
+                          <span className={cn('mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border-2', active ? 'border-brand' : 'border-border')}>
+                            {active && <span className="h-2.5 w-2.5 rounded-full bg-brand" />}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                              {a.label || a.recipient || t('Saved address')}
+                              {a.is_default && <span className="rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">{t('Default')}</span>}
+                            </span>
+                            <span className="block text-sm text-muted-foreground">
+                              {a.street}, {a.city}, {a.state} {a.zip}
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(NEW)}
+                      className={cn(
+                        'flex items-center gap-3 rounded-xl border border-dashed p-3.5 text-left text-sm font-medium transition-colors',
+                        usingNew ? 'border-brand bg-brand/5 text-foreground' : 'border-border text-muted-foreground hover:bg-muted/50',
+                      )}
+                    >
+                      <span className={cn('grid h-5 w-5 shrink-0 place-items-center rounded-full border-2', usingNew ? 'border-brand' : 'border-border')}>
+                        {usingNew ? <Plus className="h-3 w-3 text-brand" strokeWidth={3} /> : <MapPin className="h-3 w-3" strokeWidth={2} />}
+                      </span>
+                      {t('Use a new address')}
+                    </button>
+                  </div>
+                )}
+
+                {usingNew && (
+                  <div className="space-y-4">
+                    <Field
+                      label="Street address"
+                      required
+                      autoComplete="street-address"
+                      value={form.street}
+                      onChange={(e) => setForm((f) => ({ ...f, street: e.target.value }))}
+                    />
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <Field label="City" required value={form.city} onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))} />
+                      <Field label="State" required value={form.state} onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))} />
+                      <Field label="ZIP" required inputMode="numeric" value={form.zip} onChange={(e) => setForm((f) => ({ ...f, zip: e.target.value }))} />
+                    </div>
+                    <Field
+                      label="Phone number"
+                      type="tel"
+                      autoComplete="tel"
+                      value={form.phone}
+                      onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                    />
+                    {user && (
+                      <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <input type="checkbox" checked={saveNew} onChange={(e) => setSaveNew(e.target.checked)} className="h-4 w-4 rounded border-border accent-brand" />
+                        {t('Save this address for next time')}
+                      </label>
+                    )}
+                  </div>
+                )}
               </section>
 
               <section className="rounded-2xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
-                {t('Nothing is charged here. Our team confirms live stock and approves your order — you can track its status in your portal.')}
+                {t('Nothing is charged here. Once you place the order, our team reaches out to align payment and shipping, and confirms stock before anything is charged.')}
               </section>
 
               {error && (
@@ -213,7 +313,7 @@ export function RealCheckout() {
                   {unitCount} {unitCount === 1 ? t('unit') : t('units')} {t('pending approval')}
                 </div>
                 <p className="text-muted-foreground">
-                  {t('Our team reviews stock and approves your order. Track its status any time in your portal.')}
+                  {t('Our team reviews stock and reaches out to align payment and shipping. Track its status any time in your portal.')}
                 </p>
               </div>
 
