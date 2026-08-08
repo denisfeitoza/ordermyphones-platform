@@ -42,6 +42,50 @@ export const PT: Record<string, string> = {
   'Approve & reconcile': 'Aprovar e conciliar',
   'No orders yet. As customers place orders they appear here and in the approval queue.':
     'Nenhum pedido ainda. Conforme os clientes fazem pedidos, eles aparecem aqui e na fila de aprovação.',
+  // Admin sub-tabs (co-located config)
+  'Workbench': 'Bancada',
+  'Tiers & floors': 'Tiers & pisos',
+  'Pricing rules': 'Regras de preço',
+  'Upload': 'Upload',
+  'Column & model dictionary': 'Dicionário de colunas & modelos',
+  'Grade maps': 'Mapas de grade',
+  'Locations': 'Locais',
+  'Users & roles': 'Usuários & roles',
+  'Order limits': 'Limites de pedido',
+  'Go-live & storefront': 'Go-live & loja',
+  'Enforcement': 'Bloqueios',
+  'Audit log': 'Log de auditoria',
+  'Import dictionary': 'Dicionário de importação',
+  'Stock locations': 'Locais de estoque',
+  'Smart Stock Import': 'Importação inteligente de estoque',
+  'Approve or reject placed orders · stock deducts on approval, shortfalls open reconciliation':
+    'Aprove ou rejeite pedidos · o estoque é baixado na aprovação, faltas abrem conciliação',
+  'Upload a vendor stock sheet — auto-map columns, dry-run, then commit as audited stock movements.':
+    'Suba a planilha de estoque de um fornecedor — mapeamento automático de colunas, teste, e então grava como movimentos de estoque auditados.',
+  'See what you pay in each inventory, then set the sell price per tier.':
+    'Veja quanto você paga em cada inventário, então defina o preço de venda por tier.',
+  'Sales and tier distribution — derived from the live order book.':
+    'Vendas e distribuição por tier — derivado do livro de pedidos ao vivo.',
+  'Define each customer tier — who qualifies and the lowest price you’ll ever sell at.':
+    'Defina cada tier de cliente — quem se qualifica e o menor preço que você vende.',
+  'The dials the auto-pricing engine uses — benchmark markups and rounding.':
+    'Os controles que o motor de preço automático usa — markups de referência e arredondamento.',
+  'Teach the importer how suppliers name columns, carriers and models, and unify model names.':
+    'Ensine o importador como os fornecedores nomeiam colunas, operadoras e modelos, e unifique nomes de modelo.',
+  'Map each supplier’s condition wording (A/B, Grade A…) to your own grades.':
+    'Mapeie a nomenclatura de condição de cada fornecedor (A/B, Grade A…) para as suas grades.',
+  'Your warehouses and storages — create, rename, deactivate, merge, and choose which ones customers see.':
+    'Seus armazéns e storages — criar, renomear, desativar, fazer merge e escolher quais o cliente vê.',
+  'Every account — change tiers and roles (password-confirmed).':
+    'Todas as contas — mude tiers e roles (confirmado por senha).',
+  'Minimum and maximum quantities a customer can order, per tier.':
+    'Quantidades mínima e máxima que um cliente pode pedir, por tier.',
+  'Switch the storefront to real inventory, control quantity display, and pin featured products.':
+    'Ligue a loja no inventário real, controle a exibição de quantidade e fixe produtos em destaque.',
+  'Guardrails that block risky pricing and stock actions before they happen.':
+    'Guarda-corpos que bloqueiam ações arriscadas de preço e estoque antes de acontecerem.',
+  'A trail of every sensitive change — who changed what, and when.':
+    'A trilha de cada mudança sensível — quem mudou o quê, e quando.',
   // #06 Address book
   'Edit': 'Editar',
   'Default': 'Padrão',
@@ -533,6 +577,50 @@ export const ES: Record<string, string> = {
   'Approve & reconcile': 'Aprobar y conciliar',
   'No orders yet. As customers place orders they appear here and in the approval queue.':
     'Aún no hay pedidos. A medida que los clientes hacen pedidos, aparecen aquí y en la cola de aprobación.',
+  // Admin sub-tabs (co-located config)
+  'Workbench': 'Banco de trabajo',
+  'Tiers & floors': 'Tiers y pisos',
+  'Pricing rules': 'Reglas de precio',
+  'Upload': 'Subir',
+  'Column & model dictionary': 'Diccionario de columnas y modelos',
+  'Grade maps': 'Mapas de grado',
+  'Locations': 'Ubicaciones',
+  'Users & roles': 'Usuarios y roles',
+  'Order limits': 'Límites de pedido',
+  'Go-live & storefront': 'Go-live y tienda',
+  'Enforcement': 'Bloqueos',
+  'Audit log': 'Registro de auditoría',
+  'Import dictionary': 'Diccionario de importación',
+  'Stock locations': 'Ubicaciones de stock',
+  'Smart Stock Import': 'Importación inteligente de stock',
+  'Approve or reject placed orders · stock deducts on approval, shortfalls open reconciliation':
+    'Aprueba o rechaza pedidos · el stock se descuenta al aprobar, los faltantes abren conciliación',
+  'Upload a vendor stock sheet — auto-map columns, dry-run, then commit as audited stock movements.':
+    'Sube la hoja de stock de un proveedor — mapeo automático de columnas, prueba, y luego se guarda como movimientos de stock auditados.',
+  'See what you pay in each inventory, then set the sell price per tier.':
+    'Mira cuánto pagas en cada inventario, luego fija el precio de venta por tier.',
+  'Sales and tier distribution — derived from the live order book.':
+    'Ventas y distribución por tier — derivado del libro de pedidos en vivo.',
+  'Define each customer tier — who qualifies and the lowest price you’ll ever sell at.':
+    'Define cada tier de cliente — quién califica y el precio más bajo al que venderás.',
+  'The dials the auto-pricing engine uses — benchmark markups and rounding.':
+    'Los controles que usa el motor de precios automático — márgenes de referencia y redondeo.',
+  'Teach the importer how suppliers name columns, carriers and models, and unify model names.':
+    'Enseña al importador cómo los proveedores nombran columnas, operadores y modelos, y unifica los nombres de modelo.',
+  'Map each supplier’s condition wording (A/B, Grade A…) to your own grades.':
+    'Asigna la nomenclatura de condición de cada proveedor (A/B, Grade A…) a tus propios grados.',
+  'Your warehouses and storages — create, rename, deactivate, merge, and choose which ones customers see.':
+    'Tus almacenes y depósitos — crear, renombrar, desactivar, fusionar y elegir cuáles ve el cliente.',
+  'Every account — change tiers and roles (password-confirmed).':
+    'Todas las cuentas — cambia tiers y roles (confirmado con contraseña).',
+  'Minimum and maximum quantities a customer can order, per tier.':
+    'Cantidades mínima y máxima que un cliente puede pedir, por tier.',
+  'Switch the storefront to real inventory, control quantity display, and pin featured products.':
+    'Cambia la tienda al inventario real, controla la visualización de cantidad y fija productos destacados.',
+  'Guardrails that block risky pricing and stock actions before they happen.':
+    'Barreras que bloquean acciones riesgosas de precio y stock antes de que ocurran.',
+  'A trail of every sensitive change — who changed what, and when.':
+    'Un registro de cada cambio sensible — quién cambió qué y cuándo.',
   // #06 Address book
   'Edit': 'Editar',
   'Default': 'Predeterminada',
