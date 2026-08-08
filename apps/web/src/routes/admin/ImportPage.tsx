@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { AdminHeading } from '@/components/admin/parts';
+import { useI18n } from '@/i18n';
 import { detectImportFile, HEADER_CONFIDENCE_THRESHOLD, type DetectedSheet } from '@/lib/import/parse';
 import { mapColumns, CONFIDENCE_THRESHOLD, type CanonicalField } from '@/lib/import/map';
 import { projectRow } from '@/lib/import/normalize';
@@ -83,6 +84,7 @@ function buildAssignments(sheet: DetectedSheet, mapResult: Awaited<ReturnType<ty
 const INITIAL_MODE: ImportMode = 'merge';
 
 export default function ImportPage() {
+  const { t } = useI18n();
   const queryClient = useQueryClient();
   const suppliersQuery = useQuery({ queryKey: ['admin-import-suppliers'], queryFn: fetchSuppliers });
   const locationsQuery = useQuery({ queryKey: ['admin-import-locations'], queryFn: fetchLocations });
@@ -152,11 +154,11 @@ export default function ImportPage() {
     if (!file || !supplierId) return;
     const supplier = suppliers.find((s) => s.id === supplierId);
     if (!supplier?.vendorCode) {
-      setError('Selected supplier has no vendor code configured — cannot import.');
+      setError(t('Selected supplier has no vendor code configured — cannot import.'));
       return;
     }
     if (mode === 'replace_location' && !locationCode) {
-      setError('Choose a target location for Replace mode.');
+      setError(t('Choose a target location for Replace mode.'));
       return;
     }
 
@@ -165,7 +167,7 @@ export default function ImportPage() {
       const bytes = await file.arrayBuffer();
       const detectResult = detectImportFile(bytes);
       if (!detectResult.best || detectResult.best.confidence < HEADER_CONFIDENCE_THRESHOLD) {
-        setError('Could not confidently detect a header row in this file. Try a cleaner export (one data sheet, headers on row 1).');
+        setError(t('Could not confidently detect a header row in this file. Try a cleaner export (one data sheet, headers on row 1).'));
         return;
       }
       const sheet = detectResult.best;
@@ -177,7 +179,7 @@ export default function ImportPage() {
         const columnMap = applyProfileColumnMap(profile.columnMap, sheet.headers);
         const warehouseMapped = Array.from(columnMap.values()).includes('warehouse');
         if (!warehouseMapped && !locationCode) {
-          setError('This file has no location/warehouse column and the saved profile does not cover one — choose a Target location above.');
+          setError(t('This file has no location/warehouse column and the saved profile does not cover one — choose a Target location above.'));
           return;
         }
         setDetected({ fileName: basename(file.name), sheet, headerFingerprint });
@@ -190,7 +192,7 @@ export default function ImportPage() {
       const mapResult = await mapColumns(sheet.headers, sheet.rows);
       const warehouseMapped = mapResult.mappings.some((m) => m.field === 'warehouse');
       if (!warehouseMapped && !locationCode) {
-        setError('This file has no location/warehouse column — choose a Target location above.');
+        setError(t('This file has no location/warehouse column — choose a Target location above.'));
         return;
       }
       setDetected({ fileName: basename(file.name), sheet, headerFingerprint });
@@ -198,7 +200,7 @@ export default function ImportPage() {
       setAssignments(buildAssignments(sheet, mapResult));
       setStep('map');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to read file.');
+      setError(e instanceof Error ? e.message : t('Failed to read file.'));
     } finally {
       setBusy(false);
     }
@@ -221,7 +223,7 @@ export default function ImportPage() {
 
     const warehouseMapped = Array.from(columnMap.values()).includes('warehouse');
     if (!warehouseMapped && !locationCode) {
-      setError('This file has no location/warehouse column — go back and choose a Target location.');
+      setError(t('This file has no location/warehouse column — go back and choose a Target location.'));
       return;
     }
 
@@ -231,7 +233,7 @@ export default function ImportPage() {
       await runDryRun(columnMap, detected.sheet, locationCode);
       setStep('dryrun');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to run dry run.');
+      setError(e instanceof Error ? e.message : t('Failed to run dry run.'));
     } finally {
       setBusy(false);
     }
@@ -241,7 +243,7 @@ export default function ImportPage() {
     if (!detected || !dryRun || !supplierId) return;
     const supplier = suppliers.find((s) => s.id === supplierId);
     if (!supplier?.vendorCode) {
-      setError('Supplier vendor code missing.');
+      setError(t('Supplier vendor code missing.'));
       return;
     }
     setBusy(true);
@@ -278,7 +280,7 @@ export default function ImportPage() {
           columnMap: dryRun.columnMap,
         });
       } catch (profileErr) {
-        setProfileSaveWarning(profileErr instanceof Error ? profileErr.message : 'unknown error');
+        setProfileSaveWarning(profileErr instanceof Error ? profileErr.message : t('unknown error'));
       }
 
       queryClient.invalidateQueries({ queryKey: ['admin-inventory'] });
@@ -286,7 +288,7 @@ export default function ImportPage() {
       setPreCommitInfo({ rowsInFile: dryRun.validated.length, clientRejects });
       setStep('commit');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Commit failed.');
+      setError(e instanceof Error ? e.message : t('Commit failed.'));
     } finally {
       setBusy(false);
     }
@@ -300,7 +302,7 @@ export default function ImportPage() {
 
       {suppliersQuery.isError && (
         <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          Could not load suppliers: {suppliersQuery.error instanceof Error ? suppliersQuery.error.message : 'unknown error'}
+          {t('Could not load suppliers')}: {suppliersQuery.error instanceof Error ? suppliersQuery.error.message : t('unknown error')}
         </div>
       )}
 

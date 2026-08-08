@@ -6,6 +6,7 @@ import { AdminHeading, Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
 import { formatUsd } from '@/lib/format';
 import { tierBg } from '@/lib/tierStyles';
+import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 const TIERS: { code: DbTier; label: string; tone: '1' | '2' | '3' | '4' }[] = [
@@ -27,6 +28,7 @@ function name(r: PricingBreakdownRow) {
 }
 
 function WorkbenchRow({ row }: { row: PricingBreakdownRow }) {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const current = useMemo<Record<DbTier, number | null>>(
     () => ({ consumer: row.price_consumer, retailer: row.price_retailer, wholesale: row.price_wholesale, distributor: row.price_distributor }),
@@ -54,14 +56,14 @@ function WorkbenchRow({ row }: { row: PricingBreakdownRow }) {
     });
   }
 
-  const dirty = TIERS.some((t) => strToCents(edits[t.code]) !== current[t.code]);
+  const dirty = TIERS.some((tier) => strToCents(edits[tier.code]) !== current[tier.code]);
 
   async function save() {
     setSaving(true);
     try {
-      for (const t of TIERS) {
-        const next = strToCents(edits[t.code]);
-        if (next !== current[t.code]) await setTierPrice(row.variant_id, t.code, next);
+      for (const tier of TIERS) {
+        const next = strToCents(edits[tier.code]);
+        if (next !== current[tier.code]) await setTierPrice(row.variant_id, tier.code, next);
       }
       await qc.invalidateQueries({ queryKey: ['pricing-breakdown'] });
       setSaved(true);
@@ -79,7 +81,7 @@ function WorkbenchRow({ row }: { row: PricingBreakdownRow }) {
           <p className="font-mono text-xs text-muted-foreground">{row.sku} · {row.ctia_grade} · {row.total_qty} in stock</p>
         </div>
         <div className="flex items-center gap-2 text-xs">
-          <span className="text-muted-foreground">Cost basis</span>
+          <span className="text-muted-foreground">{t('Cost basis')}</span>
           <div className="inline-flex rounded-full border border-border p-0.5">
             {(['avg', 'max'] as const).map((b) => (
               <button
@@ -87,7 +89,7 @@ function WorkbenchRow({ row }: { row: PricingBreakdownRow }) {
                 onClick={() => setBasis(b)}
                 className={cn('rounded-full px-2.5 py-1 font-medium transition-colors', basis === b ? 'bg-secondary text-foreground' : 'text-muted-foreground')}
               >
-                {b === 'avg' ? 'Average' : 'Highest'}
+                {b === 'avg' ? t('Average') : t('Highest')}
               </button>
             ))}
           </div>
@@ -104,23 +106,23 @@ function WorkbenchRow({ row }: { row: PricingBreakdownRow }) {
           </span>
         ))}
         <span className="text-muted-foreground/50">|</span>
-        <span>Range <span className="font-mono text-foreground">{formatUsd(row.min_cost ?? 0)}–{formatUsd(row.max_cost ?? 0)}</span> · avg <span className="font-mono text-foreground">{formatUsd(row.avg_cost ?? 0)}</span></span>
+        <span>{t('Range')} <span className="font-mono text-foreground">{formatUsd(row.min_cost ?? 0)}–{formatUsd(row.max_cost ?? 0)}</span> · {t('avg')} <span className="font-mono text-foreground">{formatUsd(row.avg_cost ?? 0)}</span></span>
       </div>
 
       {/* Tier price inputs */}
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {TIERS.map((t) => (
-          <label key={t.code} className="flex flex-col gap-1">
+        {TIERS.map((tier) => (
+          <label key={tier.code} className="flex flex-col gap-1">
             <span className="flex items-center gap-1.5 text-xs font-medium">
-              <span className={cn('h-2 w-2 rounded-full', tierBg[t.tone])} />
-              {t.label}
+              <span className={cn('h-2 w-2 rounded-full', tierBg[tier.tone])} />
+              {t(tier.label)}
             </span>
             <div className="relative">
               <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
               <input
                 inputMode="decimal"
-                value={edits[t.code]}
-                onChange={(e) => setEdits((p) => ({ ...p, [t.code]: e.target.value }))}
+                value={edits[tier.code]}
+                onChange={(e) => setEdits((p) => ({ ...p, [tier.code]: e.target.value }))}
                 placeholder="—"
                 className="h-9 w-full rounded-lg border border-border bg-transparent pl-6 pr-2 text-right font-mono text-sm tabular-nums outline-none focus:border-brand"
               />
@@ -132,11 +134,11 @@ function WorkbenchRow({ row }: { row: PricingBreakdownRow }) {
       <div className="mt-3 flex items-center justify-between gap-3">
         <Button size="sm" variant="outline" onClick={fillFromCost} disabled={!basisCost}>
           <Wand2 className="h-3.5 w-3.5" strokeWidth={2} />
-          Fill from {basis === 'avg' ? 'average' : 'highest'} cost
+          {basis === 'avg' ? t('Fill from average cost') : t('Fill from highest cost')}
         </Button>
         <Button size="sm" variant="primary" onClick={save} disabled={!dirty || saving}>
           {saved ? <Check className="h-4 w-4" strokeWidth={2.5} /> : null}
-          {saving ? 'Saving…' : saved ? 'Saved' : 'Save prices'}
+          {saving ? t('Saving…') : saved ? t('Saved') : t('Save prices')}
         </Button>
       </div>
     </div>
@@ -144,6 +146,7 @@ function WorkbenchRow({ row }: { row: PricingBreakdownRow }) {
 }
 
 export default function PricingWorkbenchPage() {
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
   const q = usePricingBreakdown(query);
   const rows = q.data ?? [];
@@ -153,8 +156,7 @@ export default function PricingWorkbenchPage() {
       <AdminHeading title="Prices" subtitle="See what you pay in each inventory, then set the sell price per tier." />
 
       <div className="rounded-2xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm text-muted-foreground">
-        <b className="text-foreground">How this works:</b> search a model, see its cost in each warehouse, and set each tier’s price.
-        Use <b className="text-foreground">Fill from cost</b> to auto-price from the average or highest cost plus a margin — then tweak any number. Saved prices go live immediately for that tier.
+        <b className="text-foreground">{t('How this works:')}</b> {t('search a model, see its cost in each warehouse, and set each tier’s price. Use')} <b className="text-foreground">{t('Fill from cost')}</b> {t('to auto-price from the average or highest cost plus a margin — then tweak any number. Saved prices go live immediately for that tier.')}
       </div>
 
       <label className="relative block max-w-md">
@@ -162,20 +164,20 @@ export default function PricingWorkbenchPage() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search a model — iPhone 13, Galaxy, SKU…"
+          placeholder={t('Search a model — iPhone 13, Galaxy, SKU…')}
           className="h-11 w-full rounded-xl border border-border bg-background pl-9 pr-3 text-sm outline-none transition-colors focus:border-brand"
         />
       </label>
 
       {q.isLoading ? (
-        <Panel><p className="py-10 text-center text-sm text-muted-foreground">Loading…</p></Panel>
+        <Panel><p className="py-10 text-center text-sm text-muted-foreground">{t('Loading…')}</p></Panel>
       ) : q.isError ? (
-        <Panel><p className="py-10 text-center text-sm text-destructive">Could not load prices.</p></Panel>
+        <Panel><p className="py-10 text-center text-sm text-destructive">{t('Could not load prices.')}</p></Panel>
       ) : rows.length === 0 ? (
-        <Panel><p className="py-10 text-center text-sm text-muted-foreground">No matches. Try a model name or SKU.</p></Panel>
+        <Panel><p className="py-10 text-center text-sm text-muted-foreground">{t('No matches. Try a model name or SKU.')}</p></Panel>
       ) : (
         <div className="space-y-3">
-          {rows.length >= 300 && <p className="text-xs text-muted-foreground">Showing the first 300 — refine the search to narrow.</p>}
+          {rows.length >= 300 && <p className="text-xs text-muted-foreground">{t('Showing the first 300 — refine the search to narrow.')}</p>}
           {rows.map((r) => (
             <WorkbenchRow key={r.variant_id} row={r} />
           ))}

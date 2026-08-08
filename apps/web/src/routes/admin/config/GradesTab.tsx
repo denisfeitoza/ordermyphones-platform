@@ -15,6 +15,7 @@ import { CTIA_GRADES, type CtiaGrade } from '@/lib/pricingSettings';
 import { useAuth } from '@/store';
 import { Panel, Table, Td } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
+import { useI18n } from '@/i18n';
 import { AdminOnlyNote, Field, MutationError, TextInput } from './parts';
 
 function CtiaSelect({ value, onChange, disabled, label }: { value: CtiaGrade; onChange: (v: CtiaGrade) => void; disabled?: boolean; label: string }) {
@@ -36,6 +37,7 @@ function CtiaSelect({ value, onChange, disabled, label }: { value: CtiaGrade; on
 }
 
 function QueueSection({ canResolve }: { canResolve: boolean }) {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ['config-grade-queue'], queryFn: listGradeQueue });
   const [picks, setPicks] = useState<Record<string, CtiaGrade>>({});
@@ -55,20 +57,20 @@ function QueueSection({ canResolve }: { canResolve: boolean }) {
   const pending = (q.data ?? []).filter((r) => r.status === 'pending');
 
   return (
-    <Panel title={`Unknown grade queue${pending.length ? ` · ${pending.length} pending` : ''}`}>
+    <Panel title={`${t('Unknown grade queue')}${pending.length ? ` · ${pending.length} ${t('pending')}` : ''}`}>
       <p className="mb-4 text-sm text-muted-foreground">
-        Vendor grades the importer has never seen. Classify one to a CTIA grade — that writes the grade map and reprices every affected variant.
+        {t('Vendor grades the importer has never seen. Classify one to a CTIA grade — that writes the grade map and reprices every affected variant.')}
       </p>
-      {q.isLoading && <p className="text-sm text-muted-foreground">Loading queue…</p>}
-      {q.data && pending.length === 0 && <p className="text-sm text-muted-foreground">Nothing pending — all vendor grades are classified.</p>}
+      {q.isLoading && <p className="text-sm text-muted-foreground">{t('Loading queue…')}</p>}
+      {q.data && pending.length === 0 && <p className="text-sm text-muted-foreground">{t('Nothing pending — all vendor grades are classified.')}</p>}
       {pending.length > 0 && (
         <Table
           minWidth={640}
           columns={[
-            { key: 'vendor', label: 'Vendor' },
-            { key: 'grade', label: 'Raw grade' },
-            { key: 'seen', label: 'Seen', align: 'right' },
-            { key: 'action', label: 'Classify', align: 'right' },
+            { key: 'vendor', label: t('Vendor') },
+            { key: 'grade', label: t('Raw grade') },
+            { key: 'seen', label: t('Seen'), align: 'right' },
+            { key: 'action', label: t('Classify'), align: 'right' },
           ]}
         >
           {pending.map((r: GradeQueueRow) => (
@@ -79,16 +81,16 @@ function QueueSection({ canResolve }: { canResolve: boolean }) {
               <Td align="right">
                 {canResolve ? (
                   <div className="flex items-center justify-end gap-2">
-                    <CtiaSelect label={`CTIA for ${r.vendor_grade}`} value={picks[r.id] ?? 'A'} onChange={(v) => setPicks({ ...picks, [r.id]: v })} />
+                    <CtiaSelect label={`${t('CTIA for')} ${r.vendor_grade}`} value={picks[r.id] ?? 'A'} onChange={(v) => setPicks({ ...picks, [r.id]: v })} />
                     <Button size="sm" variant="outline" disabled={resolve.isPending} onClick={() => resolve.mutate({ id: r.id, ctia: picks[r.id] ?? 'A' })}>
-                      Set
+                      {t('Set')}
                     </Button>
                     <Button size="sm" variant="ghost" disabled={ignore.isPending} onClick={() => ignore.mutate(r.id)}>
-                      Ignore
+                      {t('Ignore')}
                     </Button>
                   </div>
                 ) : (
-                  <span className="text-xs text-muted-foreground">Admin-only</span>
+                  <span className="text-xs text-muted-foreground">{t('Admin-only')}</span>
                 )}
               </Td>
             </tr>
@@ -96,12 +98,13 @@ function QueueSection({ canResolve }: { canResolve: boolean }) {
         </Table>
       )}
       <MutationError error={resolve.error ?? ignore.error} />
-      {resolve.isSuccess && <p className="mt-2 text-sm text-success">Classified — {resolve.data.variants_repriced} variant(s) repriced.</p>}
+      {resolve.isSuccess && <p className="mt-2 text-sm text-success">{t('Classified —')} {resolve.data.variants_repriced} {t('variant(s) repriced.')}</p>}
     </Panel>
   );
 }
 
 function MapSection({ canEdit }: { canEdit: boolean }) {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ['config-grade-map'], queryFn: listVendorGradeMap });
   const [vendor, setVendor] = useState('');
@@ -132,38 +135,37 @@ function MapSection({ canEdit }: { canEdit: boolean }) {
   }
 
   return (
-    <Panel title="Vendor grade map">
+    <Panel title={t('Vendor grade map')}>
       <p className="mb-4 text-sm text-muted-foreground">
-        Maps a vendor's raw grade label (e.g. <code className="rounded bg-muted px-1">DLS B+</code>) to a CTIA consumer grade. Matched on grade label alone —
-        a new mapping affects every variant with that grade text.
+        {t("Maps a vendor's raw grade label (e.g.")}{' '}<code className="rounded bg-muted px-1">DLS B+</code>{t(') to a CTIA consumer grade. Matched on grade label alone — a new mapping affects every variant with that grade text.')}
       </p>
       {canEdit && (
         <form onSubmit={add} className="mb-5 grid gap-3 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end">
-          <Field label="Vendor code">
+          <Field label={t('Vendor code')}>
             <TextInput value={vendor} onChange={(e) => setVendor(e.target.value)} placeholder="DLS" className="h-10" />
           </Field>
-          <Field label="Raw grade">
+          <Field label={t('Raw grade')}>
             <TextInput value={grade} onChange={(e) => setGrade(e.target.value)} placeholder="B+" className="h-10" />
           </Field>
-          <Field label="CTIA">
-            <CtiaSelect label="CTIA grade" value={ctia} onChange={setCtia} />
+          <Field label={t('CTIA')}>
+            <CtiaSelect label={t('CTIA grade')} value={ctia} onChange={setCtia} />
           </Field>
           <Button type="submit" size="sm" disabled={upsert.isPending || !vendor.trim() || !grade.trim()}>
-            Add / update
+            {t('Add / update')}
           </Button>
         </form>
       )}
       <MutationError error={upsert.error ?? remove.error} />
 
-      {q.isLoading && <p className="text-sm text-muted-foreground">Loading grade map…</p>}
-      {q.data && q.data.length === 0 && <p className="text-sm text-muted-foreground">No mappings yet.</p>}
+      {q.isLoading && <p className="text-sm text-muted-foreground">{t('Loading grade map…')}</p>}
+      {q.data && q.data.length === 0 && <p className="text-sm text-muted-foreground">{t('No mappings yet.')}</p>}
       {q.data && q.data.length > 0 && (
         <Table
           minWidth={520}
           columns={[
-            { key: 'vendor', label: 'Vendor' },
-            { key: 'grade', label: 'Raw grade' },
-            { key: 'ctia', label: 'CTIA' },
+            { key: 'vendor', label: t('Vendor') },
+            { key: 'grade', label: t('Raw grade') },
+            { key: 'ctia', label: t('CTIA') },
             { key: 'action', label: '', align: 'right' },
           ]}
         >
@@ -174,7 +176,7 @@ function MapSection({ canEdit }: { canEdit: boolean }) {
               <Td>{r.ctia}</Td>
               <Td align="right">
                 {canEdit && (
-                  <button type="button" aria-label={`Delete ${r.vendor_code} ${r.vendor_grade}`} onClick={() => remove.mutate(r.id)} className="text-muted-foreground hover:text-destructive">
+                  <button type="button" aria-label={`${t('Delete')} ${r.vendor_code} ${r.vendor_grade}`} onClick={() => remove.mutate(r.id)} className="text-muted-foreground hover:text-destructive">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 )}

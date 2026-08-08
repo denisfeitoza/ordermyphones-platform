@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/store';
+import { useI18n } from '@/i18n';
 import { Button } from '@/components/ui/Button';
 
 /**
@@ -38,6 +39,7 @@ export function ConfirmPassword({
   onCancel: () => void;
 }) {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
@@ -47,7 +49,7 @@ export function ConfirmPassword({
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (!user?.email || !password) {
-      setError('Enter your password to confirm.');
+      setError(t('Enter your password to confirm.'));
       return;
     }
     setVerifying(true);
@@ -55,7 +57,7 @@ export function ConfirmPassword({
     const { error: authError } = await supabase.auth.signInWithPassword({ email: user.email, password });
     setVerifying(false);
     if (authError) {
-      setError('Password incorrect.');
+      setError(t('Password incorrect.'));
       return;
     }
     setPassword('');
@@ -77,7 +79,7 @@ export function ConfirmPassword({
 
         <form onSubmit={submit} className="mt-4 space-y-3">
           <label className="block">
-            <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Confirm your password</span>
+            <span className="mb-1.5 block text-xs font-medium text-muted-foreground">{t('Confirm your password')}</span>
             <input
               type="password"
               autoFocus
@@ -112,7 +114,7 @@ export function ConfirmPassword({
               }}
               disabled={verifying || busy}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button type="submit" variant={danger ? 'brand' : 'primary'} size="sm" disabled={verifying || busy || !password}>
               {(verifying || busy) && <Loader2 className="h-4 w-4 animate-spin" />}

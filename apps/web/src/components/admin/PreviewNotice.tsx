@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Sparkles } from 'lucide-react';
 import { AdminHeading } from '@/components/admin/parts';
+import { useI18n } from '@/i18n';
 
 /**
  * Honest "not in v1 yet" state for admin surfaces that are still chrome/mock
@@ -22,6 +23,7 @@ export function PreviewNotice({
   bullets?: string[];
   icon?: ReactNode;
 }) {
+  const { t } = useI18n();
   return (
     <div className="space-y-6">
       <AdminHeading title={title} subtitle={subtitle} />
@@ -30,7 +32,7 @@ export function PreviewNotice({
           {icon ?? <Sparkles className="h-6 w-6" strokeWidth={1.75} />}
         </div>
         <span className="inline-flex items-center rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand">
-          On the roadmap
+          {t('On the roadmap')}
         </span>
         <p className="mx-auto mt-4 max-w-md text-sm text-muted-foreground">{blurb}</p>
         {bullets && bullets.length > 0 && (

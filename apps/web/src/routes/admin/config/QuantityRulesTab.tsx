@@ -4,6 +4,7 @@ import { getAppSetting, setAppSetting } from '@/data/adminConfig';
 import { DB_TIERS, DB_TIER_LABELS, type DbTier } from '@/lib/invites';
 import { Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
+import { useI18n } from '@/i18n';
 import { Field, MutationError, TextInput } from './parts';
 import { cn } from '@/lib/utils';
 
@@ -30,6 +31,7 @@ function ruleFor(rules: QtyRules, tier: DbTier): TierRule {
 }
 
 export default function QuantityRulesTab() {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ['app_setting', 'cart_quantity_rules'], queryFn: () => getAppSetting<QtyRules>('cart_quantity_rules', DEFAULT) });
   const [draft, setDraft] = useState<QtyRules>(DEFAULT);
@@ -52,10 +54,10 @@ export default function QuantityRulesTab() {
 
   return (
     <div className="space-y-6">
-      <Panel title="Enforcement mode">
+      <Panel title={t('Enforcement mode')}>
         <p className="mb-4 text-sm text-muted-foreground">
-          Minimum order quantity and pack multiples, per tier. Enforcement is opt-in — it ships <span className="font-medium text-foreground">off</span> and
-          the cart never gates until an admin turns it on here.
+          {t('Minimum order quantity and pack multiples, per tier. Enforcement is opt-in — it ships')}{' '}<span className="font-medium text-foreground">{t('off')}</span>{' '}
+          {t('and the cart never gates until an admin turns it on here.')}
         </p>
         <div className="flex flex-wrap gap-2">
           {(['off', 'warn', 'block'] as Mode[]).map((m) => (
@@ -68,14 +70,14 @@ export default function QuantityRulesTab() {
                 draft.mode === m ? 'border-brand bg-brand/5 font-medium' : 'border-border hover:bg-muted',
               )}
             >
-              <span className={cn('mr-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', MODE_META[m].tone)}>{MODE_META[m].label}</span>
-              <span className="text-muted-foreground">{MODE_META[m].help}</span>
+              <span className={cn('mr-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', MODE_META[m].tone)}>{t(MODE_META[m].label)}</span>
+              <span className="text-muted-foreground">{t(MODE_META[m].help)}</span>
             </button>
           ))}
         </div>
       </Panel>
 
-      <Panel title="Per-tier rules">
+      <Panel title={t('Per-tier rules')}>
         <div className="grid gap-4 sm:grid-cols-2">
           {DB_TIERS.map((tier) => {
             const rule = ruleFor(draft, tier);
@@ -83,7 +85,7 @@ export default function QuantityRulesTab() {
               <div key={tier} className="rounded-2xl border border-border p-4">
                 <p className="mb-3 text-sm font-medium">{DB_TIER_LABELS[tier]}</p>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Min units">
+                  <Field label={t('Min units')}>
                     <TextInput
                       type="number"
                       min="1"
@@ -92,7 +94,7 @@ export default function QuantityRulesTab() {
                       onChange={(e) => setTierRule(tier, { min: Math.max(1, Math.floor(Number(e.target.value) || 1)) })}
                     />
                   </Field>
-                  <Field label="Multiple of">
+                  <Field label={t('Multiple of')}>
                     <TextInput
                       type="number"
                       min="1"
@@ -106,14 +108,14 @@ export default function QuantityRulesTab() {
             );
           })}
         </div>
-        {draft.mode === 'off' && <p className="mt-3 text-xs text-muted-foreground">Set mode to Warn or Block to edit per-tier rules.</p>}
+        {draft.mode === 'off' && <p className="mt-3 text-xs text-muted-foreground">{t('Set mode to Warn or Block to edit per-tier rules.')}</p>}
       </Panel>
 
       <div className="flex items-center gap-3">
         <Button size="sm" disabled={!dirty || save.isPending} onClick={() => save.mutate(draft)}>
-          {save.isPending ? 'Saving…' : 'Save quantity rules'}
+          {save.isPending ? t('Saving…') : t('Save quantity rules')}
         </Button>
-        {save.isSuccess && !dirty && <span className="text-xs text-success">Saved ✓</span>}
+        {save.isSuccess && !dirty && <span className="text-xs text-success">{t('Saved ✓')}</span>}
         <MutationError error={save.error} />
       </div>
     </div>

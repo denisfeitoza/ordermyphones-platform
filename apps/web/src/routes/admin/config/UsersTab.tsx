@@ -5,6 +5,7 @@ import { Eye, ShieldCheck } from 'lucide-react';
 import { listProfiles, setCustomerTier, setUserRole, type ProfileRow, type AppRoleName } from '@/data/adminConfig';
 import { DB_TIERS, DB_TIER_LABELS, type DbTier } from '@/lib/invites';
 import { useAuth } from '@/store';
+import { useI18n } from '@/i18n';
 import { InvitePanel } from '@/components/admin/InvitePanel';
 import { ConfirmPassword } from '@/components/admin/ConfirmPassword';
 import { Panel, Table, Td } from '@/components/admin/parts';
@@ -22,6 +23,7 @@ type PendingAction =
   | { kind: 'tier'; user: ProfileRow; tier: DbTier };
 
 export default function UsersTab() {
+  const { t } = useI18n();
   const { role: myRole, user: me } = useAuth();
   const isAdmin = myRole === 'admin';
   const qc = useQueryClient();
@@ -47,12 +49,12 @@ export default function UsersTab() {
     <div className="space-y-6">
       <InvitePanel />
 
-      <Panel title="Accounts">
+      <Panel title={t('Accounts')}>
         <p className="mb-4 text-sm text-muted-foreground">
-          Every profile. Change a customer's tier or a user's role — both are audited and require you to re-confirm your password.
-          {!isAdmin && ' Role/tier changes are admin-only.'}
+          {t("Every profile. Change a customer's tier or a user's role — both are audited and require you to re-confirm your password.")}
+          {!isAdmin && ` ${t('Role/tier changes are admin-only.')}`}
         </p>
-        {q.isLoading && <p className="text-sm text-muted-foreground">Loading accounts…</p>}
+        {q.isLoading && <p className="text-sm text-muted-foreground">{t('Loading accounts…')}</p>}
         {q.isError && <MutationError error={q.error} />}
         <MutationError error={applyRole.error ?? applyTier.error} />
 
@@ -60,11 +62,11 @@ export default function UsersTab() {
           <Table
             minWidth={860}
             columns={[
-              { key: 'email', label: 'Account' },
-              { key: 'role', label: 'Role' },
-              { key: 'tier', label: 'Tier' },
-              { key: 'flags', label: 'Flags' },
-              { key: 'view', label: 'Lens', align: 'right' },
+              { key: 'email', label: t('Account') },
+              { key: 'role', label: t('Role') },
+              { key: 'tier', label: t('Tier') },
+              { key: 'flags', label: t('Flags') },
+              { key: 'view', label: t('Lens'), align: 'right' },
             ]}
           >
             {q.data.map((u) => (
@@ -77,7 +79,7 @@ export default function UsersTab() {
                   {isAdmin ? (
                     <select
                       value={u.role}
-                      aria-label={`Role for ${u.email}`}
+                      aria-label={`${t('Role for')} ${u.email}`}
                       onChange={(e) => setPending({ kind: 'role', user: u, role: e.target.value as AppRoleName })}
                       className="h-8 rounded-lg border border-border bg-background px-2 text-xs outline-none focus:border-brand"
                     >
@@ -94,11 +96,11 @@ export default function UsersTab() {
                     isAdmin ? (
                       <select
                         value={u.tier ?? ''}
-                        aria-label={`Tier for ${u.email}`}
+                        aria-label={`${t('Tier for')} ${u.email}`}
                         onChange={(e) => e.target.value && setPending({ kind: 'tier', user: u, tier: e.target.value as DbTier })}
                         className="h-8 rounded-lg border border-border bg-background px-2 text-xs outline-none focus:border-brand"
                       >
-                        <option value="" disabled>Unassigned</option>
+                        <option value="" disabled>{t('Unassigned')}</option>
                         {DB_TIERS.map((t) => (
                           <option key={t} value={t}>{DB_TIER_LABELS[t]}</option>
                         ))}
@@ -111,8 +113,8 @@ export default function UsersTab() {
                   )}
                 </Td>
                 <Td>
-                  {u.is_test && <span className="inline-flex items-center rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-warning">test</span>}
-                  {u.id === me?.id && <span className="ml-1 inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium">you</span>}
+                  {u.is_test && <span className="inline-flex items-center rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-warning">{t('test')}</span>}
+                  {u.id === me?.id && <span className="ml-1 inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium">{t('you')}</span>}
                 </Td>
                 <Td align="right">
                   {isAdmin && u.role !== 'admin' && (
@@ -120,7 +122,7 @@ export default function UsersTab() {
                       to={`/admin/view-as/${u.id}`}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs font-medium transition-colors hover:bg-muted"
                     >
-                      <Eye className="h-3.5 w-3.5" /> View as
+                      <Eye className="h-3.5 w-3.5" /> {t('View as')}
                     </Link>
                   )}
                 </Td>
@@ -131,18 +133,18 @@ export default function UsersTab() {
       </Panel>
 
       <p className="flex items-center gap-2 text-xs text-muted-foreground">
-        <ShieldCheck className="h-3.5 w-3.5" /> Role and tier changes write an audit row and re-verify your password. The last admin cannot be demoted.
+        <ShieldCheck className="h-3.5 w-3.5" /> {t('Role and tier changes write an audit row and re-verify your password. The last admin cannot be demoted.')}
       </p>
 
       <ConfirmPassword
         open={!!pending}
-        title={pending?.kind === 'role' ? `Change ${pending.user.email} to ${pending.role}?` : `Change ${pending?.user.email}'s tier?`}
+        title={pending?.kind === 'role' ? `${t('Change')} ${pending.user.email} ${t('to')} ${pending.role}?` : `${t('Change')} ${pending?.user.email}${t("'s tier?")}`}
         description={
           pending?.kind === 'role'
-            ? 'This changes what the account can access. Confirm your password.'
-            : `Reassign to ${pending ? DB_TIER_LABELS[(pending as { tier: DbTier }).tier] : ''}. The customer will see the new tier's prices. Confirm your password.`
+            ? t('This changes what the account can access. Confirm your password.')
+            : `${t('Reassign to')} ${pending ? DB_TIER_LABELS[(pending as { tier: DbTier }).tier] : ''}. ${t("The customer will see the new tier's prices. Confirm your password.")}`
         }
-        actionLabel="Apply change"
+        actionLabel={t('Apply change')}
         busy={applyRole.isPending || applyTier.isPending}
         onCancel={() => {
           setPending(null);
