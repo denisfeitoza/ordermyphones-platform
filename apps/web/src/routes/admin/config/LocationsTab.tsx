@@ -1,24 +1,86 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { GitMerge } from 'lucide-react';
-import { listStockLocations, updateStockLocation, mergeLocations, type StockLocationRow, type MergeResult } from '@/data/adminConfig';
+import { GitMerge, Plus, Trash2 } from 'lucide-react';
+import {
+  listStockLocations,
+  updateStockLocation,
+  createStockLocation,
+  deleteStockLocation,
+  mergeLocations,
+  type StockLocationRow,
+  type MergeResult,
+} from '@/data/adminConfig';
 import { useAuth } from '@/store';
 import { Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
 import { ConfirmPassword } from '@/components/admin/ConfirmPassword';
 import { Field, MutationError, TextInput, Toggle } from './parts';
 
-function LocationRow({ row }: { row: StockLocationRow }) {
+function CreateLocationPanel() {
+  const qc = useQueryClient();
+  const [code, setCode] = useState('');
+  const [name, setName] = useState('');
+  const [region, setRegion] = useState('');
+
+  const create = useMutation({
+    mutationFn: () => createStockLocation({ code: code.trim().toUpperCase(), display_name: name.trim(), region: region.trim() || null }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['config-locations'] });
+      setCode('');
+      setName('');
+      setRegion('');
+    },
+  });
+
+  const valid = code.trim().length > 0 && name.trim().length > 0;
+
+  return (
+    <Panel title="Add a location" action={<Plus className="h-4 w-4 text-muted-foreground" />}>
+      <p className="mb-4 text-sm text-muted-foreground">
+        Create a new warehouse or storage. The <span className="font-medium text-foreground">code</span> is a short internal handle (unique, e.g.{' '}
+        <span className="font-mono">DAL-2</span>); the <span className="font-medium text-foreground">display name</span> is what customers see.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field label="Code" help="Short, unique.">
+          <TextInput value={code} placeholder="DAL-2" onChange={(e) => setCode(e.target.value)} className="font-mono uppercase" />
+        </Field>
+        <Field label="Display name" help="Customer-visible.">
+          <TextInput value={name} placeholder="Dallas — Storage 2" onChange={(e) => setName(e.target.value)} />
+        </Field>
+        <Field label="Region">
+          <TextInput value={region} placeholder="TX" onChange={(e) => setRegion(e.target.value)} />
+        </Field>
+      </div>
+      <div className="mt-4 flex items-center gap-3">
+        <Button size="sm" variant="brand" disabled={!valid || create.isPending} onClick={() => create.mutate()}>
+          <Plus className="h-4 w-4" strokeWidth={2} />
+          {create.isPending ? 'Creating…' : 'Create location'}
+        </Button>
+        {create.isSuccess && <span className="text-sm text-success">Location created.</span>}
+      </div>
+      <MutationError error={create.error} />
+    </Panel>
+  );
+}
+
+function LocationRow({ row, canManage }: { row: StockLocationRow; canManage: boolean }) {
   const qc = useQueryClient();
   const [name, setName] = useState(row.display_name);
   const [region, setRegion] = useState(row.region ?? '');
+  const [confirmDelete, setConfirmDelete] = useState(false);
   useEffect(() => {
     setName(row.display_name);
     setRegion(row.region ?? '');
+    setConfirmDelete(false);
   }, [row]);
 
   const save = useMutation({
     mutationFn: (patch: Partial<Pick<StockLocationRow, 'display_name' | 'region' | 'active'>>) => updateStockLocation(row.id, patch),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['config-locations'] }),
+  });
+
+  const del = useMutation({
+    mutationFn: () => deleteStockLocation(row.id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['config-locations'] }),
   });
 
@@ -41,12 +103,37 @@ function LocationRow({ row }: { row: StockLocationRow }) {
           <TextInput value={region} placeholder="—" onChange={(e) => setRegion(e.target.value)} />
         </Field>
       </div>
-      <div className="mt-3 flex items-center justify-end gap-3">
+      <div className="mt-3 flex items-center justify-between gap-3">
+        {canManage ? (
+          confirmDelete ? (
+            <span className="flex items-center gap-2 text-xs">
+              <span className="text-muted-foreground">Delete this location?</span>
+              <button type="button" onClick={() => del.mutate()} disabled={del.isPending} className="font-medium text-destructive hover:underline">
+                {del.isPending ? 'Deleting…' : 'Yes, delete'}
+              </button>
+              <button type="button" onClick={() => setConfirmDelete(false)} className="text-muted-foreground hover:text-foreground">
+                Cancel
+              </button>
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-destructive"
+            >
+              <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
+              Delete
+            </button>
+          )
+        ) : (
+          <span />
+        )}
         <Button size="sm" variant="outline" disabled={!dirty || !name.trim() || save.isPending} onClick={() => save.mutate({ display_name: name.trim(), region: region.trim() || null })}>
           {save.isPending ? 'Saving…' : 'Save'}
         </Button>
       </div>
       <MutationError error={save.error} />
+      <MutationError error={del.error} />
     </div>
   );
 }
@@ -143,6 +230,7 @@ function MergePanel({ locations, canMerge }: { locations: StockLocationRow[]; ca
 
 export default function LocationsTab() {
   const { role } = useAuth();
+  const isAdmin = role === 'admin';
   const q = useQuery({ queryKey: ['config-locations'], queryFn: listStockLocations });
 
   return (
@@ -152,10 +240,11 @@ export default function LocationsTab() {
 
       {q.data && (
         <>
-          <MergePanel locations={q.data} canMerge={role === 'admin'} />
+          {isAdmin && <CreateLocationPanel />}
+          <MergePanel locations={q.data} canMerge={isAdmin} />
           <div className="grid gap-4 lg:grid-cols-2">
             {q.data.map((row) => (
-              <LocationRow key={row.id} row={row} />
+              <LocationRow key={row.id} row={row} canManage={isAdmin} />
             ))}
           </div>
         </>
