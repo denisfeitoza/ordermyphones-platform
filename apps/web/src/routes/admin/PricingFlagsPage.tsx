@@ -22,6 +22,18 @@ const KIND_LABEL: Record<FlagKind, string> = {
   zero_qty: 'Zero stock',
 };
 
+/** Plain, one-line reason each flag fires — shown under the badge so the row
+ * explains itself without the operator memorizing the jargon. */
+const KIND_HELP: Record<FlagKind, string> = {
+  cost_swing: 'The cost jumped a lot vs. before — check it isn’t a typo.',
+  margin: 'This price would sell below your profit floor.',
+  unbenchmarked: 'No market benchmark yet — priced from a fallback.',
+  tier_order: 'A cheaper tier ended up pricier than a richer one.',
+  spread: 'The cost differs a lot between locations.',
+  collision: 'Two suppliers disagree on this item’s cost.',
+  zero_qty: 'Priced, but nothing is in stock.',
+};
+
 const TIER_LABEL: Record<DbTier, string> = {
   consumer: 'Consumer',
   retailer: 'Retailer',
@@ -320,6 +332,7 @@ export default function PricingFlagsPage() {
                 <span className={cn('inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium', 'bg-warning/10 text-warning')}>
                   {t(KIND_LABEL[r.kind])}
                 </span>
+                <span className="mt-1 block max-w-[13rem] text-xs text-muted-foreground">{t(KIND_HELP[r.kind])}</span>
               </Td>
               <Td className="font-medium">
                 {r.make} {r.model}
