@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Eye, X } from 'lucide-react';
-import { useTier } from '@/store';
+import { useAuth, useTier } from '@/store';
 import { TIERS } from '@/data/tiers';
 import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
@@ -11,10 +11,15 @@ import { cn } from '@/lib/utils';
  */
 export function TierPreviewPill() {
   const { previewCode, startPreview, stopPreview, tier } = useTier();
+  const { role } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
 
-  if (!previewCode) return null;
+  // Admin/staff only. previewCode lives in sessionStorage and survives a
+  // sign-out within the same tab, so without the role gate a customer signing
+  // in after an admin's "view as" would see this admin banner + an /admin link
+  // (leak audit Finding 1). Gate it exactly like realCatalog applies the preview.
+  if (!previewCode || (role !== 'admin' && role !== 'staff')) return null;
 
   return (
     <div className="fixed inset-x-0 bottom-4 z-50 flex justify-center px-4">

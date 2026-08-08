@@ -58,7 +58,16 @@ export default function App() {
     <AppProviders>
       <TestEnvBadge />
       <Routes>
-        <Route path="ops" element={<OpsPage />} />
+        {/* Internal ops console — admin/staff only (leak audit Finding 2). Not a
+            customer-facing showcase; the footer link was removed to match. */}
+        <Route
+          path="ops"
+          element={
+            <RequireAuth roles={['admin', 'staff']}>
+              <OpsPage />
+            </RequireAuth>
+          }
+        />
 
         <Route path="auth">
           <Route path="sign-in" element={<SignInPage />} />
