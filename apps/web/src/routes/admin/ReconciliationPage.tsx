@@ -20,7 +20,7 @@ export default function ReconciliationPage() {
 
   return (
     <div className="space-y-6">
-      <AdminHeading title="Reconciliation" subtitle={`${list.length} open shortfall${list.length === 1 ? '' : 's'} awaiting stock`} />
+      <AdminHeading title="Reconciliation" subtitle={`${list.length} ${t('open shortfalls awaiting stock')}`} />
 
       <div className="rounded-2xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm text-muted-foreground">
         <b className="text-foreground">{t('What is this?')}</b> {t('When you approve an order the system deducts live stock. If there wasn’t enough on hand, the missing units land here as a')} <b className="text-foreground">{t('shortfall')}</b>{t('. When more stock arrives, hit')} <b className="text-foreground">{t('Fulfill')}</b> {t('to complete those units; or')} <b className="text-foreground">{t('Cancel')}</b> {t('to close the shortfall and leave the order partially filled. Nothing is charged — this only tracks what’s owed.')}

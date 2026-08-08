@@ -89,7 +89,7 @@ export function RealCustomers() {
     <div className="space-y-6">
       <AdminHeading
         title="Customers"
-        subtitle={`${customers.length} registered account${customers.length === 1 ? '' : 's'}${isAdmin ? ' · change a tier inline' : ' · manage tiers & roles in Settings → Users'}`}
+        subtitle={`${customers.length} ${t('registered accounts')}${isAdmin ? ` · ${t('change a tier inline')}` : ` · ${t('manage tiers & roles in the Users & roles tab')}`}`}
       />
 
       <AccessRequestsPanel />
