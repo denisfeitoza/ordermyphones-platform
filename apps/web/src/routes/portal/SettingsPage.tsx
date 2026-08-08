@@ -18,7 +18,7 @@ interface Profile {
 }
 
 const NOTIFS = [
-  { key: 'restock', label: 'Restock alerts', desc: 'When a watched model is back at a supplier' },
+  { key: 'restock', label: 'Restock alerts', desc: 'When a watched model is back in stock' },
   { key: 'price', label: 'Price drops', desc: 'When tier pricing changes on saved models' },
   { key: 'dispatch', label: 'Dispatch updates', desc: 'When a supplier ships part of an order' },
 ] as const;

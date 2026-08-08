@@ -44,7 +44,7 @@ export function SupplierSyncPanel() {
   const { suppliers, secondsAgo } = useSync();
   const last = secondsAgo === 0 ? 'just now' : `${secondsAgo}s ago`;
   return (
-    <Panel title="Supplier sync" badge="every 2s">
+    <Panel title="Inventory sync" badge="every 2s">
       <div className="divide-y divide-border">
         {suppliers.map((s) => (
           <div key={s.code} className="px-4 py-3">
@@ -70,11 +70,11 @@ export function SupplierSyncPanel() {
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-2 text-sm font-medium">
               <span className="h-2 w-2 rounded-full bg-muted-foreground/40" />
-              Source C · offshore
+              Warehouse 3 · overflow
             </span>
             <span className="font-mono text-[0.65rem] text-muted-foreground">reserved</span>
           </div>
-          <p className="mt-1.5 text-xs text-muted-foreground">Offshore wholesale feed — reserved capacity</p>
+          <p className="mt-1.5 text-xs text-muted-foreground">Overflow wholesale capacity — held in reserve</p>
         </div>
       </div>
     </Panel>
@@ -85,7 +85,7 @@ const STAGE_TONE = ['border-border bg-muted/30', 'border-border bg-muted/30', 'b
 
 export function OrderPipeline({ orders }: { orders: LiveOrder[] }) {
   return (
-    <Panel title="Order pipeline" badge="reserve-at-source">
+    <Panel title="Order pipeline" badge="auto-reserve">
       <div className="overflow-x-auto p-4">
         <div className="grid min-w-[640px] grid-cols-5 gap-2">
           {ORDER_STAGES.map((stage, idx) => {
@@ -169,7 +169,7 @@ interface Alert {
 export function buildAlerts(): Alert[] {
   return CATALOG.flatMap((item): Alert[] => {
     const total = totalAvailable(item);
-    if (total === 0) return [{ id: item.id, model: item.model, sev: 'high', msg: 'Out of stock — all suppliers' }];
+    if (total === 0) return [{ id: item.id, model: item.model, sev: 'high', msg: 'Out of stock — all warehouses' }];
     const zero = item.stock.find((s) => s.availableQty === 0);
     if (zero) return [{ id: item.id, model: item.model, sev: 'med', msg: `0 at ${SOURCE_LABELS[zero.supplier]} · rebalance` }];
     if (total <= 20) return [{ id: item.id, model: item.model, sev: 'low', msg: `${total} units left · reorder soon` }];
@@ -200,7 +200,7 @@ export function StockAlerts() {
 
 const AGENTS = [
   { name: 'orchestrator', role: 'Routes each intent to the right agent', last: 'Dispatched 3 actions this minute' },
-  { name: 'inventory-triage', role: 'Flags stock discrepancies across feeds', last: 'Flagged 2 price gaps · Source B vs Source A' },
+  { name: 'inventory-triage', role: 'Flags stock discrepancies across warehouses', last: 'Flagged 2 price gaps · Warehouse 2 vs Warehouse 1' },
   { name: 'pricing', role: 'Re-derives tier prices on cost change', last: 'Refreshed 4 tiers · iPhone 16 Pro' },
   { name: 'tier-classifier', role: 'Promotes accounts by cumulative volume', last: 'Promoted 1 account → Wholesale' },
   { name: 'customer-support', role: 'Drafts replies for admin approval', last: 'Drafted 3 replies · awaiting approval' },

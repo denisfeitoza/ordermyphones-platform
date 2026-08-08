@@ -11,8 +11,8 @@ const SECTIONS = [
 
 const SHIPPING = [
   ['Free U.S. shipping', 'Every order ships free within the contiguous U.S. — the price you see at your tier is the price you pay.'],
-  ['Dispatched from source', 'Once units are reserved at a supplier, that supplier dispatches directly. Split orders can arrive in more than one parcel.'],
-  ['Tracking per supplier', 'Each dispatch posts its own tracking to your portal as it leaves — watch it under Orders.'],
+  ['Dispatched from our warehouses', 'Once your units are reserved, they ship from the warehouse holding them. Split orders can arrive in more than one parcel.'],
+  ['Tracking per shipment', 'Each dispatch posts its own tracking to your portal as it leaves — watch it under Orders.'],
   ['Lead times', 'New stock typically ships in 1–2 business days. Certified Pre-Owned is graded and tested first, usually 2–4 business days.'],
 ];
 
@@ -23,9 +23,9 @@ const RETURNS = [
 ];
 
 const FAQ = [
-  ['How does “reserve at source” work?', 'When you place an order, the inventory bot re-checks live stock at each supplier, cross-references open orders, and holds your exact units before any charge — so you never pay for stock we can’t secure.'],
+  ['How does reserving stock work?', 'When you place an order, the inventory bot re-checks live stock across our warehouses, cross-references open orders, and holds your exact units before any charge — so you never pay for stock we can’t secure.'],
   ['When does my tier move up?', 'Tiers are driven by cumulative purchase volume and never reset. Cross a threshold and the new discount applies to your next order automatically — no quotes, no rep.'],
-  ['Do you charge before reserving?', 'No. Payment is authorized only after units are confirmed and held at source. If a hold fails, nothing is charged.'],
+  ['Do you charge before reserving?', 'No. Payment is authorized only after units are confirmed and held in our warehouses. If a hold fails, nothing is charged.'],
   ['What is Certified Pre-Owned?', 'Graded, fully tested devices with a 30-day functional warranty — priced below new, with condition shown on every listing.'],
   ['Can I get net terms or a custom quote?', 'Yes, beyond Wholesale we set up net terms and dedicated pricing. Reach the sales desk from the contact page.'],
 ];
