@@ -20,8 +20,8 @@ const DEFAULT: Enforcement = {
 };
 
 const FIELD_LABELS: Record<string, { label: string; help: string }> = {
-  g1_business_name: { label: 'Business name (G1)', help: 'Legal business name captured at registration.' },
-  g2_tax_certificate: { label: 'Tax certificate (G2)', help: 'Resale/exemption certificate for business tiers.' },
+  g1_business_name: { label: 'Business name', help: 'Legal business name captured at registration.' },
+  g2_tax_certificate: { label: 'Tax certificate', help: 'Resale/exemption certificate for business tiers.' },
   shipping_address: { label: 'Shipping address', help: 'A default shipping address on file.' },
 };
 
@@ -50,10 +50,13 @@ export default function EnforcementTab() {
 
   return (
     <div className="space-y-6">
-      <Panel title={t('G1 / G2 enforcement points')}>
+      <Panel title={t('When each detail is required')}>
+        <p className="mb-3 text-sm text-muted-foreground">
+          {t('Turn on where a customer must provide each detail: before they can check out, before you approve their order, or both. Example: require the tax certificate at approval so no business order is fulfilled without one on file.')}
+        </p>
         <div className="mb-4 flex items-start gap-2 rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-muted-foreground">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          {t('Config only — this records WHERE each field is required (at checkout and/or at order approval). Wiring the gate into those flows is a separate change; this is the single source of truth it will read.')}
+          {t('This is the setting the checkout and approval flows read; it does not block anything on its own until those flows are wired to it.')}
         </div>
 
         <div className="overflow-x-auto rounded-xl border border-border">
