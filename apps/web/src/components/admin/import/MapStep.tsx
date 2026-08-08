@@ -1,5 +1,6 @@
 import { Panel, Table, Td } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
+import { useI18n } from '@/i18n';
 import { CANONICAL_FIELDS, type CanonicalField } from '@/lib/import/map';
 import { cn } from '@/lib/utils';
 import type { ColumnAssignment } from './types';
@@ -34,38 +35,38 @@ export function MapStep({
   onBack: () => void;
   busy: boolean;
 }) {
+  const { t } = useI18n();
   const needsReviewCount = assignments.filter((a) => a.needsReview).length;
   const mappedCount = assignments.filter((a) => a.field !== 'ignore').length;
 
   return (
     <div className="space-y-4">
       <Panel
-        title="Column mapping"
+        title={t('Column mapping')}
         action={
           <span className="text-xs text-muted-foreground">
-            {mappedCount} of {assignments.length} columns mapped
-            {needsReviewCount > 0 && ` · ${needsReviewCount} need review`}
+            {mappedCount} {t('of')} {assignments.length} {t('columns mapped')}
+            {needsReviewCount > 0 && ` · ${needsReviewCount} ${t('need review')}`}
           </span>
         }
       >
         <p className="mb-4 text-sm text-muted-foreground">
-          High-confidence columns were mapped automatically. Columns highlighted amber need a human eye — check the sample
-          values and confirm or fix the field before running the dry run.
+          {t('High-confidence columns were mapped automatically. Columns highlighted amber need a human eye — check the sample values and confirm or fix the field before running the dry run.')}
         </p>
 
         <Table
           minWidth={720}
           columns={[
-            { key: 'column', label: 'Sheet column' },
-            { key: 'samples', label: 'Sample values' },
-            { key: 'field', label: 'Maps to' },
+            { key: 'column', label: t('Sheet column') },
+            { key: 'samples', label: t('Sample values') },
+            { key: 'field', label: t('Maps to') },
           ]}
         >
           {assignments.map((a) => (
             <tr key={a.column} className={cn(a.needsReview && a.field !== 'ignore' && 'bg-warning/5')}>
               <Td className="font-medium">{a.column}</Td>
               <Td className="text-xs text-muted-foreground">
-                {a.sampleValues.length > 0 ? a.sampleValues.join(', ') : <span className="italic">empty</span>}
+                {a.sampleValues.length > 0 ? a.sampleValues.join(', ') : <span className="italic">{t('empty')}</span>}
               </Td>
               <Td>
                 <select
@@ -76,10 +77,10 @@ export function MapStep({
                     a.needsReview && a.field !== 'ignore' ? 'border-warning' : 'border-border',
                   )}
                 >
-                  <option value="ignore">Ignore</option>
+                  <option value="ignore">{t('Ignore')}</option>
                   {CANONICAL_FIELDS.map((f) => (
                     <option key={f} value={f}>
-                      {FIELD_LABEL[f]}
+                      {t(FIELD_LABEL[f])}
                     </option>
                   ))}
                 </select>
@@ -91,10 +92,10 @@ export function MapStep({
 
       <div className="flex justify-between">
         <Button variant="outline" onClick={onBack} disabled={busy}>
-          Back
+          {t('Back')}
         </Button>
         <Button onClick={onConfirm} disabled={busy}>
-          {busy ? 'Running dry run…' : 'Confirm mapping → dry run'}
+          {busy ? t('Running dry run…') : t('Confirm mapping → dry run')}
         </Button>
       </div>
     </div>

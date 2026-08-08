@@ -5,6 +5,7 @@ import { ArrowLeft, Eye, Loader2 } from 'lucide-react';
 import { adminGetCustomerProfile, adminGetCustomerOrders, logViewAs, type ViewAsOrder } from '@/data/adminConfig';
 import { DB_TIER_LABELS } from '@/lib/invites';
 import { Panel } from '@/components/admin/parts';
+import { useI18n } from '@/i18n';
 import { formatUsd } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
@@ -17,6 +18,7 @@ const STATUS_TONE: Record<string, string> = {
 };
 
 function OrderCard({ order }: { order: ViewAsOrder }) {
+  const { t } = useI18n();
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -42,7 +44,7 @@ function OrderCard({ order }: { order: ViewAsOrder }) {
         ))}
       </div>
       <div className="mt-3 flex justify-between border-t border-border pt-2 text-sm">
-        <span className="text-muted-foreground">Ordered total</span>
+        <span className="text-muted-foreground">{t('Ordered total')}</span>
         <span className="font-mono font-semibold tabular-nums">{formatUsd(order.subtotal_cents)}</span>
       </div>
     </div>
@@ -50,6 +52,7 @@ function OrderCard({ order }: { order: ViewAsOrder }) {
 }
 
 export default function ViewAsPage() {
+  const { t } = useI18n();
   const { userId } = useParams<{ userId: string }>();
   const loggedRef = useRef<string | null>(null);
 
@@ -76,10 +79,10 @@ export default function ViewAsPage() {
       <div className="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-3 border-b border-warning/30 bg-warning/10 px-4 py-2.5 text-sm">
         <span className="inline-flex items-center gap-2 font-medium text-warning">
           <Eye className="h-4 w-4" strokeWidth={2} />
-          {profile ? `Viewing as ${profile.email} (read-only)` : 'Read-only lens'}
+          {profile ? `${t('Viewing as')} ${profile.email} ${t('(read-only)')}` : t('Read-only lens')}
         </span>
         <Link to="/admin/config/users" className="inline-flex items-center gap-1.5 rounded-full border border-warning/40 px-3 py-1 text-xs font-medium text-warning transition-colors hover:bg-warning/15">
-          <ArrowLeft className="h-3.5 w-3.5" /> Back to accounts
+          <ArrowLeft className="h-3.5 w-3.5" /> {t('Back to accounts')}
         </Link>
       </div>
 
@@ -89,59 +92,58 @@ export default function ViewAsPage() {
             <Loader2 className="h-6 w-6 animate-spin text-brand" />
           </div>
         )}
-        {profileQ.isError && <p className="text-sm text-destructive">{profileQ.error instanceof Error ? profileQ.error.message : 'Could not load this account.'}</p>}
-        {profileQ.isSuccess && !profile && <p className="text-sm text-muted-foreground">Account not found.</p>}
+        {profileQ.isError && <p className="text-sm text-destructive">{profileQ.error instanceof Error ? profileQ.error.message : t('Could not load this account.')}</p>}
+        {profileQ.isSuccess && !profile && <p className="text-sm text-muted-foreground">{t('Account not found.')}</p>}
 
         {profile && (
           <>
-            <Panel title="Account">
+            <Panel title={t('Account')}>
               <dl className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <dt className="text-xs text-muted-foreground">Name</dt>
+                  <dt className="text-xs text-muted-foreground">{t('Name')}</dt>
                   <dd className="text-sm font-medium">{profile.display_name || '—'}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground">Email</dt>
+                  <dt className="text-xs text-muted-foreground">{t('Email')}</dt>
                   <dd className="text-sm">{profile.email}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground">Role</dt>
+                  <dt className="text-xs text-muted-foreground">{t('Role')}</dt>
                   <dd className="text-sm capitalize">{profile.role}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground">Tier</dt>
+                  <dt className="text-xs text-muted-foreground">{t('Tier')}</dt>
                   <dd className="text-sm">{profile.tier ? DB_TIER_LABELS[profile.tier] : '—'}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground">Phone</dt>
+                  <dt className="text-xs text-muted-foreground">{t('Phone')}</dt>
                   <dd className="text-sm">{profile.phone || '—'}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground">Member since</dt>
+                  <dt className="text-xs text-muted-foreground">{t('Member since')}</dt>
                   <dd className="text-sm">{new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</dd>
                 </div>
               </dl>
               <p className="mt-4 text-xs text-muted-foreground">
-                Addresses are stored client-side in this build and aren't available to the lens (see AUTONOMOUS-DECISIONS.md).
+                {t("Addresses are stored client-side in this build and aren't available to the lens (see AUTONOMOUS-DECISIONS.md).")}
               </p>
             </Panel>
 
             {profile.role === 'customer' ? (
               <div className="space-y-4">
-                <h2 className="text-sm font-medium">Orders</h2>
-                {ordersQ.isLoading && <p className="text-sm text-muted-foreground">Loading orders…</p>}
+                <h2 className="text-sm font-medium">{t('Orders')}</h2>
+                {ordersQ.isLoading && <p className="text-sm text-muted-foreground">{t('Loading orders…')}</p>}
                 {ordersQ.data && ordersQ.data.length === 0 && (
                   <Panel>
-                    <p className="py-6 text-center text-sm text-muted-foreground">No orders yet.</p>
+                    <p className="py-6 text-center text-sm text-muted-foreground">{t('No orders yet.')}</p>
                   </Panel>
                 )}
                 {ordersQ.data?.map((o) => <OrderCard key={o.id} order={o} />)}
               </div>
             ) : (
-              <Panel title="Staff view">
+              <Panel title={t('Staff view')}>
                 <p className="text-sm text-muted-foreground">
-                  This is a staff account. Staff operate the admin console (import stock, approve orders, manage catalog) but cannot access config or finance.
-                  Use the Users tab and the audit log to review what they can touch — a full staff console lens is a follow-up.
+                  {t('This is a staff account. Staff operate the admin console (import stock, approve orders, manage catalog) but cannot access config or finance. Use the Users tab and the audit log to review what they can touch — a full staff console lens is a follow-up.')}
                 </p>
               </Panel>
             )}

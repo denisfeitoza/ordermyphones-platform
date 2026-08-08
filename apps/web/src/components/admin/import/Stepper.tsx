@@ -1,8 +1,10 @@
 import { Check } from 'lucide-react';
+import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { WIZARD_STEPS, type WizardStepId } from './types';
 
 export function Stepper({ current }: { current: WizardStepId }) {
+  const { t } = useI18n();
   const currentIndex = WIZARD_STEPS.findIndex((s) => s.id === current);
 
   return (
@@ -25,7 +27,7 @@ export function Stepper({ current }: { current: WizardStepId }) {
               ) : (
                 <span className="tabular-nums">{i + 1}</span>
               )}
-              {step.label}
+              {t(step.label)}
             </span>
           </li>
         );
