@@ -155,8 +155,6 @@ export default function App() {
           <Route path="ai" element={<AiBotsPage />} />
           <Route path="reports" element={<ReportsPage />} />
 
-          <Route path="manual" element={<ManualPage />} />
-
           {/* Settings, slimmed to system-only. */}
           <Route path="config" element={<SectionTabs tabs={SETTINGS_TABS} />}>
             <Route index element={<CatalogTab />} />
@@ -186,6 +184,16 @@ export default function App() {
           element={
             <RequireAuth roles={['admin']}>
               <ViewAsPage />
+            </RequireAuth>
+          }
+        />
+
+        {/* Full-screen, admin-gated manual (not inside AdminLayout — no nested chrome). */}
+        <Route
+          path="admin/manual"
+          element={
+            <RequireAuth roles={['admin', 'staff']}>
+              <ManualPage />
             </RequireAuth>
           }
         />
