@@ -102,6 +102,41 @@ export async function updateStockLocation(id: string, patch: Partial<Pick<StockL
   if (error) throw new Error(error.message);
 }
 
+export interface CreateStockLocationInput {
+  code: string;
+  display_name: string;
+  region?: string | null;
+}
+
+/** Create a new warehouse/location. Plain INSERT — RLS ('staff write=ALL')
+ * authorizes admin/staff. `code` is unique; a duplicate surfaces as a friendly
+ * message instead of the raw Postgres 23505. */
+export async function createStockLocation(input: CreateStockLocationInput): Promise<StockLocationRow> {
+  const { data, error } = await supabase
+    .from('stock_locations')
+    .insert({ code: input.code, display_name: input.display_name, region: input.region ?? null })
+    .select('id,code,display_name,region,active')
+    .single();
+  if (error) {
+    if (error.code === '23505') throw new Error(`A location with code "${input.code}" already exists.`);
+    throw new Error(error.message);
+  }
+  return data as StockLocationRow;
+}
+
+/** Hard-delete a location — only succeeds when it has never held stock (no
+ * inventory, no ledger movements); otherwise the guarded RPC raises and the
+ * admin must deactivate or merge instead. Admin-only. */
+export async function deleteStockLocation(id: string): Promise<void> {
+  const { error } = await supabase.rpc('delete_stock_location', { p_id: id });
+  if (error) {
+    if (error.message.includes('location_has_history')) {
+      throw new Error('This location has stock or history — deactivate or merge it instead of deleting.');
+    }
+    throw new Error(error.message);
+  }
+}
+
 export interface MergeResult {
   from_code: string;
   to_code: string;
