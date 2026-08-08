@@ -7,19 +7,22 @@ import { LangSwitch } from '@/i18n';
 import { PulseDot } from '@/components/store/SyncHeartbeat';
 import { cn } from '@/lib/utils';
 
+// Every shipping tab carries a `beta` badge for v1 (owner-facing signal that
+// the console is live but still hardening); only genuinely not-yet-built tabs
+// keep `soon`. A tab is never both.
 const NAV = [
-  { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/admin/customers', label: 'Customers', icon: Users },
-  { to: '/admin/orders', label: 'Orders', icon: Receipt },
+  { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true, beta: true },
+  { to: '/admin/customers', label: 'Customers', icon: Users, beta: true },
+  { to: '/admin/orders', label: 'Orders', icon: Receipt, beta: true },
   { to: '/admin/reconciliation', label: 'Reconciliation', icon: PackageSearch, beta: true },
-  { to: '/admin/inventory', label: 'Inventory', icon: Boxes },
-  { to: '/admin/import', label: 'Import', icon: UploadCloud },
+  { to: '/admin/inventory', label: 'Inventory', icon: Boxes, beta: true },
+  { to: '/admin/import', label: 'Import', icon: UploadCloud, beta: true },
   { to: '/admin/prices', label: 'Prices', icon: Tag, beta: true },
   { to: '/admin/pricing-flags', label: 'Flag queue', icon: Flag, beta: true },
-  { to: '/admin/reports', label: 'Reports', icon: BarChart3, soon: true },
+  { to: '/admin/reports', label: 'Reports', icon: BarChart3, beta: true },
   { to: '/admin/api-logs', label: 'API logs', icon: ScrollText, soon: true },
   { to: '/admin/ai', label: 'AI & bots', icon: Bot, soon: true },
-  { to: '/admin/config', label: 'Settings', icon: Settings },
+  { to: '/admin/config', label: 'Settings', icon: Settings, beta: true },
 ] as const;
 
 export default function AdminLayout() {

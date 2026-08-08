@@ -21,7 +21,6 @@ const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
       { label: 'Bulk orders', to: '/portal/wishlist' },
       { label: 'Become a reseller', to: '/contact' },
       { label: 'Your orders', to: '/portal/orders' },
-      { label: 'Live operations', to: '/ops' },
     ],
   },
   {
