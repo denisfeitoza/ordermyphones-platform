@@ -15,6 +15,13 @@ export interface AdminOrderLine {
   lineTotalCents: number;
 }
 
+export interface ShippingAddress {
+  street?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+}
+
 export interface AdminOrder {
   id: string;
   status: AdminOrderStatus;
@@ -23,6 +30,8 @@ export interface AdminOrder {
   placedAt: string;
   decidedAt: string | null;
   decisionReason: string | null;
+  note: string | null;
+  shippingAddress: ShippingAddress | null;
   customerEmail: string | null;
   customerName: string | null;
   lines: AdminOrderLine[];
@@ -52,6 +61,8 @@ interface RawOrder {
   placed_at: string;
   decided_at: string | null;
   decision_reason: string | null;
+  notes: string | null;
+  shipping_address: ShippingAddress | null;
   customer: { email: string | null; display_name: string | null } | null;
   order_items: RawItem[];
 }
@@ -66,7 +77,7 @@ async function fetchAdminOrders(): Promise<AdminOrder[]> {
   const { data, error } = await supabase
     .from('orders')
     .select(
-      `id, status, tier_at_order, subtotal_cents, placed_at, decided_at, decision_reason,
+      `id, status, tier_at_order, subtotal_cents, placed_at, decided_at, decision_reason, notes, shipping_address,
        customer:profiles!orders_customer_id_fkey(email, display_name),
        order_items(id, variant_id, qty_requested, qty_approved, unit_price_cents,
          product_variants(sku, capacity, color, carrier, lock_status, products(make, model)))`,
@@ -82,6 +93,8 @@ async function fetchAdminOrders(): Promise<AdminOrder[]> {
     placedAt: o.placed_at,
     decidedAt: o.decided_at,
     decisionReason: o.decision_reason,
+    note: o.notes,
+    shippingAddress: o.shipping_address,
     customerEmail: o.customer?.email ?? null,
     customerName: o.customer?.display_name ?? null,
     lines: (o.order_items ?? []).map((it) => ({
@@ -188,6 +201,42 @@ export function useApproveOrder() {
       return data as { status: string; approved_lines: number; short_lines: number; reconciliation_ids: string[] };
     },
     onSuccess: invalidate,
+  });
+}
+
+export interface EditOrderItem {
+  variant_id: string;
+  qty: number;
+  unit_price_cents: number;
+}
+
+/** Full edit of a pending order (items, prices, address, note). The RPC records
+ * a customer-visible diff into order_events; we invalidate both order surfaces. */
+export function useEditOrder() {
+  const qc = useQueryClient();
+  const invalidate = useInvalidateOrderData();
+  return useMutation({
+    mutationFn: async (input: {
+      orderId: string;
+      items: EditOrderItem[];
+      shippingAddress?: ShippingAddress | null;
+      note?: string | null;
+      reason?: string | null;
+    }) => {
+      const { data, error } = await supabase.rpc('admin_edit_order', {
+        p_order_id: input.orderId,
+        p_items: input.items,
+        p_shipping_address: input.shippingAddress ?? null,
+        p_note: input.note ?? null,
+        p_reason: input.reason ?? null,
+      });
+      if (error) throw new Error(error.message);
+      return data as { order_id: string; subtotal_cents: number; changes: unknown[] };
+    },
+    onSuccess: (_data, vars) => {
+      invalidate();
+      qc.invalidateQueries({ queryKey: ['order-events', vars.orderId] });
+    },
   });
 }
 
