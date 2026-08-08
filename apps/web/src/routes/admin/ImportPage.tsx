@@ -298,6 +298,11 @@ export default function ImportPage() {
     <div className="space-y-6">
       <AdminHeading title="Smart Stock Import" subtitle="Upload a vendor stock sheet — auto-map columns, dry-run, then commit as audited stock movements." />
 
+      <div className="rounded-2xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm text-muted-foreground">
+        <b className="text-foreground">{t('Four steps:')}</b>{' '}
+        {t('upload the supplier’s sheet, confirm which column is which, review the dry-run, then commit. Nothing touches your stock until the final Commit — the dry-run only previews what would change.')}
+      </div>
+
       <Stepper current={step} />
 
       {suppliersQuery.isError && (
