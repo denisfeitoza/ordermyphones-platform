@@ -12,6 +12,7 @@ import {
 import { AdminHeading, Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
 import { formatInt, formatUsd } from '@/lib/format';
+import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 const STATUS_LABEL: Record<AdminOrderStatus, string> = {
@@ -40,9 +41,10 @@ const FILTERS: { key: AdminOrderStatus | 'all'; label: string }[] = [
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
 export function StatusChip({ status }: { status: AdminOrderStatus }) {
+  const { t } = useI18n();
   return (
     <span className={cn('inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium', STATUS_CLS[status])}>
-      {STATUS_LABEL[status]}
+      {t(STATUS_LABEL[status])}
     </span>
   );
 }
@@ -50,6 +52,7 @@ export function StatusChip({ status }: { status: AdminOrderStatus }) {
 /** Real-mode admin order queue. Master list + detail panel with Approve /
  * Reject, live per-line availability, and post-approval approved/short summary. */
 export function RealAdminOrders() {
+  const { t } = useI18n();
   const { data: orders, isLoading, isError } = useAdminOrders();
   const [filter, setFilter] = useState<AdminOrderStatus | 'all'>('pending');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -78,7 +81,7 @@ export function RealAdminOrders() {
                   filter === f.key ? 'border-foreground bg-foreground text-background' : 'border-border text-muted-foreground hover:bg-muted',
                 )}
               >
-                {f.label}
+                {t(f.label)}
               </button>
             ))}
           </div>
@@ -87,16 +90,16 @@ export function RealAdminOrders() {
 
       {isError ? (
         <p className="rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          Could not load orders.
+          {t('Could not load orders.')}
         </p>
       ) : isLoading ? (
-        <p className="rounded-2xl border border-border bg-card p-16 text-center text-sm text-muted-foreground">Loading…</p>
+        <p className="rounded-2xl border border-border bg-card p-16 text-center text-sm text-muted-foreground">{t('Loading…')}</p>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[1fr_420px] [&>*]:min-w-0">
           <div className="space-y-2">
             {list.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-border py-12 text-center text-sm text-muted-foreground">
-                No orders in this status.
+                {t('No orders in this status.')}
               </p>
             ) : (
               list.map((o) => (
@@ -129,7 +132,7 @@ export function RealAdminOrders() {
               <OrderDetailPanel order={selected} onClose={() => setSelectedId(null)} />
             ) : (
               <Panel>
-                <p className="py-10 text-center text-sm text-muted-foreground">Select an order to review and decide.</p>
+                <p className="py-10 text-center text-sm text-muted-foreground">{t('Select an order to review and decide.')}</p>
               </Panel>
             )}
           </div>
@@ -140,6 +143,7 @@ export function RealAdminOrders() {
 }
 
 function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () => void }) {
+  const { t } = useI18n();
   const variantIds = useMemo(() => order.lines.map((l) => l.variantId), [order.lines]);
   const { data: availability } = useVariantAvailability(variantIds);
   const approve = useApproveOrder();
@@ -154,9 +158,9 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
 
   return (
     <Panel
-      title={`Order ${order.id.slice(0, 8).toUpperCase()}`}
+      title={`${t('Order')} ${order.id.slice(0, 8).toUpperCase()}`}
       action={
-        <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-full hover:bg-muted" aria-label="Close">
+        <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-full hover:bg-muted" aria-label={t('Close')}>
           <X className="h-4 w-4" />
         </button>
       }
@@ -179,19 +183,19 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
                 </div>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>
-                    Qty {formatInt(l.qtyRequested)}
+                    {t('Qty')} {formatInt(l.qtyRequested)}
                     {showApproved && l.qtyApproved !== null && (
                       <>
                         {' · '}
                         <span className={cn(l.qtyApproved < l.qtyRequested ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400')}>
-                          approved {formatInt(l.qtyApproved)}
+                          {t('approved')} {formatInt(l.qtyApproved)}
                         </span>
                       </>
                     )}
                   </span>
                   {isPending && (
                     <span className={cn('font-mono', short ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground')}>
-                      {avail === undefined ? '…' : `${formatInt(avail)} avail`}
+                      {avail === undefined ? '…' : `${formatInt(avail)} ${t('avail')}`}
                     </span>
                   )}
                 </div>
@@ -201,13 +205,13 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
         </ul>
 
         <div className="flex items-center justify-between border-t border-border pt-3 text-sm">
-          <span className="font-medium">Total</span>
+          <span className="font-medium">{t('Total')}</span>
           <span className="font-mono text-base font-semibold tabular-nums">{formatUsd(order.subtotalCents)}</span>
         </div>
 
         {order.status === 'rejected' && order.decisionReason && (
           <p className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-800 dark:bg-rose-500/10 dark:text-rose-300">
-            Rejected: {order.decisionReason}
+            {t('Rejected')}: {order.decisionReason}
           </p>
         )}
 
@@ -216,16 +220,16 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
             {anyShort ? (
               <p className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
                 <AlertTriangle className="h-3.5 w-3.5" strokeWidth={2} />
-                Partially approved — shortfalls opened in reconciliation.
+                {t('Partially approved — shortfalls opened in reconciliation.')}
               </p>
             ) : (
               <p className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
                 <Check className="h-3.5 w-3.5" strokeWidth={2} />
-                Fully approved and deducted.
+                {t('Fully approved and deducted.')}
               </p>
             )}
             <Link to="/admin/reconciliation" className="mt-1.5 inline-flex items-center gap-1 font-medium text-foreground hover:underline">
-              Open reconciliation
+              {t('Open reconciliation')}
               <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
             </Link>
           </div>
@@ -233,17 +237,17 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
 
         {(approve.isError || reject.isError) && (
           <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
-            {(approve.error as Error)?.message ?? (reject.error as Error)?.message ?? 'Action failed.'}
+            {(approve.error as Error)?.message ?? (reject.error as Error)?.message ?? t('Action failed.')}
           </p>
         )}
 
         {isPending && !rejecting && (
           <div className="flex gap-2">
             <Button variant="primary" className="flex-1" disabled={busy} onClick={() => approve.mutate(order.id)}>
-              {approve.isPending ? 'Approving…' : 'Approve'}
+              {approve.isPending ? t('Approving…') : t('Approve')}
             </Button>
             <Button variant="outline" className="flex-1" disabled={busy} onClick={() => setRejecting(true)}>
-              Reject
+              {t('Reject')}
             </Button>
           </div>
         )}
@@ -253,7 +257,7 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Reason for rejection (optional)"
+              placeholder={t('Reason for rejection (optional)')}
               rows={2}
               className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
             />
@@ -264,10 +268,10 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
                 disabled={busy}
                 onClick={() => reject.mutate({ orderId: order.id, reason }, { onSuccess: () => setRejecting(false) })}
               >
-                {reject.isPending ? 'Rejecting…' : 'Confirm reject'}
+                {reject.isPending ? t('Rejecting…') : t('Confirm reject')}
               </Button>
               <Button variant="outline" className="flex-1" disabled={busy} onClick={() => setRejecting(false)}>
-                Cancel
+                {t('Cancel')}
               </Button>
             </div>
           </div>

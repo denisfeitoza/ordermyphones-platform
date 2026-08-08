@@ -34,7 +34,7 @@ export function TierPrice({
       </div>
       {save > 0 ? (
         <span className={cn('text-xs font-medium', tierText[tier.tone])}>
-          {t('Save')} {formatUsd(save)} {t('per unit')} · {tier.label}
+          {t('You save')} {formatUsd(save)} {t('per unit')} · {tier.label}
         </span>
       ) : (
         <span className="text-xs text-muted-foreground">{t('Retail · buy more to unlock tier pricing')}</span>

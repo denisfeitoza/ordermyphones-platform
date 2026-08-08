@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 
 /** Label + optional help text wrapper for a config input. */
 export function Field({ label, help, htmlFor, children }: { label: string; help?: string; htmlFor?: string; children: ReactNode }) {
@@ -93,28 +94,31 @@ export function MoneyCentsInput({
 
 /** Shown atop a panel a staff user may only read. */
 export function AdminOnlyNote({ show }: { show: boolean }) {
+  const { t } = useI18n();
   if (!show) return null;
   return (
     <div className="mb-4 flex items-center gap-2 rounded-xl border border-warning/30 bg-warning/5 px-3.5 py-2.5 text-xs text-warning">
       <Lock className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-      Admin-only settings — you can view these but not change them.
+      {t('Admin-only settings — you can view these but not change them.')}
     </div>
   );
 }
 
 /** Consistent inline error line for mutations. */
 export function MutationError({ error }: { error: unknown }) {
+  const { t } = useI18n();
   if (!error) return null;
   return (
     <p role="alert" className="mt-2 text-sm text-destructive">
-      {error instanceof Error ? error.message : 'Something went wrong.'}
+      {error instanceof Error ? error.message : t('Something went wrong.')}
     </p>
   );
 }
 
 /** Small saved/loading status pill for a mutation. */
 export function SaveState({ pending, saved }: { pending: boolean; saved: boolean }) {
-  if (pending) return <span className="text-xs text-muted-foreground">Saving…</span>;
-  if (saved) return <span className="text-xs text-success">Saved ✓</span>;
+  const { t } = useI18n();
+  if (pending) return <span className="text-xs text-muted-foreground">{t('Saving…')}</span>;
+  if (saved) return <span className="text-xs text-success">{t('Saved ✓')}</span>;
   return null;
 }

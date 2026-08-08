@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { AdminHeading, Panel, Table, Td } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
 import { formatUsd } from '@/lib/format';
+import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 type DbTier = 'consumer' | 'retailer' | 'wholesale' | 'distributor';
@@ -114,6 +115,7 @@ function summarizePayload(payload: Record<string, unknown>): string {
 
 /** Each flag row owns its own mutation instance — keeps pending/error state scoped to that row instead of a single queue-wide mutation. */
 function FlagActions({ flag, onResolved }: { flag: FlagRow; onResolved: () => void }) {
+  const { t } = useI18n();
   const [overriding, setOverriding] = useState(false);
   const [priceInput, setPriceInput] = useState('');
   const [expiryDays, setExpiryDays] = useState('30');
@@ -140,11 +142,11 @@ function FlagActions({ flag, onResolved }: { flag: FlagRow; onResolved: () => vo
     const cents = Math.round(Number(priceInput) * 100);
     const days = Number(expiryDays);
     if (!priceInput.trim() || !Number.isFinite(cents) || cents <= 0) {
-      setFormErr('Enter a positive $ amount');
+      setFormErr(t('Enter a positive $ amount'));
       return;
     }
     if (!Number.isFinite(days) || days <= 0) {
-      setFormErr('Expiry must be a positive number of days');
+      setFormErr(t('Expiry must be a positive number of days'));
       return;
     }
     setFormErr(null);
@@ -163,7 +165,7 @@ function FlagActions({ flag, onResolved }: { flag: FlagRow; onResolved: () => vo
           value={priceInput}
           onChange={(e) => setPriceInput(e.target.value)}
           placeholder="0.00"
-          aria-label="Override price"
+          aria-label={t('Override price')}
           disabled={mutation.isPending}
           className="h-8 w-20 rounded-md border border-border bg-background px-2 text-xs tabular-nums outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
         />
@@ -174,13 +176,13 @@ function FlagActions({ flag, onResolved }: { flag: FlagRow; onResolved: () => vo
           step="1"
           value={expiryDays}
           onChange={(e) => setExpiryDays(e.target.value)}
-          aria-label="Override expiry in days"
+          aria-label={t('Override expiry in days')}
           disabled={mutation.isPending}
           className="h-8 w-14 rounded-md border border-border bg-background px-2 text-xs tabular-nums outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
         />
-        <span className="text-xs text-muted-foreground">days</span>
+        <span className="text-xs text-muted-foreground">{t('days')}</span>
         <Button type="submit" variant="brand" size="sm" disabled={mutation.isPending} className="h-8 px-2.5 text-[11px]">
-          {mutation.isPending ? 'Saving…' : 'Confirm'}
+          {mutation.isPending ? t('Saving…') : t('Confirm')}
         </Button>
         <Button
           type="button"
@@ -193,12 +195,12 @@ function FlagActions({ flag, onResolved }: { flag: FlagRow; onResolved: () => vo
           }}
           className="h-8 px-2 text-[11px]"
         >
-          Cancel
+          {t('Cancel')}
         </Button>
         {formErr && <span className="w-full text-right text-[10px] text-destructive">{formErr}</span>}
         {mutation.isError && (
           <span className="w-full text-right text-[10px] text-destructive">
-            {mutation.error instanceof Error ? mutation.error.message : 'Failed'}
+            {mutation.error instanceof Error ? mutation.error.message : t('Failed')}
           </span>
         )}
       </form>
@@ -212,10 +214,10 @@ function FlagActions({ flag, onResolved }: { flag: FlagRow; onResolved: () => vo
         size="sm"
         className="h-8 px-2.5 text-[11px]"
         disabled={flag.tier === null || mutation.isPending}
-        title={flag.tier === null ? "This flag affects every tier — override needs a single tier" : undefined}
+        title={flag.tier === null ? t('This flag affects every tier — override needs a single tier') : undefined}
         onClick={() => setOverriding(true)}
       >
-        Override
+        {t('Override')}
       </Button>
       <Button
         variant="outline"
@@ -224,7 +226,7 @@ function FlagActions({ flag, onResolved }: { flag: FlagRow; onResolved: () => vo
         disabled={mutation.isPending}
         onClick={() => mutation.mutate({ action: 'acknowledge' })}
       >
-        Acknowledge
+        {t('Acknowledge')}
       </Button>
       <Button
         variant="outline"
@@ -233,7 +235,7 @@ function FlagActions({ flag, onResolved }: { flag: FlagRow; onResolved: () => vo
         disabled={mutation.isPending}
         onClick={() => mutation.mutate({ action: 'watch' })}
       >
-        Watch
+        {t('Watch')}
       </Button>
       <Button
         variant="subtle"
@@ -242,11 +244,11 @@ function FlagActions({ flag, onResolved }: { flag: FlagRow; onResolved: () => vo
         disabled={mutation.isPending}
         onClick={() => mutation.mutate({ action: 'resolve' })}
       >
-        Resolve
+        {t('Resolve')}
       </Button>
       {mutation.isError && (
         <span className="w-full text-right text-[10px] text-destructive">
-          {mutation.error instanceof Error ? mutation.error.message : 'Failed'}
+          {mutation.error instanceof Error ? mutation.error.message : t('Failed')}
         </span>
       )}
     </div>
@@ -254,6 +256,7 @@ function FlagActions({ flag, onResolved }: { flag: FlagRow; onResolved: () => vo
 }
 
 export default function PricingFlagsPage() {
+  const { t } = useI18n();
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ['admin-pricing-flags'], queryFn: fetchOpenFlags });
   const rows = query.data ?? [];
@@ -274,21 +277,17 @@ export default function PricingFlagsPage() {
       />
 
       <div className="rounded-2xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm text-muted-foreground">
-        <b className="text-foreground">What is this?</b> Before a price goes live the system flags anything that looks
-        off — a cost that jumped a lot, a tier that would sell below your profit floor, or a SKU with no benchmark yet.
-        A flagged price is <b className="text-foreground">held back from customers</b> until you decide:
-        <b className="text-foreground"> Override</b> (publish it anyway), <b className="text-foreground">Acknowledge</b> (it’s fine),
-        or <b className="text-foreground">Watch</b> (keep an eye on it). This is the safety net that stops a bad price from ever reaching a buyer.
+        <b className="text-foreground">{t('What is this?')}</b> {t('Before a price goes live the system flags anything that looks off — a cost that jumped a lot, a tier that would sell below your profit floor, or a SKU with no benchmark yet. A flagged price is')} <b className="text-foreground">{t('held back from customers')}</b> {t('until you decide:')} <b className="text-foreground">{t('Override')}</b> {t('(publish it anyway),')} <b className="text-foreground">{t('Acknowledge')}</b> {t('(it’s fine),')} {t('or')} <b className="text-foreground">{t('Watch')}</b> {t('(keep an eye on it). This is the safety net that stops a bad price from ever reaching a buyer.')}
       </div>
 
       {query.isError && (
         <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          Could not load flags: {query.error instanceof Error ? query.error.message : 'unknown error'}
+          {t('Could not load flags')}: {query.error instanceof Error ? query.error.message : t('unknown error')}
         </div>
       )}
 
       {query.isLoading && (
-        <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">Loading flags…</div>
+        <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">{t('Loading flags…')}</div>
       )}
 
       {query.isSuccess && rows.length === 0 && (
@@ -296,8 +295,8 @@ export default function PricingFlagsPage() {
           <div className="flex flex-col items-center gap-3 py-8 text-center">
             <ShieldCheck className="h-10 w-10 text-success" strokeWidth={1.5} />
             <div>
-              <p className="font-medium">No open flags</p>
-              <p className="mt-1 text-sm text-muted-foreground">Every priced variant clears its margin floor and tier order. New flags appear here the moment the engine finds one.</p>
+              <p className="font-medium">{t('No open flags')}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{t('Every priced variant clears its margin floor and tier order. New flags appear here the moment the engine finds one.')}</p>
             </div>
           </div>
         </Panel>
@@ -307,28 +306,28 @@ export default function PricingFlagsPage() {
         <Table
           minWidth={980}
           columns={[
-            { key: 'kind', label: 'Kind' },
-            { key: 'variant', label: 'Variant' },
-            { key: 'tier', label: 'Tier' },
-            { key: 'details', label: 'Details' },
-            { key: 'age', label: 'Age' },
-            { key: 'actions', label: 'Actions', align: 'right' },
+            { key: 'kind', label: t('Kind') },
+            { key: 'variant', label: t('Variant') },
+            { key: 'tier', label: t('Tier') },
+            { key: 'details', label: t('Details') },
+            { key: 'age', label: t('Age') },
+            { key: 'actions', label: t('Actions'), align: 'right' },
           ]}
         >
           {rows.map((r) => (
             <tr key={r.id} className="transition-colors hover:bg-muted/40">
               <Td>
                 <span className={cn('inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium', 'bg-warning/10 text-warning')}>
-                  {KIND_LABEL[r.kind]}
+                  {t(KIND_LABEL[r.kind])}
                 </span>
               </Td>
               <Td className="font-medium">
                 {r.make} {r.model}
                 <span className="block font-mono text-xs font-normal text-muted-foreground">{r.sku}</span>
               </Td>
-              <Td className="text-muted-foreground">{r.tier ? TIER_LABEL[r.tier] : 'All tiers'}</Td>
+              <Td className="text-muted-foreground">{r.tier ? t(TIER_LABEL[r.tier]) : t('All tiers')}</Td>
               <Td className="max-w-xs text-xs text-muted-foreground">{summarizePayload(r.payload)}</Td>
-              <Td className="text-xs text-muted-foreground">{formatAge(r.createdAt)}</Td>
+              <Td className="text-xs text-muted-foreground">{t(formatAge(r.createdAt))}</Td>
               <Td align="right">
                 <FlagActions flag={r} onResolved={refetch} />
               </Td>

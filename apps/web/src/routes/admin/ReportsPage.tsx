@@ -7,24 +7,27 @@ import { AdminHeading } from '@/components/admin/parts';
 import { DB_TIER_LABELS, type DbTier } from '@/lib/invites';
 import { tierBg } from '@/lib/tierStyles';
 import { formatInt, formatUsd } from '@/lib/format';
+import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 const monthLabel = (m: string) => new Date(`${m}-01T00:00:00`).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
 const TIER_TONE: Record<string, '1' | '2' | '3' | '4'> = { consumer: '1', retailer: '2', wholesale: '3', distributor: '4' };
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  const { t } = useI18n();
   return (
     <section className="rounded-2xl border border-border bg-card p-5">
-      <h2 className="text-sm font-medium">{title}</h2>
+      <h2 className="text-sm font-medium">{t(title)}</h2>
       <div className="mt-4">{children}</div>
     </section>
   );
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
+  const { t } = useI18n();
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-xs text-muted-foreground">{t(label)}</p>
       <p className="mt-1 font-mono text-2xl font-semibold tabular-nums">{value}</p>
     </div>
   );
@@ -34,6 +37,7 @@ function Stat({ label, value }: { label: string; value: string }) {
  * No supplier/cost data — the order snapshot carries only model, qty, tier and
  * price. Fills in as orders flow; empty state shows until the first order. */
 function RealReports({ orders }: { orders: AdminOrder[] }) {
+  const { t } = useI18n();
   const agg = useMemo(() => {
     const monthly = new Map<string, number>();
     const tierMix = new Map<string, number>();
@@ -67,7 +71,7 @@ function RealReports({ orders }: { orders: AdminOrder[] }) {
       <div className="space-y-6">
         <AdminHeading title="Reports" subtitle="Sales and tier distribution — derived from the live order book." />
         <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
-          No orders yet. As orders come in, revenue by month, tier mix and top products fill in here automatically.
+          {t('No orders yet. As orders come in, revenue by month, tier mix and top products fill in here automatically.')}
         </div>
       </div>
     );
@@ -102,17 +106,17 @@ function RealReports({ orders }: { orders: AdminOrder[] }) {
 
         <Section title="GMV by tier">
           <div className="space-y-3.5">
-            {agg.tierArr.map((t) => (
-              <div key={t.code}>
+            {agg.tierArr.map((tier) => (
+              <div key={tier.code}>
                 <div className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-2">
-                    <span className={cn('h-2 w-2 rounded-full', tierBg[TIER_TONE[t.code]])} />
-                    {DB_TIER_LABELS[t.code]}
+                    <span className={cn('h-2 w-2 rounded-full', tierBg[TIER_TONE[tier.code]])} />
+                    {t(DB_TIER_LABELS[tier.code])}
                   </span>
-                  <span className="font-mono text-xs text-muted-foreground">{formatUsd(t.gmvCents, true)}</span>
+                  <span className="font-mono text-xs text-muted-foreground">{formatUsd(tier.gmvCents, true)}</span>
                 </div>
                 <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-muted">
-                  <div className={cn('h-full rounded-full', tierBg[TIER_TONE[t.code]])} style={{ width: `${(t.gmvCents / maxTierGmv) * 100}%` }} />
+                  <div className={cn('h-full rounded-full', tierBg[TIER_TONE[tier.code]])} style={{ width: `${(tier.gmvCents / maxTierGmv) * 100}%` }} />
                 </div>
               </div>
             ))}
@@ -121,7 +125,7 @@ function RealReports({ orders }: { orders: AdminOrder[] }) {
 
         <Section title="Top products by units">
           {agg.topProducts.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No line items yet.</p>
+            <p className="text-sm text-muted-foreground">{t('No line items yet.')}</p>
           ) : (
             <table className="w-full text-sm">
               <tbody className="divide-y divide-border">
@@ -139,9 +143,9 @@ function RealReports({ orders }: { orders: AdminOrder[] }) {
 
         <Section title="Coming in v1.1">
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>· Date-range filters and drill-down</li>
-            <li>· CSV / XLSX export</li>
-            <li>· Margin and sell-through by location</li>
+            <li>· {t('Date-range filters and drill-down')}</li>
+            <li>· {t('CSV / XLSX export')}</li>
+            <li>· {t('Margin and sell-through by location')}</li>
           </ul>
         </Section>
       </div>
@@ -150,13 +154,14 @@ function RealReports({ orders }: { orders: AdminOrder[] }) {
 }
 
 export default function ReportsPage() {
+  const { t } = useI18n();
   const source = useCatalogSource();
   const { orders, kpis } = useAdminData();
   const ordersQ = useAdminOrders();
 
   if (source === 'real') {
     if (ordersQ.isLoading) {
-      return <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">Loading reports…</div>;
+      return <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">{t('Loading reports…')}</div>;
     }
     return <RealReports orders={ordersQ.data ?? []} />;
   }
@@ -222,17 +227,17 @@ export default function ReportsPage() {
 
         <Section title="GMV by tier">
           <div className="space-y-3.5">
-            {kpis.tierMix.map((t) => (
-              <div key={t.tier.code}>
+            {kpis.tierMix.map((tm) => (
+              <div key={tm.tier.code}>
                 <div className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-2">
-                    <span className={cn('h-2 w-2 rounded-full', tierBg[t.tier.tone])} />
-                    {t.tier.label}
+                    <span className={cn('h-2 w-2 rounded-full', tierBg[tm.tier.tone])} />
+                    {t(tm.tier.label)}
                   </span>
-                  <span className="font-mono text-xs text-muted-foreground">{formatUsd(t.gmvCents, true)}</span>
+                  <span className="font-mono text-xs text-muted-foreground">{formatUsd(tm.gmvCents, true)}</span>
                 </div>
                 <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-muted">
-                  <div className={cn('h-full rounded-full', tierBg[t.tier.tone])} style={{ width: `${(t.gmvCents / maxTierGmv) * 100}%` }} />
+                  <div className={cn('h-full rounded-full', tierBg[tm.tier.tone])} style={{ width: `${(tm.gmvCents / maxTierGmv) * 100}%` }} />
                 </div>
               </div>
             ))}

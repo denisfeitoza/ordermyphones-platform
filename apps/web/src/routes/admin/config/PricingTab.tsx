@@ -5,10 +5,12 @@ import { PRICING_KEYS, PRICING_KEY_META, validatePricingValue, type PricingKeyMe
 import { useAuth } from '@/store';
 import { Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
+import { useI18n } from '@/i18n';
 import { AdminOnlyNote, Field, MoneyCentsInput, MutationError, TextInput } from './parts';
 
 /** Scalar editor — cents/fraction/posint/multiplier — returns the parsed value. */
 function ScalarEditor({ meta, value, onSave, canEdit }: { meta: PricingKeyMeta; value: unknown; onSave: (v: unknown) => void; canEdit: boolean }) {
+  const { t } = useI18n();
   const [draft, setDraft] = useState<number>(typeof value === 'number' ? value : 0);
   useEffect(() => setDraft(typeof value === 'number' ? value : 0), [value]);
 
@@ -33,7 +35,7 @@ function ScalarEditor({ meta, value, onSave, canEdit }: { meta: PricingKeyMeta; 
       </div>
       {canEdit && (
         <Button size="sm" variant="outline" disabled={!dirty || !!error} onClick={() => onSave(draft)}>
-          Save
+          {t('Save')}
         </Button>
       )}
       {error && dirty && <span className="text-xs text-destructive">{error}</span>}
@@ -43,6 +45,7 @@ function ScalarEditor({ meta, value, onSave, canEdit }: { meta: PricingKeyMeta; 
 
 /** JSON editor for bands / multipliers with live validation. */
 function JsonEditor({ meta, value, onSave, canEdit }: { meta: PricingKeyMeta; value: unknown; onSave: (v: unknown) => void; canEdit: boolean }) {
+  const { t } = useI18n();
   const [text, setText] = useState(() => JSON.stringify(value ?? null, null, 2));
   useEffect(() => setText(JSON.stringify(value ?? null, null, 2)), [value]);
 
@@ -51,7 +54,7 @@ function JsonEditor({ meta, value, onSave, canEdit }: { meta: PricingKeyMeta; va
   try {
     parsed = JSON.parse(text);
   } catch {
-    parseError = 'Invalid JSON.';
+    parseError = t('Invalid JSON.');
   }
   const validationError = parseError ?? validatePricingValue(meta.kind, parsed);
   const dirty = text !== JSON.stringify(value ?? null, null, 2);
@@ -70,7 +73,7 @@ function JsonEditor({ meta, value, onSave, canEdit }: { meta: PricingKeyMeta; va
       <div className="flex items-center gap-3">
         {canEdit && (
           <Button size="sm" variant="outline" disabled={!dirty || !!validationError} onClick={() => onSave(parsed)}>
-            Save
+            {t('Save')}
           </Button>
         )}
         {validationError && dirty && <span className="text-xs text-destructive">{validationError}</span>}
@@ -80,6 +83,7 @@ function JsonEditor({ meta, value, onSave, canEdit }: { meta: PricingKeyMeta; va
 }
 
 export default function PricingTab() {
+  const { t } = useI18n();
   const { role } = useAuth();
   const canEdit = role === 'admin';
   const qc = useQueryClient();
@@ -98,13 +102,13 @@ export default function PricingTab() {
     <div className="space-y-6">
       <AdminOnlyNote show={!canEdit} />
 
-      {settingsQ.isLoading && <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">Loading pricing parameters…</div>}
+      {settingsQ.isLoading && <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">{t('Loading pricing parameters…')}</div>}
       {settingsQ.isError && <MutationError error={settingsQ.error} />}
       <MutationError error={save.error} />
 
       {settingsQ.data && (
         <>
-          <Panel title="Scalar parameters">
+          <Panel title={t('Scalar parameters')}>
             <div className="space-y-5">
               {scalarKeys.map((meta) => (
                 <Field key={meta.key} label={meta.label} help={meta.help}>

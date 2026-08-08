@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Plus, Radio, Rocket, X } from 'lucide-react';
 import { getAppSetting, setAppSetting } from '@/data/adminConfig';
+import { useI18n } from '@/i18n';
 import { Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
 import { Field, MutationError, TextInput, Toggle } from './parts';
@@ -20,6 +21,7 @@ function useSetting<T>(key: string, fallback: T) {
 
 /** Typed-confirmation modal for the irreversible-feeling go-live flip. */
 function GoLiveModal({ onConfirm, onCancel, busy }: { onConfirm: () => void; onCancel: () => void; busy: boolean }) {
+  const { t } = useI18n();
   const [typed, setTyped] = useState('');
   const ok = typed.trim().toUpperCase() === 'GO LIVE';
   return (
@@ -30,10 +32,9 @@ function GoLiveModal({ onConfirm, onCancel, busy }: { onConfirm: () => void; onC
             <Rocket className="h-5 w-5" strokeWidth={2} />
           </span>
           <div>
-            <h2 className="text-sm font-semibold">Switch the storefront to the real catalog?</h2>
+            <h2 className="text-sm font-semibold">{t('Switch the storefront to the real catalog?')}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Every visitor will immediately see live, priced, in-stock inventory instead of the demo catalog. Make sure prices and stock are
-              correct first. Type <span className="font-mono font-semibold">GO LIVE</span> to confirm.
+              {t('Every visitor will immediately see live, priced, in-stock inventory instead of the demo catalog. Make sure prices and stock are correct first. Type')} <span className="font-mono font-semibold">GO LIVE</span> {t('to confirm.')}
             </p>
           </div>
         </div>
@@ -46,10 +47,10 @@ function GoLiveModal({ onConfirm, onCancel, busy }: { onConfirm: () => void; onC
         />
         <div className="mt-4 flex justify-end gap-2">
           <Button type="button" variant="outline" size="sm" onClick={onCancel} disabled={busy}>
-            Cancel
+            {t('Cancel')}
           </Button>
           <Button type="button" variant="brand" size="sm" disabled={!ok || busy} onClick={onConfirm}>
-            {busy ? 'Going live…' : 'Go live'}
+            {busy ? t('Going live…') : t('Go live')}
           </Button>
         </div>
       </div>
@@ -59,6 +60,7 @@ function GoLiveModal({ onConfirm, onCancel, busy }: { onConfirm: () => void; onC
 
 /** Editable string-list (featured SKUs / models). */
 function ListEditor({ label, help, values, onChange, disabled }: { label: string; help: string; values: string[]; onChange: (next: string[]) => void; disabled?: boolean }) {
+  const { t } = useI18n();
   const [draft, setDraft] = useState('');
   return (
     <Field label={label} help={help}>
@@ -67,20 +69,20 @@ function ListEditor({ label, help, values, onChange, disabled }: { label: string
           <span key={v} className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium">
             {v}
             {!disabled && (
-              <button type="button" aria-label={`Remove ${v}`} onClick={() => onChange(values.filter((x) => x !== v))} className="text-muted-foreground hover:text-destructive">
+              <button type="button" aria-label={`${t('Remove')} ${v}`} onClick={() => onChange(values.filter((x) => x !== v))} className="text-muted-foreground hover:text-destructive">
                 <X className="h-3 w-3" />
               </button>
             )}
           </span>
         ))}
-        {values.length === 0 && <span className="text-xs text-muted-foreground">None pinned.</span>}
+        {values.length === 0 && <span className="text-xs text-muted-foreground">{t('None pinned.')}</span>}
       </div>
       {!disabled && (
         <div className="mt-2 flex gap-2">
           <TextInput
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="Add and press +"
+            placeholder={t('Add and press +')}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
@@ -110,6 +112,7 @@ function ListEditor({ label, help, values, onChange, disabled }: { label: string
 }
 
 export default function CatalogTab() {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const sourceQ = useSetting<CatalogSource>('catalog_source', 'mock');
   const qtyQ = useSetting<QtyDisplay>('catalog_qty_display', 'exact');
@@ -136,11 +139,11 @@ export default function CatalogTab() {
               <Rocket className="h-6 w-6" strokeWidth={2} />
             </span>
             <div>
-              <h2 className="text-base font-semibold">Storefront catalog source</h2>
+              <h2 className="text-base font-semibold">{t('Storefront catalog source')}</h2>
               <p className="mt-1 max-w-xl text-sm text-muted-foreground">
                 {isLive
-                  ? 'LIVE — the storefront shows real, priced, in-stock inventory. Flip back to demo to hide it again.'
-                  : 'Demo — the storefront shows the polished mock catalog. Nothing real is exposed yet. Flip to LIVE when prices and stock are ready.'}
+                  ? t('LIVE — the storefront shows real, priced, in-stock inventory. Flip back to demo to hide it again.')
+                  : t('Demo — the storefront shows the polished mock catalog. Nothing real is exposed yet. Flip to LIVE when prices and stock are ready.')}
               </p>
               <span
                 className={cn(
@@ -149,18 +152,18 @@ export default function CatalogTab() {
                 )}
               >
                 <span className={cn('h-1.5 w-1.5 rounded-full', isLive ? 'bg-success' : 'bg-brand')} />
-                {isLive ? 'Live catalog' : 'Demo catalog'}
+                {isLive ? t('Live catalog') : t('Demo catalog')}
               </span>
             </div>
           </div>
           {isLive ? (
             <Button variant="outline" size="sm" disabled={save.isPending} onClick={() => save.mutate({ key: 'catalog_source', value: 'mock' })}>
-              Switch back to demo
+              {t('Switch back to demo')}
             </Button>
           ) : (
             <Button variant="brand" size="md" disabled={save.isPending} onClick={() => setGoLiveOpen(true)}>
               <Rocket className="h-4 w-4" strokeWidth={2} />
-              Go live
+              {t('Go live')}
             </Button>
           )}
         </div>
@@ -181,41 +184,41 @@ export default function CatalogTab() {
       )}
 
       {/* Quantity display */}
-      <Panel title="Stock quantity display">
+      <Panel title={t('Stock quantity display')}>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-sm font-medium">Show exact quantities</p>
+            <p className="text-sm font-medium">{t('Show exact quantities')}</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              {qty === 'exact' ? 'Customers see the exact unit count per location (locked default D2).' : 'Customers see ranges (e.g. “50+”) instead of exact counts.'}
+              {qty === 'exact' ? t('Customers see the exact unit count per location (locked default D2).') : t('Customers see ranges (e.g. “50+”) instead of exact counts.')}
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Ranges</span>
+            <span className="text-xs text-muted-foreground">{t('Ranges')}</span>
             <Toggle
-              label="Exact quantities"
+              label={t('Exact quantities')}
               checked={qty === 'exact'}
               onChange={(next) => save.mutate({ key: 'catalog_qty_display', value: next ? 'exact' : 'ranges' })}
             />
-            <span className="text-xs text-muted-foreground">Exact</span>
+            <span className="text-xs text-muted-foreground">{t('Exact')}</span>
           </div>
         </div>
       </Panel>
 
       {/* Featured curation */}
-      <Panel title="Featured sort curation" action={<AlertTriangle className="hidden h-4 w-4 text-muted-foreground sm:block" />}>
+      <Panel title={t('Featured sort curation')} action={<AlertTriangle className="hidden h-4 w-4 text-muted-foreground sm:block" />}>
         <p className="mb-4 text-sm text-muted-foreground">
-          Pin SKUs or model names to the top of the “Featured” sort. Empty = the storefront’s default ordering.
+          {t('Pin SKUs or model names to the top of the “Featured” sort. Empty = the storefront’s default ordering.')}
         </p>
         <div className="grid gap-5 sm:grid-cols-2">
           <ListEditor
-            label="Pinned SKUs"
-            help="Exact variant SKUs to feature first."
+            label={t('Pinned SKUs')}
+            help={t('Exact variant SKUs to feature first.')}
             values={featured.skus}
             onChange={(skus) => save.mutate({ key: 'catalog_featured', value: { ...featured, skus } })}
           />
           <ListEditor
-            label="Pinned models"
-            help="Model names (e.g. “iPhone 15 Pro”) to feature."
+            label={t('Pinned models')}
+            help={t('Model names (e.g. “iPhone 15 Pro”) to feature.')}
             values={featured.models}
             onChange={(models) => save.mutate({ key: 'catalog_featured', value: { ...featured, models } })}
           />
@@ -223,7 +226,7 @@ export default function CatalogTab() {
       </Panel>
 
       <p className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Radio className="h-3.5 w-3.5" /> Catalog & display settings are admin/staff-editable and stored in app_settings.
+        <Radio className="h-3.5 w-3.5" /> {t('Catalog & display settings are admin/staff-editable and stored in app_settings.')}
       </p>
     </div>
   );

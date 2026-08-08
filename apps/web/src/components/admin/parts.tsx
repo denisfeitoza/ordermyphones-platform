@@ -95,11 +95,12 @@ export function Td({ children, align, className }: { children: ReactNode; align?
 }
 
 export function OrderStatusChip({ status }: { status: OrderStatus }) {
+  const { t } = useI18n();
   const m = STATUS_META[status];
   return (
     <span className={cn('inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium', m.soft)}>
       <span className={cn('h-1.5 w-1.5 rounded-full', m.dot)} />
-      {status === 'reserved' ? 'Reserved' : m.label}
+      {status === 'reserved' ? t('Reserved') : m.label}
     </span>
   );
 }
@@ -111,9 +112,10 @@ const CUSTOMER_TONE: Record<AdminCustomer['status'], string> = {
 };
 
 export function CustomerStatusChip({ status }: { status: AdminCustomer['status'] }) {
+  const { t } = useI18n();
   return (
     <span className={cn('inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium capitalize', CUSTOMER_TONE[status])}>
-      {status === 'at-risk' ? 'At risk' : status}
+      {status === 'at-risk' ? t('At risk') : status}
     </span>
   );
 }

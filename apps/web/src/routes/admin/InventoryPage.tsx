@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { AdminHeading, Panel, StatCard, Table, Td } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
 import { formatInt, formatUsd } from '@/lib/format';
+import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { downloadCanonicalExport } from '@/lib/canonicalExport';
 
@@ -122,6 +123,7 @@ function status(qty: number): { label: string; dot: string; text: string } {
  * already gated to admin/staff by the /admin route's <RequireAuth
  * roles={['admin','staff']}> wrapper (App.tsx) — no extra role check here. */
 function ExportMenu() {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const mutation = useMutation({
     mutationFn: (format: 'csv' | 'xlsx') => downloadCanonicalExport(format),
@@ -132,13 +134,13 @@ function ExportMenu() {
     <div className="relative">
       <Button variant="outline" size="sm" onClick={() => setOpen((o) => !o)} disabled={mutation.isPending}>
         <Download className="h-4 w-4" strokeWidth={2} />
-        {mutation.isPending ? 'Exporting…' : 'Export'}
+        {mutation.isPending ? t('Exporting…') : t('Export')}
       </Button>
       {open && (
         <>
           <button
             type="button"
-            aria-label="Close export menu"
+            aria-label={t('Close export menu')}
             className="fixed inset-0 z-10 cursor-default"
             onClick={() => setOpen(false)}
           />
@@ -158,7 +160,7 @@ function ExportMenu() {
       )}
       {mutation.isError && (
         <p className="absolute right-0 top-full mt-1 w-56 text-right text-xs text-destructive">
-          Export failed: {mutation.error instanceof Error ? mutation.error.message : 'unknown error'}
+          {t('Export failed')}: {mutation.error instanceof Error ? mutation.error.message : t('unknown error')}
         </p>
       )}
     </div>
@@ -166,6 +168,7 @@ function ExportMenu() {
 }
 
 export default function InventoryPage() {
+  const { t } = useI18n();
   const query = useQuery({ queryKey: ['admin-inventory'], queryFn: fetchInventory });
   const rows = query.data ?? [];
 
@@ -178,7 +181,7 @@ export default function InventoryPage() {
   // once an operator's inventory exceeds that, these read as "of the loaded
   // page", not a true grand total. Label them honestly rather than silently
   // under-reporting.
-  const capSuffix = capped ? ' (of loaded rows)' : '';
+  const capSuffix = capped ? ` ${t('(of loaded rows)')}` : '';
 
   return (
     <div className="space-y-6">
@@ -195,7 +198,7 @@ export default function InventoryPage() {
             <Link to="/admin/import">
               <Button variant="outline" size="sm">
                 <UploadCloud className="h-4 w-4" strokeWidth={2} />
-                Run import
+                {t('Run import')}
               </Button>
             </Link>
           </div>
@@ -204,12 +207,12 @@ export default function InventoryPage() {
 
       {query.isError && (
         <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          Could not load inventory: {query.error instanceof Error ? query.error.message : 'unknown error'}
+          {t('Could not load inventory')}: {query.error instanceof Error ? query.error.message : t('unknown error')}
         </div>
       )}
 
       {query.isLoading && (
-        <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">Loading inventory…</div>
+        <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">{t('Loading inventory…')}</div>
       )}
 
       {query.isSuccess && rows.length === 0 && (
@@ -217,13 +220,13 @@ export default function InventoryPage() {
           <div className="flex flex-col items-center gap-3 py-8 text-center">
             <PackageSearch className="h-10 w-10 text-muted-foreground" strokeWidth={1.5} />
             <div>
-              <p className="font-medium">No inventory yet</p>
-              <p className="mt-1 text-sm text-muted-foreground">Run a Smart Stock Import to populate real balances — this screen shows exactly what the last import wrote, per location.</p>
+              <p className="font-medium">{t('No inventory yet')}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{t('Run a Smart Stock Import to populate real balances — this screen shows exactly what the last import wrote, per location.')}</p>
             </div>
             <Link to="/admin/import">
               <Button variant="brand" size="sm" className="mt-1">
                 <UploadCloud className="h-4 w-4" strokeWidth={2} />
-                Go to Import
+                {t('Go to Import')}
               </Button>
             </Link>
           </div>
@@ -233,24 +236,24 @@ export default function InventoryPage() {
       {query.isSuccess && rows.length > 0 && (
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatCard label="SKUs tracked" value={formatInt(skuCount)} sub={capped ? 'of loaded rows' : ''} />
-            <StatCard label="Units available" value={formatInt(totalUnits)} sub={`all locations${capSuffix}`} live />
-            <StatCard label="Low stock" value={formatInt(low)} accent={low > 0 ? 'text-warning' : ''} sub={`≤ 20 units${capSuffix}`} />
-            <StatCard label="Out of stock" value={formatInt(out)} accent={out > 0 ? 'text-destructive' : ''} sub={`this location${capSuffix}`} />
+            <StatCard label={t('SKUs tracked')} value={formatInt(skuCount)} sub={capped ? t('of loaded rows') : ''} />
+            <StatCard label={t('Units available')} value={formatInt(totalUnits)} sub={`${t('all locations')}${capSuffix}`} live />
+            <StatCard label={t('Low stock')} value={formatInt(low)} accent={low > 0 ? 'text-warning' : ''} sub={`${t('≤ 20 units')}${capSuffix}`} />
+            <StatCard label={t('Out of stock')} value={formatInt(out)} accent={out > 0 ? 'text-destructive' : ''} sub={`${t('this location')}${capSuffix}`} />
           </div>
 
           <Table
             minWidth={960}
             columns={[
-              { key: 'model', label: 'Model' },
-              { key: 'variant', label: 'Variant' },
-              { key: 'sku', label: 'SKU' },
-              { key: 'location', label: 'Location' },
-              { key: 'source', label: 'Source' },
-              { key: 'qty', label: 'Qty', align: 'right' },
-              { key: 'cost', label: 'Unit cost', align: 'right' },
-              { key: 'age', label: 'As of' },
-              { key: 'status', label: 'Status' },
+              { key: 'model', label: t('Model') },
+              { key: 'variant', label: t('Variant') },
+              { key: 'sku', label: t('SKU') },
+              { key: 'location', label: t('Location') },
+              { key: 'source', label: t('Source') },
+              { key: 'qty', label: t('Qty'), align: 'right' },
+              { key: 'cost', label: t('Unit cost'), align: 'right' },
+              { key: 'age', label: t('As of') },
+              { key: 'status', label: t('Status') },
             ]}
           >
             {rows.map((r) => {
@@ -273,11 +276,11 @@ export default function InventoryPage() {
                     {r.qtyIsFloor ? '+' : ''}
                   </Td>
                   <Td align="right" className="font-mono tabular-nums">{r.unitCostCents === null ? '—' : formatUsd(r.unitCostCents)}</Td>
-                  <Td className="text-xs text-muted-foreground">{formatAge(r.asOf)}</Td>
+                  <Td className="text-xs text-muted-foreground">{t(formatAge(r.asOf))}</Td>
                   <Td>
                     <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
                       <span className={cn('h-1.5 w-1.5 rounded-full', st.dot)} />
-                      <span className={st.text}>{st.label}</span>
+                      <span className={st.text}>{t(st.label)}</span>
                     </span>
                   </Td>
                 </tr>

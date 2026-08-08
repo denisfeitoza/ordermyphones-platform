@@ -13,6 +13,7 @@ import {
 } from '@/lib/invites';
 import { Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
+import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 const STATUS_TONE: Record<InviteRow['status'], string> = {
@@ -31,6 +32,7 @@ function isExpired(row: InviteRow): boolean {
 
 /** Copy-to-clipboard button that flips to a check for ~1.5s. */
 function CopyLink({ token }: { token: string }) {
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   const link = inviteLink(token);
   return (
@@ -43,18 +45,19 @@ function CopyLink({ token }: { token: string }) {
           window.setTimeout(() => setCopied(false), 1500);
         } catch {
           // clipboard blocked — fall back to a prompt so the admin can still grab it
-          window.prompt('Copy the invite link', link);
+          window.prompt(t('Copy the invite link'), link);
         }
       }}
       className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-xs font-medium transition-colors hover:bg-muted"
     >
       {copied ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
-      {copied ? 'Copied' : 'Copy link'}
+      {copied ? t('Copied') : t('Copy link')}
     </button>
   );
 }
 
 export function InvitePanel() {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const [email, setEmail] = useState('');
   const [tier, setTier] = useState<DbTier>('retailer');
@@ -85,7 +88,7 @@ export function InvitePanel() {
   const rows = invitesQuery.data ?? [];
 
   return (
-    <Panel title="Invite a customer">
+    <Panel title={t('Invite a customer')}>
       <p className="mb-4 text-sm text-muted-foreground">
         Accounts are invite-only. Create an invite, then copy the link and send it to the customer — email delivery is
         off in this build (toggle <code className="rounded bg-muted px-1">invite_email_delivery</code>). The link carries
@@ -94,7 +97,7 @@ export function InvitePanel() {
 
       <form onSubmit={submit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <label className="flex flex-1 flex-col gap-1.5">
-          <span className="text-sm font-medium">Customer email</span>
+          <span className="text-sm font-medium">{t('Customer email')}</span>
           <input
             type="email"
             required
@@ -105,7 +108,7 @@ export function InvitePanel() {
           />
         </label>
         <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium">Tier</span>
+          <span className="text-sm font-medium">{t('Tier')}</span>
           <select
             value={tier}
             onChange={(e) => setTier(e.target.value as DbTier)}
@@ -120,20 +123,20 @@ export function InvitePanel() {
         </label>
         <Button type="submit" size="md" disabled={create.isPending}>
           {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          Create invite
+          {t('Create invite')}
         </Button>
       </form>
 
       {create.isError && (
         <p role="alert" className="mt-3 text-sm text-destructive">
-          Could not create the invite: {(create.error as Error).message}
+          {t('Could not create the invite:')} {(create.error as Error).message}
         </p>
       )}
 
       {justCreated && (
         <div className="mt-4 rounded-xl border border-success/30 bg-success/5 p-4">
           <div className="flex items-center gap-2 text-sm font-medium text-success">
-            <Check className="h-4 w-4" /> Invite ready for {justCreated.email} · {DB_TIER_LABELS[justCreated.tier]}
+            <Check className="h-4 w-4" /> {t('Invite ready for')} {justCreated.email} · {DB_TIER_LABELS[justCreated.tier]}
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <code className="min-w-0 flex-1 truncate rounded-lg bg-background px-2.5 py-1.5 text-xs">
@@ -145,21 +148,21 @@ export function InvitePanel() {
       )}
 
       <div className="mt-6">
-        <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Invites</h3>
+        <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t('Invites')}</h3>
         {invitesQuery.isPending ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
+          <p className="text-sm text-muted-foreground">{t('Loading…')}</p>
         ) : rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No invites yet.</p>
+          <p className="text-sm text-muted-foreground">{t('No invites yet.')}</p>
         ) : (
           <div className="overflow-x-auto rounded-xl border border-border">
             <table className="w-full text-sm" style={{ minWidth: 640 }}>
               <thead>
                 <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">Email</th>
-                  <th className="px-3 py-2 font-medium">Tier</th>
-                  <th className="px-3 py-2 font-medium">Status</th>
-                  <th className="px-3 py-2 font-medium">Expires</th>
-                  <th className="px-3 py-2 font-medium text-right">Actions</th>
+                  <th className="px-3 py-2 font-medium">{t('Email')}</th>
+                  <th className="px-3 py-2 font-medium">{t('Tier')}</th>
+                  <th className="px-3 py-2 font-medium">{t('Status')}</th>
+                  <th className="px-3 py-2 font-medium">{t('Expires')}</th>
+                  <th className="px-3 py-2 font-medium text-right">{t('Actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -176,7 +179,7 @@ export function InvitePanel() {
                             expired ? 'bg-destructive/10 text-destructive' : STATUS_TONE[r.status],
                           )}
                         >
-                          {expired ? 'expired' : r.status}
+                          {expired ? t('expired') : r.status}
                         </span>
                       </td>
                       <td className="px-3 py-2 text-muted-foreground">{fmtDate(r.expires_at)}</td>
@@ -190,7 +193,7 @@ export function InvitePanel() {
                               disabled={revoke.isPending}
                               className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
                             >
-                              <X className="h-3.5 w-3.5" /> Revoke
+                              <X className="h-3.5 w-3.5" /> {t('Revoke')}
                             </button>
                           )}
                         </div>
