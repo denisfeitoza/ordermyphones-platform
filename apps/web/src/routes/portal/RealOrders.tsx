@@ -2,6 +2,8 @@ import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ShoppingBag, PackageCheck, Clock, XCircle, AlertTriangle, Ban, FileDown, FileText } from 'lucide-react';
 import { useMyOrders, type RealOrder, type RealOrderLine, type RealOrderStatus } from '@/data/realOrders';
+import { useOrderEvents } from '@/data/orderEvents';
+import { OrderTimeline } from '@/components/orders/OrderTimeline';
 import { PageHeading } from '@/components/portal/parts';
 import { Button, buttonVariants } from '@/components/ui/Button';
 import { exportDocCsv, exportDocPdf, type ExportDoc } from '@/lib/export';
@@ -126,6 +128,7 @@ export function RealOrderDetail() {
   const { t } = useI18n();
   const { id } = useParams();
   const { data: orders, isLoading } = useMyOrders();
+  const { data: events } = useOrderEvents(id);
   const order = orders?.find((o) => o.id === id);
 
   if (isLoading) {
@@ -197,6 +200,7 @@ export function RealOrderDetail() {
       )}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px] [&>*]:min-w-0">
+        <div className="space-y-6">
         <section className="rounded-2xl border border-border bg-card">
           <header className="border-b border-border px-5 py-3.5">
             <h2 className="text-sm font-medium">{t('Items')}</h2>
@@ -229,6 +233,24 @@ export function RealOrderDetail() {
             })}
           </ul>
         </section>
+
+          {events && events.length > 0 && (
+            <section className="rounded-2xl border border-border bg-card">
+              <header className="border-b border-border px-5 py-3.5">
+                <h2 className="text-sm font-medium">{t('Order history')}</h2>
+              </header>
+              <div className="px-5 py-5">
+                <OrderTimeline
+                  placedAt={order.placedAt}
+                  status={order.status}
+                  decidedAt={order.decidedAt}
+                  decisionReason={order.decisionReason}
+                  events={events}
+                />
+              </div>
+            </section>
+          )}
+        </div>
 
         <aside className="lg:sticky lg:top-28 lg:self-start">
           <div className="rounded-2xl border border-border bg-card p-5">
