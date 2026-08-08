@@ -537,6 +537,7 @@ export const PT: Record<string, string> = {
   'is not allowed': 'não é permitido',
   'allowed': 'permitidos',
   'When each detail is required': 'Quando cada informação é obrigatória',
+  'the fill buttons': 'os botões de preencher',
   'Turn on where a customer must provide each detail: before they can check out, before you approve their order, or both. Example: require the tax certificate at approval so no business order is fulfilled without one on file.':
     'Ligue onde o cliente precisa informar cada dado: antes de finalizar a compra, antes de você aprovar o pedido, ou ambos. Exemplo: exija o certificado fiscal na aprovação para que nenhum pedido empresarial seja atendido sem um no cadastro.',
   'This is the setting the checkout and approval flows read; it does not block anything on its own until those flows are wired to it.':
@@ -1540,6 +1541,7 @@ export const ES: Record<string, string> = {
   'is not allowed': 'no se permite',
   'allowed': 'permitidos',
   'When each detail is required': 'Cuándo se exige cada dato',
+  'the fill buttons': 'los botones de rellenar',
   'Turn on where a customer must provide each detail: before they can check out, before you approve their order, or both. Example: require the tax certificate at approval so no business order is fulfilled without one on file.':
     'Activa dónde el cliente debe proporcionar cada dato: antes de finalizar la compra, antes de que apruebes su pedido, o ambos. Ejemplo: exige el certificado fiscal en la aprobación para que ningún pedido de empresa se cumpla sin uno registrado.',
   'This is the setting the checkout and approval flows read; it does not block anything on its own until those flows are wired to it.':
