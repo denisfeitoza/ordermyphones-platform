@@ -37,6 +37,7 @@ import InventoryPage from '@/routes/admin/InventoryPage';
 import ImportPage from '@/routes/admin/ImportPage';
 import PricingWorkbenchPage from '@/routes/admin/PricingWorkbenchPage';
 import ManualOrderPage from '@/routes/admin/ManualOrderPage';
+import ManualPage from '@/routes/admin/ManualPage';
 import PricingFlagsPage from '@/routes/admin/PricingFlagsPage';
 import ApiLogsPage from '@/routes/admin/ApiLogsPage';
 import AiBotsPage from '@/routes/admin/AiBotsPage';
@@ -153,6 +154,8 @@ export default function App() {
           <Route path="api-logs" element={<ApiLogsPage />} />
           <Route path="ai" element={<AiBotsPage />} />
           <Route path="reports" element={<ReportsPage />} />
+
+          <Route path="manual" element={<ManualPage />} />
 
           {/* Settings, slimmed to system-only. */}
           <Route path="config" element={<SectionTabs tabs={SETTINGS_TABS} />}>
