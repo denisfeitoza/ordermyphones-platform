@@ -333,9 +333,15 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
 interface EditLine {
   variantId: string;
   name: string;
-  qty: number;
-  unitPriceCents: number;
+  qtyStr: string;
+  priceStr: string;
 }
+
+// Free-typing drafts → validated values. A controlled type="number" reformats
+// on every keystroke (dropping the decimal point mid-typing and clashing with
+// the pt-BR comma), so we hold raw strings and parse here. Accepts "," or ".".
+const qtyOf = (s: string) => Math.max(0, Math.trunc(Number(s.replace(',', '.')) || 0));
+const centsOf = (s: string) => Math.max(0, Math.round((Number(s.replace(',', '.')) || 0) * 100));
 
 /** In-place full editor for a pending order. Admin adjusts quantities and unit
  * prices, removes or adds items, and edits the shipping address + note. Saving
@@ -345,15 +351,30 @@ function OrderEditor({ order, onDone }: { order: AdminOrder; onDone: () => void 
   const edit = useEditOrder();
   const { items: listings } = useRealCatalog();
 
-  const [lines, setLines] = useState<EditLine[]>(() =>
-    order.lines.map((l) => ({ variantId: l.variantId, name: l.name, qty: l.qtyRequested, unitPriceCents: l.unitPriceCents })),
-  );
+  // One row per variant — same model the RPC uses. With location selection on, an
+  // order can carry two order_item rows for one variant (split across warehouses);
+  // collapse them here so the editor never shows duplicate-key rows or loses qty.
+  const [lines, setLines] = useState<EditLine[]>(() => {
+    const byVariant = new Map<string, EditLine>();
+    for (const l of order.lines) {
+      const prev = byVariant.get(l.variantId);
+      if (prev) prev.qtyStr = String(qtyOf(prev.qtyStr) + l.qtyRequested);
+      else
+        byVariant.set(l.variantId, {
+          variantId: l.variantId,
+          name: l.name,
+          qtyStr: String(l.qtyRequested),
+          priceStr: (l.unitPriceCents / 100).toString(),
+        });
+    }
+    return [...byVariant.values()];
+  });
   const [addr, setAddr] = useState<ShippingAddress>(order.shippingAddress ?? {});
   const [note, setNote] = useState(order.note ?? '');
   const [reason, setReason] = useState('');
   const [addQuery, setAddQuery] = useState('');
 
-  const subtotal = lines.reduce((s, l) => s + l.qty * l.unitPriceCents, 0);
+  const subtotal = lines.reduce((s, l) => s + qtyOf(l.qtyStr) * centsOf(l.priceStr), 0);
   const existing = new Set(lines.map((l) => l.variantId));
 
   const matches = useMemo(() => {
@@ -364,12 +385,15 @@ function OrderEditor({ order, onDone }: { order: AdminOrder; onDone: () => void 
       .slice(0, 6);
   }, [addQuery, listings, existing]);
 
-  function setQty(idx: number, qty: number) {
-    setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, qty: Math.max(1, qty) } : l)));
+  // Stepper nudges the numeric value; the text field holds a free-typing draft.
+  function stepQty(idx: number, delta: number) {
+    setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, qtyStr: String(Math.max(1, qtyOf(l.qtyStr) + delta)) } : l)));
   }
-  function setPrice(idx: number, dollars: string) {
-    const cents = Math.max(0, Math.round((parseFloat(dollars) || 0) * 100));
-    setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, unitPriceCents: cents } : l)));
+  function setQtyStr(idx: number, s: string) {
+    setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, qtyStr: s.replace(/[^\d]/g, '') } : l)));
+  }
+  function setPriceStr(idx: number, s: string) {
+    setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, priceStr: s.replace(/[^\d.,]/g, '') } : l)));
   }
   function remove(idx: number) {
     setLines((ls) => ls.filter((_, i) => i !== idx));
@@ -380,8 +404,8 @@ function OrderEditor({ order, onDone }: { order: AdminOrder; onDone: () => void 
       {
         variantId: v.variantId,
         name: `${v.model} · ${v.capacity}`,
-        qty: 1,
-        unitPriceCents: v.priceCents ?? 0,
+        qtyStr: '1',
+        priceStr: ((v.priceCents ?? 0) / 100).toString(),
       },
     ]);
     setAddQuery('');
@@ -391,7 +415,7 @@ function OrderEditor({ order, onDone }: { order: AdminOrder; onDone: () => void 
     edit.mutate(
       {
         orderId: order.id,
-        items: lines.map((l) => ({ variant_id: l.variantId, qty: l.qty, unit_price_cents: l.unitPriceCents })),
+        items: lines.map((l) => ({ variant_id: l.variantId, qty: qtyOf(l.qtyStr), unit_price_cents: centsOf(l.priceStr) })),
         shippingAddress: addr,
         note,
         reason,
@@ -400,7 +424,7 @@ function OrderEditor({ order, onDone }: { order: AdminOrder; onDone: () => void 
     );
   }
 
-  const canSave = lines.length > 0 && lines.every((l) => l.qty > 0 && l.unitPriceCents >= 0);
+  const canSave = lines.length > 0 && lines.every((l) => qtyOf(l.qtyStr) > 0);
 
   return (
     <div className="space-y-4">
@@ -425,17 +449,17 @@ function OrderEditor({ order, onDone }: { order: AdminOrder; onDone: () => void 
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-3">
               <div className="inline-flex items-center rounded-lg border border-border">
-                <button type="button" onClick={() => setQty(idx, l.qty - 1)} className="grid h-8 w-8 place-items-center hover:bg-muted" aria-label={t('Decrease')}>
+                <button type="button" onClick={() => stepQty(idx, -1)} className="grid h-8 w-8 place-items-center hover:bg-muted" aria-label={t('Decrease')}>
                   <Minus className="h-3.5 w-3.5" strokeWidth={2.5} />
                 </button>
                 <input
-                  type="number"
-                  min={1}
-                  value={l.qty}
-                  onChange={(e) => setQty(idx, parseInt(e.target.value, 10) || 1)}
-                  className="w-12 border-x border-border bg-transparent py-1.5 text-center font-mono text-sm outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+                  type="text"
+                  inputMode="numeric"
+                  value={l.qtyStr}
+                  onChange={(e) => setQtyStr(idx, e.target.value)}
+                  className="w-12 border-x border-border bg-transparent py-1.5 text-center font-mono text-sm outline-none"
                 />
-                <button type="button" onClick={() => setQty(idx, l.qty + 1)} className="grid h-8 w-8 place-items-center hover:bg-muted" aria-label={t('Increase')}>
+                <button type="button" onClick={() => stepQty(idx, 1)} className="grid h-8 w-8 place-items-center hover:bg-muted" aria-label={t('Increase')}>
                   <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
                 </button>
               </div>
@@ -444,16 +468,15 @@ function OrderEditor({ order, onDone }: { order: AdminOrder; onDone: () => void 
                 <span className="relative">
                   <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                   <input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={(l.unitPriceCents / 100).toString()}
-                    onChange={(e) => setPrice(idx, e.target.value)}
-                    className="w-24 rounded-lg border border-border bg-transparent py-1.5 pl-5 pr-2 text-right font-mono text-sm outline-none focus:border-brand [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+                    type="text"
+                    inputMode="decimal"
+                    value={l.priceStr}
+                    onChange={(e) => setPriceStr(idx, e.target.value)}
+                    className="w-24 rounded-lg border border-border bg-transparent py-1.5 pl-5 pr-2 text-right font-mono text-sm outline-none focus:border-brand"
                   />
                 </span>
               </label>
-              <span className="ml-auto font-mono text-sm font-semibold tabular-nums">{formatUsd(l.qty * l.unitPriceCents)}</span>
+              <span className="ml-auto font-mono text-sm font-semibold tabular-nums">{formatUsd(qtyOf(l.qtyStr) * centsOf(l.priceStr))}</span>
             </div>
           </li>
         ))}
