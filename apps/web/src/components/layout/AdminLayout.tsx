@@ -3,7 +3,7 @@ import { BarChart3, Bot, Boxes, Flag, LayoutDashboard, LogOut, PackageSearch, Re
 import { useAuth, useTier } from '@/store';
 import { TIERS } from '@/data/tiers';
 import { Logo } from '@/components/store/Logo';
-import { LangSwitch } from '@/i18n';
+import { LangSwitch, useI18n } from '@/i18n';
 import { PulseDot } from '@/components/store/SyncHeartbeat';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +28,7 @@ const NAV = [
 export default function AdminLayout() {
   const { user, signOut } = useAuth();
   const { startPreview } = useTier();
+  const { t } = useI18n();
   const navigate = useNavigate();
 
   function viewStoreAs(code: string) {
@@ -43,17 +44,17 @@ export default function AdminLayout() {
           <Logo invert />
           <span className="hidden items-center gap-2 border-l border-white/15 pl-4 text-sm text-background/70 sm:flex">
             <PulseDot />
-            Admin console
+            {t('Admin console')}
           </span>
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
             <label className="relative inline-flex items-center">
-              <span className="sr-only">View store as tier</span>
+              <span className="sr-only">{t('View store as tier')}</span>
               <select
                 value=""
                 onChange={(e) => viewStoreAs(e.target.value)}
                 className="h-8 cursor-pointer appearance-none rounded-full border border-white/15 bg-transparent pl-3 pr-7 text-xs font-medium text-background/80 outline-none transition-colors hover:bg-white/10 [&>option]:text-foreground"
               >
-                <option value="" disabled>View store as…</option>
+                <option value="" disabled>{t('View store as…')}</option>
                 {TIERS.map((tr) => (
                   <option key={tr.code} value={tr.code}>{tr.short} · {tr.label}</option>
                 ))}
@@ -66,7 +67,7 @@ export default function AdminLayout() {
             {user && <span className="hidden font-mono text-xs text-background/50 md:inline">{user.email}</span>}
             <button
               type="button"
-              aria-label="Sign out"
+              aria-label={t('Sign out')}
               onClick={() => {
                 signOut();
                 navigate('/');
@@ -74,7 +75,7 @@ export default function AdminLayout() {
               className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs text-background/70 transition-colors hover:bg-white/10"
             >
               <LogOut className="h-3.5 w-3.5" strokeWidth={2} />
-              <span className="hidden sm:inline">Sign out</span>
+              <span className="hidden sm:inline">{t('Sign out')}</span>
             </button>
           </div>
         </div>
@@ -96,7 +97,7 @@ export default function AdminLayout() {
                 }
               >
                 <l.icon className="h-4 w-4" strokeWidth={2} />
-                {l.label}
+                {t(l.label)}
                 {'soon' in l && l.soon && (
                   <span className="ml-auto rounded-full bg-brand/10 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-brand">soon</span>
                 )}
