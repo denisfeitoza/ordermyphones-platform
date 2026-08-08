@@ -49,7 +49,7 @@ export function SectionTabs({ tabs }: { tabs: SectionTab[] }) {
         ))}
       </nav>
 
-      {active?.title && <AdminHeading title={t(active.title)} {...(active.subtitle ? { subtitle: t(active.subtitle) } : {})} />}
+      {active?.title && <AdminHeading title={active.title} {...(active.subtitle ? { subtitle: active.subtitle } : {})} />}
 
       <Outlet />
     </div>

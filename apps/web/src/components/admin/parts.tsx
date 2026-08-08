@@ -3,14 +3,19 @@ import { PulseDot } from '@/components/store/SyncHeartbeat';
 import { STATUS_META } from '@/components/portal/OrderCard';
 import type { OrderStatus } from '@/store';
 import type { AdminCustomer } from '@/data/admin';
+import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
 
+/** Every admin section header. Translates title + subtitle through t() so all
+ * admin pages localize from one place — a string with a dictionary entry is
+ * translated; a dynamic/interpolated one falls back to itself unchanged. */
 export function AdminHeading({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) {
+  const { t } = useI18n();
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="font-display text-xl font-semibold tracking-tight">{title}</h1>
-        {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
+        <h1 className="font-display text-xl font-semibold tracking-tight">{t(title)}</h1>
+        {subtitle && <p className="mt-1 text-sm text-muted-foreground">{t(subtitle)}</p>}
       </div>
       {action}
     </div>
