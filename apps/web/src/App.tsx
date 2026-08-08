@@ -35,7 +35,7 @@ import AdminOrdersPage from '@/routes/admin/OrdersPage';
 import ReconciliationPage from '@/routes/admin/ReconciliationPage';
 import InventoryPage from '@/routes/admin/InventoryPage';
 import ImportPage from '@/routes/admin/ImportPage';
-import PricesPage from '@/routes/admin/PricesPage';
+import PricingWorkbenchPage from '@/routes/admin/PricingWorkbenchPage';
 import PricingFlagsPage from '@/routes/admin/PricingFlagsPage';
 import ApiLogsPage from '@/routes/admin/ApiLogsPage';
 import AiBotsPage from '@/routes/admin/AiBotsPage';
@@ -82,7 +82,7 @@ export default function App() {
           <Route path="reconciliation" element={<ReconciliationPage />} />
           <Route path="inventory" element={<InventoryPage />} />
           <Route path="import" element={<ImportPage />} />
-          <Route path="prices" element={<PricesPage />} />
+          <Route path="prices" element={<PricingWorkbenchPage />} />
           <Route path="pricing-flags" element={<PricingFlagsPage />} />
           <Route path="api-logs" element={<ApiLogsPage />} />
           <Route path="ai" element={<AiBotsPage />} />
