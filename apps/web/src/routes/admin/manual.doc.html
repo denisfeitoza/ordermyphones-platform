@@ -1,41 +1,32 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OrderMyPhones — Manual</title></head><body><style>
+<style>
+  /* Always dark — high contrast, easy to read. */
   :root{
-    --bg:#fbfbfd; --surface:#ffffff; --surface-2:#f4f4f8;
-    --text:#15141b; --muted:#6a6976; --border:#e6e5ee;
-    --accent:#6d5cf5; --accent-soft:#efecff;
-    --t1:#3b82f6; --t2:#10b981; --t3:#f59e0b; --t4:#8b5cf6;
-    --beta:#3b82f6; --beta-bg:#eaf1ff; --soon:#a855f7; --soon-bg:#f6ecff;
-    --shadow:0 1px 2px rgba(20,18,40,.04),0 8px 24px -12px rgba(20,18,40,.10);
+    --bg:#0c0b10; --surface:#17161f; --surface-2:#211f2b;
+    --text:#f4f3f8; --muted:#a9a7b8; --border:#2c2a38;
+    --accent:#9b8dff; --accent-soft:#241f3c;
+    --t1:#60a5fa; --t2:#34d399; --t3:#fbbf24; --t4:#a78bfa;
+    --beta:#7cb0ff; --beta-bg:#17233c; --soon:#c084fc; --soon-bg:#271836;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px -16px rgba(0,0,0,.7);
     --radius:16px;
     --sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
     --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   }
-  @media (prefers-color-scheme:dark){
-    :root{
-      --bg:#0d0c11; --surface:#161520; --surface-2:#1e1d29;
-      --text:#f2f1f7; --muted:#9c9aab; --border:#282734;
-      --accent:#8f80ff; --accent-soft:#221f38;
-      --beta-bg:#152238; --soon-bg:#241733;
-      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px -14px rgba(0,0,0,.6);
-    }
-  }
-  :root[data-theme="light"]{--bg:#fbfbfd;--surface:#ffffff;--surface-2:#f4f4f8;--text:#15141b;--muted:#6a6976;--border:#e6e5ee;--accent:#6d5cf5;--accent-soft:#efecff;--beta-bg:#eaf1ff;--soon-bg:#f6ecff;--shadow:0 1px 2px rgba(20,18,40,.04),0 8px 24px -12px rgba(20,18,40,.10)}
-  :root[data-theme="dark"]{--bg:#0d0c11;--surface:#161520;--surface-2:#1e1d29;--text:#f2f1f7;--muted:#9c9aab;--border:#282734;--accent:#8f80ff;--accent-soft:#221f38;--beta-bg:#152238;--soon-bg:#241733;--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px -14px rgba(0,0,0,.6)}
 
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
   .wrap{max-width:940px;margin:0 auto;padding:0 24px}
 
   header.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
-  .top .wrap{display:flex;align-items:center;gap:14px;height:60px}
+  .top .wrap{display:flex;align-items:center;gap:12px;min-height:62px;flex-wrap:wrap;padding-top:9px;padding-bottom:9px}
   .logo{display:flex;align-items:center;gap:10px;font-weight:680;letter-spacing:-.02em}
   .mark{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#8b5cf6,#3b82f6);flex:none;box-shadow:0 2px 8px -2px rgba(109,92,245,.6)}
   .logo small{color:var(--muted);font-weight:500;border-left:1px solid var(--border);padding-left:10px}
   .spacer{flex:1}
-  .seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2)}
-  .seg button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:13px;font-weight:600;padding:5px 12px;border-radius:8px;cursor:pointer;transition:.15s}
-  .seg button.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
-  .ghost{border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:10px;padding:6px 11px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+  .seg{display:inline-flex;gap:3px;padding:4px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2)}
+  .seg button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:14px;font-weight:700;padding:8px 16px;border-radius:9px;cursor:pointer;transition:.15s;min-height:38px}
+  .seg button.on{background:var(--accent);color:#fff;box-shadow:0 2px 8px -3px var(--accent)}
+  .ghost{border:0;background:var(--accent);color:#fff;border-radius:10px;padding:9px 16px;font:inherit;font-size:14px;font-weight:650;cursor:pointer;min-height:40px;box-shadow:0 4px 14px -6px var(--accent)}
+  .ghost:active{transform:scale(.98)}
 
   .hero{padding:52px 0 18px}
   .eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
@@ -44,13 +35,13 @@
   .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
   .tag{font-size:12.5px;font-weight:600;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:5px 12px}
 
-  nav.toc{position:sticky;top:60px;z-index:15;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);margin-top:24px}
-  .toc .wrap{display:flex;gap:6px;overflow-x:auto;padding-top:12px;padding-bottom:12px;scrollbar-width:none}
+  nav.toc{position:static;z-index:15;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);margin-top:24px}
+  .toc .wrap{display:flex;gap:8px;overflow-x:auto;padding-top:12px;padding-bottom:12px;scrollbar-width:none}
   .toc .wrap::-webkit-scrollbar{display:none}
-  .toc a{white-space:nowrap;font-size:13.5px;font-weight:600;color:var(--muted);text-decoration:none;padding:7px 13px;border-radius:9px;transition:.15s}
-  .toc a:hover{color:var(--text);background:var(--surface-2)}
+  .toc a{white-space:nowrap;font-size:13.5px;font-weight:650;color:var(--text);text-decoration:none;padding:9px 15px;border-radius:10px;border:1px solid var(--border);background:var(--surface);transition:.15s;min-height:40px;display:inline-flex;align-items:center}
+  .toc a:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
 
-  section.doc{padding:42px 0;border-bottom:1px solid var(--border);scroll-margin-top:120px}
+  section.doc{padding:42px 0;border-bottom:1px solid var(--border);scroll-margin-top:72px}
   .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:8px}
   .num{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:8px;padding:3px 8px;flex:none}
   h2{font-size:24px;letter-spacing:-.02em;margin:0}
@@ -120,6 +111,17 @@
 
   footer{padding:34px 0 60px;color:var(--muted);font-size:13px;text-align:center}
 
+  @media (max-width:640px){
+    .wrap{padding:0 16px}
+    .hero{padding:30px 0 10px}
+    h1{font-size:28px}
+    .lede{font-size:15.5px}
+    h2{font-size:21px}
+    section.doc{padding:30px 0}
+    .grid{gap:18px}
+    .logo small{display:none}
+    nav.toc .wrap{padding-top:10px;padding-bottom:10px}
+  }
   @media print{
     header.top,nav.toc,.ghost{position:static}
     nav.toc,.print-hide{display:none}
@@ -128,15 +130,6 @@
     body{background:#fff}
   }
 </style>
-
-<header class="top">
-  <div class="wrap">
-    <span class="logo"><span class="mark"></span>OrderMyPhones <small data-pt="Manual do sistema" data-en="System manual"></small></span>
-    <span class="spacer"></span>
-    <div class="seg" role="group" aria-label="Language"><button id="pt" class="on" onclick="setLang('pt')">PT</button><button id="en" onclick="setLang('en')">EN</button></div>
-    <button class="ghost print-hide" onclick="window.print()" data-pt="Imprimir / PDF" data-en="Print / PDF"></button>
-  </div>
-</header>
 
 <div class="wrap">
   <div class="hero">
@@ -410,18 +403,3 @@
   <footer><span data-pt="OrderMyPhones · Manual da versão 1 · confidencial." data-en="OrderMyPhones · Version 1 manual · confidential."></span></footer>
 </div>
 
-<script>
-  function setLang(l){
-    document.querySelectorAll('[data-pt]').forEach(function(el){
-      var v = l==='en' ? el.getAttribute('data-en') : el.getAttribute('data-pt');
-      if(v==null) return;
-      if(/[<&]/.test(v)) el.innerHTML = v; else el.textContent = v;
-    });
-    document.getElementById('pt').classList.toggle('on', l==='pt');
-    document.getElementById('en').classList.toggle('on', l==='en');
-    document.documentElement.lang = l==='en'?'en':'pt-BR';
-    try{ localStorage.setItem('omp_manual_lang', l); }catch(e){}
-  }
-  (function(){ var s='en'; try{ s=localStorage.getItem('omp_manual_lang')||'en'; }catch(e){} setLang(s); })();
-</script>
-</body></html>
