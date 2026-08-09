@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Copy, Loader2, Send, X } from 'lucide-react';
+import { Check, Copy, Loader2, Mail, MessageCircle, Send, X } from 'lucide-react';
 import {
   createInvite,
   inviteLink,
@@ -133,19 +133,43 @@ export function InvitePanel() {
         </p>
       )}
 
-      {justCreated && (
-        <div className="mt-4 rounded-xl border border-success/30 bg-success/5 p-4">
-          <div className="flex items-center gap-2 text-sm font-medium text-success">
-            <Check className="h-4 w-4" /> {t('Invite ready for')} {justCreated.email} · {DB_TIER_LABELS[justCreated.tier]}
+      {justCreated && (() => {
+        const link = inviteLink(justCreated.token);
+        const message = `${t('You’ve been invited to OrderMyPhones. Set your password and start ordering here:')} ${link}`;
+        const subject = t('Your OrderMyPhones invite');
+        const waHref = `https://wa.me/?text=${encodeURIComponent(message)}`;
+        const mailHref = `mailto:${encodeURIComponent(justCreated.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
+        return (
+          <div className="mt-4 rounded-xl border border-success/30 bg-success/5 p-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-success">
+              <Check className="h-4 w-4" /> {t('Invite ready for')} {justCreated.email} · {DB_TIER_LABELS[justCreated.tier]}
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t('No email is sent automatically — copy this link and send it to the customer yourself. Opening it lets them set a password and sign in.')}
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <code className="min-w-0 flex-1 truncate rounded-lg bg-background px-2.5 py-1.5 text-xs">{link}</code>
+              <CopyLink token={justCreated.token} />
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <a
+                href={waHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-xs font-medium transition-colors hover:bg-muted"
+              >
+                <MessageCircle className="h-3.5 w-3.5" /> {t('Send on WhatsApp')}
+              </a>
+              <a
+                href={mailHref}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-xs font-medium transition-colors hover:bg-muted"
+              >
+                <Mail className="h-3.5 w-3.5" /> {t('Send by email')}
+              </a>
+            </div>
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <code className="min-w-0 flex-1 truncate rounded-lg bg-background px-2.5 py-1.5 text-xs">
-              {inviteLink(justCreated.token)}
-            </code>
-            <CopyLink token={justCreated.token} />
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       <div className="mt-6">
         <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t('Invites')}</h3>

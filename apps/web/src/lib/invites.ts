@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { publicBaseUrl } from '@/lib/siteUrl';
 
 /**
  * Invite RPC client. All three functions are SECURITY DEFINER RPCs
@@ -50,10 +51,10 @@ export function isBusinessTier(tier: DbTier): boolean {
   return tier !== 'consumer';
 }
 
-/** Build the copyable accept link from a token, rooted at the current origin. */
+/** Build the copyable accept link from a token, rooted at the canonical public
+ * URL — never localhost, even when generated from the local dev server. */
 export function inviteLink(token: string): string {
-  const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  return `${origin}/auth/invite?token=${encodeURIComponent(token)}`;
+  return `${publicBaseUrl()}/auth/invite?token=${encodeURIComponent(token)}`;
 }
 
 export async function createInvite(email: string, tier: DbTier): Promise<InviteRow> {
