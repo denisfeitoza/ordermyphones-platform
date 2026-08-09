@@ -2,7 +2,14 @@ import { useLayoutEffect, useRef, useState, type MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Printer } from 'lucide-react';
 import content from './manual.doc.html?raw';
-import { useI18n } from '@/i18n';
+
+// The bar follows the manual's OWN language toggle (not the app's language), so
+// the whole page stays consistent — default English, and everything flips
+// together when the reader switches PT/EN.
+const BAR = {
+  en: { back: 'Back to console', print: 'Print / PDF' },
+  pt: { back: 'Voltar ao console', print: 'Imprimir / PDF' },
+} as const;
 
 /**
  * System manual — full-screen, admin-gated (option B). Rendered as the page
@@ -14,8 +21,8 @@ import { useI18n } from '@/i18n';
  */
 export default function ManualPage() {
   const navigate = useNavigate();
-  const { t } = useI18n();
   const [lang, setLang] = useState<'pt' | 'en'>('en');
+  const label = BAR[lang];
   const ref = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
@@ -63,7 +70,7 @@ export default function ManualPage() {
           style={{ borderColor: '#2c2a38', background: '#17161f', color: '#f4f3f8' }}
         >
           <ArrowLeft className="h-4 w-4" strokeWidth={2.25} />
-          {t('Back to console')}
+          {label.back}
         </button>
         <span className="flex-1" />
         <div className="inline-flex gap-1 rounded-xl border p-1" style={{ borderColor: '#2c2a38', background: '#17161f' }}>
@@ -90,7 +97,7 @@ export default function ManualPage() {
           style={{ background: '#9b8dff', color: '#0c0b10' }}
         >
           <Printer className="h-4 w-4" strokeWidth={2.25} />
-          {t('Print / PDF')}
+          {label.print}
         </button>
       </div>
 
