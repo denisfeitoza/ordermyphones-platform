@@ -5,6 +5,7 @@ import { ArrowLeft, MailCheck } from 'lucide-react';
 import { AuthLayout, AuthField } from '@/components/auth/AuthLayout';
 import { Button } from '@/components/ui/Button';
 import { supabase } from '@/lib/supabase';
+import { publicBaseUrl } from '@/lib/siteUrl';
 import { useI18n } from '@/i18n';
 
 /** GoTrue's rate-limit error is the only failure mode worth surfacing — everything
@@ -30,7 +31,7 @@ export default function ResetPage() {
     setPending(true);
     setError(null);
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/auth/callback`,
+      redirectTo: `${publicBaseUrl()}/auth/callback`,
     });
     setPending(false);
     if (isRateLimited(resetError)) {

@@ -17,8 +17,20 @@ port = 54323
 
 [auth]
 enabled = true
+# NOTE: this [auth] block configures the LOCAL supabase stack only. The hosted
+# project's Site URL + Redirect URLs live in the Supabase dashboard and MUST be
+# set to the production domain, otherwise password-reset emails link to the
+# wrong host. Required on the remote project:
+#   Site URL:      https://ordermyphones.vercel.app
+#   Redirect URLs: https://ordermyphones.vercel.app/auth/callback
+#                  https://ordermyphones.vercel.app/auth/invite
 site_url = "http://localhost:5173"
-additional_redirect_urls = ["http://localhost:5173"]
+additional_redirect_urls = [
+  "http://localhost:5173",
+  "https://ordermyphones.vercel.app",
+  "https://ordermyphones.vercel.app/auth/callback",
+  "https://ordermyphones.vercel.app/auth/invite",
+]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10

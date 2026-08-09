@@ -541,6 +541,13 @@ export const PT: Record<string, string> = {
   'Manual': 'Manual',
   'Back to console': 'Voltar ao console',
   'Print / PDF': 'Imprimir / PDF',
+  'Send on WhatsApp': 'Enviar no WhatsApp',
+  'Send by email': 'Enviar por e-mail',
+  'Your OrderMyPhones invite': 'Seu convite OrderMyPhones',
+  'No email is sent automatically — copy this link and send it to the customer yourself. Opening it lets them set a password and sign in.':
+    'Nenhum e-mail é enviado automaticamente — copie este link e mande você mesmo para o cliente. Ao abrir, ele define uma senha e entra.',
+  'You’ve been invited to OrderMyPhones. Set your password and start ordering here:':
+    'Você foi convidado para o OrderMyPhones. Defina sua senha e comece a pedir aqui:',
   'Edit order': 'Editar pedido',
   'Editing order': 'Editando pedido',
   'Order history': 'Histórico do pedido',
@@ -1664,6 +1671,13 @@ export const ES: Record<string, string> = {
   'Manual': 'Manual',
   'Back to console': 'Volver a la consola',
   'Print / PDF': 'Imprimir / PDF',
+  'Send on WhatsApp': 'Enviar por WhatsApp',
+  'Send by email': 'Enviar por correo',
+  'Your OrderMyPhones invite': 'Tu invitación de OrderMyPhones',
+  'No email is sent automatically — copy this link and send it to the customer yourself. Opening it lets them set a password and sign in.':
+    'No se envía ningún correo automáticamente — copia este enlace y envíaselo tú mismo al cliente. Al abrirlo, define una contraseña e inicia sesión.',
+  'You’ve been invited to OrderMyPhones. Set your password and start ordering here:':
+    'Has sido invitado a OrderMyPhones. Define tu contraseña y empieza a pedir aquí:',
   'Edit order': 'Editar pedido',
   'Editing order': 'Editando pedido',
   'Order history': 'Historial del pedido',
