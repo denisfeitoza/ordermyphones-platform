@@ -43,7 +43,7 @@ const TESTIMONIALS: Testimonial[] = [
 export function Testimonials() {
   const { t } = useI18n();
   return (
-    <section className="relative overflow-hidden border-y border-border bg-muted/30">
+    <section id="testimonials" className="relative scroll-mt-24 overflow-hidden border-y border-border bg-muted/30">
       <LogoMark className="pointer-events-none absolute -right-10 -top-10 h-56 w-56 opacity-[0.06]" />
       <div className="container relative py-16 md:py-24">
         <div className="max-w-2xl">
