@@ -1,11 +1,9 @@
 import { motion } from 'framer-motion';
 import { LogoMark } from './Logo';
+import { BrandLogo, type BrandName } from './BrandLogos';
 import { useI18n } from '@/i18n';
 
-// Wordmark tiles (not embedded logo art) — clean and consistent with the
-// storefront's minimal type system, and free of external logo assets. Swap any
-// entry for an inline SVG mark later if the client supplies brand artwork.
-const BRANDS = ['Apple', 'Samsung', 'Nokia', 'LG', 'Motorola', 'TCL', 'Infinix', 'Google'] as const;
+const BRANDS: BrandName[] = ['Apple', 'Samsung', 'Google', 'Nokia', 'Motorola', 'LG', 'TCL', 'Infinix'];
 
 const reveal = {
   hidden: { opacity: 0, y: 16 },
@@ -51,8 +49,8 @@ export function TopBrands() {
               variants={reveal}
               className="group grid h-24 place-items-center rounded-2xl border border-border bg-card shadow-soft transition-colors hover:border-brand/40"
             >
-              <span className="font-display text-xl font-semibold tracking-tight text-muted-foreground transition-colors group-hover:text-foreground md:text-2xl">
-                {brand}
+              <span className="text-muted-foreground transition-colors group-hover:text-foreground" aria-label={brand}>
+                <BrandLogo brand={brand} />
               </span>
             </motion.li>
           ))}

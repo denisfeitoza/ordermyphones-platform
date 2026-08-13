@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Hero } from '@/components/store/Hero';
 import { ProductGrid } from '@/components/store/ProductGrid';
@@ -18,20 +17,7 @@ import { useI18n } from '@/i18n';
 
 export default function HomePage() {
   const { t } = useI18n();
-  const { hash } = useLocation();
   const source = useCatalogSource();
-
-  // Top-menu items link to /#section — scroll to the anchor once the page (and
-  // any async catalog content above it) has settled. scroll-mt-24 on each
-  // section clears the sticky header.
-  useEffect(() => {
-    if (!hash) return;
-    const id = hash.slice(1);
-    const t = window.setTimeout(() => {
-      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 120);
-    return () => window.clearTimeout(t);
-  }, [hash]);
   const featured = CATALOG.slice(0, 6);
   // Real catalog is only fetched once the flag is 'real' — mock mode never
   // pays for the network round trip, matching the "zero visual/behavioral
