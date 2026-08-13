@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, ClipboardList, ShoppingBag, Plus, Trash2, Search } from 'lucide-react';
-import { useRealCart } from '@/store';
+import { X, ClipboardList, ShoppingBag, Plus, Trash2, Search, Eye } from 'lucide-react';
+import { useAuth, useRealCart, useTier } from '@/store';
 import { useRealCatalog, buildDisplayName, type PricedRealListing } from '@/data/realCatalog';
+import { TIERS } from '@/data/tiers';
 import { Button } from '@/components/ui/Button';
 import { formatUsd } from '@/lib/format';
 import { useI18n } from '@/i18n';
@@ -24,8 +26,16 @@ export function QuickOrderDialog({ open, onClose }: { open: boolean; onClose: ()
   const { t } = useI18n();
   const { items } = useRealCatalog(true);
   const { add } = useRealCart();
+  const { role, signedIn } = useAuth();
+  const { previewCode, startPreview } = useTier();
   const [query, setQuery] = useState('');
   const [staged, setStaged] = useState<StagedLine[]>([]);
+
+  // Admin/staff have no customer tier, so every price resolves null and rows are
+  // unaddable ("No price"). Offer an inline tier preview so pricing lights up
+  // without leaving the dialog. Guests are pointed to request access instead.
+  const needsTierPreview = (role === 'admin' || role === 'staff') && !previewCode;
+  const guestNoPricing = !signedIn;
 
   const byVariant = useMemo(() => new Map(items.map((i) => [i.variantId, i])), [items]);
   const stagedIds = useMemo(() => new Set(staged.map((s) => s.variantId)), [staged]);
@@ -99,6 +109,33 @@ export function QuickOrderDialog({ open, onClose }: { open: boolean; onClose: ()
                   className="h-11 w-full rounded-xl border border-border bg-muted/30 pl-9 pr-3 text-sm outline-none transition-colors focus:border-brand"
                 />
               </label>
+
+              {needsTierPreview ? (
+                <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl border border-brand/25 bg-brand/5 px-3 py-2.5 text-xs">
+                  <Eye className="h-4 w-4 shrink-0 text-brand" strokeWidth={2} />
+                  <span className="font-medium text-foreground">{t('Preview pricing as')}</span>
+                  <div className="flex flex-wrap gap-1">
+                    {TIERS.map((tr) => (
+                      <button
+                        key={tr.code}
+                        type="button"
+                        onClick={() => startPreview(tr.code)}
+                        title={tr.label}
+                        className="rounded-full border border-border bg-background px-2.5 py-1 font-mono text-[0.65rem] font-bold text-muted-foreground transition-colors hover:border-brand hover:text-foreground"
+                      >
+                        {tr.short}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : guestNoPricing ? (
+                <p className="mt-2 rounded-xl border border-border bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground">
+                  {t('Pricing shows once your account is approved.')}{' '}
+                  <Link to="/request-access" className="font-medium text-brand hover:underline" onClick={onClose}>
+                    {t('Request access')}
+                  </Link>
+                </p>
+              ) : null}
 
               {query.trim() && (
                 <div className="mt-2 max-h-56 overflow-y-auto rounded-xl border border-border">

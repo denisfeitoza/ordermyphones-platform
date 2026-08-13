@@ -6,8 +6,18 @@ import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
 
 /**
- * Floating pill shown while an admin previews the store through a tier's eyes.
- * Lets them hop between tiers in one click and jump back to the admin console.
+ * Floating pill for admin/staff browsing the customer storefront.
+ *
+ * Admins have no customer tier, so prices resolve to null and everything —
+ * price tags, the Quick order — shows "No price" and is unusable for them. This
+ * pill lets them preview the store through a tier's eyes: once a tier is picked,
+ * useRealCatalog applies it (previewTier) and prices light up everywhere.
+ *
+ * Two states: a compact "preview pricing as…" starter when no tier is selected,
+ * and the full tier-hopper once one is. Both are admin/staff only — the role
+ * gate matches how realCatalog applies the preview, so a customer never sees it
+ * (previewCode lives in sessionStorage and would otherwise leak across a
+ * sign-out in the same tab — leak audit Finding 1).
  */
 export function TierPreviewPill() {
   const { previewCode, startPreview, stopPreview, tier } = useTier();
@@ -15,11 +25,34 @@ export function TierPreviewPill() {
   const { t } = useI18n();
   const navigate = useNavigate();
 
-  // Admin/staff only. previewCode lives in sessionStorage and survives a
-  // sign-out within the same tab, so without the role gate a customer signing
-  // in after an admin's "view as" would see this admin banner + an /admin link
-  // (leak audit Finding 1). Gate it exactly like realCatalog applies the preview.
-  if (!previewCode || (role !== 'admin' && role !== 'staff')) return null;
+  if (role !== 'admin' && role !== 'staff') return null;
+
+  // No tier picked yet — offer to start a preview so prices (and Quick order) work.
+  if (!previewCode) {
+    return (
+      <div className="fixed inset-x-0 bottom-4 z-50 flex justify-center px-4">
+        <div className="flex max-w-full items-center gap-2 overflow-x-auto rounded-full border border-border bg-background/95 px-3 py-2 shadow-2xl backdrop-blur">
+          <Eye className="h-4 w-4 shrink-0 text-brand" strokeWidth={2} />
+          <span className="whitespace-nowrap text-xs font-medium text-muted-foreground">
+            {t('Preview pricing as')}
+          </span>
+          <div className="flex shrink-0 gap-1">
+            {TIERS.map((tr) => (
+              <button
+                key={tr.code}
+                type="button"
+                onClick={() => startPreview(tr.code)}
+                title={tr.label}
+                className="rounded-full border border-border px-2.5 py-1 font-mono text-[0.65rem] font-bold text-muted-foreground transition-colors hover:border-brand hover:bg-secondary hover:text-foreground"
+              >
+                {tr.short}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-x-0 bottom-4 z-50 flex justify-center px-4">
