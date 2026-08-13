@@ -11,10 +11,13 @@
 // @ts-nocheck — Deno runtime
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 
+// TechRadar's feed serves only an empty header to non-browser/server IPs, so it
+// was dropped in favor of GSMArena — a reliable mobile-news source that pairs
+// well with Fierce Wireless. Any feed that fails is skipped gracefully.
 const FEEDS = [
   { source: 'Fierce Network', url: 'https://www.fierce-network.com/rss/xml' },
   { source: 'Fierce Network', url: 'https://www.fiercewireless.com/rss/xml' },
-  { source: 'TechRadar', url: 'https://www.techradar.com/rss/news/phone-and-communications/mobile-phones' },
+  { source: 'GSMArena', url: 'https://www.gsmarena.com/rss-news-reviews.php3' },
 ];
 
 const TTL_MS = 20 * 60 * 1000;
@@ -81,7 +84,13 @@ function parseFeed(xml: string, source: string): NewsItem[] {
 async function fetchOne(feed: { source: string; url: string }): Promise<NewsItem[]> {
   try {
     const res = await fetch(feed.url, {
-      headers: { 'User-Agent': 'OrderMyPhones/1.0 (+https://ordermyphones.vercel.app)' },
+      // Browser-like UA — several feeds (GSMArena, TechRadar) return an empty
+      // body to bot/server user agents.
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+        Accept: 'application/rss+xml, application/xml, text/xml, */*',
+      },
       signal: AbortSignal.timeout(6000),
     });
     if (!res.ok) return [];
@@ -91,21 +100,32 @@ async function fetchOne(feed: { source: string; url: string }): Promise<NewsItem
   }
 }
 
+const byDateDesc = (a: NewsItem, b: NewsItem) =>
+  (b.publishedAt ? Date.parse(b.publishedAt) : 0) - (a.publishedAt ? Date.parse(a.publishedAt) : 0);
+
 async function collect(): Promise<NewsItem[]> {
   const settled = await Promise.all(FEEDS.map(fetchOne));
-  const seenLinks = new Set<string>();
-  const merged: NewsItem[] = [];
+  // Group by source (deduped by link) so one high-frequency feed can't crowd the
+  // others out — a busy feed would otherwise fill every slot by pure date sort.
+  const bySource = new Map<string, NewsItem[]>();
+  const seen = new Set<string>();
   for (const item of settled.flat()) {
-    if (seenLinks.has(item.link)) continue;
-    seenLinks.add(item.link);
-    merged.push(item);
+    if (seen.has(item.link)) continue;
+    seen.add(item.link);
+    const arr = bySource.get(item.source) ?? [];
+    arr.push(item);
+    bySource.set(item.source, arr);
   }
-  merged.sort((a, b) => {
-    const ta = a.publishedAt ? Date.parse(a.publishedAt) : 0;
-    const tb = b.publishedAt ? Date.parse(b.publishedAt) : 0;
-    return tb - ta;
-  });
-  return merged.slice(0, MAX_ITEMS);
+  const buckets = [...bySource.values()];
+  buckets.forEach((b) => b.sort(byDateDesc));
+  // Round-robin interleave so every source is represented.
+  const out: NewsItem[] = [];
+  for (let i = 0; out.length < MAX_ITEMS && buckets.some((b) => b.length); i++) {
+    const b = buckets[i % buckets.length];
+    const next = b.shift();
+    if (next) out.push(next);
+  }
+  return out;
 }
 
 serve(async (req) => {
