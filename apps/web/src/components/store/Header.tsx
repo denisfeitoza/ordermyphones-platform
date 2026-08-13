@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Search, ShoppingBag, Menu, X, UserRound } from 'lucide-react';
+import { Search, ShoppingBag, Menu, X, UserRound, ChevronDown } from 'lucide-react';
 import { useAuth, useCart, useRealCart } from '@/store';
 import { useCatalogSource } from '@/lib/catalogSource';
 import { useEffectiveTier } from '@/lib/effectiveTier';
@@ -10,12 +10,27 @@ import { TierBadge } from './TierBadge';
 import { cn } from '@/lib/utils';
 import { homePathForRole } from '@/lib/roleRoutes';
 
-const NAV = [
-  { to: '/catalog', label: 'Shop' },
+// Shop keeps the old quick-filters, now folded into a dropdown instead of
+// standalone top-level pills (client request).
+const SHOP_LINKS = [
+  { to: '/catalog', label: 'All phones' },
   { to: '/catalog?brand=Apple', label: 'iPhone' },
   { to: '/catalog?brand=Samsung', label: 'Samsung' },
   { to: '/catalog?condition=cpo', label: 'Certified Pre-Owned' },
 ];
+
+// Landing-page anchors. On the home page these scroll to the section; from any
+// other route react-router navigates home first, then HomePage scrolls to the hash.
+const SECTION_LINKS = [
+  { to: '/#expertise', label: 'Expertise' },
+  { to: '/#partner', label: 'Partner With Us' },
+  { to: '/#brands', label: 'Top Brands' },
+  { to: '/#testimonials', label: 'Testimonials' },
+  { to: '/#news', label: 'News' },
+];
+
+const pill =
+  'rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground';
 
 export function Header() {
   // Source-aware cart badge: real mode reflects/opens the {variant_id, qty}
@@ -54,19 +69,39 @@ export function Header() {
         <Logo />
 
         <nav className="ml-2 hidden items-center gap-1 lg:flex">
-          {NAV.map((l) => (
+          {/* Shop — links to the catalog, reveals the quick-filters on hover/focus. */}
+          <div className="group relative">
             <NavLink
-              key={l.label}
-              to={l.to}
+              to="/catalog"
               className={({ isActive }) =>
                 cn(
-                  'rounded-full px-3 py-1.5 text-sm transition-colors',
-                  isActive ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground',
+                  'inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm transition-colors',
+                  isActive ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
                 )
               }
             >
-              {t(l.label)}
+              {t('Shop')}
+              <ChevronDown className="h-3.5 w-3.5 transition-transform group-hover:rotate-180" strokeWidth={2} />
             </NavLink>
+            <div className="invisible absolute left-0 top-full z-50 pt-2 opacity-0 transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+              <div className="min-w-52 rounded-xl border border-border bg-background p-1.5 shadow-soft">
+                {SHOP_LINKS.map((l) => (
+                  <Link
+                    key={l.label}
+                    to={l.to}
+                    className="block rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    {t(l.label)}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {SECTION_LINKS.map((l) => (
+            <Link key={l.label} to={l.to} className={pill}>
+              {t(l.label)}
+            </Link>
           ))}
         </nav>
 
@@ -136,12 +171,24 @@ export function Header() {
               </div>
             </form>
             <nav className="grid">
-              {NAV.map((l) => (
+              <p className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Shop')}</p>
+              {SHOP_LINKS.map((l) => (
                 <Link
                   key={l.label}
                   to={l.to}
                   onClick={() => setMenuOpen(false)}
                   className="rounded-xl px-3 py-2.5 text-sm hover:bg-muted"
+                >
+                  {t(l.label)}
+                </Link>
+              ))}
+              <div className="my-1 border-t border-border" />
+              {SECTION_LINKS.map((l) => (
+                <Link
+                  key={l.label}
+                  to={l.to}
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-muted"
                 >
                   {t(l.label)}
                 </Link>
