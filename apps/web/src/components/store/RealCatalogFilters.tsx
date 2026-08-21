@@ -1,7 +1,9 @@
+import type { ReactNode } from 'react';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n';
 import { carrierLabel } from '@/data/realCatalog';
+import { BrandLogo, type BrandName } from './BrandLogos';
 import {
   FACET_KEYS,
   REAL_PRICE_BANDS,
@@ -93,7 +95,23 @@ export function facetValueLabel(key: FacetKey, value: string): string {
   }
 }
 
-function FilterRow({ label, count, active, onClick }: { label: string; count: number; active: boolean; onClick: () => void }) {
+// Known brand marks for the Brand facet. Only makes we render a logo for.
+const BRAND_MAKES = new Set<BrandName>(['Apple', 'Samsung', 'Google', 'Nokia', 'Motorola', 'LG', 'TCL', 'Infinix']);
+const brandOf = (make: string): BrandName | null => (BRAND_MAKES.has(make as BrandName) ? (make as BrandName) : null);
+
+function FilterRow({
+  label,
+  count,
+  active,
+  onClick,
+  leading,
+}: {
+  label: string;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+  leading?: ReactNode;
+}) {
   return (
     <button
       type="button"
@@ -112,6 +130,7 @@ function FilterRow({ label, count, active, onClick }: { label: string; count: nu
         >
           {active && <Check className="h-3 w-3" strokeWidth={3} />}
         </span>
+        {leading}
         {label}
       </span>
       <span className="font-mono text-xs text-muted-foreground/70">{count}</span>
@@ -156,15 +175,25 @@ export function RealCatalogFilters({ counts, facets, onToggle, onClearAll, signe
           <div key={key} className="border-t border-border py-4 first:border-t-0 first:pt-0">
             <h3 className="mb-2 px-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</h3>
             <div className="space-y-0.5">
-              {values.map((v) => (
-                <FilterRow
-                  key={v}
-                  label={facetValueLabel(key, v)}
-                  count={counts[key].get(v) ?? 0}
-                  active={facets[key].has(v)}
-                  onClick={() => onToggle(key, v)}
-                />
-              ))}
+              {values.map((v) => {
+                const brand = key === 'make' ? brandOf(v) : null;
+                return (
+                  <FilterRow
+                    key={v}
+                    label={facetValueLabel(key, v)}
+                    count={counts[key].get(v) ?? 0}
+                    active={facets[key].has(v)}
+                    onClick={() => onToggle(key, v)}
+                    leading={
+                      brand ? (
+                        <span className="grid w-6 shrink-0 place-items-center text-foreground [&>span]:!text-sm [&>svg]:!h-4 [&>svg]:!w-4">
+                          <BrandLogo brand={brand} />
+                        </span>
+                      ) : undefined
+                    }
+                  />
+                );
+              })}
             </div>
           </div>
         );

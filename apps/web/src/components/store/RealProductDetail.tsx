@@ -1,3 +1,4 @@
+import { useRef, type MouseEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronRight, MapPin, ShieldCheck, Truck, RotateCcw, Smartphone } from 'lucide-react';
@@ -15,6 +16,33 @@ function gradeTone(grade: PricedRealListing['ctiaGrade']): 'success' | 'dark' | 
   if (grade === 'NEW') return 'success';
   if (grade === 'CPO' || grade === 'A') return 'dark';
   return 'neutral';
+}
+
+/** Product image with cursor-tracked magnify — the zoom origin follows the
+ *  pointer, so hovering any detail enlarges that spot. Style is set on the ref
+ *  directly to avoid a re-render per mouse move. */
+function ZoomImage({ src, alt, sku }: { src: string; alt: string; sku: string }) {
+  const ref = useRef<HTMLImageElement>(null);
+  function onMove(e: MouseEvent<HTMLDivElement>) {
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width) * 100;
+    const y = ((e.clientY - r.top) / r.height) * 100;
+    if (ref.current) ref.current.style.transformOrigin = `${x}% ${y}%`;
+  }
+  return (
+    <div onMouseMove={onMove} className="aspect-square w-full cursor-zoom-in overflow-hidden">
+      <motion.img
+        ref={ref}
+        key={sku}
+        src={src}
+        alt={alt}
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="h-full w-full object-contain p-8 transition-transform duration-200 will-change-transform hover:scale-[1.9]"
+      />
+    </div>
+  );
 }
 
 export function RealProductDetail({ item, related }: { item: PricedRealListing; related: PricedRealListing[] }) {
@@ -39,15 +67,7 @@ export function RealProductDetail({ item, related }: { item: PricedRealListing; 
               <Badge tone={gradeTone(item.ctiaGrade)}>{t(item.ctiaLabel)}</Badge>
             </div>
             {image ? (
-              <motion.img
-                key={item.sku}
-                src={image}
-                alt={name}
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="aspect-square w-full object-contain p-8"
-              />
+              <ZoomImage src={image} alt={name} sku={item.sku} />
             ) : (
               <div className="grid aspect-square w-full place-items-center">
                 <Smartphone className="h-24 w-24 text-muted-foreground/40" strokeWidth={1} />
@@ -128,9 +148,42 @@ export function RealProductDetail({ item, related }: { item: PricedRealListing; 
 
       {related.length > 0 && (
         <section className="mt-16 md:mt-24">
-          <div className="mb-6 flex items-end justify-between">
-            <h2 className="font-display text-xl font-semibold tracking-tight md:text-2xl">{t('More')} {item.model}</h2>
+          <h2 className="mb-4 font-display text-xl font-semibold tracking-tight md:text-2xl">{t('Compare')} {item.model}</h2>
+          <div className="mb-10 overflow-x-auto rounded-2xl border border-border">
+            <table className="w-full text-sm" style={{ minWidth: 640 }}>
+              <thead>
+                <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
+                  <th className="px-4 py-2.5 font-medium">{t('Variant')}</th>
+                  <th className="px-4 py-2.5 font-medium">{t('Condition')}</th>
+                  <th className="px-4 py-2.5 font-medium">{t('Carrier')}</th>
+                  <th className="px-4 py-2.5 font-medium">{t('Lock status')}</th>
+                  <th className="px-4 py-2.5 font-medium">{t('In stock')}</th>
+                  <th className="px-4 py-2.5 text-right font-medium">{t('Price')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {[item, ...related].slice(0, 5).map((ci) => {
+                  const isThis = ci.variantId === item.variantId;
+                  return (
+                    <tr key={ci.variantId} className={isThis ? 'bg-secondary/40' : ''}>
+                      <td className="px-4 py-3 font-medium">
+                        {ci.capacity}
+                        {ci.color ? ` · ${ci.color}` : ''}
+                        {isThis && <span className="ml-2 rounded-full bg-brand/10 px-2 py-0.5 text-xs font-semibold text-brand">{t('This one')}</span>}
+                      </td>
+                      <td className="px-4 py-3"><Badge tone={gradeTone(ci.ctiaGrade)}>{t(ci.ctiaLabel)}</Badge></td>
+                      <td className="px-4 py-3 text-muted-foreground">{carrierLabel(ci.carrier)}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{ci.lockStatus === 'unlocked' ? t('Unlocked') : t('Locked')}</td>
+                      <td className="px-4 py-3 font-mono tabular-nums text-muted-foreground">{formatInt(ci.totalQty)}</td>
+                      <td className="px-4 py-3 text-right"><RealPriceTag priceCents={ci.priceCents} /></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
+
+          <h2 className="mb-6 font-display text-xl font-semibold tracking-tight md:text-2xl">{t('More')} {item.model}</h2>
           <RealProductGrid items={related} />
         </section>
       )}
