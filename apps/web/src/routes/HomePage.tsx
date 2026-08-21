@@ -4,6 +4,7 @@ import { Hero } from '@/components/store/Hero';
 import { ProductGrid } from '@/components/store/ProductGrid';
 import { RealProductGrid } from '@/components/store/RealProductGrid';
 import { RealCatalogEmpty } from '@/components/store/RealCatalogEmpty';
+import { ShopByCategory } from '@/components/store/ShopByCategory';
 import { Expertise } from '@/components/store/Expertise';
 import { PartnerWithUs } from '@/components/store/PartnerWithUs';
 import { TopBrands } from '@/components/store/TopBrands';
@@ -27,6 +28,8 @@ export default function HomePage() {
   return (
     <div>
       <Hero />
+
+      <ShopByCategory />
 
       <section className="container py-16 md:py-20">
         <div className="mb-8 flex items-end justify-between gap-4">
