@@ -3,7 +3,7 @@ import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n';
 import { carrierLabel } from '@/data/realCatalog';
-import { BrandLogo, type BrandName } from './BrandLogos';
+import { BrandMark, type BrandName } from './BrandLogos';
 import {
   FACET_KEYS,
   REAL_PRICE_BANDS,
@@ -186,8 +186,8 @@ export function RealCatalogFilters({ counts, facets, onToggle, onClearAll, signe
                     onClick={() => onToggle(key, v)}
                     leading={
                       brand ? (
-                        <span className="grid w-6 shrink-0 place-items-center text-foreground [&>span]:!text-sm [&>svg]:!h-4 [&>svg]:!w-4">
-                          <BrandLogo brand={brand} />
+                        <span className="grid w-5 shrink-0 place-items-center text-foreground">
+                          <BrandMark brand={brand} />
                         </span>
                       ) : undefined
                     }
