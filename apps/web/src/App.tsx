@@ -52,6 +52,7 @@ import GradesTab from '@/routes/admin/config/GradesTab';
 import ImportDictTab from '@/routes/admin/config/ImportDictTab';
 import UsersTab from '@/routes/admin/config/UsersTab';
 import EnforcementTab from '@/routes/admin/config/EnforcementTab';
+import HomeContentTab from '@/routes/admin/config/HomeContentTab';
 import AuditTab from '@/routes/admin/config/AuditTab';
 import ViewAsPage from '@/routes/admin/ViewAsPage';
 
@@ -82,6 +83,7 @@ const ORDERS_TABS: SectionTab[] = [
 ];
 const SETTINGS_TABS: SectionTab[] = [
   { to: '/admin/config', label: 'Go-live & storefront', end: true, title: 'Go-live & storefront', subtitle: 'Switch the storefront to real inventory, control quantity display, and pin featured products.' },
+  { to: '/admin/config/home', label: 'Home & promos', title: 'Home & promos', subtitle: 'Manage the storefront home page — benefits bar, promotions, and trending products.' },
   { to: '/admin/config/enforcement', label: 'Enforcement', title: 'Enforcement', subtitle: 'Guardrails that block risky pricing and stock actions before they happen.' },
   { to: '/admin/config/audit', label: 'Audit log', title: 'Audit log', subtitle: 'A trail of every sensitive change — who changed what, and when.' },
 ];
@@ -158,6 +160,7 @@ export default function App() {
           {/* Settings, slimmed to system-only. */}
           <Route path="config" element={<SectionTabs tabs={SETTINGS_TABS} />}>
             <Route index element={<CatalogTab />} />
+            <Route path="home" element={<HomeContentTab />} />
             <Route path="enforcement" element={<EnforcementTab />} />
             <Route path="audit" element={<AuditTab />} />
           </Route>
