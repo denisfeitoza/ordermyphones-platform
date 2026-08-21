@@ -28,6 +28,8 @@ export interface RealListing {
   ctiaLabel: string;
   totalQty: number;
   locations: RealLocationStock[];
+  createdAt: string;
+  soldQty: number;
 }
 
 /** RealListing + the caller's own tier price (null when unavailable — see priceStatus). */
@@ -48,6 +50,8 @@ interface RawCatalogListingRow {
   ctia_label: string;
   total_qty: number;
   locations: RealLocationStock[] | null;
+  created_at: string;
+  sold_qty: number | null;
 }
 
 interface RawPriceRow {
@@ -63,7 +67,7 @@ async function fetchCatalogListing(): Promise<RealListing[]> {
       supabase
         .from('catalog_listing')
         .select(
-          'variant_id, sku, make, model, capacity, color, carrier, lock_status, ctia_grade, ctia_label, total_qty, locations',
+          'variant_id, sku, make, model, capacity, color, carrier, lock_status, ctia_grade, ctia_label, total_qty, locations, created_at, sold_qty',
         )
         .order('sku')
         .range(from, to),
@@ -82,6 +86,8 @@ async function fetchCatalogListing(): Promise<RealListing[]> {
     ctiaLabel: r.ctia_label,
     totalQty: r.total_qty,
     locations: r.locations ?? [],
+    createdAt: r.created_at,
+    soldQty: r.sold_qty ?? 0,
   }));
 }
 

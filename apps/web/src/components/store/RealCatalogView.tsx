@@ -31,6 +31,8 @@ import {
 
 const SORTS = [
   { id: 'featured', label: 'Featured' },
+  { id: 'best-selling', label: 'Best selling' },
+  { id: 'newest', label: 'New arrivals' },
   { id: 'price-asc', label: 'Price: low to high' },
   { id: 'price-desc', label: 'Price: high to low' },
 ] as const;

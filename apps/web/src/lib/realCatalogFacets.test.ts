@@ -17,6 +17,8 @@ function listing(over: Partial<PricedRealListing>): PricedRealListing {
     totalQty: 5,
     locations: [{ id: 'tx', name: 'TX1', qty: 5 }],
     priceCents: 30000,
+    createdAt: '2026-01-01T00:00:00Z',
+    soldQty: 0,
     ...over,
   };
 }
@@ -92,5 +94,21 @@ describe('computeFacetedCatalog', () => {
     expect(anyFacetActive(f)).toBe(false);
     f.carrier.add('UNL');
     expect(anyFacetActive(f)).toBe(true);
+  });
+
+  it('best-selling sorts by units sold, descending', () => {
+    const set = [listing({ sku: 'X', soldQty: 2 }), listing({ sku: 'Y', soldQty: 40 }), listing({ sku: 'Z', soldQty: 10 })];
+    const { filtered } = computeFacetedCatalog(set, emptyFacetState(), '', 'best-selling');
+    expect(filtered.map((i) => i.sku)).toEqual(['Y', 'Z', 'X']);
+  });
+
+  it('newest sorts by created date, descending', () => {
+    const set = [
+      listing({ sku: 'old', createdAt: '2025-01-01T00:00:00Z' }),
+      listing({ sku: 'new', createdAt: '2026-06-01T00:00:00Z' }),
+      listing({ sku: 'mid', createdAt: '2025-09-01T00:00:00Z' }),
+    ];
+    const { filtered } = computeFacetedCatalog(set, emptyFacetState(), '', 'newest');
+    expect(filtered.map((i) => i.sku)).toEqual(['new', 'mid', 'old']);
   });
 });

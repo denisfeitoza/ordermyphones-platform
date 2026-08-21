@@ -92,7 +92,7 @@ function passesAllExcept(i: PricedRealListing, facets: FacetState, needle: strin
   return true;
 }
 
-export type Sort = 'featured' | 'price-asc' | 'price-desc';
+export type Sort = 'featured' | 'price-asc' | 'price-desc' | 'newest' | 'best-selling';
 
 export interface FacetedResult {
   filtered: PricedRealListing[];
@@ -120,6 +120,11 @@ export function computeFacetedCatalog(
     filtered = [...filtered].sort(
       (a, b) => sign * ((a.priceCents ?? Number.MAX_SAFE_INTEGER) - (b.priceCents ?? Number.MAX_SAFE_INTEGER)),
     );
+  } else if (sort === 'newest') {
+    filtered = [...filtered].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  } else if (sort === 'best-selling') {
+    // Most units sold first; ties fall back to native (SKU) order for stability.
+    filtered = [...filtered].sort((a, b) => b.soldQty - a.soldQty);
   }
 
   // Per-axis counts over the set filtered by every OTHER axis.
