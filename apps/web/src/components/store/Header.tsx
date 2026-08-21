@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Search, ShoppingBag, Menu, X, UserRound, ChevronDown, LayoutGrid, BadgeCheck, type LucideIcon } from 'lucide-react';
-import { BrandLogo, type BrandName } from './BrandLogos';
+import { BrandMark, type BrandName } from './BrandLogos';
 import { useAuth, useCart, useRealCart } from '@/store';
 import { useCatalogSource } from '@/lib/catalogSource';
 import { useEffectiveTier } from '@/lib/effectiveTier';
@@ -106,8 +106,8 @@ export function Header() {
                         to={b.to}
                         className="flex items-center gap-3 rounded-lg px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                       >
-                        <span className="grid h-8 w-9 shrink-0 place-items-center rounded-md border border-border bg-card text-foreground [&>span]:!text-base [&>svg]:!h-5 [&>svg]:!w-5">
-                          <BrandLogo brand={b.brand} />
+                        <span className="grid h-8 w-9 shrink-0 place-items-center rounded-md border border-border bg-card text-foreground">
+                          <BrandMark brand={b.brand} />
                         </span>
                         <span className="font-medium text-foreground">{t(b.label)}</span>
                       </Link>
