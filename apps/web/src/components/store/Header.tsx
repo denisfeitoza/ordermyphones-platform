@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Search, ShoppingBag, Menu, X, UserRound, ChevronDown } from 'lucide-react';
+import { Search, ShoppingBag, Menu, X, UserRound, ChevronDown, LayoutGrid, BadgeCheck, type LucideIcon } from 'lucide-react';
+import { BrandLogo, type BrandName } from './BrandLogos';
 import { useAuth, useCart, useRealCart } from '@/store';
 import { useCatalogSource } from '@/lib/catalogSource';
 import { useEffectiveTier } from '@/lib/effectiveTier';
@@ -31,6 +32,17 @@ const SECTION_LINKS = [
 
 const pill =
   'rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground';
+
+// Desktop "Shop" mega-menu: the makes we actually carry (with logos) + categories.
+const SHOP_BRANDS: { brand: BrandName; label: string; to: string }[] = [
+  { brand: 'Apple', label: 'iPhone', to: '/catalog?brand=Apple' },
+  { brand: 'Samsung', label: 'Galaxy', to: '/catalog?brand=Samsung' },
+  { brand: 'Google', label: 'Pixel', to: '/catalog?brand=Google' },
+];
+const SHOP_CATEGORIES: { icon: LucideIcon; label: string; to: string }[] = [
+  { icon: LayoutGrid, label: 'All phones', to: '/catalog' },
+  { icon: BadgeCheck, label: 'Certified Pre-Owned', to: '/catalog?condition=cpo' },
+];
 
 export function Header() {
   // Source-aware cart badge: real mode reflects/opens the {variant_id, qty}
@@ -84,16 +96,39 @@ export function Header() {
               <ChevronDown className="h-3.5 w-3.5 transition-transform group-hover:rotate-180" strokeWidth={2} />
             </NavLink>
             <div className="invisible absolute left-0 top-full z-50 pt-2 opacity-0 transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-              <div className="min-w-52 rounded-xl border border-border bg-background p-1.5 shadow-soft">
-                {SHOP_LINKS.map((l) => (
-                  <Link
-                    key={l.label}
-                    to={l.to}
-                    className="block rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  >
-                    {t(l.label)}
-                  </Link>
-                ))}
+              <div className="w-[440px] rounded-2xl border border-border bg-background p-4 shadow-soft">
+                <div className="grid grid-cols-2 gap-x-4">
+                  <div>
+                    <p className="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Shop by brand')}</p>
+                    {SHOP_BRANDS.map((b) => (
+                      <Link
+                        key={b.brand}
+                        to={b.to}
+                        className="flex items-center gap-3 rounded-lg px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        <span className="grid h-8 w-9 shrink-0 place-items-center rounded-md border border-border bg-card text-foreground [&>span]:!text-base [&>svg]:!h-5 [&>svg]:!w-5">
+                          <BrandLogo brand={b.brand} />
+                        </span>
+                        <span className="font-medium text-foreground">{t(b.label)}</span>
+                      </Link>
+                    ))}
+                  </div>
+                  <div className="border-l border-border pl-4">
+                    <p className="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Categories')}</p>
+                    {SHOP_CATEGORIES.map((c) => (
+                      <Link
+                        key={c.label}
+                        to={c.to}
+                        className="flex items-center gap-3 rounded-lg px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        <span className="grid h-8 w-9 shrink-0 place-items-center rounded-md border border-border bg-card text-foreground">
+                          <c.icon className="h-5 w-5" strokeWidth={2} aria-hidden />
+                        </span>
+                        <span className="font-medium text-foreground">{t(c.label)}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
