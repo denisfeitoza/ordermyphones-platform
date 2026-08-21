@@ -34,8 +34,23 @@ const reveal = {
 export function PartnerWithUs() {
   const { t } = useI18n();
   return (
-    <section id="partner" className="scroll-mt-24 border-y border-border bg-muted/30">
-      <div className="container grid gap-10 py-16 md:py-24 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
+    <section
+      id="partner"
+      className="relative isolate scroll-mt-24 overflow-hidden border-y border-border bg-foreground text-background"
+    >
+      {/* Phone-related backdrop, darkened left→right so the intro stays legible
+          while the photo reads behind the glass feature cards on the right. */}
+      <img
+        src="/generated/hero-phones.png"
+        alt=""
+        aria-hidden
+        className="absolute inset-0 h-full w-full scale-110 object-cover object-left opacity-45"
+      />
+      <div className="absolute inset-0 bg-gradient-to-r from-foreground via-foreground/85 to-foreground/40" />
+      <div className="absolute inset-0 bg-grid-faint opacity-30" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-foreground to-transparent" />
+
+      <div className="relative container grid gap-10 py-16 md:py-24 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
         <motion.div
           initial="hidden"
           whileInView="show"
@@ -43,14 +58,14 @@ export function PartnerWithUs() {
           variants={reveal}
           className="lg:sticky lg:top-24 lg:self-start"
         >
-          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-brand">
+          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-brand-2">
             <LogoMark className="h-4 w-4" />
             {t('Partner With Us')}
           </span>
           <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-balance md:text-4xl">
             {t('Built to keep your shelves — and your customers — supplied')}
           </h2>
-          <p className="mt-3 text-muted-foreground text-pretty">
+          <p className="mt-3 max-w-md text-background/70 text-pretty">
             {t('Retailers, marketplaces, and distributors partner with Order My Phones for dependable inventory, worldwide fulfillment, and support that stands behind every device.')}
           </p>
           <Link to="/request-access" className={`${buttonVariants({ size: 'lg', variant: 'brand' })} mt-7`}>
@@ -70,14 +85,14 @@ export function PartnerWithUs() {
             <motion.div
               key={r.title}
               variants={reveal}
-              className="flex gap-4 rounded-2xl border border-border bg-card p-5 shadow-soft sm:p-6"
+              className="flex gap-4 rounded-2xl border border-white/15 bg-white/5 p-5 shadow-2xl backdrop-blur-md sm:p-6"
             >
               <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-gradient text-white shadow-soft">
                 <r.icon className="h-5 w-5" strokeWidth={2} aria-hidden />
               </span>
               <div>
                 <h3 className="font-display text-lg font-semibold tracking-tight">{t(r.title)}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground text-pretty">{t(r.body)}</p>
+                <p className="mt-1.5 text-sm leading-relaxed text-background/70 text-pretty">{t(r.body)}</p>
               </div>
             </motion.div>
           ))}
