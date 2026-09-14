@@ -34,6 +34,8 @@ export interface AdminOrder {
   shippingAddress: ShippingAddress | null;
   customerEmail: string | null;
   customerName: string | null;
+  /** Snapshot of profiles.is_test at place_order — rehearsal orders reports hide by default. */
+  isTest: boolean;
   lines: AdminOrderLine[];
 }
 
@@ -63,6 +65,7 @@ interface RawOrder {
   decision_reason: string | null;
   notes: string | null;
   shipping_address: ShippingAddress | null;
+  is_test: boolean | null;
   customer: { email: string | null; display_name: string | null } | null;
   order_items: RawItem[];
 }
@@ -77,7 +80,7 @@ async function fetchAdminOrders(): Promise<AdminOrder[]> {
   const { data, error } = await supabase
     .from('orders')
     .select(
-      `id, status, tier_at_order, subtotal_cents, placed_at, decided_at, decision_reason, notes, shipping_address,
+      `id, status, tier_at_order, subtotal_cents, placed_at, decided_at, decision_reason, notes, shipping_address, is_test,
        customer:profiles!orders_customer_id_fkey(email, display_name),
        order_items(id, variant_id, qty_requested, qty_approved, unit_price_cents,
          product_variants(sku, capacity, color, carrier, lock_status, products(make, model)))`,
@@ -97,6 +100,7 @@ async function fetchAdminOrders(): Promise<AdminOrder[]> {
     shippingAddress: o.shipping_address,
     customerEmail: o.customer?.email ?? null,
     customerName: o.customer?.display_name ?? null,
+    isTest: o.is_test === true,
     lines: (o.order_items ?? []).map((it) => ({
       id: it.id,
       variantId: it.variant_id,

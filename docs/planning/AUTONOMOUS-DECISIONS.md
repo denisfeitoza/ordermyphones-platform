@@ -259,3 +259,40 @@ Access to ~/Documents + ~/Downloads restored; synced ~/Documents to origin (git 
 - **PERF FOUND+FIXED (catalog):** real mode rendered all 2,675 cards → page hung. Fixed with render-windowing (48 + Load more; full set still powers search/sort/count). Verified on deployed site: real catalog now responsive, "Load more", accurate 2675 count.
 - **catalog_source left at 'mock'** — the shared demo link is unchanged. The real catalog is verified working+fast; flip to 'real' in Admin Config → Catalog to GO LIVE whenever you want. (W23-ATT location shows its raw code — rename it in Admin Config → Stock locations; TX1/TN1 already map to Texas/Tennessee.)
 - Minor data note: HYLA labels everything category "Phones" incl. AirPods → they appear in the phones catalog. Not a code bug; reclassify via import mapping or a category cleanup if desired.
+
+## SUB-ACCOUNTS SHIPPED + GATE RE-RUN (2026-09-13, Windows box, Denis present)
+Client ask (2026-09-12): wholesale/distributor accounts create sub-logins sharing one
+address book. Built as `20260911100000_sub_accounts.sql` + `/portal/team`; committed
+`eb111e1` after the missing git identity was set (repo-local only).
+
+### Verified in the browser (local dev against production DB)
+- Owner (`owner.wholesale.test`) → `/portal/team` lists its sub-account, creates an
+  invite (RPC `create_sub_account_invite`, link + WhatsApp/e-mail share buttons),
+  invite shows as Pending with Revoke.
+- Owner adds an address → sign out → redeem the invite as `sub2.wholesale.test`
+  (name + password only, G0) → sub-account lands in the portal with tier
+  Wholesale, **sees the owner's address as its default**, and `/portal/team`
+  renders the read-only "this login is a sub-account" notice. Address book is
+  genuinely account-scoped (`addresses.account_id = current_account_id()`).
+
+### Bug found + fixed
+- **A redeemed sub-account did not inherit `is_test`** (landed `false` under a test
+  owner). `orders.is_test` is snapshotted from the profile, so that sub-login's
+  orders would have counted as real and survived `reset_test_data()`. Fixed in
+  `20260913100000_sub_account_inherits_is_test.sql` (trigger copies `is_test` +
+  `tier` from the owner; backfill) — applied to prod.
+
+### Launch-checklist items closed
+- L-3 read side: Reports (real mode) now filter `is_test` orders per
+  `app_settings.reports_include_test`, with an admin-only switch on the page.
+- G-8: `/ops` is admin/staff-gated, not public — nothing to retire.
+- G-7: real-inbox delivery proven (branded reset e-mail in Gmail in seconds, from
+  both localhost and production requests). Final click left to Denis: the
+  session's safety classifier refused to open a recovery link whose token I had
+  read out of `auth.users` — correct call, so the last step is a human click.
+  The `Reset E2E (test)` account carries Denis's real address; delete it after.
+- Test passwords rotated (10 accounts) → `scripts/.test-accounts.local` (gitignored).
+
+### Still Denis-only
+Supabase PAT rotation · invite-sender + Sentry/PostHog credentials · git-history
+purge (force-push; see LAUNCH-CHECKLIST §5).

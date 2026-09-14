@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAdminData } from '@/data/admin';
 import { useAdminOrders, type AdminOrder } from '@/data/adminOrders';
+import { getAppSetting, setAppSetting } from '@/data/adminConfig';
+import { useAuth } from '@/store';
 import { CATALOG, SOURCE_LABELS } from '@/data/catalog';
 import { useCatalogSource } from '@/lib/catalogSource';
 import { AdminHeading } from '@/components/admin/parts';
@@ -33,11 +36,63 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
+const REPORTS_INCLUDE_TEST_KEY = 'reports_include_test';
+
+/** Mirrors `app_settings.reports_include_test` (Phase 8): rehearsal orders
+ * (`orders.is_test`, snapshotted from the profile at place_order) stay out of
+ * the numbers unless an admin flips the switch. Same predicate as the
+ * `orders_reportable` view, applied client-side on the already-fetched book. */
+function useReportsIncludeTest() {
+  const qc = useQueryClient();
+  const q = useQuery({
+    queryKey: ['app_settings', REPORTS_INCLUDE_TEST_KEY],
+    queryFn: () => getAppSetting<boolean>(REPORTS_INCLUDE_TEST_KEY, false),
+  });
+  const m = useMutation({
+    mutationFn: (next: boolean) => setAppSetting(REPORTS_INCLUDE_TEST_KEY, next),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['app_settings', REPORTS_INCLUDE_TEST_KEY] }),
+  });
+  return { includeTest: q.data === true, setIncludeTest: (v: boolean) => m.mutate(v), pending: m.isPending };
+}
+
+function TestOrdersToggle({ hidden }: { hidden: number }) {
+  const { t } = useI18n();
+  const { role } = useAuth();
+  const { includeTest, setIncludeTest, pending } = useReportsIncludeTest();
+  const canFlip = role === 'admin';
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-sm">
+      <p className="text-muted-foreground">
+        {includeTest
+          ? t('Including rehearsal (TEST) orders in every figure below.')
+          : hidden > 0
+            ? `${formatInt(hidden)} ${t('rehearsal (TEST) orders hidden from the figures below.')}`
+            : t('Rehearsal (TEST) orders are excluded from the figures below.')}
+      </p>
+      {canFlip && (
+        <label className="inline-flex cursor-pointer items-center gap-2">
+          <input
+            type="checkbox"
+            className="h-4 w-4 accent-brand"
+            checked={includeTest}
+            disabled={pending}
+            onChange={(e) => setIncludeTest(e.target.checked)}
+          />
+          <span>{t('Include test orders')}</span>
+        </label>
+      )}
+    </div>
+  );
+}
+
 /** Real-mode analytics derived entirely from the live order book (useAdminOrders).
  * No supplier/cost data — the order snapshot carries only model, qty, tier and
  * price. Fills in as orders flow; empty state shows until the first order. */
-function RealReports({ orders }: { orders: AdminOrder[] }) {
+function RealReports({ orders: allOrders }: { orders: AdminOrder[] }) {
   const { t } = useI18n();
+  const { includeTest } = useReportsIncludeTest();
+  const orders = useMemo(() => (includeTest ? allOrders : allOrders.filter((o) => !o.isTest)), [allOrders, includeTest]);
+  const hiddenCount = allOrders.length - orders.length;
   const agg = useMemo(() => {
     const monthly = new Map<string, number>();
     const tierMix = new Map<string, number>();
@@ -70,6 +125,7 @@ function RealReports({ orders }: { orders: AdminOrder[] }) {
     return (
       <div className="space-y-6">
         <AdminHeading title="Reports" subtitle="Sales and tier distribution — derived from the live order book." />
+        <TestOrdersToggle hidden={hiddenCount} />
         <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
           {t('No orders yet. As orders come in, revenue by month, tier mix and top products fill in here automatically.')}
         </div>
@@ -83,6 +139,7 @@ function RealReports({ orders }: { orders: AdminOrder[] }) {
   return (
     <div className="space-y-6">
       <AdminHeading title="Reports" subtitle="Sales and tier distribution — derived from the live order book." />
+      <TestOrdersToggle hidden={hiddenCount} />
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Stat label="Gross merchandise value" value={formatUsd(agg.gmv, true)} />
