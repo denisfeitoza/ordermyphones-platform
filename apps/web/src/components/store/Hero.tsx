@@ -9,7 +9,8 @@ import { formatInt } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { PulseDot } from './SyncHeartbeat';
 
-export function Hero() {
+/** `skuCount` overrides the demo counter with the live catalog size in real mode. */
+export function Hero({ skuCount }: { skuCount?: number | undefined } = {}) {
   const reduce = useReducedMotion();
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
@@ -29,7 +30,7 @@ export function Hero() {
   const stats = [
     { value: '4', label: t('Pricing tiers') },
     { value: '3', label: t('U.S. warehouses') },
-    { value: formatInt(skusTracked), label: t('SKUs tracked') },
+    { value: formatInt(skuCount ?? skusTracked), label: t('SKUs tracked') },
     { value: '< 2s', label: t('Stock refresh') },
   ];
 

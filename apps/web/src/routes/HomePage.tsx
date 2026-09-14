@@ -16,6 +16,10 @@ import { NewsFeed } from '@/components/store/NewsFeed';
 import { Recommendations } from '@/components/store/Recommendations';
 import { CATALOG } from '@/data/catalog';
 import { useRealCatalog } from '@/data/realCatalog';
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getAppSetting } from '@/data/adminConfig';
+import { pickFeatured, type FeaturedPins } from '@/lib/realCatalogFacets';
 import { useCatalogSource } from '@/lib/catalogSource';
 import { useI18n } from '@/i18n';
 
@@ -27,12 +31,20 @@ export default function HomePage() {
   // pays for the network round trip, matching the "zero visual/behavioral
   // change while mock" contract.
   const real = useRealCatalog(source === 'real');
+  // Admin curation (Admin → Settings → Catalog → Featured); anon-readable.
+  const pinsQ = useQuery({
+    queryKey: ['app-settings', 'catalog_featured'],
+    queryFn: () => getAppSetting<FeaturedPins>('catalog_featured', { skus: [], models: [] }),
+    enabled: source === 'real',
+    staleTime: 5 * 60_000,
+  });
+  const realFeatured = useMemo(() => pickFeatured(real.items, pinsQ.data), [real.items, pinsQ.data]);
 
   return (
     <div>
       <BenefitsBar />
 
-      <Hero />
+      <Hero skuCount={source === 'real' && real.items.length > 0 ? real.items.length : undefined} />
 
       <ShopByCategory />
 
@@ -57,7 +69,7 @@ export default function HomePage() {
         {source === 'mock' ? (
           <ProductGrid items={featured} />
         ) : real.items.length > 0 ? (
-          <RealProductGrid items={real.items.slice(0, 6)} />
+          <RealProductGrid items={realFeatured} />
         ) : (
           <RealCatalogEmpty />
         )}

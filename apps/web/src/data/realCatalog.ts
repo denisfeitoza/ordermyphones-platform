@@ -79,7 +79,8 @@ async function fetchCatalogListing(): Promise<RealListing[]> {
     make: r.make,
     model: r.model,
     capacity: r.capacity,
-    color: r.color,
+    // Vendor sheets use "*" / "-" for "no colour" — never show that to a buyer.
+    color: r.color && /[a-z]/i.test(r.color) ? r.color : null,
     carrier: r.carrier,
     lockStatus: r.lock_status,
     ctiaGrade: r.ctia_grade,
@@ -190,6 +191,10 @@ export function carrierLabel(code: string): string {
  * "iPhone 11 Pro" 256GB variant renders "iPhone 11 Pro · 256GB · Unlocked".
  */
 export function buildDisplayName(l: Pick<RealListing, 'model' | 'capacity' | 'carrier' | 'lockStatus'>): string {
-  const lockPart = l.lockStatus === 'unlocked' ? 'Unlocked' : `${carrierLabel(l.carrier)} Locked`;
-  return `${l.model} · ${l.capacity} · ${lockPart}`;
+  // "Other Locked" (carrier OTH) says nothing to a buyer — just "Locked".
+  const lockPart = l.lockStatus === 'unlocked' ? 'Unlocked' : l.carrier === 'OTH' ? 'Locked' : `${carrierLabel(l.carrier)} Locked`;
+  // Accessories come through the phone import with a placeholder "1GB"
+  // capacity (AirPods, Watch…); no phone ships with 1GB, so hide it.
+  const cap = l.capacity && !/^1\s*GB$/i.test(l.capacity.trim()) ? l.capacity : null;
+  return [l.model, cap, lockPart].filter(Boolean).join(' · ');
 }

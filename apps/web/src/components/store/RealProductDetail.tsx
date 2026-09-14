@@ -1,8 +1,9 @@
 import { useRef, type MouseEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronRight, MapPin, ShieldCheck, Truck, RotateCcw, Smartphone } from 'lucide-react';
+import { ChevronRight, MapPin, ShieldCheck, Smartphone } from 'lucide-react';
 import { buildDisplayName, carrierLabel, type PricedRealListing } from '@/data/realCatalog';
+import { HOME_ICONS, useHomeContent } from '@/data/homeContent';
 import { resolveProductImage } from '@/lib/productImage';
 import { Badge } from '@/components/ui/Badge';
 import { RealPriceTag } from './RealPriceTag';
@@ -47,6 +48,8 @@ function ZoomImage({ src, alt, sku }: { src: string; alt: string; sku: string })
 
 export function RealProductDetail({ item, related }: { item: PricedRealListing; related: PricedRealListing[] }) {
   const { t } = useI18n();
+  const { data: home } = useHomeContent();
+  const trust = home?.benefits.enabled ? home.benefits.items.slice(0, 3) : [];
   const image = resolveProductImage(item.model);
   const name = buildDisplayName(item);
   const available = item.totalQty;
@@ -83,7 +86,7 @@ export function RealProductDetail({ item, related }: { item: PricedRealListing; 
 
           <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <RealPriceTag priceCents={item.priceCents} size="lg" />
-            <span className="text-sm text-muted-foreground">/ {t('unit')}</span>
+            {item.priceCents !== null && <span className="text-sm text-muted-foreground">/ {t('unit')}</span>}
           </div>
 
           <dl className="mt-6 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
@@ -131,18 +134,22 @@ export function RealProductDetail({ item, related }: { item: PricedRealListing; 
             <RealAddToCart variantId={item.variantId} priceCents={item.priceCents} stepper className="mt-6" />
           )}
 
-          <div className="mt-6 grid grid-cols-3 gap-3 text-xs">
-            {[
-              { icon: ShieldCheck, label: '12-month warranty' },
-              { icon: Truck, label: 'Ships from US stock' },
-              { icon: RotateCcw, label: '30-day returns' },
-            ].map((tr) => (
-              <div key={tr.label} className="flex flex-col items-center gap-1.5 rounded-xl bg-muted/50 p-3 text-center text-muted-foreground">
-                <tr.icon className="h-4 w-4" strokeWidth={1.75} />
-                {t(tr.label)}
-              </div>
-            ))}
-          </div>
+          {/* Trust bullets come from the admin-managed benefits bar so the
+              product page never contradicts the home page (production showed
+              "90-day warranty" up top and "12-month warranty" here). */}
+          {trust.length > 0 && (
+            <div className="mt-6 grid grid-cols-3 gap-3 text-xs">
+              {trust.map((tr) => {
+                const Icon = HOME_ICONS[tr.icon] ?? ShieldCheck;
+                return (
+                  <div key={tr.text} className="flex flex-col items-center gap-1.5 rounded-xl bg-muted/50 p-3 text-center text-muted-foreground">
+                    <Icon className="h-4 w-4" strokeWidth={1.75} />
+                    {t(tr.text)}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
