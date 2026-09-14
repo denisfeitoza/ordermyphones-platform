@@ -1256,6 +1256,14 @@ export const PT: Record<string, string> = {
   'Expected volume': 'Volume esperado',
   'Anything else? (optional)': 'Algo mais? (opcional)',
   'Already invited?': 'Já foi convidado?',
+
+  // ---- added 2026-09-13 (audit i18n sweep) ----
+  'Mark as shipped': 'Marcar como enviado',
+  'Tracking number': 'Código de rastreio',
+  'Note for the customer (optional)': 'Observação para o cliente (opcional)',
+  'Confirm shipped': 'Confirmar envio',
+  'Picking sheet (PDF)': 'Romaneio de separação (PDF)',
+  'Tracking details will follow from our team.': 'Os dados de rastreio serão enviados pela nossa equipe.',
 };
 
 export const ES: Record<string, string> = {
@@ -2512,4 +2520,12 @@ export const ES: Record<string, string> = {
   'Expected volume': 'Volumen esperado',
   'Anything else? (optional)': '¿Algo más? (opcional)',
   'Already invited?': '¿Ya te invitaron?',
+
+  // ---- added 2026-09-13 (audit i18n sweep) ----
+  'Mark as shipped': 'Marcar como enviado',
+  'Tracking number': 'Número de seguimiento',
+  'Note for the customer (optional)': 'Nota para el cliente (opcional)',
+  'Confirm shipped': 'Confirmar envío',
+  'Picking sheet (PDF)': 'Hoja de picking (PDF)',
+  'Tracking details will follow from our team.': 'Nuestro equipo enviará los datos de seguimiento.',
 };

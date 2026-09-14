@@ -1,9 +1,9 @@
-import { ArrowRight, Check, Pencil, ShoppingBag, XCircle } from 'lucide-react';
+import { ArrowRight, Check, Pencil, ShoppingBag, Truck, XCircle } from 'lucide-react';
 import type { OrderChange, OrderEvent } from '@/data/orderEvents';
 import { formatUsd, formatInt } from '@/lib/format';
 import { useI18n } from '@/i18n';
 
-type Status = 'pending' | 'approved' | 'partially_approved' | 'rejected' | 'cancelled';
+type Status = 'pending' | 'approved' | 'partially_approved' | 'rejected' | 'cancelled' | 'shipped';
 
 /** Renders one field-level change as a plain, customer-safe sentence. Never
  * exposes cost/supplier/grade — only model, quantity and the price paid. */
@@ -99,7 +99,9 @@ export function OrderTimeline({
     dot: <Dot tone="bg-foreground text-background" icon={ShoppingBag} />,
     title: t('Order placed'),
   });
+  const shippedEvents = events.filter((e) => e.kind === 'shipped');
   for (const e of events) {
+    if (e.kind === 'shipped') continue; // rendered after the decision row
     rows.push({
       key: e.id,
       at: e.createdAt,
@@ -111,6 +113,9 @@ export function OrderTimeline({
   }
   if (decidedAt && status !== 'pending') {
     const rejected = status === 'rejected' || status === 'cancelled';
+    // A shipped order was approved (fully or partially) first; the approved
+    // split is on the lines, so "Approved" is the honest label here.
+    const approvedTitle = status === 'partially_approved' ? t('Partially approved') : t('Approved');
     rows.push({
       key: 'decided',
       at: decidedAt,
@@ -119,15 +124,19 @@ export function OrderTimeline({
       ) : (
         <Dot tone="bg-emerald-500 text-white" icon={Check} />
       ),
-      title:
-        status === 'approved'
-          ? t('Approved')
-          : status === 'partially_approved'
-            ? t('Partially approved')
-            : status === 'rejected'
-              ? t('Rejected')
-              : t('Cancelled'),
+      title: status === 'rejected' ? t('Rejected') : status === 'cancelled' ? t('Cancelled') : approvedTitle,
       reason: rejected ? (decisionReason ?? null) : null,
+    });
+  }
+  for (const e of shippedEvents) {
+    const c = e.changes.find((x) => x.type === 'shipped');
+    const via = [c?.carrier, c?.tracking].filter(Boolean).join(' · ');
+    rows.push({
+      key: e.id,
+      at: e.createdAt,
+      dot: <Dot tone="bg-sky-500 text-white" icon={Truck} />,
+      title: via ? `${t('Shipped')} · ${via}` : t('Shipped'),
+      reason: e.summary,
     });
   }
 

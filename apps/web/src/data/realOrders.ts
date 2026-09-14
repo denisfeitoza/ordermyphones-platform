@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/store/auth';
 import { carrierLabel } from './realCatalog';
 
-export type RealOrderStatus = 'pending' | 'approved' | 'partially_approved' | 'rejected' | 'cancelled';
+export type RealOrderStatus = 'pending' | 'approved' | 'partially_approved' | 'rejected' | 'cancelled' | 'shipped';
 
 export interface RealOrderLine {
   id: string;
@@ -34,6 +34,9 @@ export interface RealOrder {
   isTest: boolean;
   /** profiles.id of the login that placed it — an account owner also sees its sub-accounts' orders. */
   customerId: string;
+  shippedAt: string | null;
+  trackingCarrier: string | null;
+  trackingNumber: string | null;
   lines: RealOrderLine[];
 }
 
@@ -49,6 +52,9 @@ interface RawOrderRow {
   shipping_address: RealOrder['shippingAddress'];
   is_test: boolean;
   customer_id: string;
+  shipped_at: string | null;
+  tracking_carrier: string | null;
+  tracking_number: string | null;
 }
 
 interface RawItemRow {
@@ -91,7 +97,7 @@ function mapLine(r: RawItemRow): RealOrderLine {
 async function fetchMyOrders(): Promise<RealOrder[]> {
   const { data: orders, error } = await supabase
     .from('orders')
-    .select('id, status, tier_at_order, subtotal_cents, placed_at, decided_at, decision_reason, notes, shipping_address, is_test, customer_id')
+    .select('id, status, tier_at_order, subtotal_cents, placed_at, decided_at, decision_reason, notes, shipping_address, is_test, customer_id, shipped_at, tracking_carrier, tracking_number')
     .order('placed_at', { ascending: false });
   if (error) throw new Error(error.message);
   const rows = (orders ?? []) as RawOrderRow[];
@@ -122,6 +128,9 @@ async function fetchMyOrders(): Promise<RealOrder[]> {
     shippingAddress: o.shipping_address,
     isTest: o.is_test ?? false,
     customerId: o.customer_id,
+    shippedAt: o.shipped_at ?? null,
+    trackingCarrier: o.tracking_carrier ?? null,
+    trackingNumber: o.tracking_number ?? null,
     lines: byOrder.get(o.id) ?? [],
   }));
 }
