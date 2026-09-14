@@ -50,7 +50,7 @@ export function RealProductDetail({ item, related }: { item: PricedRealListing; 
   const { t } = useI18n();
   const { data: home } = useHomeContent();
   const trust = home?.benefits.enabled ? home.benefits.items.slice(0, 3) : [];
-  const image = resolveProductImage(item.model);
+  const image = item.imageUrl ?? resolveProductImage(item.model);
   const name = buildDisplayName(item);
   const available = item.totalQty;
   const soldOut = available === 0;
@@ -83,6 +83,7 @@ export function RealProductDetail({ item, related }: { item: PricedRealListing; 
           <span className="text-sm font-medium text-muted-foreground">{item.make}</span>
           <h1 className="mt-1.5 font-display text-3xl font-semibold tracking-tight md:text-4xl">{name}</h1>
           {item.color && <p className="mt-1 text-sm text-muted-foreground">{item.color}</p>}
+          {item.description && <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{item.description}</p>}
 
           <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <RealPriceTag priceCents={item.priceCents} size="lg" />

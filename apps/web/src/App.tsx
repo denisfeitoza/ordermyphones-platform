@@ -45,6 +45,7 @@ import AiBotsPage from '@/routes/admin/AiBotsPage';
 import ReportsPage from '@/routes/admin/ReportsPage';
 import { SectionTabs, type SectionTab } from '@/components/admin/SectionTabs';
 import CatalogTab from '@/routes/admin/config/CatalogTab';
+import ProductsTab from '@/routes/admin/config/ProductsTab';
 import TiersTab from '@/routes/admin/config/TiersTab';
 import PricingTab from '@/routes/admin/config/PricingTab';
 import QuantityRulesTab from '@/routes/admin/config/QuantityRulesTab';
@@ -72,6 +73,7 @@ const IMPORT_TABS: SectionTab[] = [
 ];
 const INVENTORY_TABS: SectionTab[] = [
   { to: '/admin/inventory', label: 'Stock', end: true },
+  { to: '/admin/inventory/products', label: 'Products', title: 'Products', subtitle: 'Photos, descriptions and the publish switch for every model the import brought in.' },
   { to: '/admin/inventory/locations', label: 'Locations', title: 'Stock locations', subtitle: 'Your warehouses and storages — create, rename, deactivate, merge, and choose which ones customers see.' },
 ];
 const CUSTOMERS_TABS: SectionTab[] = [
@@ -138,6 +140,7 @@ export default function App() {
 
           <Route path="inventory" element={<SectionTabs tabs={INVENTORY_TABS} />}>
             <Route index element={<InventoryPage />} />
+            <Route path="products" element={<ProductsTab />} />
             <Route path="locations" element={<LocationsTab />} />
           </Route>
 
