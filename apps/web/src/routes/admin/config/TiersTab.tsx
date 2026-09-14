@@ -100,7 +100,8 @@ export default function TiersTab() {
   const qc = useQueryClient();
   const tiersQ = useQuery({ queryKey: ['config-tiers'], queryFn: listTiers });
 
-  const reprice = useMutation({ mutationFn: repriceAll });
+  // A full reprice changes every price/flag/listing — refresh everything.
+  const reprice = useMutation({ mutationFn: repriceAll, onSuccess: () => void qc.invalidateQueries() });
 
   return (
     <div className="space-y-6">

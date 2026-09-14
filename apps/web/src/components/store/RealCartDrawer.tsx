@@ -61,9 +61,13 @@ export function RealCartDrawer() {
   // Block checkout only when a line has an in-progress split that doesn't sum to
   // its qty (all-or-nothing). Lines with no split are always valid.
   const allocationsValid = resolved.every((l) => allocationValid(l));
+  // Every line must have a resolved tier price before checkout — otherwise
+  // the subtotal shown undercounts and place_order would price lines the
+  // buyer never saw (audit 2026-09-13 P2).
+  const pricesReady = resolved.length > 0 && resolved.every((l) => l.lineTotalCents !== null);
 
   function checkout() {
-    if (!allocationsValid) return;
+    if (!allocationsValid || !pricesReady) return;
     setOpen(false);
     navigate('/checkout');
   }
@@ -190,7 +194,7 @@ export function RealCartDrawer() {
                     <span className="text-sm text-muted-foreground">{t('Subtotal')}</span>
                     <span className="font-mono text-xl font-semibold tabular-nums">{formatUsd(subtotalCents)}</span>
                   </div>
-                  <Button variant="primary" size="lg" className="w-full" onClick={checkout} disabled={!allocationsValid}>
+                  <Button variant="primary" size="lg" className="w-full" onClick={checkout} disabled={!allocationsValid || !pricesReady}>
                     {t('Review & place order')}
                     <ArrowRight className="h-4 w-4" strokeWidth={2} />
                   </Button>

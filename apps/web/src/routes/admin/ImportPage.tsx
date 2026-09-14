@@ -283,7 +283,10 @@ export default function ImportPage() {
         setProfileSaveWarning(profileErr instanceof Error ? profileErr.message : t('unknown error'));
       }
 
-      queryClient.invalidateQueries({ queryKey: ['admin-inventory'] });
+      // An import touches inventory, prices, flags, locations and the
+      // storefront listing at once — drop every cached query rather than
+      // chase each key (audit 2026-09-13 P2). Imports are rare and heavy.
+      void queryClient.invalidateQueries();
       setCommitResult(result);
       setPreCommitInfo({ rowsInFile: dryRun.validated.length, clientRejects });
       setStep('commit');
