@@ -16,6 +16,12 @@ jobs:
     defaults:
       run:
         working-directory: apps/web
+    env:
+      # Public placeholder values only (they ship in the browser bundle anyway).
+      # lib/supabase.ts creates its client at import time, so unit tests and
+      # the build need a URL/key shape; real values come from the host at deploy.
+      VITE_SUPABASE_URL: https://example.supabase.co
+      VITE_SUPABASE_ANON_KEY: sb_publishable_ci_placeholder
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -28,8 +34,3 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npx vite build
-        env:
-          # Public values only (they ship in the browser bundle). The build
-          # needs a URL/key shape; real values come from the host at deploy.
-          VITE_SUPABASE_URL: https://example.supabase.co
-          VITE_SUPABASE_ANON_KEY: sb_publishable_ci_placeholder
