@@ -5,6 +5,7 @@ import { useCatalogSource } from '@/lib/catalogSource';
 import { useEffectiveTier } from '@/lib/effectiveTier';
 import { TierBadge } from '@/components/store/TierBadge';
 import { hasApiAccess } from '@/data/inventoryApi';
+import { canManageSubAccounts } from '@/data/subAccounts';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n';
 
@@ -13,8 +14,9 @@ const portalNav = [
   { to: '/portal/orders', label: 'Orders' },
   { to: '/portal/wishlist', label: 'Wishlist' },
   { to: '/portal/tier', label: 'Tier' },
-  { to: '/portal/inventory-api', label: 'Inventory API', gated: true },
+  { to: '/portal/inventory-api', label: 'Inventory API', gate: 'api' as const },
   { to: '/portal/addresses', label: 'Addresses' },
+  { to: '/portal/team', label: 'Team', gate: 'team' as const },
   { to: '/portal/payment-methods', label: 'Payment' },
   { to: '/portal/settings', label: 'Settings' },
 ];
@@ -35,6 +37,7 @@ export default function PortalLayout() {
   const { tierDef, code } = useEffectiveTier();
   const isStaff = role === 'admin' || role === 'staff';
   const apiUnlocked = hasApiAccess(code);
+  const teamUnlocked = canManageSubAccounts(profile?.tier ?? null, profile?.parent_account_id ?? null) || !!profile?.parent_account_id;
   const { t } = useI18n();
   const navigate = useNavigate();
 
@@ -90,7 +93,8 @@ export default function PortalLayout() {
                 }
               >
                 {t(l.label)}
-                {l.gated && !apiUnlocked && <Lock className="h-3 w-3 opacity-60" strokeWidth={2} aria-label={t('Wholesale and up')} />}
+                {l.gate === 'api' && !apiUnlocked && <Lock className="h-3 w-3 opacity-60" strokeWidth={2} aria-label={t('Wholesale and up')} />}
+                {l.gate === 'team' && !teamUnlocked && <Lock className="h-3 w-3 opacity-60" strokeWidth={2} aria-label={t('Wholesale and up')} />}
               </NavLink>
             ))}
           </nav>

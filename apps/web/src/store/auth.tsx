@@ -18,6 +18,8 @@ export interface Profile {
   tier: 'consumer' | 'retailer' | 'wholesale' | 'distributor' | null;
   is_test: boolean;
   display_name: string | null;
+  /** Null for a normal account or an account owner; the owner's profile id for a sub-account. */
+  parent_account_id: string | null;
 }
 
 export interface AuthUser {
@@ -69,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id,email,role,tier,is_test,display_name')
+        .select('id,email,role,tier,is_test,display_name,parent_account_id')
         .eq('id', session!.user.id)
         .single();
       if (error) throw error;
