@@ -255,7 +255,7 @@ function ProfileSection() {
         >
           {q.data.map((r: ImportProfileRow) => (
             <tr key={r.id} className="hover:bg-muted/40">
-              <Td className="font-medium">{r.supplier?.name ?? r.supplier_id.slice(0, 8)}</Td>
+              <Td className="font-medium">{r.supplier?.anon_label ?? r.supplier_id.slice(0, 8)}</Td>
               <Td className="text-muted-foreground">{r.sheet_name ?? '—'}{r.header_row != null ? ` · ${t('row')} ${r.header_row}` : ''}</Td>
               <Td align="right" className="font-mono tabular-nums">{r.version}</Td>
               <Td className="text-muted-foreground">{new Date(r.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</Td>

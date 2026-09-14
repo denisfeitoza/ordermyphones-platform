@@ -16,7 +16,9 @@ interface Featured {
 }
 
 function useSetting<T>(key: string, fallback: T) {
-  return useQuery({ queryKey: ['app_setting', key], queryFn: () => getAppSetting<T>(key, fallback) });
+  // Same key family as lib/catalogSource.ts so flipping LIVE/Demo here
+  // refreshes the storefront hook in this tab too (audit 2026-09-13 P2).
+  return useQuery({ queryKey: ['app-settings', key], queryFn: () => getAppSetting<T>(key, fallback) });
 }
 
 /** Typed-confirmation modal for the irreversible-feeling go-live flip. */
@@ -121,7 +123,7 @@ export default function CatalogTab() {
 
   const save = useMutation({
     mutationFn: ({ key, value }: { key: string; value: unknown }) => setAppSetting(key, value),
-    onSuccess: (_d, v) => qc.invalidateQueries({ queryKey: ['app_setting', v.key] }),
+    onSuccess: (_d, v) => qc.invalidateQueries({ queryKey: ['app-settings', v.key] }),
   });
 
   const source = sourceQ.data ?? 'mock';

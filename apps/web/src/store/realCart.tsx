@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { supabase } from '@/lib/supabase';
 
 /**
  * Real-mode cart — the storefront's cart when app_settings.catalog_source is
@@ -27,7 +28,14 @@ export interface RealCartLine {
   allocations?: RealCartAllocation[] | undefined;
 }
 
-const STORAGE_KEY = 'omp_real_cart_v1';
+/**
+ * Storage is scoped per signed-in user (audit 2026-09-13 P0-2): a cart built
+ * by user A must not be inherited by user B on the same browser. The anonymous
+ * cart lives under its own key and is merged into the user's cart on sign-in.
+ */
+const STORAGE_PREFIX = 'omp_real_cart_v2';
+const ANON = 'anon';
+const storageKey = (uid: string | null) => `${STORAGE_PREFIX}:${uid ?? ANON}`;
 
 function sanitizeAllocations(a: unknown): RealCartAllocation[] | undefined {
   if (!Array.isArray(a)) return undefined;
@@ -37,9 +45,9 @@ function sanitizeAllocations(a: unknown): RealCartAllocation[] | undefined {
   return clean.length ? clean : undefined;
 }
 
-function load(): RealCartLine[] {
+function load(uid: string | null): RealCartLine[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey(uid));
     if (raw) {
       const parsed = JSON.parse(raw) as RealCartLine[];
       if (Array.isArray(parsed)) {
@@ -69,16 +77,54 @@ interface RealCartContextValue {
 const RealCartContext = createContext<RealCartContextValue | null>(null);
 
 export function RealCartProvider({ children }: { children: ReactNode }) {
-  const [lines, setLines] = useState<RealCartLine[]>(() => load());
+  // The cart starts as the anonymous cart; the auth listener below swaps it
+  // for the user's own cart as soon as the session is known.
+  const [uid, setUid] = useState<string | null>(null);
+  const [lines, setLines] = useState<RealCartLine[]>(() => load(null));
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(lines));
+      localStorage.setItem(storageKey(uid), JSON.stringify(lines));
     } catch {
       // storage may be unavailable (private mode) — non-fatal
     }
-  }, [lines]);
+  }, [lines, uid]);
+
+  // Follow the auth session: on sign-in, merge the anonymous cart into the
+  // user's saved cart (and clear the anon one); on sign-out, drop back to an
+  // EMPTY anonymous cart so nothing of the previous user lingers on screen.
+  useEffect(() => {
+    let current: string | null = null;
+    const apply = (nextUid: string | null) => {
+      if (nextUid === current) return;
+      current = nextUid;
+      if (nextUid) {
+        const own = load(nextUid);
+        const anon = load(null);
+        const merged = [...own];
+        for (const l of anon) {
+          const existing = merged.find((m) => m.variantId === l.variantId);
+          if (existing) existing.qty += l.qty;
+          else merged.push({ variantId: l.variantId, qty: l.qty });
+        }
+        try {
+          localStorage.removeItem(storageKey(null));
+        } catch {
+          /* non-fatal */
+        }
+        setUid(nextUid);
+        setLines(merged);
+      } else {
+        setUid(null);
+        setLines([]);
+        setOpen(false);
+      }
+    };
+    void supabase.auth.getSession().then(({ data }) => apply(data.session?.user.id ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => apply(session?.user.id ?? null));
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
   const add = useCallback((variantId: string, qty = 1) => {
     const inc = Math.max(1, Math.floor(qty));

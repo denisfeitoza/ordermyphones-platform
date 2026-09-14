@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { X, ClipboardList, ShoppingBag, Plus, Trash2, Search, Eye } from 'lucide-react';
 import { useAuth, useRealCart, useTier } from '@/store';
 import { useRealCatalog, buildDisplayName, type PricedRealListing } from '@/data/realCatalog';
+import { canOrder } from '@/components/store/RealAddToCart';
 import { TIERS } from '@/data/tiers';
 import { Button } from '@/components/ui/Button';
 import { formatUsd } from '@/lib/format';
@@ -70,7 +71,10 @@ export function QuickOrderDialog({ open, onClose }: { open: boolean; onClose: ()
     setStaged((prev) => prev.filter((s) => s.variantId !== variantId));
   }
   function addAll() {
-    for (const s of stagedResolved) add(s.item.variantId, s.qty);
+    // Same gate as RealAddToCart: only a signed-in customer with a resolved
+    // price can put a line in the cart — an admin in a tier lens must not
+    // build a preview-priced cart (audit 2026-09-13).
+    for (const s of stagedResolved) if (canOrder(signedIn, role, s.item.priceCents)) add(s.item.variantId, s.qty);
     setStaged([]);
     setQuery('');
     onClose();
@@ -205,7 +209,13 @@ export function QuickOrderDialog({ open, onClose }: { open: boolean; onClose: ()
             </div>
 
             <footer className="border-t border-border px-5 py-4">
-              <Button variant="primary" size="lg" className="w-full" onClick={addAll} disabled={stagedResolved.length === 0}>
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full"
+                onClick={addAll}
+                disabled={stagedResolved.length === 0 || !stagedResolved.some((s) => canOrder(signedIn, role, s.item.priceCents))}
+              >
                 <ShoppingBag className="h-4 w-4" strokeWidth={2} />
                 {stagedResolved.length === 0
                   ? t('Nothing to add yet')

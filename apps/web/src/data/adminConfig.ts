@@ -251,13 +251,14 @@ export interface ImportProfileRow {
   header_row: number | null;
   version: number;
   updated_at: string;
-  supplier: { name: string } | null;
+  /** suppliers has no `name` column — the anonymized label is the display name. */
+  supplier: { anon_label: string } | null;
 }
 
 export async function listImportProfiles(): Promise<ImportProfileRow[]> {
   const { data, error } = await supabase
     .from('import_profiles')
-    .select('id,supplier_id,header_fingerprint,sheet_name,header_row,version,updated_at,supplier:suppliers(name)')
+    .select('id,supplier_id,header_fingerprint,sheet_name,header_row,version,updated_at,supplier:suppliers(anon_label)')
     .order('updated_at', { ascending: false });
   if (error) throw new Error(error.message);
   return ((data ?? []) as unknown as ImportProfileRow[]);
