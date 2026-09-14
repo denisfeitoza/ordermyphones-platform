@@ -46,3 +46,18 @@ describe('carrierLabel', () => {
     expect(carrierLabel('ZZZ')).toBe('ZZZ');
   });
 });
+
+describe('buildDisplayName — accessories and unknown carriers (audit 2026-09-13)', () => {
+  it('hides the placeholder 1GB capacity accessories get from the phone import', () => {
+    expect(buildDisplayName({ model: 'AirPods Max 2 USB-C', capacity: '1GB', carrier: 'OTH', lockStatus: 'locked' })).toBe(
+      'AirPods Max 2 USB-C · Locked',
+    );
+  });
+  it('says just "Locked" when the carrier is the catch-all OTH', () => {
+    expect(buildDisplayName({ model: 'Galaxy S23', capacity: '128GB', carrier: 'OTH', lockStatus: 'locked' })).toBe('Galaxy S23 · 128GB · Locked');
+  });
+  it('keeps the named carrier for real carriers', () => {
+    expect(buildDisplayName({ model: 'iPhone 11', capacity: '64GB', carrier: 'ATT', lockStatus: 'locked' })).toContain('Locked');
+    expect(buildDisplayName({ model: 'iPhone 11', capacity: '64GB', carrier: 'ATT', lockStatus: 'locked' })).not.toBe('iPhone 11 · 64GB · Locked');
+  });
+});

@@ -140,3 +140,61 @@ export function computeFacetedCatalog(
 
   return { filtered, counts };
 }
+
+/** Admin curation for the home page "Featured" grid (app_settings.catalog_featured). */
+export interface FeaturedPins {
+  skus: string[];
+  models: string[];
+}
+
+const ACCESSORY_RE = /airpods|watch|pencil|magsafe|charger|case\b|cable|adapter|earbuds|buds\b|band\b/i;
+
+/**
+ * Pick the home page "Featured" cards from the live catalog (audit 2026-09-13,
+ * production home showed AirPods in SKU order): admin-pinned SKUs first (in
+ * pin order), then variants of admin-pinned models, then best sellers, then
+ * whatever is in stock — accessories that ride along in the phone import
+ * (AirPods, Watch…) are skipped in the automatic fill, and at most one card
+ * per model so the grid shows variety. Pure; unit-tested.
+ */
+export function pickFeatured<T extends { sku: string; model: string; totalQty: number; soldQty: number }>(
+  items: readonly T[],
+  pins: FeaturedPins | null | undefined,
+  limit = 6,
+): T[] {
+  const out: T[] = [];
+  const taken = new Set<string>();
+  const models = new Set<string>();
+  const push = (it: T, oneModel: boolean) => {
+    if (out.length >= limit || taken.has(it.sku)) return;
+    const m = it.model.toLowerCase();
+    if (oneModel && models.has(m)) return;
+    out.push(it);
+    taken.add(it.sku);
+    models.add(m);
+  };
+
+  const bySku = new Map(items.map((i) => [i.sku.toUpperCase(), i]));
+  for (const s of pins?.skus ?? []) {
+    const it = bySku.get(s.trim().toUpperCase());
+    if (it) push(it, false);
+  }
+  for (const m of pins?.models ?? []) {
+    const needle = m.trim().toLowerCase();
+    if (!needle) continue;
+    const it = items.find((i) => i.totalQty > 0 && i.model.toLowerCase() === needle) ?? items.find((i) => i.model.toLowerCase() === needle);
+    if (it) push(it, false);
+  }
+  if (out.length >= limit) return out;
+
+  const phones = items.filter((i) => i.totalQty > 0 && !ACCESSORY_RE.test(i.model));
+  for (const it of [...phones].sort((a, b) => b.soldQty - a.soldQty)) {
+    if (it.soldQty <= 0) break;
+    push(it, true);
+  }
+  for (const it of [...phones].sort((a, b) => b.totalQty - a.totalQty)) push(it, true);
+  // Last resort (a catalog with nothing but accessories / nothing in stock):
+  // show something rather than an empty grid — never mix these in otherwise.
+  if (out.length === 0) for (const it of items) push(it, true);
+  return out;
+}
