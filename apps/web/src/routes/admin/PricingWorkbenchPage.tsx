@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Search, MapPin, Wand2, Check } from 'lucide-react';
 import { usePricingBreakdown, setTierPrice, TIER_MARKUP, type PricingBreakdownRow, type DbTier } from '@/data/adminPricing';
+import { useAuth } from '@/store';
 import { AdminHeading, Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
 import { formatUsd } from '@/lib/format';
@@ -41,6 +42,9 @@ function WorkbenchRow({ row }: { row: PricingBreakdownRow }) {
     distributor: centsToStr(row.price_distributor),
   });
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const { role } = useAuth();
+  const canEdit = role === 'admin'; // set_tier_price is admin-only (audit P1-11)
   const [saved, setSaved] = useState(false);
 
   // Auto-price every tier from a chosen cost basis (avg or highest) × the tier
@@ -59,15 +63,21 @@ function WorkbenchRow({ row }: { row: PricingBreakdownRow }) {
 
   async function save() {
     setSaving(true);
+    setSaveError(null);
     try {
       for (const tier of TIERS) {
         const next = strToCents(edits[tier.code]);
         if (next !== current[tier.code]) await setTierPrice(row.variant_id, tier.code, next);
       }
-      await qc.invalidateQueries({ queryKey: ['pricing-breakdown'] });
       setSaved(true);
       setTimeout(() => setSaved(false), 1600);
+    } catch (e) {
+      // A mid-loop failure leaves earlier tiers saved — say so instead of
+      // failing silently (audit 2026-09-13 P2); the breakdown refetch below
+      // shows exactly which tiers landed.
+      setSaveError(e instanceof Error ? e.message : t('Could not save prices'));
     } finally {
+      await qc.invalidateQueries({ queryKey: ['pricing-breakdown'] });
       setSaving(false);
     }
   }
@@ -125,7 +135,8 @@ function WorkbenchRow({ row }: { row: PricingBreakdownRow }) {
           {t('Fill from highest cost')}
           {row.max_cost ? <span className="font-mono text-xs text-muted-foreground">· {formatUsd(row.max_cost)}</span> : null}
         </Button>
-        <Button size="sm" variant="primary" className="ml-auto" onClick={save} disabled={!dirty || saving}>
+        {saveError && <span className="text-xs text-destructive">{saveError}</span>}
+        <Button size="sm" variant="primary" className="ml-auto" onClick={save} disabled={!dirty || saving || !canEdit} title={!canEdit ? t('Setting sell prices is admin-only.') : undefined}>
           {saved ? <Check className="h-4 w-4" strokeWidth={2.5} /> : null}
           {saving ? t('Saving…') : saved ? t('Saved') : t('Save prices')}
         </Button>

@@ -8,12 +8,14 @@ import {
   createSubAccountInvite,
   listSubAccountInvites,
   listSubAccounts,
+  removeSubAccount,
   revokeSubAccountInvite,
 } from '@/data/subAccounts';
 import { PageHeading } from '@/components/portal/parts';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
+import { formatDate } from '@/lib/format';
 
 const STATUS_TONE: Record<InviteRow['status'], string> = {
   pending: 'bg-warning/10 text-warning',
@@ -21,9 +23,7 @@ const STATUS_TONE: Record<InviteRow['status'], string> = {
   revoked: 'bg-muted text-muted-foreground',
 };
 
-function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
+const fmtDate = formatDate;
 
 function isExpired(row: InviteRow): boolean {
   return row.status === 'pending' && new Date(row.expires_at).getTime() < Date.now();
@@ -62,7 +62,7 @@ function CopyLink({ token }: { token: string }) {
  * read-only notice here instead of the invite form. 20260911100000_sub_accounts.sql.
  */
 export default function TeamPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { profile } = useAuth();
   const qc = useQueryClient();
   const [email, setEmail] = useState('');
@@ -71,8 +71,14 @@ export default function TeamPage() {
   const isOwner = canManageSubAccounts(profile?.tier ?? null, profile?.parent_account_id ?? null);
   const isSubAccount = !!profile?.parent_account_id;
 
-  const invitesQuery = useQuery({ queryKey: ['sub-account-invites'], queryFn: listSubAccountInvites, enabled: isOwner });
-  const membersQuery = useQuery({ queryKey: ['sub-accounts'], queryFn: listSubAccounts, enabled: isOwner });
+  const ownerId = profile?.id ?? '';
+  const invitesQuery = useQuery({ queryKey: ['sub-account-invites', ownerId], queryFn: () => listSubAccountInvites(ownerId), enabled: isOwner && !!ownerId });
+  const membersQuery = useQuery({ queryKey: ['sub-accounts', ownerId], queryFn: () => listSubAccounts(ownerId), enabled: isOwner && !!ownerId });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => removeSubAccount(id),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['sub-accounts'] }),
+  });
 
   const create = useMutation({
     mutationFn: () => createSubAccountInvite(email),
@@ -194,12 +200,27 @@ export default function TeamPage() {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             {members.map((m) => (
-              <div key={m.id} className="rounded-2xl border border-border bg-card p-4">
-                <p className="text-sm font-medium">{m.display_name || m.email}</p>
-                <p className="text-xs text-muted-foreground">{m.email}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{t('Joined')} {fmtDate(m.created_at)}</p>
+              <div key={m.id} className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-card p-4">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{m.display_name || m.email}</p>
+                  <p className="truncate text-xs text-muted-foreground">{m.email}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{t('Joined')} {fmtDate(m.created_at, lang)}</p>
+                </div>
+                <button
+                  type="button"
+                  disabled={remove.isPending}
+                  onClick={() => {
+                    if (window.confirm(`${t('Remove this login from your account?')} ${m.email}\n${t('They will be signed out and lose access for good.')}`)) remove.mutate(m.id);
+                  }}
+                  className="shrink-0 rounded-lg border border-border px-2.5 py-1 text-xs text-muted-foreground hover:border-destructive/40 hover:text-destructive disabled:opacity-50"
+                >
+                  {t('Remove')}
+                </button>
               </div>
             ))}
+            {remove.isError && (
+              <p className="text-sm text-destructive sm:col-span-2">{remove.error instanceof Error ? remove.error.message : t('Could not remove this login.')}</p>
+            )}
           </div>
         )}
       </div>
@@ -232,7 +253,7 @@ export default function TeamPage() {
                           {expired ? t('expired') : r.status}
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">{fmtDate(r.expires_at)}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{fmtDate(r.expires_at, lang)}</td>
                       <td className="px-3 py-2">
                         <div className="flex items-center justify-end gap-2">
                           {r.status === 'pending' && !expired && <CopyLink token={r.token} />}

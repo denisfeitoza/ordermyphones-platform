@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Info } from 'lucide-react';
 import { getAppSetting, setAppSetting } from '@/data/adminConfig';
+import { useAuth } from '@/store';
 import { useI18n } from '@/i18n';
 import { Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
@@ -28,6 +29,8 @@ const FIELD_LABELS: Record<string, { label: string; help: string }> = {
 export default function EnforcementTab() {
   const { t } = useI18n();
   const qc = useQueryClient();
+  const { role } = useAuth();
+  const canEdit = role === 'admin'; // app_settings is admin-only to write (audit P0-4)
   const q = useQuery({ queryKey: ['app_setting', 'enforcement_points'], queryFn: () => getAppSetting<Enforcement>('enforcement_points', DEFAULT) });
   const [draft, setDraft] = useState<Enforcement>(DEFAULT);
 
@@ -97,7 +100,7 @@ export default function EnforcementTab() {
       </Panel>
 
       <div className="flex items-center gap-3">
-        <Button size="sm" disabled={!dirty || save.isPending} onClick={() => save.mutate(draft)}>
+        <Button size="sm" disabled={!dirty || save.isPending || !canEdit} onClick={() => save.mutate(draft)}>
           {save.isPending ? t('Saving…') : t('Save enforcement points')}
         </Button>
         {save.isSuccess && !dirty && <span className="text-xs text-success">{t('Saved ✓')}</span>}

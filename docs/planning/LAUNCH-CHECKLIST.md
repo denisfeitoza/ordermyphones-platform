@@ -6,7 +6,8 @@
 > **DONE** (verified) · **PENDING** (owner action, not blocked) ·
 > **BLOCKED** (waiting on access/data outside the repo).
 >
-> Last updated: 2026-09-13 (post sub-accounts; gate re-run).
+> Last updated: 2026-09-13 (post sub-accounts; gate re-run; audit fixes —
+> see [AUDIT-2026-09-13.md](AUDIT-2026-09-13.md) §Status).
 
 ## 1. TEST-READY §5 gate items
 

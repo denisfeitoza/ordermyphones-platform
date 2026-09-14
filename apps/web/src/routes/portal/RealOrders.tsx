@@ -2,12 +2,13 @@ import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ShoppingBag, PackageCheck, Clock, XCircle, AlertTriangle, Ban, FileDown, FileText } from 'lucide-react';
 import { useMyOrders, type RealOrder, type RealOrderLine, type RealOrderStatus } from '@/data/realOrders';
+import { useAuth } from '@/store';
 import { useOrderEvents } from '@/data/orderEvents';
 import { OrderTimeline } from '@/components/orders/OrderTimeline';
 import { PageHeading } from '@/components/portal/parts';
 import { Button, buttonVariants } from '@/components/ui/Button';
 import { exportDocCsv, exportDocPdf, type ExportDoc } from '@/lib/export';
-import { formatUsd, formatInt } from '@/lib/format';
+import { formatUsd, formatInt, formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n';
 
@@ -62,12 +63,13 @@ function units(o: RealOrder): number {
   return o.lines.reduce((s, l) => s + l.qtyRequested, 0);
 }
 
-const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+// Dates follow the viewer's language; exports (realOrderToDoc) stay en-US.
+const fmtDate = formatDate;
 
 /** Real-mode portal orders list — the signed-in customer's orders from Supabase. */
 export function RealOrdersList() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const { user } = useAuth();
   const { data: orders, isLoading, isError } = useMyOrders();
   const list = orders ?? [];
 
@@ -106,9 +108,16 @@ export function RealOrdersList() {
               className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-border/70 hover:bg-muted/40"
             >
               <div className="min-w-0">
-                <p className="font-mono text-sm font-semibold">{o.id.slice(0, 8).toUpperCase()}</p>
+                <p className="font-mono text-sm font-semibold">
+                  {o.id.slice(0, 8).toUpperCase()}
+                  {user && o.customerId !== user.id && (
+                    <span className="ml-2 rounded-full bg-brand/10 px-2 py-0.5 font-sans text-[10px] font-medium uppercase tracking-wide text-brand">
+                      {t('Team')}
+                    </span>
+                  )}
+                </p>
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                  {fmtDate(o.placedAt)} · {units(o)} {units(o) === 1 ? t('unit') : t('units')}
+                  {fmtDate(o.placedAt, lang)} · {units(o)} {units(o) === 1 ? t('unit') : t('units')}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-3">
@@ -125,7 +134,7 @@ export function RealOrdersList() {
 
 /** Real-mode portal order detail — per-line requested vs approved, prices, status. */
 export function RealOrderDetail() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { id } = useParams();
   const { data: orders, isLoading, isError, refetch } = useMyOrders();
   const { data: events } = useOrderEvents(id);
@@ -188,7 +197,7 @@ export function RealOrderDetail() {
         <div>
           <h1 className="font-mono text-2xl font-semibold tracking-tight">{order.id.slice(0, 8).toUpperCase()}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {t('Placed')} {fmtDate(order.placedAt)} · {units(order)} {units(order) === 1 ? t('unit') : t('units')}
+            {t('Placed')} {fmtDate(order.placedAt, lang)} · {units(order)} {units(order) === 1 ? t('unit') : t('units')}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

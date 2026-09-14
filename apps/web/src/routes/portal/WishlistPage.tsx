@@ -1,6 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, FileDown, Heart, Minus, Plus, Sheet, Trash2 } from 'lucide-react';
 import { useAccount, useCart, useTier, useWishlist } from '@/store';
+import { RealModeUnavailable } from '@/components/portal/RealModeUnavailable';
+import { useCatalogSource } from '@/lib/catalogSource';
 import { PageHeading } from '@/components/portal/parts';
 import { Button, buttonVariants } from '@/components/ui/Button';
 import { exportDocCsv, exportDocPdf, type ExportDoc } from '@/lib/export';
@@ -9,7 +11,16 @@ import { cn } from '@/lib/utils';
 
 const PRESETS = [10, 50, 100];
 
+/** Real mode: the wishlist still points at the demo catalog — hidden until it is wired to real listings. */
 export default function WishlistPage() {
+  const source = useCatalogSource();
+  if (source === 'real') {
+    return <RealModeUnavailable title="Wishlist" note="Saving models to watch for restocks and price drops is on its way. Until then, the catalog search and filters are the fastest way back to a model." />;
+  }
+  return <MockWishlistPage />;
+}
+
+function MockWishlistPage() {
   const { lines, unitCount, subtotalCents, retailSubtotalCents, savingsCents, setQty, remove, clear } = useWishlist();
   const { add, setOpen } = useCart();
   const { businessName } = useAccount();

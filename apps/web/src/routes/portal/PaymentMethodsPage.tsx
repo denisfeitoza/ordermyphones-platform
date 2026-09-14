@@ -1,7 +1,18 @@
 import { ShieldCheck, CreditCard, Building2 } from 'lucide-react';
 import { PageHeading, Panel } from '@/components/portal/parts';
+import { RealModeUnavailable } from '@/components/portal/RealModeUnavailable';
+import { useCatalogSource } from '@/lib/catalogSource';
 
+/** Real mode: billing is off-system in v1 (no Stripe) — never show mock cards to a real customer. */
 export default function PaymentMethodsPage() {
+  const source = useCatalogSource();
+  if (source === 'real') {
+    return <RealModeUnavailable title="Payment methods" note="Invoices and payment are arranged directly with our team for now. Saved payment methods arrive with online checkout in a later release." />;
+  }
+  return <MockPaymentMethodsPage />;
+}
+
+function MockPaymentMethodsPage() {
   return (
     <div className="space-y-6">
       <PageHeading title="Payment methods" subtitle="Cards are tokenized by Stripe — raw card data never reaches this app." />

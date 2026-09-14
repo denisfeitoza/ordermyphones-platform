@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Check } from 'lucide-react';
 import { useTier } from '@/store';
+import { useEffectiveTier } from '@/lib/effectiveTier';
 import { PageHeading } from '@/components/portal/parts';
 import { TierBadge } from '@/components/store/TierBadge';
 import { buttonVariants } from '@/components/ui/Button';
@@ -8,7 +9,11 @@ import { tierBg, tierText } from '@/lib/tierStyles';
 import { cn } from '@/lib/utils';
 
 export default function TierPage() {
-  const { tier } = useTier();
+  // Real mode: the tier comes from the profile (useEffectiveTier); the mock
+  // store is only the demo fallback (audit 2026-09-13).
+  const mock = useTier();
+  const { tierDef } = useEffectiveTier();
+  const tier = tierDef ?? mock.tier;
 
   const benefits = [
     tier.discount > 0 ? `${Math.round(tier.discount * 100)}% off retail on every device` : 'Retail pricing on every device',

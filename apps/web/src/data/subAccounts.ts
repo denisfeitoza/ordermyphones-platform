@@ -33,11 +33,14 @@ export async function createSubAccountInvite(email: string): Promise<InviteRow> 
   return (Array.isArray(data) ? data[0] : data) as InviteRow;
 }
 
-/** Owner's own pending/accepted/revoked sub-account invites (RLS: parent_account_id = auth.uid()). */
-export async function listSubAccountInvites(): Promise<InviteRow[]> {
+/** Owner's own pending/accepted/revoked sub-account invites. RLS already scopes
+ * to parent_account_id = auth.uid(); the explicit filter keeps an admin/staff
+ * session (whose RLS arm sees every invite) from listing other owners' tokens. */
+export async function listSubAccountInvites(ownerId: string): Promise<InviteRow[]> {
   const { data, error } = await supabase
     .from('invites')
     .select('id,email,tier,token,status,invited_by,created_at,expires_at,accepted_at')
+    .eq('parent_account_id', ownerId)
     .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []) as InviteRow[];
@@ -56,12 +59,23 @@ export async function revokeSubAccountInvite(id: string): Promise<void> {
  * includes the caller's OWN row (the "self" arm), so it must be excluded
  * here explicitly rather than relied on to be absent.
  */
-export async function listSubAccounts(): Promise<SubAccountRow[]> {
+export async function listSubAccounts(ownerId: string): Promise<SubAccountRow[]> {
   const { data, error } = await supabase
     .from('profiles')
     .select('id,email,display_name,tier,created_at')
-    .not('parent_account_id', 'is', null)
+    .eq('parent_account_id', ownerId)
     .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []) as SubAccountRow[];
+}
+
+/**
+ * Detach a sub-account for good (owner or admin): it leaves the account (no
+ * tier, no shared address book), the login is banned and its sessions are
+ * revoked server-side. Orders it placed stay on record.
+ * RPC remove_sub_account — 20260913130000_audit_hardening.sql §G4.
+ */
+export async function removeSubAccount(id: string): Promise<void> {
+  const { error } = await supabase.rpc('remove_sub_account', { p_id: id });
+  if (error) throw new Error(error.message);
 }

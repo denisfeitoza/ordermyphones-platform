@@ -11,6 +11,7 @@ import {
   type PromoCard,
 } from '@/data/homeContent';
 import { useRealCatalog, buildDisplayName } from '@/data/realCatalog';
+import { useAuth } from '@/store';
 import { Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/i18n';
@@ -43,6 +44,8 @@ function newId() {
  *  curated "trending" product list. Friendly, form-based, save-on-demand. */
 export default function HomeContentTab() {
   const { t } = useI18n();
+  const { role } = useAuth();
+  const canEdit = role === 'admin'; // app_settings is admin-only to write (audit P0-4)
   const { data } = useHomeContent();
   const update = useUpdateHomeContent();
   const [draft, setDraft] = useState<HomeContent | null>(null);
@@ -72,10 +75,10 @@ export default function HomeContentTab() {
               <Check className="h-4 w-4" /> {t('Saved')}
             </span>
           )}
-          <Button variant="outline" size="md" disabled={update.isPending} onClick={() => setDraft(DEFAULT_HOME_CONTENT)}>
+          <Button variant="outline" size="md" disabled={update.isPending || !canEdit} onClick={() => setDraft(DEFAULT_HOME_CONTENT)}>
             {t('Reset to defaults')}
           </Button>
-          <Button variant="primary" size="md" disabled={!dirty || update.isPending} onClick={() => update.mutate(draft)}>
+          <Button variant="primary" size="md" disabled={!dirty || update.isPending || !canEdit} onClick={() => update.mutate(draft)}>
             {update.isPending ? t('Saving…') : t('Save changes')}
           </Button>
         </div>
@@ -224,15 +227,14 @@ function TrendingPicker({ variantIds, onChange }: { variantIds: string[]; onChan
   const [query, setQuery] = useState('');
 
   const byId = useMemo(() => new Map(items.map((i) => [i.variantId, i])), [items]);
-  const chosen = new Set(variantIds);
-
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (q.length < 2) return [];
+    const chosen = new Set(variantIds);
     return items
       .filter((i) => !chosen.has(i.variantId) && `${buildDisplayName(i)} ${i.make} ${i.sku}`.toLowerCase().includes(q))
       .slice(0, 6);
-  }, [query, items, chosen]);
+  }, [query, items, variantIds]);
 
   return (
     <div className="space-y-3">

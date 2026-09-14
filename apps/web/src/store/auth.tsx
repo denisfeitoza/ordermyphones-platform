@@ -103,7 +103,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSentryUser(null);
   }, [queryClient]);
 
-  const user: AuthUser | null = session ? { id: session.user.id, email: session.user.email ?? '' } : null;
+  const user = useMemo<AuthUser | null>(
+    () => (session ? { id: session.user.id, email: session.user.email ?? '' } : null),
+    [session],
+  );
 
   // A session whose profile row failed to load (e.g. missing row) is a broken
   // account, not a permissive one — expose no profile/role so RequireAuth

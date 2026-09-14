@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Check, Copy, Eye, EyeOff, Lock, Pause, Play, RefreshCw, Webhook } from 'lucide-react';
+import { RealModeUnavailable } from '@/components/portal/RealModeUnavailable';
+import { useCatalogSource } from '@/lib/catalogSource';
 import type { PricingTierCode } from '@shared/pricing';
 import { useAccount, useTier } from '@/store';
 import { PageHeading, Panel } from '@/components/portal/parts';
@@ -219,7 +221,16 @@ function initialFeed(code: PricingTierCode): FeedState {
   return { rows: buildFeed(code), events: [], sequence: 918_270, suppressed: 0 };
 }
 
+/** Real mode: the Partner Inventory API is v1.1 scope — no real key exists yet, so never show the demo one. */
 export default function InventoryApiPage() {
+  const source = useCatalogSource();
+  if (source === 'real') {
+    return <RealModeUnavailable title="Inventory API" note="Live inventory feeds for wholesale and distributor partners are planned for a later release. Ask your account manager if you would like early access." />;
+  }
+  return <MockInventoryApiPage />;
+}
+
+function MockInventoryApiPage() {
   const { tier, code } = useTier();
   const { businessName } = useAccount();
 
