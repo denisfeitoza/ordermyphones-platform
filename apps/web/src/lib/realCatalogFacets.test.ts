@@ -19,6 +19,8 @@ function listing(over: Partial<PricedRealListing>): PricedRealListing {
     priceCents: 30000,
     createdAt: '2026-01-01T00:00:00Z',
     soldQty: 0,
+    imageUrl: null,
+    description: null,
     ...over,
   };
 }

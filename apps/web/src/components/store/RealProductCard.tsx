@@ -23,7 +23,8 @@ export function gradeTone(grade: PricedRealListing['ctiaGrade']): 'success' | 'd
  * customer with a visible tier price — everyone else still gets View details. */
 export function RealProductCard({ item }: { item: PricedRealListing }) {
   const { t } = useI18n();
-  const image = resolveProductImage(item.model);
+  // Staff photo first; the mock-family render is only the fallback.
+  const image = item.imageUrl ?? resolveProductImage(item.model);
   const name = buildDisplayName(item);
   const soldOut = item.totalQty === 0;
 
