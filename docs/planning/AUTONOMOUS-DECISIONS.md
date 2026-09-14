@@ -296,3 +296,35 @@ address book. Built as `20260911100000_sub_accounts.sql` + `/portal/team`; commi
 ### Still Denis-only
 Supabase PAT rotation · invite-sender + Sentry/PostHog credentials · git-history
 purge (force-push; see LAUNCH-CHECKLIST §5).
+
+## PLAN GAP CLOSURE (2026-09-13, evening) — J2 fulfilment + S2 product content
+Cross-checked OMP-V1-Execution-Plan.html against the code. Two scheduled items were
+never built; both shipped today and are live in production.
+
+### J2 steps 4–5 — picking sheet + shipped (commit d26b802)
+- `order_status` gained `shipped`; orders carry `shipped_at/shipped_by/tracking_carrier/
+  tracking_number`; RPC `mark_order_shipped` (staff, from approved/partially_approved)
+  writes an `order_events` row (kind `shipped`) + `audit_log`. `catalog_listing.sold_qty`
+  keeps counting shipped orders.
+- Admin order detail: "Picking sheet (PDF)" (approved qty + deducted location per line,
+  tick boxes, no prices, TEST watermark) and "Mark as shipped" (carrier UPS/FedEx/USPS/
+  DHL/Other + tracking + note). Portal: Shipped status, tracking link, timeline event.
+- Verified in the browser end to end on test order 9C49C3F3 (admin → shipped → customer sees
+  "UPS 1Z999AA10123456784").
+- DECISION: shipping cost stays off-system (plan #8); tracking is manual text (no carrier API).
+
+### S2 — product photo / description / publish (commit 63f4520)
+- `products.description/image_url/published`; public bucket `product-photos` (anyone
+  reads, staff writes); `catalog_listing` exposes image_url + description and hides
+  unpublished products (stock/prices untouched).
+- Admin → Inventory → Products: search, thumbnails, one-click publish/hide, editor with
+  photo upload (≤5 MB JPG/PNG/WebP) + description. Storefront prefers the staff photo.
+- Verified: description saved, PNG uploaded to storage and served publicly (HTTP 200),
+  hide/publish round-trip. Photo lives on the PRODUCT (model), shown on every variant.
+- Data note: the import DOES categorise (AirPods = `accessories`), but the storefront
+  "All phones" listing does not filter by category yet — a follow-up if accessories
+  should not be sold there.
+
+### Remaining plan items that need Denis
+- J1 step 1 "sistema envia o link" (invite e-mail) — blocked on custom SMTP.
+- `.github/workflows/ci.yml` still unpushed (token lacks `workflow` scope).
