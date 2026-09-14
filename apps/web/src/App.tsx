@@ -27,6 +27,7 @@ import WishlistPage from '@/routes/portal/WishlistPage';
 import TierPage from '@/routes/portal/TierPage';
 import InventoryApiPage from '@/routes/portal/InventoryApiPage';
 import AddressesPage from '@/routes/portal/AddressesPage';
+import TeamPage from '@/routes/portal/TeamPage';
 import PaymentMethodsPage from '@/routes/portal/PaymentMethodsPage';
 import SettingsPage from '@/routes/portal/SettingsPage';
 import DashboardPage from '@/routes/admin/DashboardPage';
@@ -233,6 +234,7 @@ export default function App() {
             <Route path="tier" element={<TierPage />} />
             <Route path="inventory-api" element={<InventoryApiPage />} />
             <Route path="addresses" element={<AddressesPage />} />
+            <Route path="team" element={<TeamPage />} />
             <Route path="payment-methods" element={<PaymentMethodsPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
