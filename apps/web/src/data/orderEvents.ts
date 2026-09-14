@@ -3,12 +3,15 @@ import { supabase } from '@/lib/supabase';
 
 /** One field-level change inside an edit. Prices are integer cents; qty is a count. */
 export interface OrderChange {
-  type: 'qty' | 'price' | 'added' | 'removed' | 'address' | 'note';
+  type: 'qty' | 'price' | 'added' | 'removed' | 'address' | 'note' | 'shipped';
   label: string;
   from?: number;
   to?: number;
   qty?: number;
   price?: number;
+  /** kind 'shipped' only — manual carrier + tracking typed by staff. */
+  carrier?: string | null;
+  tracking?: string | null;
 }
 
 export interface OrderEvent {

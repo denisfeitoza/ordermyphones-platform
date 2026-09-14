@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { carrierLabel } from './realCatalog';
 
-export type AdminOrderStatus = 'pending' | 'approved' | 'partially_approved' | 'rejected' | 'cancelled';
+export type AdminOrderStatus = 'pending' | 'approved' | 'partially_approved' | 'rejected' | 'cancelled' | 'shipped';
 
 export interface AdminOrderLine {
   id: string;
@@ -13,6 +13,8 @@ export interface AdminOrderLine {
   qtyApproved: number | null;
   unitPriceCents: number;
   lineTotalCents: number;
+  /** Stock location the approval deducted from (null until approved) — drives the picking sheet. */
+  locationName: string | null;
 }
 
 export interface ShippingAddress {
@@ -36,6 +38,9 @@ export interface AdminOrder {
   customerName: string | null;
   /** Snapshot of profiles.is_test at place_order — rehearsal orders reports hide by default. */
   isTest: boolean;
+  shippedAt: string | null;
+  trackingCarrier: string | null;
+  trackingNumber: string | null;
   lines: AdminOrderLine[];
 }
 
@@ -54,6 +59,7 @@ interface RawItem {
   qty_approved: number | null;
   unit_price_cents: number;
   product_variants: RawVariant | null;
+  location: { display_name: string } | null;
 }
 interface RawOrder {
   id: string;
@@ -66,6 +72,9 @@ interface RawOrder {
   notes: string | null;
   shipping_address: ShippingAddress | null;
   is_test: boolean | null;
+  shipped_at: string | null;
+  tracking_carrier: string | null;
+  tracking_number: string | null;
   customer: { email: string | null; display_name: string | null } | null;
   order_items: RawItem[];
 }
@@ -81,8 +90,10 @@ async function fetchAdminOrders(): Promise<AdminOrder[]> {
     .from('orders')
     .select(
       `id, status, tier_at_order, subtotal_cents, placed_at, decided_at, decision_reason, notes, shipping_address, is_test,
+       shipped_at, tracking_carrier, tracking_number,
        customer:profiles!orders_customer_id_fkey(email, display_name),
        order_items(id, variant_id, qty_requested, qty_approved, unit_price_cents,
+         location:stock_locations!order_items_location_id_fkey(display_name),
          product_variants(sku, capacity, color, carrier, lock_status, products(make, model)))`,
     )
     .order('placed_at', { ascending: false });
@@ -101,6 +112,9 @@ async function fetchAdminOrders(): Promise<AdminOrder[]> {
     customerEmail: o.customer?.email ?? null,
     customerName: o.customer?.display_name ?? null,
     isTest: o.is_test === true,
+    shippedAt: o.shipped_at ?? null,
+    trackingCarrier: o.tracking_carrier ?? null,
+    trackingNumber: o.tracking_number ?? null,
     lines: (o.order_items ?? []).map((it) => ({
       id: it.id,
       variantId: it.variant_id,
@@ -110,6 +124,7 @@ async function fetchAdminOrders(): Promise<AdminOrder[]> {
       qtyApproved: it.qty_approved,
       unitPriceCents: it.unit_price_cents,
       lineTotalCents: it.unit_price_cents * it.qty_requested,
+      locationName: it.location?.display_name ?? null,
     })),
   }));
 }
@@ -240,6 +255,27 @@ export function useEditOrder() {
     onSuccess: (_data, vars) => {
       invalidate();
       qc.invalidateQueries({ queryKey: ['order-events', vars.orderId] });
+    },
+  });
+}
+
+/** J2 step 5: approved → shipped with a manual carrier + tracking number (RPC mark_order_shipped). */
+export function useMarkShipped() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ orderId, carrier, tracking, note }: { orderId: string; carrier: string; tracking: string; note?: string }) => {
+      const { error } = await supabase.rpc('mark_order_shipped', {
+        p_order_id: orderId,
+        p_carrier: carrier || null,
+        p_tracking: tracking || null,
+        p_note: note || null,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: (_d, v) => {
+      void qc.invalidateQueries({ queryKey: ['admin-orders'] });
+      void qc.invalidateQueries({ queryKey: ['order-events', v.orderId] });
+      void qc.invalidateQueries({ queryKey: ['admin-summary'] });
     },
   });
 }

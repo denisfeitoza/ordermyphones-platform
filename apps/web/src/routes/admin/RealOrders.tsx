@@ -1,16 +1,18 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, ArrowRight, Check, Minus, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Check, ClipboardList, Minus, Pencil, Plus, Search, Trash2, Truck, X } from 'lucide-react';
 import {
   useAdminOrders,
   useVariantAvailability,
   useApproveOrder,
   useRejectOrder,
   useEditOrder,
+  useMarkShipped,
   type AdminOrder,
   type AdminOrderStatus,
   type ShippingAddress,
 } from '@/data/adminOrders';
+import { exportPickingSheetPdf } from '@/lib/export';
 import { useOrderEvents } from '@/data/orderEvents';
 import { useRealCatalog } from '@/data/realCatalog';
 import { OrderTimeline } from '@/components/orders/OrderTimeline';
@@ -26,11 +28,13 @@ const STATUS_LABEL: Record<AdminOrderStatus, string> = {
   partially_approved: 'Partial',
   rejected: 'Rejected',
   cancelled: 'Cancelled',
+  shipped: 'Shipped',
 };
 const STATUS_CLS: Record<AdminOrderStatus, string> = {
   pending: 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300',
   approved: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300',
   partially_approved: 'bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300',
+  shipped: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-500/15 dark:text-indigo-300',
   rejected: 'bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-300',
   cancelled: 'bg-muted text-muted-foreground',
 };
@@ -39,9 +43,79 @@ const FILTERS: { key: AdminOrderStatus | 'all'; label: string }[] = [
   { key: 'pending', label: 'Pending' },
   { key: 'partially_approved', label: 'Partial' },
   { key: 'approved', label: 'Approved' },
+  { key: 'shipped', label: 'Shipped' },
   { key: 'rejected', label: 'Rejected' },
   { key: 'all', label: 'All' },
 ];
+
+const CARRIERS = ['UPS', 'FedEx', 'USPS', 'DHL', 'Other'] as const;
+
+/** Approved (or partially approved) → shipped, with the manual carrier + tracking the plan calls for (J2 step 5). */
+function ShipForm({ order, onDone }: { order: AdminOrder; onDone: () => void }) {
+  const { t } = useI18n();
+  const ship = useMarkShipped();
+  const [carrier, setCarrier] = useState<string>('UPS');
+  const [tracking, setTracking] = useState('');
+  const [note, setNote] = useState('');
+  return (
+    <form
+      className="space-y-2 rounded-xl border border-border bg-muted/30 p-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        ship.mutate({ orderId: order.id, carrier, tracking: tracking.trim(), note: note.trim() }, { onSuccess: onDone });
+      }}
+    >
+      <p className="text-xs font-medium">{t('Mark as shipped')}</p>
+      <div className="grid grid-cols-[110px_1fr] gap-2">
+        <select value={carrier} onChange={(e) => setCarrier(e.target.value)} className="rounded-lg border border-border bg-background px-2 py-2 text-sm" aria-label={t('Carrier')}>
+          {CARRIERS.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+        <input
+          value={tracking}
+          onChange={(e) => setTracking(e.target.value)}
+          placeholder={t('Tracking number')}
+          className="rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-brand"
+          aria-label={t('Tracking number')}
+        />
+      </div>
+      <input
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder={t('Note for the customer (optional)')}
+        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
+      />
+      {ship.isError && <p className="text-xs text-destructive">{(ship.error as Error).message}</p>}
+      <div className="flex gap-2">
+        <Button type="submit" variant="primary" className="flex-1" disabled={ship.isPending}>
+          <Truck className="h-4 w-4" strokeWidth={2} />
+          {ship.isPending ? t('Saving…') : t('Confirm shipped')}
+        </Button>
+        <Button type="button" variant="outline" onClick={onDone} disabled={ship.isPending}>
+          {t('Cancel')}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+function pickingDoc(order: AdminOrder) {
+  const a = order.shippingAddress;
+  return {
+    reference: order.id.slice(0, 8).toUpperCase(),
+    dateLabel: fmtDate(order.placedAt),
+    customer: order.customerName || order.customerEmail || '—',
+    shipTo: [a?.street, [a?.city, a?.state, a?.zip].filter(Boolean).join(', ')].filter((s): s is string => !!s),
+    note: order.note,
+    lines: order.lines
+      .filter((l) => (l.qtyApproved ?? 0) > 0)
+      .map((l) => ({ sku: l.sku, name: l.name, qty: l.qtyApproved ?? 0, location: l.locationName })),
+    isTest: order.isTest,
+  };
+}
 
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
@@ -156,10 +230,13 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
   const reject = useRejectOrder();
   const [rejecting, setRejecting] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [shipping, setShipping] = useState(false);
   const [reason, setReason] = useState('');
 
   const isPending = order.status === 'pending';
-  const showApproved = order.status === 'approved' || order.status === 'partially_approved';
+  const isShipped = order.status === 'shipped';
+  const canFulfil = order.status === 'approved' || order.status === 'partially_approved';
+  const showApproved = canFulfil || isShipped;
   const anyShort = order.lines.some((l) => l.qtyApproved !== null && l.qtyApproved < l.qtyRequested);
   const busy = approve.isPending || reject.isPending;
 
@@ -243,6 +320,32 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
               {t('Rejected')}: {order.decisionReason}
             </p>
           )}
+
+          {isShipped && (
+            <div className="rounded-lg bg-sky-50 px-3 py-2.5 text-xs text-sky-900 dark:bg-sky-500/10 dark:text-sky-200">
+              <p className="flex items-center gap-1.5 font-medium">
+                <Truck className="h-3.5 w-3.5" strokeWidth={2} />
+                {t('Shipped')} {order.shippedAt ? fmtDate(order.shippedAt) : ''}
+              </p>
+              {(order.trackingCarrier || order.trackingNumber) && (
+                <p className="mt-1 font-mono">{[order.trackingCarrier, order.trackingNumber].filter(Boolean).join(' · ')}</p>
+              )}
+            </div>
+          )}
+
+          {canFulfil && !shipping && (
+            <div className="space-y-2">
+              <Button variant="outline" className="w-full" onClick={() => void exportPickingSheetPdf(pickingDoc(order))}>
+                <ClipboardList className="h-4 w-4" strokeWidth={2} />
+                {t('Picking sheet (PDF)')}
+              </Button>
+              <Button variant="primary" className="w-full" onClick={() => setShipping(true)}>
+                <Truck className="h-4 w-4" strokeWidth={2} />
+                {t('Mark as shipped')}
+              </Button>
+            </div>
+          )}
+          {canFulfil && shipping && <ShipForm order={order} onDone={() => setShipping(false)} />}
 
           {showApproved && (
             <div className="rounded-lg bg-muted/50 px-3 py-2.5 text-xs">

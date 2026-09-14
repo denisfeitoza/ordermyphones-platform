@@ -59,6 +59,102 @@ export function exportDocCsv(d: ExportDoc) {
   downloadBlob(`${d.reference}.csv`, csv, 'text/csv;charset=utf-8');
 }
 
+/** Picking sheet (romaneio) for the warehouse — J2 step 4 of the v1.0 plan. */
+export interface PickingLine {
+  sku: string;
+  name: string;
+  /** Units to pick = qty approved (never the requested qty). */
+  qty: number;
+  location: string | null;
+}
+export interface PickingDoc {
+  reference: string;
+  dateLabel: string;
+  customer: string;
+  shipTo: string[];
+  note: string | null;
+  lines: PickingLine[];
+  isTest: boolean;
+}
+
+/** Warehouse picking sheet as PDF: no prices, one row per line with the
+ *  deducted location and a tick box; TEST orders are stamped so a rehearsal
+ *  order can never be picked (TEST-READY-V1 §3). */
+export async function exportPickingSheetPdf(d: PickingDoc) {
+  const { jsPDF } = await import('jspdf');
+  const autoTable = (await import('jspdf-autotable')).default;
+
+  const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+
+  doc.setFillColor(BRAND[0], BRAND[1], BRAND[2]);
+  doc.rect(0, 0, W, 6, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.setTextColor(20, 20, 28);
+  doc.text('OrderMyPhones', 40, 52);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(120, 120, 130);
+  doc.text('Picking sheet', 40, 70);
+  doc.setTextColor(20, 20, 28);
+  doc.text(`Order ${d.reference}`, W - 40, 52, { align: 'right' });
+  doc.setTextColor(120, 120, 130);
+  doc.text(d.dateLabel, W - 40, 67, { align: 'right' });
+
+  doc.setTextColor(20, 20, 28);
+  doc.setFontSize(11);
+  doc.text(d.customer, 40, 102);
+  doc.setFontSize(10);
+  doc.setTextColor(60, 60, 70);
+  let y = 118;
+  for (const line of d.shipTo) {
+    doc.text(line, 40, y);
+    y += 14;
+  }
+  if (d.note) {
+    doc.setTextColor(120, 120, 130);
+    doc.text(`Note: ${d.note}`, 40, y + 4);
+    y += 18;
+  }
+
+  autoTable(doc, {
+    startY: Math.max(y + 14, 150),
+    head: [['', 'SKU', 'Item', 'Location', 'Pick']],
+    body: d.lines.map((l) => ['☐', l.sku, l.name, l.location ?? '—', String(l.qty)]),
+    headStyles: { fillColor: [20, 20, 28], textColor: 255, fontStyle: 'bold' },
+    columnStyles: { 0: { cellWidth: 22, halign: 'center' }, 1: { cellWidth: 170, fontSize: 8 }, 4: { halign: 'right', fontStyle: 'bold' } },
+    styles: { fontSize: 10, cellPadding: 6 },
+    theme: 'striped',
+  });
+
+  const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
+  const units = d.lines.reduce((s, l) => s + l.qty, 0);
+  doc.setFontSize(10);
+  doc.setTextColor(120, 120, 130);
+  doc.text(`${units} units · ${d.lines.length} line${d.lines.length === 1 ? '' : 's'}`, 40, finalY + 26);
+  doc.setTextColor(20, 20, 28);
+  doc.text('Picked by: ______________________    Date: ____________', 40, finalY + 56);
+
+  if (d.isTest) {
+    // Same guarded GState dance as exportDocPdf below (older jsPDF builds lack it).
+    const g = doc as unknown as { GState?: new (o: { opacity: number }) => unknown; setGState?: (x: unknown) => void };
+    const canDim = typeof g.GState === 'function' && typeof g.setGState === 'function';
+    if (canDim) g.setGState!(new g.GState!({ opacity: 0.12 }));
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(90);
+    doc.setTextColor(200, 40, 40);
+    doc.text('TEST', W / 2, H / 2, { align: 'center', angle: 30 });
+    if (canDim) g.setGState!(new g.GState!({ opacity: 1 }));
+  }
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(150, 150, 160);
+  doc.text(d.isTest ? 'TEST DATA — rehearsal order · DO NOT PICK OR SHIP' : 'Internal picking sheet · no prices · not a customer document', 40, H - 30);
+  doc.save(`picking-${d.reference}.pdf`);
+}
+
 /** PDF export (jsPDF lazy-loaded). */
 export async function exportDocPdf(d: ExportDoc) {
   const { jsPDF } = await import('jspdf');

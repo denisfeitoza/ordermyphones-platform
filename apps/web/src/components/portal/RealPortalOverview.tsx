@@ -13,6 +13,7 @@ const STATUS_LABEL: Record<RealOrder['status'], string> = {
   partially_approved: 'Partially approved',
   rejected: 'Rejected',
   cancelled: 'Cancelled',
+  shipped: 'Shipped',
 };
 
 const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });

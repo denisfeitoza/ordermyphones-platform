@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ShoppingBag, PackageCheck, Clock, XCircle, AlertTriangle, Ban, FileDown, FileText } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, PackageCheck, Clock, XCircle, AlertTriangle, Ban, FileDown, FileText, Truck } from 'lucide-react';
 import { useMyOrders, type RealOrder, type RealOrderLine, type RealOrderStatus } from '@/data/realOrders';
 import { useAuth } from '@/store';
 import { useOrderEvents } from '@/data/orderEvents';
@@ -40,6 +40,15 @@ const STATUS: Record<RealOrderStatus, { label: string; cls: string; icon: typeof
   partially_approved: { label: 'Partially approved', cls: 'bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300', icon: AlertTriangle },
   rejected: { label: 'Rejected', cls: 'bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-300', icon: XCircle },
   cancelled: { label: 'Cancelled', cls: 'bg-muted text-muted-foreground', icon: Ban },
+  shipped: { label: 'Shipped', cls: 'bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300', icon: Truck },
+};
+
+/** Public tracking pages for the carriers staff can pick; "Other" gets no link. */
+const TRACKING_URL: Record<string, (n: string) => string> = {
+  UPS: (n) => `https://www.ups.com/track?tracknum=${encodeURIComponent(n)}`,
+  FedEx: (n) => `https://www.fedex.com/fedextrack/?trknbr=${encodeURIComponent(n)}`,
+  USPS: (n) => `https://tools.usps.com/go/TrackConfirmAction?tLabels=${encodeURIComponent(n)}`,
+  DHL: (n) => `https://www.dhl.com/en/express/tracking.html?AWB=${encodeURIComponent(n)}`,
 };
 
 function StatusPill({ status }: { status: RealOrderStatus }) {
@@ -175,7 +184,7 @@ export function RealOrderDetail() {
     );
   }
 
-  const showApproved = order.status === 'approved' || order.status === 'partially_approved';
+  const showApproved = order.status === 'approved' || order.status === 'partially_approved' || order.status === 'shipped';
   // On a partial, line totals are priced for the REQUESTED qty (matching the
   // placement-time subtotal), so label the total as ordered — not approved — to
   // avoid implying the shipped/approved amount. Billing is off-system (D8).
@@ -222,6 +231,30 @@ export function RealOrderDetail() {
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
           <span className="font-medium">{t('Reason')}: </span>
           {order.decisionReason}
+        </div>
+      )}
+
+      {order.status === 'shipped' && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900 dark:border-sky-500/20 dark:bg-sky-500/10 dark:text-sky-200">
+          <span className="inline-flex items-center gap-1.5 font-medium">
+            <Truck className="h-4 w-4" strokeWidth={2} />
+            {t('Shipped')}
+            {order.shippedAt ? ` · ${fmtDate(order.shippedAt, lang)}` : ''}
+          </span>
+          {order.trackingNumber ? (
+            <span className="font-mono">
+              {order.trackingCarrier ? `${order.trackingCarrier} ` : ''}
+              {order.trackingCarrier && TRACKING_URL[order.trackingCarrier] ? (
+                <a href={TRACKING_URL[order.trackingCarrier]!(order.trackingNumber)} target="_blank" rel="noreferrer" className="underline decoration-dotted underline-offset-2 hover:decoration-solid">
+                  {order.trackingNumber}
+                </a>
+              ) : (
+                order.trackingNumber
+              )}
+            </span>
+          ) : (
+            <span className="text-sky-800/80 dark:text-sky-200/80">{t('Tracking details will follow from our team.')}</span>
+          )}
         </div>
       )}
 
