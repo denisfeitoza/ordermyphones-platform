@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getAppSetting, setAppSetting } from '@/data/adminConfig';
+import { useAuth } from '@/store';
 import { DB_TIERS, DB_TIER_LABELS, type DbTier } from '@/lib/invites';
 import { Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
@@ -57,6 +58,8 @@ function ExampleLine({ rule, t }: { rule: TierRule; t: (s: string) => string }) 
 export default function QuantityRulesTab() {
   const { t } = useI18n();
   const qc = useQueryClient();
+  const { role } = useAuth();
+  const canEdit = role === 'admin'; // app_settings is admin-only to write (audit P0-4)
   const q = useQuery({ queryKey: ['app_setting', 'cart_quantity_rules'], queryFn: () => getAppSetting<QtyRules>('cart_quantity_rules', DEFAULT) });
   const [draft, setDraft] = useState<QtyRules>(DEFAULT);
 
@@ -137,7 +140,7 @@ export default function QuantityRulesTab() {
       </Panel>
 
       <div className="flex items-center gap-3">
-        <Button size="sm" disabled={!dirty || save.isPending} onClick={() => save.mutate(draft)}>
+        <Button size="sm" disabled={!dirty || save.isPending || !canEdit} onClick={() => save.mutate(draft)}>
           {save.isPending ? t('Saving…') : t('Save quantity rules')}
         </Button>
         {save.isSuccess && !dirty && <span className="text-xs text-success">{t('Saved ✓')}</span>}

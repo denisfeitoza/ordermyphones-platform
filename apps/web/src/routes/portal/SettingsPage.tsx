@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Check } from 'lucide-react';
 import { useAccount } from '@/store';
+import { useCatalogSource } from '@/lib/catalogSource';
+import { RealSettings } from './RealSettings';
 import { PageHeading, Panel, Field } from '@/components/portal/parts';
 import { ProfileCompletionPanel } from '@/components/portal/ProfileCompletionPanel';
 import { Button } from '@/components/ui/Button';
@@ -52,7 +54,14 @@ function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
   );
 }
 
+/** Real mode reads/writes the customer's own profile; mock mode keeps the demo persona below. */
 export default function SettingsPage() {
+  const source = useCatalogSource();
+  if (source === 'real') return <RealSettings />;
+  return <MockSettingsPage />;
+}
+
+function MockSettingsPage() {
   const { businessName } = useAccount();
   const { t } = useI18n();
   const [profile] = useState<Profile>(() =>

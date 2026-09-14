@@ -375,15 +375,14 @@ function OrderEditor({ order, onDone }: { order: AdminOrder; onDone: () => void 
   const [addQuery, setAddQuery] = useState('');
 
   const subtotal = lines.reduce((s, l) => s + qtyOf(l.qtyStr) * centsOf(l.priceStr), 0);
-  const existing = new Set(lines.map((l) => l.variantId));
-
   const matches = useMemo(() => {
     const q = addQuery.trim().toLowerCase();
     if (q.length < 2) return [];
+    const existing = new Set(lines.map((l) => l.variantId));
     return listings
       .filter((v) => !existing.has(v.variantId) && `${v.model} ${v.capacity} ${v.sku}`.toLowerCase().includes(q))
       .slice(0, 6);
-  }, [addQuery, listings, existing]);
+  }, [addQuery, listings, lines]);
 
   // Stepper nudges the numeric value; the text field holds a free-typing draft.
   function stepQty(idx: number, delta: number) {

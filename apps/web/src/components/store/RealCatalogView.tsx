@@ -88,7 +88,7 @@ export function RealCatalogView() {
     setFacets(next);
     setQ(urlQ ?? '');
     setVisibleCount(WINDOW);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [params]);
 
   function selectView(next: CatalogView) {

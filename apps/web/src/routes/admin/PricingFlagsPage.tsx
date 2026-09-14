@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ShieldCheck } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/store';
 import { AdminHeading, Panel, Table, Td } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
 import { formatUsd } from '@/lib/format';
@@ -128,6 +129,8 @@ function summarizePayload(payload: Record<string, unknown>): string {
 /** Each flag row owns its own mutation instance — keeps pending/error state scoped to that row instead of a single queue-wide mutation. */
 function FlagActions({ flag, onResolved }: { flag: FlagRow; onResolved: () => void }) {
   const { t } = useI18n();
+  const { role } = useAuth();
+  const isAdmin = role === 'admin'; // override writes a sell price — admin-only (RPC-enforced too)
   const [overriding, setOverriding] = useState(false);
   const [priceInput, setPriceInput] = useState('');
   const [expiryDays, setExpiryDays] = useState('30');
@@ -225,8 +228,14 @@ function FlagActions({ flag, onResolved }: { flag: FlagRow; onResolved: () => vo
         variant="outline"
         size="sm"
         className="h-8 px-2.5 text-[11px]"
-        disabled={flag.tier === null || mutation.isPending}
-        title={flag.tier === null ? t('This flag affects every tier — override needs a single tier') : undefined}
+        disabled={flag.tier === null || mutation.isPending || !isAdmin}
+        title={
+          !isAdmin
+            ? t('Overriding a sell price is admin-only.')
+            : flag.tier === null
+              ? t('This flag affects every tier — override needs a single tier')
+              : undefined
+        }
         onClick={() => setOverriding(true)}
       >
         {t('Override')}

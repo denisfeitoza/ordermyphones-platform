@@ -52,7 +52,7 @@ export default function UsersTab() {
         {t('Roles decide what someone can do — admin runs everything, staff helps operate day-to-day (no sensitive pricing or settings), and customer shops. A customer’s tier sets which prices they see.')}
       </div>
 
-      <InvitePanel />
+      {isAdmin && <InvitePanel />}
 
       <Panel title={t('Accounts')}>
         <p className="mb-4 text-sm text-muted-foreground">

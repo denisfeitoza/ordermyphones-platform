@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Plus, Radio, Rocket, X } from 'lucide-react';
 import { getAppSetting, setAppSetting } from '@/data/adminConfig';
+import { useAuth } from '@/store';
 import { useI18n } from '@/i18n';
 import { Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
@@ -116,6 +117,8 @@ function ListEditor({ label, help, values, onChange, disabled }: { label: string
 export default function CatalogTab() {
   const { t } = useI18n();
   const qc = useQueryClient();
+  const { role } = useAuth();
+  const canEdit = role === 'admin'; // app_settings is admin-only to write (audit P0-4)
   const sourceQ = useSetting<CatalogSource>('catalog_source', 'mock');
   const qtyQ = useSetting<QtyDisplay>('catalog_qty_display', 'exact');
   const featuredQ = useSetting<Featured>('catalog_featured', { skus: [], models: [] });
@@ -159,11 +162,11 @@ export default function CatalogTab() {
             </div>
           </div>
           {isLive ? (
-            <Button variant="outline" size="sm" disabled={save.isPending} onClick={() => save.mutate({ key: 'catalog_source', value: 'mock' })}>
+            <Button variant="outline" size="sm" disabled={save.isPending || !canEdit} onClick={() => save.mutate({ key: 'catalog_source', value: 'mock' })}>
               {t('Switch back to demo')}
             </Button>
           ) : (
-            <Button variant="brand" size="md" disabled={save.isPending} onClick={() => setGoLiveOpen(true)}>
+            <Button variant="brand" size="md" disabled={save.isPending || !canEdit} onClick={() => setGoLiveOpen(true)}>
               <Rocket className="h-4 w-4" strokeWidth={2} />
               {t('Go live')}
             </Button>

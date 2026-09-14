@@ -12,12 +12,14 @@ import { useI18n } from '@/i18n';
 const portalNav = [
   { to: '/portal', label: 'Overview', end: true },
   { to: '/portal/orders', label: 'Orders' },
-  { to: '/portal/wishlist', label: 'Wishlist' },
+  // mockOnly: demo-era pages (wishlist on the demo catalog, Stripe cards,
+  // Partner API key) are hidden in real mode — v1.1 scope (audit P0-5).
+  { to: '/portal/wishlist', label: 'Wishlist', mockOnly: true },
   { to: '/portal/tier', label: 'Tier' },
-  { to: '/portal/inventory-api', label: 'Inventory API', gate: 'api' as const },
+  { to: '/portal/inventory-api', label: 'Inventory API', gate: 'api' as const, mockOnly: true },
   { to: '/portal/addresses', label: 'Addresses' },
   { to: '/portal/team', label: 'Team', gate: 'team' as const },
-  { to: '/portal/payment-methods', label: 'Payment' },
+  { to: '/portal/payment-methods', label: 'Payment', mockOnly: true },
   { to: '/portal/settings', label: 'Settings' },
 ];
 
@@ -80,7 +82,7 @@ export default function PortalLayout() {
           )}
 
           <nav className="scrollbar-hide mt-4 flex gap-1 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible">
-            {portalNav.map((l) => (
+            {portalNav.filter((l) => !(source === 'real' && l.mockOnly)).map((l) => (
               <NavLink
                 key={l.to}
                 to={l.to}
