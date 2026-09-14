@@ -127,12 +127,29 @@ export function RealOrdersList() {
 export function RealOrderDetail() {
   const { t } = useI18n();
   const { id } = useParams();
-  const { data: orders, isLoading } = useMyOrders();
+  const { data: orders, isLoading, isError, refetch } = useMyOrders();
   const { data: events } = useOrderEvents(id);
   const order = orders?.find((o) => o.id === id);
 
   if (isLoading) {
     return <div className="py-16 text-center text-sm text-muted-foreground">{t('Loading…')}</div>;
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-4">
+        <Link to="/portal/orders" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" strokeWidth={2} />
+          {t('Back to orders')}
+        </Link>
+        <div className="rounded-2xl border border-danger/30 bg-danger/5 py-12 text-center">
+          <p className="font-medium">{t('Could not load this order.')}</p>
+          <button type="button" onClick={() => void refetch()} className="mt-3 text-sm font-medium text-brand hover:underline">
+            {t('Try again')}
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (!order) {

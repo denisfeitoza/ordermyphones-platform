@@ -125,7 +125,7 @@ export default function ViewAsPage() {
                 </div>
               </dl>
               <p className="mt-4 text-xs text-muted-foreground">
-                {t("Addresses are stored client-side in this build and aren't available to the lens (see AUTONOMOUS-DECISIONS.md).")}
+                {t('The address book is account-scoped by RLS and not exposed to the lens yet.')}
               </p>
             </Panel>
 

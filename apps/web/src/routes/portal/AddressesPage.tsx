@@ -73,7 +73,7 @@ export default function AddressesPage() {
       />
 
       {editing && (
-        <form onSubmit={submit} className="space-y-4 rounded-2xl border border-border bg-card p-5">
+        <form key={editing.id ?? 'new'} onSubmit={submit} className="space-y-4 rounded-2xl border border-border bg-card p-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Label (optional)" name="label" placeholder={t('Main warehouse')} defaultValue={editRow?.label ?? ''} />
             <Field label="Recipient (optional)" name="recipient" placeholder={profile?.display_name ?? ''} defaultValue={editRow?.recipient ?? profile?.display_name ?? ''} />

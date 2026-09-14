@@ -91,9 +91,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
-    // remove, not invalidate — a subsequent different user must never briefly
-    // render the previous user's cached profile (T-01-47).
-    queryClient.removeQueries({ queryKey: ['profile'] });
+    // Drop EVERY cached query, not just the profile — a subsequent different
+    // user on the same browser must never briefly render the previous user's
+    // orders, address book or tier prices (T-01-47; audit 2026-09-13 P0-1).
+    // Those keys carry no user id, so clearing is the only safe option.
+    queryClient.clear();
     // Observability cleanup on sign-out (OBSERVABILITY.md §5.7): drop the
     // PostHog identity and the Sentry user so a later session isn't attributed
     // to the previous account. No-op when analytics/Sentry are unconfigured.

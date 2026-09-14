@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Check, MapPin, PackageCheck, Plus, ShoppingBag } from 'lucide-react';
 import { useAuth, useRealCart } from '@/store';
@@ -61,12 +61,16 @@ function Field({ label, ...props }: { label: string } & React.InputHTMLAttribute
 export function RealCheckout() {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const queryClient = useQueryClient();
+  const { user, profile, role, loading: authLoading } = useAuth();
   const { lines, clear } = useRealCart();
   const { items } = useRealCatalog(true);
 
   const [phase, setPhase] = useState<Phase>('review');
   const [orderId, setOrderId] = useState<string | null>(null);
+  // Snapshot of what was ordered, taken BEFORE the cart is cleared so the
+  // confirmation panel doesn't render "0 units" (audit 2026-09-13 P1-17).
+  const [placedSummary, setPlacedSummary] = useState<{ units: number; subtotalCents: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<ShippingForm>({ street: '', city: '', state: '', zip: '', phone: '' });
   // Which saved address is chosen, or NEW to type one. null until the book loads.
@@ -123,8 +127,25 @@ export function RealCheckout() {
       }),
     [lines, byVariant],
   );
-  const subtotalCents = resolved.reduce((s, l) => s + (l.lineTotalCents ?? 0), 0);
-  const unitCount = lines.reduce((s, l) => s + l.qty, 0);
+  const liveSubtotalCents = resolved.reduce((s, l) => s + (l.lineTotalCents ?? 0), 0);
+  const liveUnitCount = lines.reduce((s, l) => s + l.qty, 0);
+  const subtotalCents = placedSummary?.subtotalCents ?? liveSubtotalCents;
+  const unitCount = placedSummary?.units ?? liveUnitCount;
+
+  // Checkout is a signed-in customer surface: a guest with a stale cart goes to
+  // sign-in (and comes back here); admin/staff in a tier lens cannot order.
+  if (!authLoading && !user) {
+    return <Navigate to="/auth/sign-in" state={{ from: '/checkout' }} replace />;
+  }
+  if (!authLoading && user && role && role !== 'customer') {
+    return (
+      <div className="container flex flex-col items-center justify-center gap-4 py-24 text-center">
+        <h1 className="font-display text-2xl font-semibold">{t('Ordering is for customer accounts')}</h1>
+        <p className="max-w-md text-muted-foreground">{t('Staff and admin accounts can preview prices through the tier lens, but orders must be placed by a customer login.')}</p>
+        <Button onClick={() => navigate('/catalog')}>{t('Browse catalog')}</Button>
+      </div>
+    );
+  }
 
   if (lines.length === 0 && phase !== 'done') {
     return (
@@ -157,17 +178,6 @@ export function RealCheckout() {
     }
     setPhase('placing');
 
-    // Mirror into profiles.shipping_address + phone so the profile-completeness
-    // meter stays honest (advisor point 1). Best-effort, non-blocking.
-    if (user) void supabase.from('profiles').update({ shipping_address, phone }).eq('id', user.id);
-
-    // Save a freshly-typed address to the book for next time, if the buyer opted in.
-    if (user && usingNew && saveNew) {
-      void createAddress(user.id, { recipient: profile?.display_name ?? null, ...shipping_address, phone: phone || null }).catch(() => {
-        /* non-fatal: the order still goes through */
-      });
-    }
-
     const p_items = expandCartToOrderItems(lines);
     const { data, error: rpcError } = await supabase.rpc('place_order', {
       p_items,
@@ -181,10 +191,29 @@ export function RealCheckout() {
       return;
     }
 
+    // Side-effects run only AFTER the order exists, so a failed attempt +
+    // retry can't insert the same address twice (audit 2026-09-13 P1-17).
+    // Mirror into profiles.shipping_address + phone so the profile-completeness
+    // meter stays honest (advisor point 1). Best-effort, non-blocking.
+    if (user) void supabase.from('profiles').update({ shipping_address, phone }).eq('id', user.id);
+
+    // Save a freshly-typed address to the book for next time, if the buyer opted in.
+    if (user && usingNew && saveNew) {
+      void createAddress(user.id, { recipient: profile?.display_name ?? null, ...shipping_address, phone: phone || null })
+        .catch(() => {
+          /* non-fatal: the order still went through */
+        })
+        .finally(() => void queryClient.invalidateQueries({ queryKey: ['addresses'] }));
+    }
+
     const placed = data as { id?: string } | null;
     setOrderId(placed?.id ?? null);
+    setPlacedSummary({ units: liveUnitCount, subtotalCents: liveSubtotalCents });
     clear();
     setPhase('done');
+    // The portal's order list is cached for 30s with no focus refetch — make
+    // "Track order" show the new order immediately.
+    void queryClient.invalidateQueries({ queryKey: ['my-orders'] });
   }
 
   return (
