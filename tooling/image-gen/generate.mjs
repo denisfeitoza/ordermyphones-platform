@@ -1,5 +1,5 @@
 // Generate all storefront images via OpenRouter Nano Banana 2.
-// Run: set -a; source .env.local; set +a; node tooling/image-gen/generate.mjs [--force]
+// Run from tooling/image-gen: npm run generate:mockup [-- --force]  (key from repo-root .env.local)
 //
 // Idempotent: skips ids whose PNG already exists unless --force is passed.
 // Concurrency-limited, retries once, prints per-item status + total cost.
@@ -7,12 +7,10 @@ import { writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MANIFEST, FLASH } from './manifest.mjs';
+import { requireEnv } from './env.mjs';
+import { requestImage } from './openrouter.mjs';
 
-const KEY = process.env.OPENROUTER_API_KEY;
-if (!KEY) {
-  console.error('FAIL: OPENROUTER_API_KEY not set (source .env.local first)');
-  process.exit(1);
-}
+const KEY = requireEnv('OPENROUTER_API_KEY');
 
 const FORCE = process.argv.includes('--force');
 const CONCURRENCY = 4;
@@ -30,29 +28,8 @@ async function generateOne(item, attempt = 1) {
   }
   const model = item.model || FLASH;
   try {
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://ordermyphones.com',
-        'X-Title': 'OrderMyPhones',
-      },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: 'user', content: item.prompt }],
-        modalities: ['image', 'text'],
-      }),
-    });
-    const json = await res.json();
-    if (!res.ok) throw new Error(`HTTP ${res.status} ${JSON.stringify(json).slice(0, 300)}`);
-    const cost = json.usage?.cost ?? 0;
+    const { buf, cost } = await requestImage({ key: KEY, model, prompt: item.prompt });
     totalCost += cost;
-    const images = json.choices?.[0]?.message?.images ?? [];
-    if (images.length === 0) throw new Error('no image in response');
-    const url = images[0].image_url?.url ?? images[0].url ?? '';
-    const b64 = url.includes(',') ? url.split(',')[1] : url;
-    const buf = Buffer.from(b64, 'base64');
     writeFileSync(outPath, buf);
     console.log(`OK    ${item.id}  ${(buf.length / 1024).toFixed(0)}KB  $${cost.toFixed(4)}  [${model.split('/')[1]}]`);
     return { id: item.id, status: 'ok' };

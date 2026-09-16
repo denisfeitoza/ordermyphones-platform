@@ -1,0 +1,12 @@
+{
+  "name": "@omp/image-gen",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate:mockup": "node generate.mjs",
+    "generate:catalog": "node generate-catalog.mjs"
+  },
+  "dependencies": {
+    "sharp": "^0.34.3"
+  }
+}
