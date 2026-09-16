@@ -127,7 +127,7 @@ export function RealCartDrawer() {
               <>
                 <ul className="flex-1 divide-y divide-border overflow-y-auto px-5">
                   {resolved.map((l) => {
-                    const image = l.item ? resolveProductImage(l.item.model) : null;
+                    const image = l.item ? (l.item.imageUrl ?? resolveProductImage(l.item.model)) : null;
                     const name = l.item ? buildDisplayName(l.item) : t('Item unavailable');
                     return (
                       <li key={l.variantId} className="flex gap-3 py-4">
