@@ -15,6 +15,7 @@ import {
 import { exportPickingSheetPdf } from '@/lib/export';
 import { useOrderEvents } from '@/data/orderEvents';
 import { useRealCatalog } from '@/data/realCatalog';
+import { TrackingTimeline } from '@/components/store/TrackingTimeline';
 import { OrderTimeline } from '@/components/orders/OrderTimeline';
 import { AdminHeading, Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
@@ -330,6 +331,7 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
               {(order.trackingCarrier || order.trackingNumber) && (
                 <p className="mt-1 font-mono">{[order.trackingCarrier, order.trackingNumber].filter(Boolean).join(' · ')}</p>
               )}
+              <TrackingTimeline orderId={order.id} carrier={order.trackingCarrier} trackingNumber={order.trackingNumber} className="mt-3" />
             </div>
           )}
 

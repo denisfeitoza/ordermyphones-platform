@@ -89,15 +89,26 @@ export interface StockLocationRow {
   display_name: string;
   region: string | null;
   active: boolean;
+  /** Origin address — only postal_code is required for a carrier rate quote
+   * (20260917120000_shipping_fedex.sql). Null postal code = not quotable. */
+  city: string | null;
+  state_code: string | null;
+  postal_code: string | null;
 }
 
 export async function listStockLocations(): Promise<StockLocationRow[]> {
-  const { data, error } = await supabase.from('stock_locations').select('id,code,display_name,region,active').order('code');
+  const { data, error } = await supabase
+    .from('stock_locations')
+    .select('id,code,display_name,region,active,city,state_code,postal_code')
+    .order('code');
   if (error) throw new Error(error.message);
   return (data ?? []) as StockLocationRow[];
 }
 
-export async function updateStockLocation(id: string, patch: Partial<Pick<StockLocationRow, 'display_name' | 'region' | 'active'>>): Promise<void> {
+export async function updateStockLocation(
+  id: string,
+  patch: Partial<Pick<StockLocationRow, 'display_name' | 'region' | 'active' | 'city' | 'state_code' | 'postal_code'>>,
+): Promise<void> {
   const { error } = await supabase.from('stock_locations').update(patch).eq('id', id);
   if (error) throw new Error(error.message);
 }

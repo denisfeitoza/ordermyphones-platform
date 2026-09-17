@@ -5,6 +5,7 @@ import { useMyOrders, type RealOrder, type RealOrderLine, type RealOrderStatus }
 import { useAuth } from '@/store';
 import { useOrderEvents } from '@/data/orderEvents';
 import { OrderTimeline } from '@/components/orders/OrderTimeline';
+import { TrackingTimeline } from '@/components/store/TrackingTimeline';
 import { PageHeading } from '@/components/portal/parts';
 import { Button, buttonVariants } from '@/components/ui/Button';
 import { exportDocCsv, exportDocPdf, type ExportDoc } from '@/lib/export';
@@ -257,6 +258,8 @@ export function RealOrderDetail() {
           )}
         </div>
       )}
+
+      <TrackingTimeline orderId={order.id} carrier={order.trackingCarrier} trackingNumber={order.trackingNumber} />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px] [&>*]:min-w-0">
         <div className="space-y-6">

@@ -70,15 +70,22 @@ function LocationRow({ row, canManage }: { row: StockLocationRow; canManage: boo
   const qc = useQueryClient();
   const [name, setName] = useState(row.display_name);
   const [region, setRegion] = useState(row.region ?? '');
+  const [city, setCity] = useState(row.city ?? '');
+  const [stateCode, setStateCode] = useState(row.state_code ?? '');
+  const [postal, setPostal] = useState(row.postal_code ?? '');
   const [confirmDelete, setConfirmDelete] = useState(false);
   useEffect(() => {
     setName(row.display_name);
     setRegion(row.region ?? '');
+    setCity(row.city ?? '');
+    setStateCode(row.state_code ?? '');
+    setPostal(row.postal_code ?? '');
     setConfirmDelete(false);
   }, [row]);
 
   const save = useMutation({
-    mutationFn: (patch: Partial<Pick<StockLocationRow, 'display_name' | 'region' | 'active'>>) => updateStockLocation(row.id, patch),
+    mutationFn: (patch: Partial<Pick<StockLocationRow, 'display_name' | 'region' | 'active' | 'city' | 'state_code' | 'postal_code'>>) =>
+      updateStockLocation(row.id, patch),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['config-locations'] }),
   });
 
@@ -87,7 +94,12 @@ function LocationRow({ row, canManage }: { row: StockLocationRow; canManage: boo
     onSuccess: () => qc.invalidateQueries({ queryKey: ['config-locations'] }),
   });
 
-  const dirty = name !== row.display_name || (region || null) !== (row.region ?? null);
+  const dirty =
+    name !== row.display_name ||
+    (region || null) !== (row.region ?? null) ||
+    (city || null) !== (row.city ?? null) ||
+    (stateCode || null) !== (row.state_code ?? null) ||
+    (postal || null) !== (row.postal_code ?? null);
 
   return (
     <div className="rounded-2xl border border-border p-4">
@@ -104,6 +116,15 @@ function LocationRow({ row, canManage }: { row: StockLocationRow; canManage: boo
         </Field>
         <Field label={t('Region')}>
           <TextInput value={region} placeholder="—" onChange={(e) => setRegion(e.target.value)} />
+        </Field>
+        <Field label={t('City')}>
+          <TextInput value={city} placeholder="Dallas" onChange={(e) => setCity(e.target.value)} />
+        </Field>
+        <Field label={t('State')}>
+          <TextInput value={stateCode} placeholder="TX" onChange={(e) => setStateCode(e.target.value.toUpperCase())} className="uppercase" />
+        </Field>
+        <Field label={t('ZIP code')} help={t('Origin for carrier shipping quotes. Without it this warehouse is not quoted.')}>
+          <TextInput value={postal} placeholder="75201" onChange={(e) => setPostal(e.target.value)} className="font-mono" />
         </Field>
       </div>
       <div className="mt-3 flex items-center justify-between gap-3">
@@ -131,7 +152,15 @@ function LocationRow({ row, canManage }: { row: StockLocationRow; canManage: boo
         ) : (
           <span />
         )}
-        <Button size="sm" variant="outline" disabled={!dirty || !name.trim() || save.isPending} onClick={() => save.mutate({ display_name: name.trim(), region: region.trim() || null })}>
+        <Button size="sm" variant="outline" disabled={!dirty || !name.trim() || save.isPending} onClick={() =>
+            save.mutate({
+              display_name: name.trim(),
+              region: region.trim() || null,
+              city: city.trim() || null,
+              state_code: stateCode.trim().toUpperCase() || null,
+              postal_code: postal.trim() || null,
+            })
+          }>
           {save.isPending ? t('Saving…') : t('Save')}
         </Button>
       </div>

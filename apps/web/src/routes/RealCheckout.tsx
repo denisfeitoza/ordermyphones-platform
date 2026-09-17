@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { expandCartToOrderItems } from '@/lib/orderItems';
 import { listAddresses, createAddress, type AddressRow } from '@/data/addresses';
 import { useRealCatalog, buildDisplayName, type PricedRealListing } from '@/data/realCatalog';
+import { ShippingEstimate } from '@/components/store/ShippingEstimate';
 import { Button } from '@/components/ui/Button';
 import { formatUsd } from '@/lib/format';
 import { useI18n } from '@/i18n';
@@ -381,10 +382,7 @@ export function RealCheckout() {
             )}
 
             <div className="mt-3 space-y-2 border-t border-border pt-4 text-sm">
-              <div className="flex items-center justify-between text-muted-foreground">
-                <span>{t('Shipping')}</span>
-                <span>{t('Arranged separately')}</span>
-              </div>
+              <ShippingEstimate zip={form.zip} state={form.state} city={form.city} units={unitCount} />
               <div className="flex items-center justify-between border-t border-border pt-3">
                 <span className="font-medium">{t('Subtotal')}</span>
                 <span className="font-mono text-xl font-semibold tabular-nums">{formatUsd(subtotalCents)}</span>
