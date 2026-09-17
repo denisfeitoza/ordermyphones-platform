@@ -126,6 +126,26 @@ Actual cost: **$3.36** (36 renders + 11 regenerated mockup models + 3 re-rolls:
 Galaxy S22 tilted, Z Flip7 lying flat, S23 FE doubled). ~$0.067 per image.
 Key: `~/.claude/secrets/openrouter.key` or `OPENROUTER_API_KEY` in the root `.env.local`.
 
+### 1.4b Imageless products unpublished (2026-09-17)
+
+On request, every product still without an image was hidden from the storefront
+with `published = false` (not deleted — stock, prices and variants untouched).
+52 product rows, ≈ 2 500 units (1.7% of stock). The storefront now lists 2 405
+listings, all with an image. The iPhone 11 Pro "staff photo" was a purple test
+rectangle and was replaced by its render.
+
+Unpublished: Galaxy S21 / S21 5G / S21 Plus 5G / S21 Ultra (+5G) / S21 FE 5G,
+S24 Plus 5G / S24+, S25 / S25 5G / S25 Plus 5G / S25+ / S25 Edge 5G, S26 / S26+ /
+S26 Ultra 5G, Note20 5G / Note20 Ultra 5G, Z Fold 3/3 5G/4/4 5G, Z Flip3 5G / Flip4;
+iPhone 17e, iPhone Air, iPhone SE 3, iPhone XR; Pixel 2 XL, 6 Pro, 7 / 7 5G,
+7 Pro 5G, 8 5G, 8 Pro 5G, 8a, 9, 9 Pro, 9a, 10, 10a, 10 Pro XL, 10 Pro Fold, Fold;
+AirPods Max USB-C / Max 2 USB-C; Watch SE3 (2); ZZUI UI Demo Phone.
+
+To bring one back: generate its render (add it to `catalog-manifest.mjs`), set
+`image_url`, then flip **Published** in Admin → Products. Blanket undo:
+`update products set published = true where image_url is null;` (only after
+they have images, or they return as placeholders).
+
 ### 1.5 Risks / decisions
 
 - **These are AI renders, not manufacturer photos.** That is the safer option
