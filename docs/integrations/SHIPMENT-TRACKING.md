@@ -54,7 +54,47 @@ When a carrier supports webhooks (EasyPost, AfterShip), polling is replaced by w
 - Once approved by admin, the system either generates a return label (when the carrier API supports it) or instructs the customer to use a supplier-provided method.
 - On scan-back at the supplier, `shipments.status` transitions to `returned`; the `orders` flow handles refund accounting via the Stripe path.
 
-## 7. Phase-by-phase work
+## 7. FedEx, as built (2026-09-17)
+
+Carrier-direct, FedEx only, **sandbox-first**. Two edge functions share one
+OAuth client ([`_shared/fedex.ts`](../../supabase/functions/_shared/fedex.ts));
+the client id/secret never leave the server.
+
+| Piece | Where |
+|---|---|
+| Tracking state per order | `public.shipment_tracking` — read by owner/account owner/staff, written only by the function (service role) |
+| Warehouse origin address | `stock_locations.city/state_code/postal_code/country_code`, editable in Admin → Inventory → Locations |
+| Parcel defaults | `app_settings.shipping_package_defaults` (unit weight, box weight, units per box, box inches) |
+| Refresh tracking | [`fedex-track`](../../supabase/functions/fedex-track/README.md) — per order (caller's JWT) or a 30-min sweep (shared secret) |
+| Rate estimate | [`fedex-rate`](../../supabase/functions/fedex-rate/README.md) — quotes every warehouse with a postal code, cheapest first |
+| Customer UI | Tracking timeline on the portal order page; estimate under "Shipping" at checkout |
+| Staff UI | Same timeline on the admin order drawer |
+
+### Env contract (Supabase → Edge Functions → Secrets)
+
+| Variable | Notes |
+|---|---|
+| `FEDEX_CLIENT_ID` / `FEDEX_CLIENT_SECRET` | From a project on developer.fedex.com. Sandbox keys are issued instantly. |
+| `FEDEX_ACCOUNT_NUMBER` | The 9-digit account. Sandbox projects get a test account number. |
+| `FEDEX_API_BASE` | Omit for sandbox (`https://apis-sandbox.fedex.com`); set `https://apis.fedex.com` for production. |
+| `FEDEX_TRACK_SWEEP_SECRET` | Bearer token for the scheduled sweep only. |
+
+With the credentials absent both functions answer `503 fedex_not_configured`
+and the UI falls back to today's behaviour (manual tracking number, "Shipping —
+arranged separately"). That is the state the code ships in.
+
+### Deliberately not built
+
+- **Label creation (Ship API).** FedEx requires label/solution validation before
+  production, which is a human review of test shipments — it cannot be done in
+  code. Still out of scope per §9.
+- **Charging shipping.** The quote is an estimate; order totals remain tier
+  price × qty (D4/D8), so `place_order` is untouched.
+- **The 30-minute sweep schedule.** The function is deployed and takes
+  `{sweep:true}`; wiring `pg_cron` (or any scheduler) to call it is a one-line
+  follow-up once production keys exist.
+
+## 8. Phase-by-phase work
 
 | Phase | Work |
 |---|---|
@@ -63,7 +103,7 @@ When a carrier supports webhooks (EasyPost, AfterShip), polling is replaced by w
 | **Phase 3** | Ship the customer portal timeline, the admin shipment views, and the notification senders. |
 | **Phase 4** | Production credentials; webhook subscriptions if applicable; runbook entry. |
 
-## 8. Risks
+## 9. Risks
 
 | Risk | Mitigation |
 |---|---|
@@ -72,7 +112,7 @@ When a carrier supports webhooks (EasyPost, AfterShip), polling is replaced by w
 | Webhook delivery failures (carrier-direct) | Polling reconciliation sweep every 6h closes any gap. |
 | Customer expects real-time updates that the carrier does not provide | UI labels updates with "Carrier may take up to N hours to reflect status." |
 
-## 9. Out of scope (v1)
+## 10. Out of scope (v1)
 
 - Label printing in-house.
 - Customs documentation generation.
