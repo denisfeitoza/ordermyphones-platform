@@ -7,6 +7,7 @@ import AdminLayout from '@/components/layout/AdminLayout';
 import HomePage from '@/routes/HomePage';
 import CatalogPage from '@/routes/CatalogPage';
 import ProductPage from '@/routes/ProductPage';
+import ModelPage from '@/routes/ModelPage';
 import CartPage from '@/routes/CartPage';
 import CheckoutPage from '@/routes/CheckoutPage';
 import ContactPage from '@/routes/ContactPage';
@@ -209,6 +210,7 @@ export default function App() {
           <Route index element={<HomePage />} />
           <Route path="catalog" element={<CatalogPage />} />
           <Route path="p/:slug" element={<ProductPage />} />
+          <Route path="m/:slug" element={<ModelPage />} />
           <Route path="cart" element={<CartPage />} />
           <Route path="checkout" element={<CheckoutPage />} />
           <Route path="contact" element={<ContactPage />} />
