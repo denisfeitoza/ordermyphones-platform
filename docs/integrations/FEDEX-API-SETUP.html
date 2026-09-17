@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FedEx API Setup — OrderMyPhones</title>
+<style>
+  @page { size: letter; margin: 16mm 14mm 14mm; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    margin: 0;
+    font: 10.5pt/1.5 "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    color: #1b2030;
+  }
+  h1 { font-size: 21pt; line-height: 1.15; margin: 0 0 6px; letter-spacing: -0.4px; }
+  h2 {
+    font-size: 12.5pt; margin: 22px 0 8px; padding-top: 10px;
+    border-top: 2px solid #e6e8f0; letter-spacing: -0.2px;
+  }
+  h3 { font-size: 10.5pt; margin: 14px 0 4px; }
+  p { margin: 0 0 8px; }
+  ul, ol { margin: 0 0 8px; padding-left: 20px; }
+  li { margin-bottom: 4px; }
+  a { color: #5b21b6; text-decoration: none; }
+  .lead { color: #4a5268; font-size: 11pt; }
+  .meta { color: #6b7280; font-size: 8.5pt; margin-top: 4px; }
+  .rule { height: 3px; background: #6d28d9; width: 54px; margin: 10px 0 14px; border-radius: 2px; }
+
+  .facts { display: flex; gap: 10px; margin: 14px 0 4px; }
+  .fact { flex: 1; border: 1px solid #e6e8f0; border-radius: 8px; padding: 9px 11px; background: #fbfbfe; }
+  .fact .k { font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.6px; color: #6b7280; }
+  .fact .v { font-size: 11pt; font-weight: 600; margin-top: 2px; }
+
+  .step { margin: 0 0 10px; }
+  .step-head { font-weight: 600; }
+  .num {
+    display: inline-block; width: 18px; height: 18px; line-height: 18px; text-align: center;
+    border-radius: 50%; background: #6d28d9; color: #fff; font-size: 8pt; font-weight: 700;
+    margin-right: 7px; vertical-align: 1px;
+  }
+  code, .mono { font-family: "Cascadia Mono", Consolas, monospace; font-size: 9.5pt; }
+
+  .callout { border-left: 3px solid #6d28d9; background: #f6f3ff; padding: 9px 12px; border-radius: 0 6px 6px 0; margin: 10px 0; }
+  .warn { border-left-color: #b45309; background: #fff8ed; }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout .title { font-weight: 600; }
+
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 4px; }
+  th, td { border: 1px solid #d9dceb; padding: 7px 9px; text-align: left; vertical-align: top; }
+  th { background: #f4f5fa; font-size: 9pt; }
+  td.fill { height: 30px; background: #fffdf5; }
+  .small { font-size: 9pt; color: #4a5268; }
+  .footer { margin-top: 18px; border-top: 1px solid #e6e8f0; padding-top: 8px; font-size: 8.5pt; color: #6b7280; }
+  .avoid-break { break-inside: avoid; }
+  .page-break { break-before: page; }
+</style>
+</head>
+<body>
+
+<h1>FedEx API Setup</h1>
+<div class="rule"></div>
+<p class="lead">Connecting your FedEx account to the OrderMyPhones platform, so the site can show live
+delivery tracking to your customers and real shipping quotes at checkout.</p>
+<p class="meta">Prepared for the owner of OrderMyPhones &middot; September 2026 &middot; Takes about 15 minutes</p>
+
+<div class="facts">
+  <div class="fact"><div class="k">Cost of API access</div><div class="v">$0</div></div>
+  <div class="fact"><div class="k">Time needed</div><div class="v">~15 min</div></div>
+  <div class="fact"><div class="k">Credit card required</div><div class="v">No</div></div>
+  <div class="fact"><div class="k">You send us</div><div class="v">3 values</div></div>
+</div>
+
+<h2>What this gives the platform</h2>
+<ul>
+  <li><strong>Live tracking.</strong> Today your team types a tracking number by hand and the customer
+      has to check FedEx themselves. After this, the order page shows the real status — in transit, out
+      for delivery, delivered, or a problem — with every scan and its location.</li>
+  <li><strong>Shipping quotes.</strong> At checkout the customer sees an estimated shipping cost from the
+      warehouse that holds the stock to their ZIP code. It is an estimate for information only: it is not
+      added to the order total, and shipping keeps being invoiced separately by your team.</li>
+</ul>
+<p class="small">Using the FedEx API is free. You keep paying only for the shipments you actually send, at
+your own FedEx rates. Nothing about your pricing or billing changes.</p>
+
+<h2>Step 1 &nbsp;&middot;&nbsp; Create a fedex.com login (5 minutes)</h2>
+<p>If you already sign in to fedex.com, skip to Step 2 and use that login.</p>
+<p class="step"><span class="num">1</span>Go to <strong>fedex.com/register</strong></p>
+<p class="step"><span class="num">2</span>Fill in the form. It asks only for:</p>
+<ul>
+  <li>Your name</li>
+  <li>Email address and phone number</li>
+  <li>Your address (country, street, city, state, ZIP)</li>
+  <li>Company name — optional, but please fill it in</li>
+  <li>A user ID and password of your choice</li>
+</ul>
+<div class="callout">
+  <p><span class="title">No payment details at this stage.</span> This login is free and does not ask for a
+  credit card, a tax ID, or business documents. It is only the account you use to sign in.</p>
+</div>
+
+<h2>Step 2 &nbsp;&middot;&nbsp; Create the API project (10 minutes)</h2>
+<p class="step"><span class="num">1</span>Go to <strong>developer.fedex.com</strong> and sign in with the login from Step 1.</p>
+<p class="step"><span class="num">2</span>FedEx asks what kind of company you are. Choose
+  <strong>&ldquo;A company that ships with FedEx&rdquo;</strong>.</p>
+<p class="small">The other option is for software vendors who resell FedEx integrations, and it triggers a
+longer approval process we do not need.</p>
+<p class="step"><span class="num">3</span>Open <strong>My Projects</strong> and click <strong>Create Project</strong>.</p>
+<p class="step"><span class="num">4</span>Fill in the project:</p>
+<table class="avoid-break">
+  <tr>
+    <th style="width:30%">Field</th>
+    <th>What to enter</th>
+  </tr>
+  <tr>
+    <td><strong>Project Name</strong></td>
+    <td><span class="mono">OrderMyPhones_Platform</span></td>
+  </tr>
+  <tr>
+    <td><strong>APIs</strong></td>
+    <td>Select <strong>&ldquo;Ship, Rate &amp; Other APIs&rdquo;</strong>.<br>
+      <strong>Do not</strong> select <em>Advanced Integrated Visibility</em> — it is the one paid product,
+      and selecting it makes FedEx ask for a billing account we do not need.</td>
+  </tr>
+  <tr>
+    <td><strong>Countries</strong></td>
+    <td>The countries you ship from and to. <strong>United States</strong> is enough if you only ship
+      domestically; add any others you already ship to.</td>
+  </tr>
+  <tr>
+    <td><strong>Terms</strong></td>
+    <td>Accept the FedEx Developer Portal License Agreement, then click <strong>Create</strong>.</td>
+  </tr>
+</table>
+<p class="step"><span class="num">5</span>On the project page, open the <strong>Test Key</strong> tab.
+FedEx shows three values immediately — this is what we need.</p>
+<div class="callout">
+  <p><span class="title">You do not need a FedEx shipping account for this.</span> The Test Key tab includes
+  a test account number that FedEx creates for you, so the platform can be built and tested before anything
+  goes live.</p>
+</div>
+
+<div class="page-break"></div>
+
+<h2>Step 3 &nbsp;&middot;&nbsp; Send us these three values</h2>
+<p>Copy them exactly as FedEx shows them, from the <strong>Test Key</strong> tab:</p>
+<table class="avoid-break">
+  <tr>
+    <th style="width:38%">What FedEx calls it</th>
+    <th>Value</th>
+  </tr>
+  <tr><td><strong>API Key</strong><div class="small">Also shown as &ldquo;Client ID&rdquo;</div></td><td class="fill"></td></tr>
+  <tr><td><strong>Secret Key</strong><div class="small">Treat this like a password</div></td><td class="fill"></td></tr>
+  <tr><td><strong>Test Account Number</strong><div class="small">9 digits</div></td><td class="fill"></td></tr>
+</table>
+<div class="callout warn">
+  <p><span class="title">Please do not send the Secret Key by email.</span> Send it over WhatsApp, or send
+  the API Key and account number one way and the Secret Key another. If you prefer, we can walk you through
+  pasting the three values straight into the platform's settings yourself, so nobody else ever sees them.
+  If the key is ever exposed, you can delete it and generate a new one in the same tab.</p>
+</div>
+
+<h2>Also needed: your warehouse addresses</h2>
+<p>A shipping quote needs a starting point, and the platform currently has warehouse names but no addresses.
+Please fill in the ZIP code for each location — city and state help, but the ZIP is what we need:</p>
+<table class="avoid-break">
+  <tr>
+    <th style="width:34%">Warehouse (as it appears in the platform)</th>
+    <th style="width:22%">City</th>
+    <th style="width:14%">State</th>
+    <th>ZIP code</th>
+  </tr>
+  <tr><td><strong>Texas</strong> <span class="small">(TX1)</span></td><td class="fill"></td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td><strong>Tennessee</strong> <span class="small">(TN1)</span></td><td class="fill"></td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td><strong>Warehouse 23</strong> <span class="small">(W23-ATT)</span></td><td class="fill"></td><td class="fill"></td><td class="fill"></td></tr>
+</table>
+<p class="small">Warehouse 23 holds roughly 94% of the stock, so its ZIP is the most important one. If a
+location does not ship directly to customers, just tell us and we will leave it out of the quotes.</p>
+
+<h2>Later, only when you want to go live</h2>
+<p>Everything above uses the FedEx test environment, which is enough to build and demo the feature. When you
+want real tracking and real rates on the live site, FedEx needs a production key, and that requires a
+<strong>regular 9-digit FedEx shipping account</strong>. If you already have one, we only need the number.
+If you don't, opening one at <strong>fedex.com/en-us/open-account.html</strong> asks for:</p>
+<ul>
+  <li>Company name and business address</li>
+  <li>Proof of business registration and your tax ID (EIN)</li>
+  <li>A contact person</li>
+  <li>A credit card for billing — the account itself is free, but FedEx places a temporary $1 hold to verify the card</li>
+</ul>
+<p class="small">Printing FedEx labels from the admin panel is a separate feature. FedEx reviews sample
+labels before allowing it, which takes days to weeks, so it is not part of this setup. Tracking and quotes
+need no such review.</p>
+
+<h2>Common questions</h2>
+<h3>Does this cost anything?</h3>
+<p>No. API access is free, and the test environment charges nothing at all. You keep paying only for real
+shipments, at your existing rates.</p>
+
+<h3>Will this change my shipping prices or who I ship with?</h3>
+<p>No. The platform only reads FedEx information. It does not create shipments, buy labels, or change any
+rate you have negotiated.</p>
+
+<h3>I already have a FedEx account. Can we use it?</h3>
+<p>Yes, and it makes the last step easier — send us the 9-digit account number and we can prepare the live
+setup at the same time. Please still create the developer project, because that is where the keys come from.</p>
+
+<h3>What if I pick the wrong option in the project?</h3>
+<p>Nothing breaks. The project can be edited, and keys can be regenerated or deleted at any time.</p>
+
+<h3>Who can see these keys?</h3>
+<p>They are stored in the platform's server-side settings. They are never included in the website's code and
+are never visible to customers or to your staff in the admin panel.</p>
+
+<div class="footer">
+  Once we have the three values and the warehouse ZIP codes, tracking and shipping quotes are switched on
+  and tested the same day. Questions about any step: reply to this document and we will walk you through it.
+</div>
+
+</body>
+</html>
