@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, X, LayoutGrid, Rows3, ClipboardList } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRealCatalog } from '@/data/realCatalog';
-import { RealProductGrid } from './RealProductGrid';
+import { RealModelGrid } from './RealModelGrid';
 import { RealCatalogTable } from './RealCatalogTable';
 import { RealCatalogEmpty } from './RealCatalogEmpty';
 import { RealCatalogFilters, facetValueLabel } from './RealCatalogFilters';
@@ -28,6 +28,7 @@ import {
   type FacetState,
   type Sort,
 } from '@/lib/realCatalogFacets';
+import { groupByModel, sortGroups } from '@/lib/modelGroups';
 
 const SORTS = [
   { id: 'featured', label: 'Featured' },
@@ -101,6 +102,21 @@ export function RealCatalogView() {
     [real.items, facets, q, sort],
   );
 
+  // Grid browses by model (one card per model, options picked on /m/:slug);
+  // the table stays one row per SKU for wholesale buyers who order by line.
+  const groups = useMemo(() => sortGroups(groupByModel(filtered), sort), [filtered, sort]);
+  const total = view === 'grid' ? groups.length : filtered.length;
+
+  // Single-valued filters travel to the model page so it opens preselected.
+  const modelSearch = useMemo(() => {
+    const qs = new URLSearchParams();
+    for (const [facet, param] of [['capacity', 'capacity'], ['grade', 'condition'], ['lock', 'lock'], ['carrier', 'carrier']] as const) {
+      if (facets[facet].size === 1) qs.set(param, [...facets[facet]][0]);
+    }
+    const str = qs.toString();
+    return str ? `?${str}` : '';
+  }, [facets]);
+
   const resetWindow = () => setVisibleCount(WINDOW);
 
   function toggleFacet(key: FacetKey, value: string) {
@@ -124,7 +140,9 @@ export function RealCatalogView() {
   // Only this slice is mounted into the DOM; `filtered` (the full set) still
   // drives facets, sort and the total-count label.
   const visibleItems = filtered.slice(0, visibleCount);
-  const hasMore = visibleCount < filtered.length;
+  const visibleGroups = groups.slice(0, visibleCount);
+  const shown = view === 'grid' ? visibleGroups.length : visibleItems.length;
+  const hasMore = visibleCount < total;
 
   return (
     <div className="container py-8 md:py-12">
@@ -132,7 +150,17 @@ export function RealCatalogView() {
         <div>
           <h1 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">{t('All phones')}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            <span className="font-mono">{filtered.length}</span> {filtered.length === 1 ? t('phone') : t('phones')} · {t('live tier pricing & inventory')}
+            {view === 'grid' ? (
+              <>
+                <span className="font-mono">{groups.length}</span> {groups.length === 1 ? t('model') : t('models')} ·{' '}
+                <span className="font-mono">{filtered.length}</span> {filtered.length === 1 ? t('option') : t('options')}
+              </>
+            ) : (
+              <>
+                <span className="font-mono">{filtered.length}</span> {filtered.length === 1 ? t('phone') : t('phones')}
+              </>
+            )}{' '}
+            · {t('live tier pricing & inventory')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -251,12 +279,12 @@ export function RealCatalogView() {
             </div>
           ) : filtered.length > 0 ? (
             <>
-              {view === 'table' ? <RealCatalogTable items={visibleItems} /> : <RealProductGrid items={visibleItems} />}
+              {view === 'table' ? <RealCatalogTable items={visibleItems} /> : <RealModelGrid groups={visibleGroups} search={modelSearch} />}
               {hasMore && (
                 <div className="mt-8 flex flex-col items-center gap-3">
                   <p className="text-sm text-muted-foreground">
-                    {t('Showing')} <span className="font-mono">{visibleItems.length}</span> {t('of')}{' '}
-                    <span className="font-mono">{filtered.length}</span>
+                    {t('Showing')} <span className="font-mono">{shown}</span> {t('of')}{' '}
+                    <span className="font-mono">{total}</span>
                   </p>
                   <Button variant="outline" className="min-h-11 w-full sm:w-auto sm:min-w-48" onClick={() => setVisibleCount((c) => c + WINDOW)}>
                     {t('Load more')}
@@ -310,7 +338,7 @@ export function RealCatalogView() {
               </div>
               <div className="border-t border-border p-4">
                 <Button className="w-full" onClick={() => setMobileOpen(false)}>
-                  {t('Show')} {filtered.length} {t('results')}
+                  {t('Show')} {total} {t('results')}
                 </Button>
               </div>
             </motion.div>

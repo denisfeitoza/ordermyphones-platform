@@ -5,6 +5,7 @@ import { ChevronRight, MapPin, ShieldCheck, Smartphone } from 'lucide-react';
 import { buildDisplayName, carrierLabel, type PricedRealListing } from '@/data/realCatalog';
 import { HOME_ICONS, useHomeContent } from '@/data/homeContent';
 import { resolveProductImage } from '@/lib/productImage';
+import { modelSlug } from '@/lib/modelGroups';
 import { Badge } from '@/components/ui/Badge';
 import { RealPriceTag } from './RealPriceTag';
 import { RealAddToCart } from './RealAddToCart';
@@ -83,6 +84,9 @@ export function RealProductDetail({ item, related }: { item: PricedRealListing; 
           <span className="text-sm font-medium text-muted-foreground">{item.make}</span>
           <h1 className="mt-1.5 font-display text-3xl font-semibold tracking-tight md:text-4xl">{name}</h1>
           {item.color && <p className="mt-1 text-sm text-muted-foreground">{item.color}</p>}
+          <Link to={`/m/${modelSlug(item.make, item.model)}`} className="mt-1 inline-block text-sm font-medium text-brand hover:underline">
+            {t('See all offers for this model')}
+          </Link>
           {item.description && <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{item.description}</p>}
 
           <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
