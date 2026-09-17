@@ -152,29 +152,23 @@ FedEx shows three values immediately — this is what we need.</p>
   <tr><td><strong>Secret Key</strong><div class="small">Treat this like a password</div></td><td class="fill"></td></tr>
   <tr><td><strong>Test Account Number</strong><div class="small">9 digits</div></td><td class="fill"></td></tr>
 </table>
-<div class="callout warn">
-  <p><span class="title">Please do not send the Secret Key by email.</span> Send it over WhatsApp, or send
-  the API Key and account number one way and the Secret Key another. If you prefer, we can walk you through
-  pasting the three values straight into the platform's settings yourself, so nobody else ever sees them.
-  If the key is ever exposed, you can delete it and generate a new one in the same tab.</p>
-</div>
+<p class="small">If a key is ever exposed, you can delete it and generate a new one from the same tab at
+any time.</p>
 
-<h2>Also needed: your warehouse addresses</h2>
-<p>A shipping quote needs a starting point, and the platform currently has warehouse names but no addresses.
-Please fill in the ZIP code for each location — city and state help, but the ZIP is what we need:</p>
+<h2>Also needed: your main warehouse address</h2>
+<p>A shipping quote needs a starting point. Since orders arrive at one warehouse for distribution, we only
+need that one — the ZIP code is what matters, city and state just help:</p>
 <table class="avoid-break">
   <tr>
-    <th style="width:34%">Warehouse (as it appears in the platform)</th>
+    <th style="width:34%">Main warehouse</th>
     <th style="width:22%">City</th>
     <th style="width:14%">State</th>
     <th>ZIP code</th>
   </tr>
-  <tr><td><strong>Texas</strong> <span class="small">(TX1)</span></td><td class="fill"></td><td class="fill"></td><td class="fill"></td></tr>
-  <tr><td><strong>Tennessee</strong> <span class="small">(TN1)</span></td><td class="fill"></td><td class="fill"></td><td class="fill"></td></tr>
-  <tr><td><strong>Warehouse 23</strong> <span class="small">(W23-ATT)</span></td><td class="fill"></td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td class="fill"></td><td class="fill"></td><td class="fill"></td><td class="fill"></td></tr>
 </table>
-<p class="small">Warehouse 23 holds roughly 94% of the stock, so its ZIP is the most important one. If a
-location does not ship directly to customers, just tell us and we will leave it out of the quotes.</p>
+<p class="small">If a second location ever starts shipping directly to customers, send us its ZIP and we
+add it — quotes then compare both and show the cheaper one.</p>
 
 <h2>Later, only when you want to go live</h2>
 <p>Everything above uses the FedEx test environment, which is enough to build and demo the feature. When you
