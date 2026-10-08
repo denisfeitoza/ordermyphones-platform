@@ -83,6 +83,13 @@ With the credentials absent both functions answer `503 fedex_not_configured`
 and the UI falls back to today's behaviour (manual tracking number, "Shipping —
 arranged separately"). That is the state the code ships in.
 
+### Sweep schedule
+
+`pg_cron` job `fedex-track-sweep` runs every 30 min
+([`20261008120000_fedex_track_sweep_cron.sql`](../../supabase/migrations/20261008120000_fedex_track_sweep_cron.sql)).
+It reads its bearer from Vault secret `fedex_track_sweep_secret`, which must
+equal the `FEDEX_TRACK_SWEEP_SECRET` edge secret. Rotate both together.
+
 ### Deliberately not built
 
 - **Label creation (Ship API).** FedEx requires label/solution validation before
@@ -90,9 +97,6 @@ arranged separately"). That is the state the code ships in.
   code. Still out of scope per §9.
 - **Charging shipping.** The quote is an estimate; order totals remain tier
   price × qty (D4/D8), so `place_order` is untouched.
-- **The 30-minute sweep schedule.** The function is deployed and takes
-  `{sweep:true}`; wiring `pg_cron` (or any scheduler) to call it is a one-line
-  follow-up once production keys exist.
 
 ## 8. Phase-by-phase work
 
