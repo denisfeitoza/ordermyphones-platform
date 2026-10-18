@@ -1,10 +1,9 @@
 import { useOpenReconciliations, useResolveReconciliation } from '@/data/adminOrders';
 import { AdminHeading, Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
-import { formatInt } from '@/lib/format';
+import { formatDate, formatInt } from '@/lib/format';
 import { useI18n } from '@/i18n';
 
-const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
 /**
  * Reconciliation queue — open shortfalls from partial approvals. Fulfill
@@ -13,7 +12,7 @@ const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { mon
  * the partial approval as-is. Both are audited server-side.
  */
 export default function ReconciliationPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { data: rows, isLoading, isError } = useOpenReconciliations();
   const resolve = useResolveReconciliation();
   const list = rows ?? [];
@@ -49,7 +48,7 @@ export default function ReconciliationPage() {
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{r.name}</p>
                 <p className="mt-0.5 font-mono text-xs text-muted-foreground">
-                  {r.sku} · opened {fmtDate(r.createdAt)}
+                  {r.sku} · opened {formatDate(r.createdAt, lang)}
                 </p>
               </div>
               <div className="flex items-center gap-3">

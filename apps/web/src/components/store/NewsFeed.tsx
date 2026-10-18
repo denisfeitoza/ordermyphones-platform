@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowUpRight, Rss } from 'lucide-react';
 import { LogoMark } from './Logo';
 import { useI18n } from '@/i18n';
+import { formatDate } from '@/lib/format';
 
 interface NewsItem {
   title: string;
@@ -17,8 +18,6 @@ const reveal = {
   show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
 };
 
-const fmtDate = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
 
 async function fetchNews(): Promise<NewsItem[]> {
   const base = import.meta.env.VITE_SUPABASE_URL;
@@ -36,7 +35,7 @@ async function fetchNews(): Promise<NewsItem[]> {
  *  whole section self-hides until the feed returns items, so nothing broken or
  *  empty ever ships — it lights up the moment the edge function is live. */
 export function NewsFeed() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { data } = useQuery({
     queryKey: ['industry-news'],
     queryFn: fetchNews,
@@ -93,7 +92,7 @@ export function NewsFeed() {
               >
                 <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
                   <span className="font-medium text-brand">{item.source}</span>
-                  <span className="font-mono tabular-nums">{fmtDate(item.publishedAt)}</span>
+                  <span className="font-mono tabular-nums">{item.publishedAt ? formatDate(item.publishedAt, lang) : ''}</span>
                 </div>
                 <h3 className="mt-2 font-display text-base font-semibold leading-snug tracking-tight text-balance">
                   {item.title}

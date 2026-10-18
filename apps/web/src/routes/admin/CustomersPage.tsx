@@ -47,8 +47,12 @@ function TierAssign() {
 
 export default function CustomersPage() {
   const source = useCatalogSource();
+  return source === 'real' ? <RealCustomers /> : <MockCustomers />;
+}
+
+/** Demo-catalog customer list. Its own component so the mock compute never runs in real mode. */
+function MockCustomers() {
   const { customers } = useAdminData();
-  if (source === 'real') return <RealCustomers />;
 
   return (
     <div className="space-y-6">

@@ -10,14 +10,14 @@ import { ConfirmPassword } from '@/components/admin/ConfirmPassword';
 import { AdminHeading, Panel, Table, Td } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/i18n';
+import { formatDate } from '@/lib/format';
 
-const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
 /** Pending "request access" submissions from the public form. The admin copies
  * the email into the invite panel below, sends the tier-scoped invite, then
  * marks the request invited (or dismisses spam). */
 function AccessRequestsPanel() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ['access-requests'], queryFn: listAccessRequests });
   const act = useMutation({
@@ -40,7 +40,7 @@ function AccessRequestsPanel() {
               <p className="truncate text-xs text-muted-foreground">
                 <span className="font-mono">{r.email}</span>
                 {r.phone && <> · {r.phone}</>}
-                {r.tier_interest && <> · {t('wants')} {r.tier_interest}</>} · {fmtDate(r.created_at)}
+                {r.tier_interest && <> · {t('wants')} {r.tier_interest}</>} · {formatDate(r.created_at, lang)}
               </p>
               {r.note && <p className="mt-0.5 max-w-md text-xs text-muted-foreground/80">“{r.note}”</p>}
             </div>
@@ -67,7 +67,7 @@ function AccessRequestsPanel() {
  * sensitive, re-auth-gated surface) — this is the read + invite view.
  */
 export function RealCustomers() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const qc = useQueryClient();
   const { role } = useAuth();
   const isAdmin = role === 'admin';
@@ -142,7 +142,7 @@ export function RealCustomers() {
                   </span>
                 )}
               </Td>
-              <Td className="text-muted-foreground">{fmtDate(c.created_at)}</Td>
+              <Td className="text-muted-foreground">{formatDate(c.created_at, lang)}</Td>
               <Td align="right">
                 <Link to="/admin/config/users" className="inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline">
                   {t('Manage')} <ArrowUpRight className="h-3 w-3" strokeWidth={2} />

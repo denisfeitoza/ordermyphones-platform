@@ -14,6 +14,7 @@ import {
 import { Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/i18n';
+import { formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 const STATUS_TONE: Record<InviteRow['status'], string> = {
@@ -21,10 +22,6 @@ const STATUS_TONE: Record<InviteRow['status'], string> = {
   accepted: 'bg-success/10 text-success',
   revoked: 'bg-muted text-muted-foreground',
 };
-
-function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
 
 function isExpired(row: InviteRow): boolean {
   return row.status === 'pending' && new Date(row.expires_at).getTime() < Date.now();
@@ -57,7 +54,7 @@ function CopyLink({ token }: { token: string }) {
 }
 
 export function InvitePanel() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const qc = useQueryClient();
   const [email, setEmail] = useState('');
   const [tier, setTier] = useState<DbTier>('retailer');
@@ -206,7 +203,7 @@ export function InvitePanel() {
                           {expired ? t('expired') : r.status}
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">{fmtDate(r.expires_at)}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{formatDate(r.expires_at, lang)}</td>
                       <td className="px-3 py-2">
                         <div className="flex items-center justify-end gap-2">
                           {r.status === 'pending' && !expired && <CopyLink token={r.token} />}

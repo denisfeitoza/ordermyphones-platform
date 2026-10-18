@@ -9,11 +9,12 @@ import { useCatalogSource } from '@/lib/catalogSource';
 import { AdminHeading } from '@/components/admin/parts';
 import { DB_TIER_LABELS, type DbTier } from '@/lib/invites';
 import { tierBg } from '@/lib/tierStyles';
-import { formatInt, formatUsd } from '@/lib/format';
+import { formatInt, formatUsd, LOCALE_FOR } from '@/lib/format';
 import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
 
-const monthLabel = (m: string) => new Date(`${m}-01T00:00:00`).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+const monthLabel = (m: string, lang: 'en' | 'pt' | 'es' = 'en') =>
+  new Date(`${m}-01T00:00:00`).toLocaleDateString(LOCALE_FOR[lang], { month: 'short', year: '2-digit' });
 const TIER_TONE: Record<string, '1' | '2' | '3' | '4'> = { consumer: '1', retailer: '2', wholesale: '3', distributor: '4' };
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -89,7 +90,7 @@ function TestOrdersToggle({ hidden }: { hidden: number }) {
  * No supplier/cost data — the order snapshot carries only model, qty, tier and
  * price. Fills in as orders flow; empty state shows until the first order. */
 function RealReports({ orders: allOrders }: { orders: AdminOrder[] }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { includeTest } = useReportsIncludeTest();
   const orders = useMemo(() => (includeTest ? allOrders : allOrders.filter((o) => !o.isTest)), [allOrders, includeTest]);
   const hiddenCount = allOrders.length - orders.length;
@@ -155,7 +156,7 @@ function RealReports({ orders: allOrders }: { orders: AdminOrder[] }) {
                 <div className="flex w-full flex-1 items-end" title={formatUsd(m.gmvCents, true)}>
                   <div className="w-full rounded-t bg-brand/80" style={{ height: `${Math.max(3, (m.gmvCents / maxMonthly) * 100)}%` }} />
                 </div>
-                <span className="font-mono text-[0.6rem] text-muted-foreground">{monthLabel(m.month)}</span>
+                <span className="font-mono text-[0.6rem] text-muted-foreground">{monthLabel(m.month, lang)}</span>
               </div>
             ))}
           </div>
@@ -211,17 +212,23 @@ function RealReports({ orders: allOrders }: { orders: AdminOrder[] }) {
 }
 
 export default function ReportsPage() {
-  const { t } = useI18n();
   const source = useCatalogSource();
-  const { orders, kpis } = useAdminData();
-  const ordersQ = useAdminOrders();
+  return source === 'real' ? <RealReportsLoader /> : <MockReports />;
+}
 
-  if (source === 'real') {
-    if (ordersQ.isLoading) {
-      return <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">{t('Loading reports…')}</div>;
-    }
-    return <RealReports orders={ordersQ.data ?? []} />;
+function RealReportsLoader() {
+  const { t } = useI18n();
+  const ordersQ = useAdminOrders();
+  if (ordersQ.isLoading) {
+    return <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">{t('Loading reports…')}</div>;
   }
+  return <RealReports orders={ordersQ.data ?? []} />;
+}
+
+/** Demo-catalog reports. Its own component so neither path pays for the other's data. */
+function MockReports() {
+  const { t } = useI18n();
+  const { orders, kpis } = useAdminData();
 
   const maxMonthly = Math.max(...kpis.monthly.map((m) => m.gmvCents), 1);
   const maxTierGmv = Math.max(...kpis.tierMix.map((t) => t.gmvCents), 1);

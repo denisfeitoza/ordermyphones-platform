@@ -25,6 +25,13 @@ export function formatInt(n: number): string {
 /** UI language → BCP-47 locale for dates. Currency stays USD/en-US by design. */
 export const LOCALE_FOR: Record<'en' | 'pt' | 'es', string> = { en: 'en-US', pt: 'pt-BR', es: 'es' };
 
+/** "Sep 13, 3:05 PM" / "13 de set., 15:05" — date + time in the viewer's language. */
+export function formatDateTime(iso: string, lang: 'en' | 'pt' | 'es' = 'en'): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleString(LOCALE_FOR[lang], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
 /** Short date ("Sep 13, 2026" / "13 de set. de 2026") in the viewer's language. */
 export function formatDate(iso: string, lang: 'en' | 'pt' | 'es' = 'en', style: 'short' | 'long' = 'short'): string {
   const d = new Date(iso);

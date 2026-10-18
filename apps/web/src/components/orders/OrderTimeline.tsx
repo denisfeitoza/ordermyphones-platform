@@ -1,6 +1,6 @@
 import { ArrowRight, Check, Pencil, ShoppingBag, Truck, XCircle } from 'lucide-react';
 import type { OrderChange, OrderEvent } from '@/data/orderEvents';
-import { formatUsd, formatInt } from '@/lib/format';
+import { formatDateTime, formatUsd, formatInt } from '@/lib/format';
 import { useI18n } from '@/i18n';
 
 type Status = 'pending' | 'approved' | 'partially_approved' | 'rejected' | 'cancelled' | 'shipped';
@@ -62,8 +62,6 @@ function Dot({ tone, icon: Icon }: { tone: string; icon: typeof Check }) {
   );
 }
 
-const fmt = (iso: string) =>
-  new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
 interface Row {
   key: string;
@@ -90,7 +88,7 @@ export function OrderTimeline({
   decisionReason?: string | null;
   events: OrderEvent[];
 }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
 
   const rows: Row[] = [];
   rows.push({
@@ -151,7 +149,7 @@ export function OrderTimeline({
           <div className="min-w-0 flex-1 pt-0.5">
             <div className="flex flex-wrap items-baseline justify-between gap-x-3">
               <p className="text-sm font-medium">{r.title}</p>
-              <p className="font-mono text-xs text-muted-foreground">{fmt(r.at)}</p>
+              <p className="font-mono text-xs text-muted-foreground">{formatDateTime(r.at, lang)}</p>
             </div>
             {r.reason && <p className="mt-0.5 text-xs italic text-muted-foreground">“{r.reason}”</p>}
             {r.changes && r.changes.length > 0 && (

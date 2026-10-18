@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronRight, PackageCheck } from 'lucide-react';
 import type { AccountOrder, OrderStatus } from '@/store';
-import { formatUsd } from '@/lib/format';
+import { formatDate, formatUsd } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n';
 
@@ -101,7 +101,7 @@ function Thumbs({ lines }: { lines: AccountOrder['lines'] }) {
 }
 
 export function OrderCard({ order, index = 0 }: { order: AccountOrder; index?: number }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const first = order.lines[0];
   const lineLabel = !first
     ? 'Order'
@@ -125,11 +125,7 @@ export function OrderCard({ order, index = 0 }: { order: AccountOrder; index?: n
           </p>
           <p className="text-xs text-muted-foreground">
             {/* Parse as local midnight (append time) — a bare 'YYYY-MM-DD' is UTC and drifts a day in negative offsets. */}
-            {new Date(`${order.placedAt}T00:00:00`).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            })}
+            {formatDate(`${order.placedAt}T00:00:00`, lang)}
           </p>
         </div>
         <StatusPill status={order.status} />

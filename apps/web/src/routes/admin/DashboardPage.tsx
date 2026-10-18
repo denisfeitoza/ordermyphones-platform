@@ -13,10 +13,12 @@ const monthLabel = (m: string) => new Date(`${m}-01T00:00:00`).toLocaleDateStrin
 
 export default function DashboardPage() {
   const source = useCatalogSource();
-  // useAdminData() (mock) is called unconditionally to satisfy the rules of
-  // hooks; its result is unused in real mode where RealDashboard renders.
+  return source === 'real' ? <RealDashboard /> : <MockDashboard />;
+}
+
+/** Demo-catalog dashboard. Its own component so the mock compute never runs in real mode. */
+function MockDashboard() {
   const { orders, kpis } = useAdminData();
-  if (source === 'real') return <RealDashboard />;
   const recent = orders.slice(0, 6);
   const maxMonthly = Math.max(...kpis.monthly.map((m) => m.gmvCents), 1);
   const maxTierGmv = Math.max(...kpis.tierMix.map((t) => t.gmvCents), 1);

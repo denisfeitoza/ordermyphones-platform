@@ -19,7 +19,7 @@ import { TrackingTimeline } from '@/components/store/TrackingTimeline';
 import { OrderTimeline } from '@/components/orders/OrderTimeline';
 import { AdminHeading, Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
-import { formatInt, formatUsd } from '@/lib/format';
+import { formatDate, formatInt, formatUsd } from '@/lib/format';
 import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
 
@@ -107,7 +107,7 @@ function pickingDoc(order: AdminOrder) {
   const a = order.shippingAddress;
   return {
     reference: order.id.slice(0, 8).toUpperCase(),
-    dateLabel: fmtDate(order.placedAt),
+    dateLabel: formatDate(order.placedAt), // the picking sheet is an English document
     customer: order.customerName || order.customerEmail || '—',
     shipTo: [a?.street, [a?.city, a?.state, a?.zip].filter(Boolean).join(', ')].filter((s): s is string => !!s),
     note: order.note,
@@ -118,7 +118,6 @@ function pickingDoc(order: AdminOrder) {
   };
 }
 
-const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
 export function StatusChip({ status }: { status: AdminOrderStatus }) {
   const { t } = useI18n();
@@ -132,7 +131,7 @@ export function StatusChip({ status }: { status: AdminOrderStatus }) {
 /** Real-mode admin order queue. Master list + detail panel with Approve /
  * Reject, live per-line availability, and post-approval approved/short summary. */
 export function RealAdminOrders() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { data: orders, isLoading, isError } = useAdminOrders();
   const [filter, setFilter] = useState<AdminOrderStatus | 'all'>('pending');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -195,7 +194,7 @@ export function RealAdminOrders() {
                   <div className="min-w-0">
                     <p className="font-mono text-sm font-semibold">{o.id.slice(0, 8).toUpperCase()}</p>
                     <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                      {o.customerEmail ?? o.customerName ?? '—'} · {fmtDate(o.placedAt)} · {o.tier}
+                      {o.customerEmail ?? o.customerName ?? '—'} · {formatDate(o.placedAt, lang)} · {o.tier}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-3">
@@ -223,7 +222,7 @@ export function RealAdminOrders() {
 }
 
 function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () => void }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const variantIds = useMemo(() => order.lines.map((l) => l.variantId), [order.lines]);
   const { data: availability } = useVariantAvailability(variantIds);
   const { data: events } = useOrderEvents(order.id);
@@ -326,7 +325,7 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
             <div className="rounded-lg bg-sky-50 px-3 py-2.5 text-xs text-sky-900 dark:bg-sky-500/10 dark:text-sky-200">
               <p className="flex items-center gap-1.5 font-medium">
                 <Truck className="h-3.5 w-3.5" strokeWidth={2} />
-                {t('Shipped')} {order.shippedAt ? fmtDate(order.shippedAt) : ''}
+                {t('Shipped')} {order.shippedAt ? formatDate(order.shippedAt, lang) : ''}
               </p>
               {(order.trackingCarrier || order.trackingNumber) && (
                 <p className="mt-1 font-mono">{[order.trackingCarrier, order.trackingNumber].filter(Boolean).join(' · ')}</p>
@@ -437,6 +436,7 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
 
 interface EditLine {
   variantId: string;
+  locationId: string | null;
   name: string;
   qtyStr: string;
   priceStr: string;
@@ -456,23 +456,24 @@ function OrderEditor({ order, onDone }: { order: AdminOrder; onDone: () => void 
   const edit = useEditOrder();
   const { items: listings } = useRealCatalog();
 
-  // One row per variant — same model the RPC uses. With location selection on, an
-  // order can carry two order_item rows for one variant (split across warehouses);
-  // collapse them here so the editor never shows duplicate-key rows or loses qty.
+  // One row per (variant, requested warehouse) — the same key admin_edit_order
+  // uses — so a "3 from Miami + 2 from Dallas" order stays split after a save.
   const [lines, setLines] = useState<EditLine[]>(() => {
-    const byVariant = new Map<string, EditLine>();
+    const byKey = new Map<string, EditLine>();
     for (const l of order.lines) {
-      const prev = byVariant.get(l.variantId);
+      const key = `${l.variantId}|${l.requestedLocationId ?? ''}`;
+      const prev = byKey.get(key);
       if (prev) prev.qtyStr = String(qtyOf(prev.qtyStr) + l.qtyRequested);
       else
-        byVariant.set(l.variantId, {
+        byKey.set(key, {
           variantId: l.variantId,
-          name: l.name,
+          locationId: l.requestedLocationId,
+          name: l.requestedLocationName ? `${l.name} · ${l.requestedLocationName}` : l.name,
           qtyStr: String(l.qtyRequested),
           priceStr: (l.unitPriceCents / 100).toString(),
         });
     }
-    return [...byVariant.values()];
+    return [...byKey.values()];
   });
   const [addr, setAddr] = useState<ShippingAddress>(order.shippingAddress ?? {});
   const [note, setNote] = useState(order.note ?? '');
@@ -507,6 +508,7 @@ function OrderEditor({ order, onDone }: { order: AdminOrder; onDone: () => void 
       ...ls,
       {
         variantId: v.variantId,
+        locationId: null,
         name: `${v.model} · ${v.capacity}`,
         qtyStr: '1',
         priceStr: ((v.priceCents ?? 0) / 100).toString(),
@@ -519,7 +521,7 @@ function OrderEditor({ order, onDone }: { order: AdminOrder; onDone: () => void 
     edit.mutate(
       {
         orderId: order.id,
-        items: lines.map((l) => ({ variant_id: l.variantId, qty: qtyOf(l.qtyStr), unit_price_cents: centsOf(l.priceStr) })),
+        items: lines.map((l) => ({ variant_id: l.variantId, requested_location_id: l.locationId, qty: qtyOf(l.qtyStr), unit_price_cents: centsOf(l.priceStr) })),
         shippingAddress: addr,
         note,
         reason,
@@ -528,7 +530,7 @@ function OrderEditor({ order, onDone }: { order: AdminOrder; onDone: () => void 
     );
   }
 
-  const canSave = lines.length > 0 && lines.every((l) => qtyOf(l.qtyStr) > 0);
+  const canSave = lines.length > 0 && lines.every((l) => qtyOf(l.qtyStr) > 0 && centsOf(l.priceStr) > 0);
 
   return (
     <div className="space-y-4">
@@ -539,7 +541,7 @@ function OrderEditor({ order, onDone }: { order: AdminOrder; onDone: () => void 
 
       <ul className="space-y-2">
         {lines.map((l, idx) => (
-          <li key={l.variantId} className="rounded-xl border border-border p-3">
+          <li key={`${l.variantId}|${l.locationId ?? ''}`} className="rounded-xl border border-border p-3">
             <div className="flex items-start justify-between gap-2">
               <span className="min-w-0 flex-1 truncate text-sm font-medium">{l.name}</span>
               <button

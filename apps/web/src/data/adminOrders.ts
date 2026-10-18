@@ -15,6 +15,9 @@ export interface AdminOrderLine {
   lineTotalCents: number;
   /** Stock location the approval deducted from (null until approved) — drives the picking sheet. */
   locationName: string | null;
+  /** Warehouse the customer picked for this line (location selection on); null = any. */
+  requestedLocationId: string | null;
+  requestedLocationName: string | null;
 }
 
 export interface ShippingAddress {
@@ -60,6 +63,8 @@ interface RawItem {
   unit_price_cents: number;
   product_variants: RawVariant | null;
   location: { display_name: string } | null;
+  requested_location_id: string | null;
+  requested_location: { display_name: string } | null;
 }
 interface RawOrder {
   id: string;
@@ -92,8 +97,9 @@ async function fetchAdminOrders(): Promise<AdminOrder[]> {
       `id, status, tier_at_order, subtotal_cents, placed_at, decided_at, decision_reason, notes, shipping_address, is_test,
        shipped_at, tracking_carrier, tracking_number,
        customer:profiles!orders_customer_id_fkey(email, display_name),
-       order_items(id, variant_id, qty_requested, qty_approved, unit_price_cents,
+       order_items(id, variant_id, qty_requested, qty_approved, unit_price_cents, requested_location_id,
          location:stock_locations!order_items_location_id_fkey(display_name),
+         requested_location:stock_locations!order_items_requested_location_id_fkey(display_name),
          product_variants(sku, capacity, color, carrier, lock_status, products(make, model)))`,
     )
     .order('placed_at', { ascending: false });
@@ -125,6 +131,8 @@ async function fetchAdminOrders(): Promise<AdminOrder[]> {
       unitPriceCents: it.unit_price_cents,
       lineTotalCents: it.unit_price_cents * it.qty_requested,
       locationName: it.location?.display_name ?? null,
+      requestedLocationId: it.requested_location_id ?? null,
+      requestedLocationName: it.requested_location?.display_name ?? null,
     })),
   }));
 }
@@ -225,6 +233,8 @@ export function useApproveOrder() {
 
 export interface EditOrderItem {
   variant_id: string;
+  /** Keeps a split-location line on its warehouse; null = any warehouse. */
+  requested_location_id: string | null;
   qty: number;
   unit_price_cents: number;
 }

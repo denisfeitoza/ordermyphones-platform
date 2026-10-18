@@ -6,7 +6,7 @@ import { adminGetCustomerProfile, adminGetCustomerOrders, logViewAs, type ViewAs
 import { DB_TIER_LABELS } from '@/lib/invites';
 import { Panel } from '@/components/admin/parts';
 import { useI18n } from '@/i18n';
-import { formatUsd } from '@/lib/format';
+import { formatDate, formatUsd, LOCALE_FOR } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 const STATUS_TONE: Record<string, string> = {
@@ -18,13 +18,13 @@ const STATUS_TONE: Record<string, string> = {
 };
 
 function OrderCard({ order }: { order: ViewAsOrder }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <span className="font-mono text-xs text-muted-foreground">#{order.id.slice(0, 8)}</span>
-          <span className="ml-2 text-xs text-muted-foreground">{new Date(order.placed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+          <span className="ml-2 text-xs text-muted-foreground">{formatDate(order.placed_at, lang)}</span>
         </div>
         <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize', STATUS_TONE[order.status] ?? 'bg-muted text-muted-foreground')}>
           {order.status.replace('_', ' ')}
@@ -52,7 +52,7 @@ function OrderCard({ order }: { order: ViewAsOrder }) {
 }
 
 export default function ViewAsPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { userId } = useParams<{ userId: string }>();
   const loggedRef = useRef<string | null>(null);
 
@@ -121,7 +121,7 @@ export default function ViewAsPage() {
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground">{t('Member since')}</dt>
-                  <dd className="text-sm">{new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</dd>
+                  <dd className="text-sm">{new Date(profile.created_at).toLocaleDateString(LOCALE_FOR[lang], { month: 'long', year: 'numeric' })}</dd>
                 </div>
               </dl>
               <p className="mt-4 text-xs text-muted-foreground">

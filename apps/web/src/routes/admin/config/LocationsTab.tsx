@@ -107,24 +107,24 @@ function LocationRow({ row, canManage }: { row: StockLocationRow; canManage: boo
         <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">{row.code}</span>
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">{row.active ? t('Active') : t('Inactive')}</span>
-          <Toggle label={`${row.code} ${t('active')}`} checked={row.active} onChange={(next) => save.mutate({ active: next })} />
+          <Toggle label={`${row.code} ${t('active')}`} checked={row.active} disabled={!canManage || save.isPending} onChange={(next) => save.mutate({ active: next })} />
         </div>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label={t('Display name')} help={t('Customer-visible (D6).')}>
-          <TextInput value={name} onChange={(e) => setName(e.target.value)} />
+          <TextInput disabled={!canManage} value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
         <Field label={t('Region')}>
-          <TextInput value={region} placeholder="—" onChange={(e) => setRegion(e.target.value)} />
+          <TextInput disabled={!canManage} value={region} placeholder="—" onChange={(e) => setRegion(e.target.value)} />
         </Field>
         <Field label={t('City')}>
-          <TextInput value={city} placeholder="Dallas" onChange={(e) => setCity(e.target.value)} />
+          <TextInput disabled={!canManage} value={city} placeholder="Dallas" onChange={(e) => setCity(e.target.value)} />
         </Field>
         <Field label={t('State')}>
-          <TextInput value={stateCode} placeholder="TX" onChange={(e) => setStateCode(e.target.value.toUpperCase())} className="uppercase" />
+          <TextInput disabled={!canManage} value={stateCode} placeholder="TX" onChange={(e) => setStateCode(e.target.value.toUpperCase())} className="uppercase" />
         </Field>
         <Field label={t('ZIP code')} help={t('Origin for carrier shipping quotes. Without it this warehouse is not quoted.')}>
-          <TextInput value={postal} placeholder="75201" onChange={(e) => setPostal(e.target.value)} className="font-mono" />
+          <TextInput disabled={!canManage} value={postal} placeholder="75201" onChange={(e) => setPostal(e.target.value)} className="font-mono" />
         </Field>
       </div>
       <div className="mt-3 flex items-center justify-between gap-3">
@@ -152,7 +152,7 @@ function LocationRow({ row, canManage }: { row: StockLocationRow; canManage: boo
         ) : (
           <span />
         )}
-        <Button size="sm" variant="outline" disabled={!dirty || !name.trim() || save.isPending} onClick={() =>
+        <Button size="sm" variant="outline" disabled={!canManage || !dirty || !name.trim() || save.isPending} onClick={() =>
             save.mutate({
               display_name: name.trim(),
               region: region.trim() || null,

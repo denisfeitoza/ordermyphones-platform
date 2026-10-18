@@ -5,7 +5,8 @@ import { useMyOrders, type RealOrder } from '@/data/realOrders';
 import { TIERS } from '@/data/tiers';
 import { TierBadge } from '@/components/store/TierBadge';
 import { PageHeading, Stat } from '@/components/portal/parts';
-import { formatInt, formatUsd } from '@/lib/format';
+import { formatDate, formatInt, formatUsd } from '@/lib/format';
+import { useI18n } from '@/i18n';
 
 const STATUS_LABEL: Record<RealOrder['status'], string> = {
   pending: 'Pending approval',
@@ -16,7 +17,6 @@ const STATUS_LABEL: Record<RealOrder['status'], string> = {
   shipped: 'Shipped',
 };
 
-const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 const unitsOf = (o: RealOrder) => o.lines.reduce((n, l) => n + l.qtyRequested, 0);
 
 /**
@@ -27,6 +27,7 @@ const unitsOf = (o: RealOrder) => o.lines.reduce((n, l) => n + l.qtyRequested, 0
  * OverviewPage so mock mode keeps its polished demo.
  */
 export function RealPortalOverview() {
+  const { lang } = useI18n();
   const { profile } = useAuth();
   const ordersQ = useMyOrders();
   const orders = ordersQ.data ?? [];
@@ -92,7 +93,7 @@ export function RealPortalOverview() {
             {recent.map((o) => (
               <div key={o.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4">
                 <div className="min-w-0">
-                  <span className="block font-mono text-xs text-muted-foreground">{o.id.slice(0, 8)} · {fmtDate(o.placedAt)}</span>
+                  <span className="block font-mono text-xs text-muted-foreground">{o.id.slice(0, 8)} · {formatDate(o.placedAt, lang)}</span>
                   <span className="block text-sm font-medium">{formatInt(unitsOf(o))} units · {formatUsd(o.subtotalCents)}</span>
                 </div>
                 <span className="shrink-0 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium">{STATUS_LABEL[o.status]}</span>
