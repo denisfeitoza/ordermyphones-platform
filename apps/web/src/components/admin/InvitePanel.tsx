@@ -28,7 +28,7 @@ function isExpired(row: InviteRow): boolean {
 }
 
 /** Copy-to-clipboard button that flips to a check for ~1.5s. */
-function CopyLink({ token }: { token: string }) {
+export function CopyLink({ token }: { token: string }) {
   const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   const link = inviteLink(token);

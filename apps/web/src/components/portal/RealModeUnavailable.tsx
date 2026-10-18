@@ -15,7 +15,7 @@ export function RealModeUnavailable({ title, note }: { title: string; note: stri
   const { t } = useI18n();
   return (
     <div className="space-y-6">
-      <PageHeading title={title} />
+      <PageHeading title={t(title)} />
       <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border py-16 text-center">
         <div className="grid h-14 w-14 place-items-center rounded-2xl bg-muted">
           <Clock className="h-6 w-6 text-muted-foreground" strokeWidth={1.5} />

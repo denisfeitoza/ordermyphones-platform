@@ -14,6 +14,13 @@ import { PT, ES } from './dict';
 
 // Load-bearing customer strings that MUST be translated in both PT and ES.
 const KEY_CUSTOMER_STRINGS = [
+  // contact + help (real since 2026-10-18)
+  'Send message',
+  'Message received',
+  'Contact us',
+  'How does ordering work?',
+  'Phones',
+  'All products',
   // storefront + cart
   'Add to cart',
   'Browse catalog',

@@ -1,34 +1,67 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, Inbox } from 'lucide-react';
-import { listProfiles, listAccessRequests, setAccessRequestStatus, setCustomerTier, type ProfileRow } from '@/data/adminConfig';
-import { DB_TIERS, DB_TIER_LABELS, type DbTier } from '@/lib/invites';
+import { ArrowUpRight, Inbox, Mail } from 'lucide-react';
+import {
+  listProfiles,
+  listAccessRequests,
+  listContactMessages,
+  markContactMessageHandled,
+  setAccessRequestStatus,
+  setCustomerTier,
+  type AccessRequestRow,
+  type ContactMessageRow,
+  type ProfileRow,
+} from '@/data/adminConfig';
+import { DB_TIERS, DB_TIER_LABELS, inviteFromAccessRequest, type DbTier } from '@/lib/invites';
 import { useAuth } from '@/store';
-import { InvitePanel } from '@/components/admin/InvitePanel';
+import { CopyLink, InvitePanel } from '@/components/admin/InvitePanel';
 import { ConfirmPassword } from '@/components/admin/ConfirmPassword';
 import { AdminHeading, Panel, Table, Td } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/i18n';
 import { formatDate } from '@/lib/format';
 
-
-/** Pending "request access" submissions from the public form. The admin copies
- * the email into the invite panel below, sends the tier-scoped invite, then
- * marks the request invited (or dismisses spam). */
-function AccessRequestsPanel() {
+/** Pending "request access" submissions from the public form. An admin picks
+ * the tier and clicks Invite: invite_from_access_request creates the invite and
+ * marks the request invited in one transaction, then the copyable link shows
+ * here (e-mail delivery is off until a sender is wired — G-1). Staff can only
+ * dismiss spam; inviting is admin-only server-side. */
+function AccessRequestsPanel({ isAdmin }: { isAdmin: boolean }) {
   const { t, lang } = useI18n();
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ['access-requests'], queryFn: listAccessRequests });
-  const act = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: 'invited' | 'dismissed' }) => setAccessRequestStatus(id, status),
+  const [tiers, setTiers] = useState<Record<string, DbTier>>({});
+  const [created, setCreated] = useState<{ email: string; token: string } | null>(null);
+  const dismiss = useMutation({
+    mutationFn: (id: string) => setAccessRequestStatus(id, 'dismissed'),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['access-requests'] }),
   });
+  const invite = useMutation({
+    mutationFn: ({ id, tier }: { id: string; tier: DbTier }) => inviteFromAccessRequest(id, tier),
+    onSuccess: (row) => {
+      setCreated({ email: row.email, token: row.token });
+      void qc.invalidateQueries({ queryKey: ['access-requests'] });
+      void qc.invalidateQueries({ queryKey: ['invites'] });
+    },
+  });
   const rows = q.data ?? [];
-  if (rows.length === 0) return null;
+  if (rows.length === 0 && !created) return null;
+
+  const tierFor = (r: AccessRequestRow): DbTier =>
+    tiers[r.id] ?? ((DB_TIERS as readonly string[]).includes(r.tier_interest ?? '') ? (r.tier_interest as DbTier) : 'retailer');
+  const busy = invite.isPending || dismiss.isPending;
 
   return (
     <Panel title={`${t('Access requests')} (${rows.length} ${t('pending')})`} action={<Inbox className="h-4 w-4 text-muted-foreground" />}>
+      {created && (
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-success/30 bg-success/5 px-3 py-2.5 text-sm">
+          <span>
+            {t('Invite created for')} <span className="font-mono">{created.email}</span>. {t('Send them this link — no e-mail goes out yet.')}
+          </span>
+          <CopyLink token={created.token} />
+        </div>
+      )}
       <ul className="divide-y divide-border">
         {rows.map((r) => (
           <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0">
@@ -44,18 +77,87 @@ function AccessRequestsPanel() {
               </p>
               {r.note && <p className="mt-0.5 max-w-md text-xs text-muted-foreground/80">“{r.note}”</p>}
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <Button size="sm" variant="outline" disabled={act.isPending} onClick={() => act.mutate({ id: r.id, status: 'invited' })}>
-                {t('Mark invited')}
-              </Button>
-              <Button size="sm" variant="ghost" disabled={act.isPending} onClick={() => act.mutate({ id: r.id, status: 'dismissed' })}>
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              {isAdmin && (
+                <>
+                  <label className="sr-only" htmlFor={`tier-${r.id}`}>{t('Tier')}</label>
+                  <select
+                    id={`tier-${r.id}`}
+                    value={tierFor(r)}
+                    onChange={(e) => setTiers((m) => ({ ...m, [r.id]: e.target.value as DbTier }))}
+                    className="h-11 rounded-xl border border-border bg-background px-3 text-sm sm:h-9"
+                  >
+                    {DB_TIERS.map((tier) => (
+                      <option key={tier} value={tier}>
+                        {t(DB_TIER_LABELS[tier])}
+                      </option>
+                    ))}
+                  </select>
+                  <Button size="sm" className="min-h-11 sm:min-h-0" disabled={busy} onClick={() => invite.mutate({ id: r.id, tier: tierFor(r) })}>
+                    {t('Invite')}
+                  </Button>
+                </>
+              )}
+              <Button size="sm" variant="ghost" className="min-h-11 sm:min-h-0" disabled={busy} onClick={() => dismiss.mutate(r.id)}>
                 {t('Dismiss')}
               </Button>
             </div>
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-xs text-muted-foreground">{t('Copy the email into “Invite a customer” below, pick the tier, send the invite, then mark it invited.')}</p>
+      {invite.isError && (
+        <p className="mt-3 text-xs text-destructive">
+          {(invite.error as Error).message.includes('email_taken')
+            ? t('This e-mail already has an account.')
+            : (invite.error as Error).message}
+        </p>
+      )}
+      {!isAdmin && <p className="mt-3 text-xs text-muted-foreground">{t('Only an admin can send invites.')}</p>}
+    </Panel>
+  );
+}
+
+const TOPIC_LABEL: Record<ContactMessageRow['topic'], string> = {
+  tier_pricing: 'Tier pricing',
+  reseller: 'Become a reseller',
+  bulk_quote: 'Bulk quote',
+  order_support: 'Order support',
+  other: 'Other',
+};
+
+/** New messages from the public Contact page. Reply by e-mail, then mark handled. */
+function ContactMessagesPanel() {
+  const { t, lang } = useI18n();
+  const qc = useQueryClient();
+  const q = useQuery({ queryKey: ['contact-messages'], queryFn: listContactMessages });
+  const done = useMutation({
+    mutationFn: (id: string) => markContactMessageHandled(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['contact-messages'] }),
+  });
+  const rows = q.data ?? [];
+  if (rows.length === 0) return null;
+
+  return (
+    <Panel title={`${t('Contact messages')} (${rows.length} ${t('new')})`} action={<Mail className="h-4 w-4 text-muted-foreground" />}>
+      <ul className="divide-y divide-border">
+        {rows.map((m) => (
+          <li key={m.id} className="flex flex-wrap items-start justify-between gap-3 py-3 first:pt-0">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">
+                {t(TOPIC_LABEL[m.topic])}
+                {m.business_name && <span className="text-muted-foreground"> · {m.business_name}</span>}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                <a href={`mailto:${m.email}`} className="font-mono hover:underline">{m.email}</a> · {formatDate(m.created_at, lang)}
+              </p>
+              <p className="mt-1 whitespace-pre-line break-words text-sm text-muted-foreground">{m.message}</p>
+            </div>
+            <Button size="sm" variant="outline" className="min-h-11 shrink-0 sm:min-h-0" disabled={done.isPending} onClick={() => done.mutate(m.id)}>
+              {t('Mark handled')}
+            </Button>
+          </li>
+        ))}
+      </ul>
     </Panel>
   );
 }
@@ -92,7 +194,8 @@ export function RealCustomers() {
         subtitle={`${customers.length} ${t('registered accounts')}${isAdmin ? ` · ${t('change a tier inline')}` : ` · ${t('manage tiers & roles in the Users & roles tab')}`}`}
       />
 
-      <AccessRequestsPanel />
+      <AccessRequestsPanel isAdmin={isAdmin} />
+      <ContactMessagesPanel />
 
       <InvitePanel />
 

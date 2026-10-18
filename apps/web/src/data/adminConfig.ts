@@ -314,7 +314,7 @@ export async function listAccessRequests(): Promise<AccessRequestRow[]> {
   return (data ?? []) as AccessRequestRow[];
 }
 
-export async function setAccessRequestStatus(id: string, status: 'invited' | 'dismissed'): Promise<void> {
+export async function setAccessRequestStatus(id: string, status: 'dismissed'): Promise<void> {
   const { error } = await supabase.rpc('set_access_request_status', { p_id: id, p_status: status });
   if (error) throw new Error(error.message);
 }
@@ -416,4 +416,33 @@ export async function listAdminAudit(limit = 100): Promise<AdminAuditRow[]> {
     .limit(limit);
   if (error) throw new Error(error.message);
   return (data ?? []) as unknown as AdminAuditRow[];
+}
+
+export interface ContactMessageRow {
+  id: string;
+  email: string;
+  business_name: string | null;
+  topic: 'tier_pricing' | 'reseller' | 'bulk_quote' | 'order_support' | 'other';
+  message: string;
+  created_at: string;
+}
+
+/** New contact-page messages (contact_messages, staff-readable via RLS). */
+export async function listContactMessages(): Promise<ContactMessageRow[]> {
+  const { data, error } = await supabase
+    .from('contact_messages')
+    .select('id,email,business_name,topic,message,created_at')
+    .eq('status', 'new')
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error) throw new Error(error.message);
+  return (data ?? []) as ContactMessageRow[];
+}
+
+export async function markContactMessageHandled(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('contact_messages')
+    .update({ status: 'handled' }) // handled_at/handled_by are stamped by a DB trigger
+    .eq('id', id);
+  if (error) throw new Error(error.message);
 }

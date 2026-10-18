@@ -2,23 +2,61 @@ import { useState, type FormEvent } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Mail, MapPin, Phone, Clock, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { supabase } from '@/lib/supabase';
+import { useI18n } from '@/i18n';
 
-const INTENTS = ['Tier pricing', 'Become a reseller', 'Bulk quote', 'Order support'] as const;
+/** Topic chips → contact_messages.topic (submit_contact_message validates the code). */
+const INTENTS = [
+  { code: 'tier_pricing', label: 'Tier pricing' },
+  { code: 'reseller', label: 'Become a reseller' },
+  { code: 'bulk_quote', label: 'Bulk quote' },
+  { code: 'order_support', label: 'Order support' },
+] as const;
+type Intent = (typeof INTENTS)[number];
+
+const ERRORS: Record<string, string> = {
+  bad_email: 'Please enter a valid email.',
+  too_long: 'Your message is too long. Keep it under 4,000 characters.',
+  rate_limited: 'You sent several messages in the last hour. Please wait a little and try again.',
+};
 
 const DETAILS = [
   { icon: MapPin, label: 'Warehouse & returns', value: '11816 Inwood Rd #1176', sub: 'Dallas, TX 75244' },
   { icon: Phone, label: 'Sales — Abdu', value: '+1 (469) 214-8830', sub: 'Wholesale & partnerships' },
-  { icon: Mail, label: 'Email', value: 'sales@ordermyphones.com', sub: 'Replies within one business day' },
-  { icon: Clock, label: 'Hours', value: 'Mon–Fri · 9–6 CT', sub: 'Reservations process 24/7' },
+  { icon: Mail, label: 'Email', value: 'sales@ordermyphones.com', sub: 'We reply by email' },
+  { icon: Clock, label: 'Hours', value: 'Mon–Fri · 9–6 CT', sub: 'Orders can be placed 24/7' },
 ];
 
+/** Contact page: the form files a real message (submit_contact_message RPC,
+ * anon-callable, rate-limited); staff read it in Admin → Customers. */
 export default function ContactPage() {
+  const { t } = useI18n();
   const [sent, setSent] = useState(false);
-  const [intent, setIntent] = useState<(typeof INTENTS)[number]>('Tier pricing');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [intent, setIntent] = useState<Intent>(INTENTS[0]);
+  const [email, setEmail] = useState('');
+  const [business, setBusiness] = useState('');
+  const [message, setMessage] = useState('');
 
-  function submit(e: FormEvent) {
+  async function submit(e: FormEvent) {
     e.preventDefault();
+    setError(null);
+    setSending(true);
+    const { error: rpcError } = await supabase.rpc('submit_contact_message', {
+      p_email: email,
+      p_topic: intent.code,
+      p_message: message,
+      p_business_name: business || null,
+    });
+    setSending(false);
+    if (rpcError) {
+      const code = Object.keys(ERRORS).find((k) => rpcError.message.includes(k));
+      setError(t(code ? ERRORS[code] : 'Something went wrong — please try again.'));
+      return;
+    }
     setSent(true);
+    setMessage('');
   }
 
   return (
@@ -26,13 +64,12 @@ export default function ContactPage() {
       <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
         {/* Left — context + reachable channels */}
         <div>
-          <span className="text-xs font-semibold uppercase tracking-widest text-brand">Contact</span>
+          <span className="text-xs font-semibold uppercase tracking-widest text-brand">{t('Contact')}</span>
           <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight text-balance md:text-4xl">
-            Talk to a human about volume
+            {t('Talk to a human about volume')}
           </h1>
           <p className="mt-3 max-w-md text-muted-foreground">
-            Tier pricing, net terms, a model we don&apos;t list yet, or a problem with an order — tell us what you need
-            and the right person picks it up.
+            {t('Tier pricing, a model we do not list yet, or a problem with an order — tell us what you need and the right person picks it up.')}
           </p>
 
           <div className="mt-8 divide-y divide-border border-y border-border">
@@ -42,9 +79,9 @@ export default function ContactPage() {
                   <d.icon className="h-4 w-4 text-muted-foreground" strokeWidth={2} />
                 </span>
                 <div>
-                  <p className="text-xs text-muted-foreground">{d.label}</p>
+                  <p className="text-xs text-muted-foreground">{t(d.label)}</p>
                   <p className="text-sm font-medium">{d.value}</p>
-                  <p className="text-xs text-muted-foreground">{d.sub}</p>
+                  <p className="text-xs text-muted-foreground">{t(d.sub)}</p>
                 </div>
               </div>
             ))}
@@ -69,75 +106,88 @@ export default function ContactPage() {
                 <Check className="h-7 w-7" strokeWidth={3} />
               </motion.span>
               <div>
-                <p className="font-display text-lg font-semibold">Message received</p>
+                <p className="font-display text-lg font-semibold">{t('Message received')}</p>
                 <p className="mt-1 max-w-xs text-sm text-muted-foreground">
-                  We routed it to the {intent.toLowerCase()} desk. Expect a reply within one business day.
+                  {t('Thanks — our team got your message and replies by email.')}
                 </p>
               </div>
               <Button variant="outline" onClick={() => setSent(false)}>
-                Send another
+                {t('Send another')}
               </Button>
             </motion.div>
           ) : (
             <form onSubmit={submit} className="space-y-5">
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="flex flex-col gap-1.5">
-                  <span className="text-sm font-medium">Work email</span>
+                  <span className="text-sm font-medium">{t('Work email')}</span>
                   <input
                     type="email"
                     required
+                    maxLength={254}
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@store.com"
                     className="h-11 rounded-xl border border-border bg-background px-3.5 text-sm outline-none transition-colors focus:border-brand"
                   />
                 </label>
                 <label className="flex flex-col gap-1.5">
-                  <span className="text-sm font-medium">Business name</span>
+                  <span className="text-sm font-medium">{t('Business name')}</span>
                   <input
-                    required
-                    placeholder="Downtown Mobile LLC"
+                    maxLength={200}
+                    autoComplete="organization"
+                    value={business}
+                    onChange={(e) => setBusiness(e.target.value)}
+                    placeholder={t('Your company')}
                     className="h-11 rounded-xl border border-border bg-background px-3.5 text-sm outline-none transition-colors focus:border-brand"
                   />
                 </label>
               </div>
 
               <div className="flex flex-col gap-2">
-                <span className="text-sm font-medium">I&apos;m interested in</span>
+                <span className="text-sm font-medium">{t('I am interested in')}</span>
                 <div className="flex flex-wrap gap-2">
                   {INTENTS.map((i) => (
                     <button
-                      key={i}
+                      key={i.code}
                       type="button"
+                      aria-pressed={intent.code === i.code}
                       onClick={() => setIntent(i)}
                       className={
-                        'rounded-full border px-3.5 py-2 text-sm transition-colors ' +
-                        (intent === i
+                        'min-h-11 rounded-full border px-3.5 py-2 text-sm transition-colors ' +
+                        (intent.code === i.code
                           ? 'border-foreground bg-foreground text-background'
                           : 'border-border text-muted-foreground hover:bg-muted')
                       }
                     >
-                      {i}
+                      {t(i.label)}
                     </button>
                   ))}
                 </div>
               </div>
 
               <label className="flex flex-col gap-1.5">
-                <span className="text-sm font-medium">How many units / what do you need?</span>
+                <span className="text-sm font-medium">{t('How many units / what do you need?')}</span>
                 <textarea
                   required
                   rows={4}
-                  placeholder="e.g. 80 iPhone 16 Pro Max monthly, plus a quote on Galaxy S24 Ultra…"
+                  maxLength={4000}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder={t('e.g. 80 iPhone 16 Pro Max monthly, plus a quote on Galaxy S24 Ultra…')}
                   className="rounded-xl border border-border bg-background px-3.5 py-3 text-sm outline-none transition-colors focus:border-brand"
                 />
               </label>
 
-              <Button type="submit" size="lg" className="w-full">
-                Send message
+              {error && (
+                <p role="alert" className="text-sm text-destructive">
+                  {error}
+                </p>
+              )}
+              <Button type="submit" size="lg" className="w-full" disabled={sending}>
+                {sending ? t('Sending…') : t('Send message')}
                 <ArrowRight className="h-4 w-4" strokeWidth={2} />
               </Button>
-              <p className="text-center text-xs text-muted-foreground">
-                Mockup form — submissions aren&apos;t stored or sent.
-              </p>
             </form>
           )}
         </div>

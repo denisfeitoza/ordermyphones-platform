@@ -64,6 +64,14 @@ export async function createInvite(email: string, tier: DbTier): Promise<InviteR
   return (Array.isArray(data) ? data[0] : data) as InviteRow;
 }
 
+/** Admin: create the invite from a pending access request and mark the request
+ * invited, in one transaction (invite_from_access_request RPC). */
+export async function inviteFromAccessRequest(requestId: string, tier: DbTier): Promise<InviteRow> {
+  const { data, error } = await supabase.rpc('invite_from_access_request', { p_request_id: requestId, p_tier: tier });
+  if (error) throw new Error(error.message);
+  return (Array.isArray(data) ? data[0] : data) as InviteRow;
+}
+
 /** Admin/staff listing of invites via the base table (RLS lets them read all). */
 export async function listInvites(): Promise<InviteRow[]> {
   const { data, error } = await supabase
