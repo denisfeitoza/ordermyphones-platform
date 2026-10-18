@@ -1335,6 +1335,13 @@ export const PT: Record<string, string> = {
   'parcels': 'volumes',
   '*not included in the total — shipping is invoiced separately': '*não incluído no total — o frete é cobrado separadamente',
   'Could not get a live rate. Our team will confirm shipping.': 'Não foi possível cotar agora. Nossa equipe confirma o frete.',
+  'Accessories': 'Acessórios',
+  'Wearables': 'Vestíveis',
+  'All products': 'Todos os produtos',
+  'Photos by color': 'Fotos por cor',
+  'Optional. A color photo replaces the model photo for that color only.': 'Opcional. A foto da cor substitui a foto do modelo só nessa cor.',
+  'Replace': 'Trocar',
+  'Remove color photo': 'Remover foto da cor',
 };
 
 export const ES: Record<string, string> = {
@@ -2670,4 +2677,11 @@ export const ES: Record<string, string> = {
   'parcels': 'paquetes',
   '*not included in the total — shipping is invoiced separately': '*no incluido en el total — el envío se factura por separado',
   'Could not get a live rate. Our team will confirm shipping.': 'No se pudo cotizar ahora. Nuestro equipo confirmará el envío.',
+  'Accessories': 'Accesorios',
+  'Wearables': 'Wearables',
+  'All products': 'Todos los productos',
+  'Photos by color': 'Fotos por color',
+  'Optional. A color photo replaces the model photo for that color only.': 'Opcional. La foto del color reemplaza la foto del modelo solo en ese color.',
+  'Replace': 'Reemplazar',
+  'Remove color photo': 'Quitar foto del color',
 };

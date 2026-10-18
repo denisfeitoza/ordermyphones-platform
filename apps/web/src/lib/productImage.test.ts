@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeModel, resolveProductImage } from './productImage';
+import { listingImage, normalizeModel, resolveProductImage } from './productImage';
 
 describe('normalizeModel', () => {
   it.each([
@@ -32,5 +32,14 @@ describe('resolveProductImage', () => {
     expect(resolveProductImage('iPhone 16 Pro Max Ultra')).toBeNull();
     expect(resolveProductImage('UI Demo Phone')).toBeNull();
     expect(resolveProductImage('')).toBeNull();
+  });
+});
+
+describe('listingImage waterfall', () => {
+  it('prefers the colour photo, then the model photo, then the render', () => {
+    expect(listingImage({ colorImageUrl: 'https://x/c.jpg', imageUrl: 'https://x/m.jpg', model: 'iPhone 14' })).toBe('https://x/c.jpg');
+    expect(listingImage({ colorImageUrl: null, imageUrl: 'https://x/m.jpg', model: 'iPhone 14' })).toBe('https://x/m.jpg');
+    expect(listingImage({ colorImageUrl: null, imageUrl: null, model: 'iPhone 14' })).toBe(resolveProductImage('iPhone 14'));
+    expect(listingImage({ imageUrl: null, model: 'No Such Phone 9000' })).toBeNull();
   });
 });

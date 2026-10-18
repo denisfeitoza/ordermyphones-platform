@@ -48,6 +48,8 @@ const PRICE_LABEL: Record<string, string> = {
   [UNPRICED_BAND]: 'Not priced for your tier',
 };
 const LOCK_LABEL: Record<string, string> = { unlocked: 'Unlocked', locked: 'Locked' };
+export const CATEGORY_LABEL: Record<string, string> = { phones: 'Phones', accessories: 'Accessories', wearables: 'Wearables' };
+const CATEGORY_ORDER = ['phones', 'accessories', 'wearables'];
 
 function capacityGb(v: string): number {
   const m = /([\d.]+)\s*(tb|gb)/i.exec(v);
@@ -63,6 +65,8 @@ function orderedValues(key: FacetKey, counts: Map<string, number>, selected: Set
   const values = new Set<string>([...counts.keys(), ...selected]);
   const arr = [...values];
   switch (key) {
+    case 'category':
+      return arr.sort((a, b) => (CATEGORY_ORDER.indexOf(a) + 1 || 99) - (CATEGORY_ORDER.indexOf(b) + 1 || 99));
     case 'grade':
       return arr.sort((a, b) => (GRADE_RANK[a] ?? 99) - (GRADE_RANK[b] ?? 99));
     case 'capacity':
@@ -84,6 +88,8 @@ function orderedValues(key: FacetKey, counts: Map<string, number>, selected: Set
  * in RealCatalogView render identical labels. */
 export function facetValueLabel(key: FacetKey, value: string): string {
   switch (key) {
+    case 'category':
+      return CATEGORY_LABEL[value] ?? value;
     case 'carrier':
       return carrierLabel(value);
     case 'lock':
@@ -142,6 +148,7 @@ export function RealCatalogFilters({ counts, facets, onToggle, onClearAll, signe
   const { t } = useI18n();
 
   const SECTIONS: { key: FacetKey; title: string }[] = [
+    { key: 'category', title: t('Category') },
     { key: 'make', title: t('Brand') },
     { key: 'grade', title: t('Condition') },
     { key: 'capacity', title: t('Storage') },
@@ -180,7 +187,7 @@ export function RealCatalogFilters({ counts, facets, onToggle, onClearAll, signe
                 return (
                   <FilterRow
                     key={v}
-                    label={facetValueLabel(key, v)}
+                    label={t(facetValueLabel(key, v))}
                     count={counts[key].get(v) ?? 0}
                     active={facets[key].has(v)}
                     onClick={() => onToggle(key, v)}

@@ -21,6 +21,8 @@ function listing(over: Partial<PricedRealListing>): PricedRealListing {
     soldQty: 0,
     imageUrl: null,
     description: null,
+    category: 'phones',
+    colorImageUrl: null,
     ...over,
   };
 }
@@ -112,5 +114,24 @@ describe('computeFacetedCatalog', () => {
     ];
     const { filtered } = computeFacetedCatalog(set, emptyFacetState(), '', 'newest');
     expect(filtered.map((i) => i.sku)).toEqual(['new', 'mid', 'old']);
+  });
+});
+
+describe('category facet', () => {
+  const set = [
+    listing({ sku: 'P1', category: 'phones' }),
+    listing({ sku: 'P2', category: 'phones', make: 'Samsung' }),
+    listing({ sku: 'A1', category: 'accessories', model: 'AirPods Pro' }),
+  ];
+
+  it('counts every category and filters to the picked one', () => {
+    const facets = emptyFacetState();
+    expect(computeFacetedCatalog(set, facets, '', 'featured').counts.category.get('accessories')).toBe(1);
+    facets.category.add('phones');
+    const { filtered, counts } = computeFacetedCatalog(set, facets, '', 'featured');
+    expect(filtered.map((i) => i.sku)).toEqual(['P1', 'P2']);
+    // add-this-value: the category axis still shows the other value
+    expect(counts.category.get('accessories')).toBe(1);
+    expect(anyFacetActive(facets)).toBe(true);
   });
 });

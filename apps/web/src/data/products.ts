@@ -113,3 +113,83 @@ export function useUploadProductPhoto() {
     onSuccess: invalidate,
   });
 }
+
+/** One colour a product carries, keyed like catalog_listing (public.color_key). */
+export interface ProductColor {
+  colorKey: string;
+  label: string;
+  variantCount: number;
+  imageUrl: string | null;
+}
+
+interface RawProductColor {
+  color_key: string;
+  color_label: string;
+  variant_count: number;
+  image_url: string | null;
+}
+
+async function fetchProductColors(productId: string): Promise<ProductColor[]> {
+  const { data, error } = await supabase
+    .from('product_colors_admin')
+    .select('color_key, color_label, variant_count, image_url')
+    .eq('product_id', productId)
+    .order('color_key');
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as RawProductColor[]).map((c) => ({
+    colorKey: c.color_key,
+    label: c.color_label,
+    variantCount: c.variant_count,
+    imageUrl: c.image_url,
+  }));
+}
+
+export function useProductColors(productId: string) {
+  return useQuery({ queryKey: ['admin-product-colors', productId], queryFn: () => fetchProductColors(productId), staleTime: 60_000 });
+}
+
+/** Upload a photo for one colour of a product (product_color_images). It wins over the model photo for that colour. */
+export async function uploadColorPhoto(productId: string, colorKey: string, file: File): Promise<string> {
+  if (!PHOTO_TYPES.has(file.type)) throw new Error('Use a JPG, PNG or WebP image.');
+  if (file.size > MAX_PHOTO_BYTES) throw new Error('Photo must be 5 MB or smaller.');
+  const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+  const slug = colorKey.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'color';
+  const path = `${productId}/color-${slug}-${Date.now()}.${ext}`;
+  const { error: upErr } = await supabase.storage.from(PRODUCT_PHOTOS_BUCKET).upload(path, file, { upsert: true, contentType: file.type, cacheControl: '31536000' });
+  if (upErr) throw new Error(upErr.message);
+  const { data } = supabase.storage.from(PRODUCT_PHOTOS_BUCKET).getPublicUrl(path);
+  const { error } = await supabase
+    .from('product_color_images')
+    .upsert({ product_id: productId, color_key: colorKey, image_url: data.publicUrl, updated_at: new Date().toISOString() });
+  if (error) throw new Error(error.message);
+  return data.publicUrl;
+}
+
+export async function removeColorPhoto(productId: string, colorKey: string): Promise<void> {
+  const { error } = await supabase.from('product_color_images').delete().eq('product_id', productId).eq('color_key', colorKey);
+  if (error) throw new Error(error.message);
+}
+
+function useInvalidateColors(productId: string) {
+  const qc = useQueryClient();
+  return () => {
+    void qc.invalidateQueries({ queryKey: ['admin-product-colors', productId] });
+    void qc.invalidateQueries({ queryKey: ['catalog-listing'] });
+  };
+}
+
+export function useUploadColorPhoto(productId: string) {
+  const invalidate = useInvalidateColors(productId);
+  return useMutation({
+    mutationFn: ({ colorKey, file }: { colorKey: string; file: File }) => uploadColorPhoto(productId, colorKey, file),
+    onSuccess: invalidate,
+  });
+}
+
+export function useRemoveColorPhoto(productId: string) {
+  const invalidate = useInvalidateColors(productId);
+  return useMutation({
+    mutationFn: (colorKey: string) => removeColorPhoto(productId, colorKey),
+    onSuccess: invalidate,
+  });
+}

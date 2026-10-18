@@ -33,6 +33,10 @@ export interface RealListing {
   /** Staff-uploaded photo (products.image_url); null = placeholder / mock-family fallback. */
   imageUrl: string | null;
   description: string | null;
+  /** products.category — 'phones' | 'accessories' | 'wearables'. */
+  category: string;
+  /** Staff photo for this variant's colour (product_color_images); wins over imageUrl. */
+  colorImageUrl: string | null;
 }
 
 /** RealListing + the caller's own tier price (null when unavailable — see priceStatus). */
@@ -57,6 +61,8 @@ interface RawCatalogListingRow {
   sold_qty: number | null;
   image_url: string | null;
   description: string | null;
+  category: string | null;
+  color_image_url: string | null;
 }
 
 interface RawPriceRow {
@@ -72,7 +78,7 @@ async function fetchCatalogListing(): Promise<RealListing[]> {
       supabase
         .from('catalog_listing')
         .select(
-          'variant_id, sku, make, model, capacity, color, carrier, lock_status, ctia_grade, ctia_label, total_qty, locations, created_at, sold_qty, image_url, description',
+          'variant_id, sku, make, model, capacity, color, carrier, lock_status, ctia_grade, ctia_label, total_qty, locations, created_at, sold_qty, image_url, description, category, color_image_url',
         )
         .order('sku')
         .range(from, to),
@@ -96,6 +102,8 @@ async function fetchCatalogListing(): Promise<RealListing[]> {
     soldQty: r.sold_qty ?? 0,
     imageUrl: r.image_url ?? null,
     description: r.description ?? null,
+    category: r.category ?? 'phones',
+    colorImageUrl: r.color_image_url ?? null,
   }));
 }
 

@@ -21,6 +21,8 @@ function listing(over: Partial<PricedRealListing>): PricedRealListing {
     soldQty: 0,
     imageUrl: null,
     description: null,
+    category: 'phones',
+    colorImageUrl: null,
     ...over,
   };
 }

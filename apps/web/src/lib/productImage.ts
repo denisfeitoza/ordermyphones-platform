@@ -30,3 +30,12 @@ export function resolveProductImage(model: string): string | null {
   const id = IMAGES[normalizeModel(model)];
   return id ? `/generated/catalog/${id}.webp` : null;
 }
+
+/**
+ * The image waterfall for one listing: staff photo for its colour →
+ * staff photo for the model → studio render for the model → null
+ * (the caller shows the brand/category placeholder).
+ */
+export function listingImage(l: { colorImageUrl?: string | null; imageUrl: string | null; model: string }): string | null {
+  return l.colorImageUrl ?? l.imageUrl ?? resolveProductImage(l.model);
+}

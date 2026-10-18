@@ -81,7 +81,9 @@ export function RealModelDetail({ group }: { group: ModelGroup }) {
   const [justAdded, setJustAdded] = useState(false);
   const [otherLimit, setOtherLimit] = useState(OTHER_OFFERS_STEP);
 
-  const image = group.imageUrl ?? resolveProductImage(group.model);
+  // A colour pick shows that colour's staff photo when one exists.
+  const colorImage = sel.color ? (group.offers.find((o) => axisValue(o, 'color') === sel.color && o.colorImageUrl)?.colorImageUrl ?? null) : null;
+  const image = colorImage ?? group.imageUrl ?? resolveProductImage(group.model);
   const description = group.offers.find((o) => o.description)?.description ?? null;
 
   const networkLabel = (v: string) => {

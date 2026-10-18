@@ -6,7 +6,7 @@ import { useRealCatalog } from '@/data/realCatalog';
 import { RealModelGrid } from './RealModelGrid';
 import { RealCatalogTable } from './RealCatalogTable';
 import { RealCatalogEmpty } from './RealCatalogEmpty';
-import { RealCatalogFilters, facetValueLabel } from './RealCatalogFilters';
+import { RealCatalogFilters, facetValueLabel, CATEGORY_LABEL } from './RealCatalogFilters';
 import { QuickOrderDialog } from './QuickOrderDialog';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
@@ -78,10 +78,12 @@ export function RealCatalogView() {
   useEffect(() => {
     const brand = params.get('brand');
     const condition = params.get('condition');
+    const category = params.get('category');
     const urlQ = params.get('q');
-    if (brand === null && condition === null && urlQ === null) return;
+    if (brand === null && condition === null && category === null && urlQ === null) return;
     const next = emptyFacetState();
     if (brand) next.make.add(brand);
+    if (category && category in CATEGORY_LABEL) next.category.add(category);
     if (condition === 'cpo') {
       next.grade.add('Certified Pre-Owned');
       next.grade.add('Certified Pre-Owned · Grade A');
@@ -119,6 +121,12 @@ export function RealCatalogView() {
 
   const resetWindow = () => setVisibleCount(WINDOW);
 
+  // Heading follows the category: one picked → its name; a catalog that only
+  // carries phones → "All phones"; otherwise accessories ride along → "All products".
+  const pickedCategory = facets.category.size === 1 ? [...facets.category][0] : null;
+  const onlyPhones = real.items.every((i) => i.category === 'phones');
+  const heading = pickedCategory ? (CATEGORY_LABEL[pickedCategory] ?? pickedCategory) : onlyPhones ? 'All phones' : 'All products';
+
   function toggleFacet(key: FacetKey, value: string) {
     setFacets((prev) => {
       const nextSet = new Set(prev[key]);
@@ -148,7 +156,7 @@ export function RealCatalogView() {
     <div className="container py-8 md:py-12">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">{t('All phones')}</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">{t(heading)}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {view === 'grid' ? (
               <>
@@ -263,7 +271,7 @@ export function RealCatalogView() {
                   onClick={() => toggleFacet(key, value)}
                   className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-border bg-secondary px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted"
                 >
-                  {facetValueLabel(key, value)}
+                  {t(facetValueLabel(key, value))}
                   <X className="h-3 w-3 text-muted-foreground" strokeWidth={2.5} />
                 </button>
               ))}

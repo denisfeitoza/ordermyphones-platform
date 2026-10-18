@@ -11,20 +11,20 @@
  * semantics.
  *
  * Masking invariant (customer-safe): facets only ever key on fields the
- * `catalog_listing` view already exposes — make, ctia grade/label, carrier
+ * `catalog_listing` view already exposes — category, make, ctia grade/label, carrier
  * code, lock_status, capacity, location name, and the caller's own-tier price.
  * Never raw vendor `grade` or `carrier_raw`.
  */
 import { buildDisplayName, carrierLabel, type PricedRealListing } from '@/data/realCatalog';
 
-export type FacetKey = 'make' | 'grade' | 'carrier' | 'lock' | 'capacity' | 'location' | 'price';
+export type FacetKey = 'category' | 'make' | 'grade' | 'carrier' | 'lock' | 'capacity' | 'location' | 'price';
 
-export const FACET_KEYS: readonly FacetKey[] = ['make', 'grade', 'carrier', 'lock', 'capacity', 'location', 'price'];
+export const FACET_KEYS: readonly FacetKey[] = ['category', 'make', 'grade', 'carrier', 'lock', 'capacity', 'location', 'price'];
 
 export type FacetState = Record<FacetKey, Set<string>>;
 
 export function emptyFacetState(): FacetState {
-  return { make: new Set(), grade: new Set(), carrier: new Set(), lock: new Set(), capacity: new Set(), location: new Set(), price: new Set() };
+  return { category: new Set(), make: new Set(), grade: new Set(), carrier: new Set(), lock: new Set(), capacity: new Set(), location: new Set(), price: new Set() };
 }
 
 export function anyFacetActive(f: FacetState): boolean {
@@ -51,6 +51,8 @@ function priceBandId(priceCents: number | null): string {
  * everything except `location` (an item can be in stock at several). */
 function facetValues(i: PricedRealListing, key: FacetKey): string[] {
   switch (key) {
+    case 'category':
+      return [i.category];
     case 'make':
       return [i.make];
     case 'grade':

@@ -1,6 +1,15 @@
 import { useMemo, useRef, useState } from 'react';
-import { Eye, EyeOff, ImagePlus, Search, Smartphone, X } from 'lucide-react';
-import { useAdminProducts, useUpdateProduct, useUploadProductPhoto, type AdminProduct } from '@/data/products';
+import { Eye, EyeOff, ImagePlus, Search, Smartphone, Trash2, X } from 'lucide-react';
+import {
+  useAdminProducts,
+  useProductColors,
+  useRemoveColorPhoto,
+  useUpdateProduct,
+  useUploadColorPhoto,
+  useUploadProductPhoto,
+  type AdminProduct,
+  type ProductColor,
+} from '@/data/products';
 import { Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/i18n';
@@ -181,6 +190,8 @@ function ProductEditor({ product, onClose }: { product: AdminProduct; onClose: (
           </div>
         </div>
 
+        <ColorPhotos productId={product.id} model={product.model} />
+
         <label className="block">
           <span className="mb-2 block text-xs font-medium uppercase tracking-wide text-muted-foreground">{t('Description')}</span>
           <textarea
@@ -216,5 +227,79 @@ function ProductEditor({ product, onClose }: { product: AdminProduct; onClose: (
         </div>
       </div>
     </Panel>
+  );
+}
+
+/** Per-colour photos: each wins over the model photo for variants of that colour. */
+function ColorPhotos({ productId, model }: { productId: string; model: string }) {
+  const { t } = useI18n();
+  const colors = useProductColors(productId);
+  const upload = useUploadColorPhoto(productId);
+  const remove = useRemoveColorPhoto(productId);
+  const list = colors.data ?? [];
+  if (colors.isLoading || list.length === 0) return null;
+
+  return (
+    <div>
+      <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t('Photos by color')}</p>
+      <p className="mb-2 text-xs text-muted-foreground">{t('Optional. A color photo replaces the model photo for that color only.')}</p>
+      <ul className="divide-y divide-border rounded-xl border border-border">
+        {list.map((c) => (
+          <ColorRow
+            key={c.colorKey}
+            color={c}
+            model={model}
+            busy={upload.isPending || remove.isPending}
+            onUpload={(file) => upload.mutate({ colorKey: c.colorKey, file })}
+            onRemove={() => remove.mutate(c.colorKey)}
+          />
+        ))}
+      </ul>
+      {(upload.isError || remove.isError) && (
+        <p className="mt-2 text-xs text-destructive">{((upload.error ?? remove.error) as Error).message}</p>
+      )}
+    </div>
+  );
+}
+
+function ColorRow({ color, model, busy, onUpload, onRemove }: { color: ProductColor; model: string; busy: boolean; onUpload: (f: File) => void; onRemove: () => void }) {
+  const { t } = useI18n();
+  const fileRef = useRef<HTMLInputElement>(null);
+  return (
+    <li className="flex items-center gap-3 px-3 py-2">
+      <Thumb url={color.imageUrl} alt={`${model} · ${color.label}`} />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium capitalize">{color.label}</p>
+        <p className="text-xs text-muted-foreground">
+          {color.variantCount} {color.variantCount === 1 ? t('variant') : t('variants')}
+        </p>
+      </div>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onUpload(f);
+          e.target.value = '';
+        }}
+      />
+      <Button size="sm" variant="outline" className="min-h-11 sm:min-h-0" disabled={busy} onClick={() => fileRef.current?.click()}>
+        <ImagePlus className="h-4 w-4" strokeWidth={2} />
+        <span className="hidden sm:inline">{color.imageUrl ? t('Replace') : t('Upload')}</span>
+      </Button>
+      {color.imageUrl && (
+        <button
+          type="button"
+          onClick={onRemove}
+          disabled={busy}
+          className="grid h-11 w-11 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-destructive sm:h-8 sm:w-8"
+          aria-label={t('Remove color photo')}
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      )}
+    </li>
   );
 }

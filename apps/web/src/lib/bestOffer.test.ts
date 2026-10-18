@@ -21,6 +21,8 @@ function offer(sku: string, priceCents: number | null, totalQty: number): Priced
     soldQty: 0,
     imageUrl: null,
     description: null,
+    category: 'phones',
+    colorImageUrl: null,
   };
 }
 

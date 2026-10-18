@@ -6,7 +6,7 @@ import { useRealCart, type RealCartAllocation } from '@/store';
 import { useCatalogSource } from '@/lib/catalogSource';
 import { useOrderLocationSelection } from '@/lib/orderSettings';
 import { useRealCatalog, buildDisplayName, type PricedRealListing } from '@/data/realCatalog';
-import { resolveProductImage } from '@/lib/productImage';
+import { listingImage } from '@/lib/productImage';
 import { CartLineLocations, allocationValid } from './CartLineLocations';
 import { Button } from '@/components/ui/Button';
 import { formatUsd } from '@/lib/format';
@@ -127,7 +127,7 @@ export function RealCartDrawer() {
               <>
                 <ul className="flex-1 divide-y divide-border overflow-y-auto px-5">
                   {resolved.map((l) => {
-                    const image = l.item ? (l.item.imageUrl ?? resolveProductImage(l.item.model)) : null;
+                    const image = l.item ? listingImage(l.item) : null;
                     const name = l.item ? buildDisplayName(l.item) : t('Item unavailable');
                     return (
                       <li key={l.variantId} className="flex gap-3 py-4">

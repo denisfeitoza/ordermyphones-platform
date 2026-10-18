@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Smartphone } from 'lucide-react';
 import { buildDisplayName, type PricedRealListing } from '@/data/realCatalog';
-import { resolveProductImage } from '@/lib/productImage';
+import { listingImage } from '@/lib/productImage';
 import { Badge } from '@/components/ui/Badge';
 import { formatInt } from '@/lib/format';
 import { PulseDot } from './SyncHeartbeat';
@@ -24,7 +24,7 @@ export function gradeTone(grade: PricedRealListing['ctiaGrade']): 'success' | 'd
 export function RealProductCard({ item }: { item: PricedRealListing }) {
   const { t } = useI18n();
   // Staff photo first; the mock-family render is only the fallback.
-  const image = item.imageUrl ?? resolveProductImage(item.model);
+  const image = listingImage(item);
   const name = buildDisplayName(item);
   const soldOut = item.totalQty === 0;
 
