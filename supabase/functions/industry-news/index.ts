@@ -54,8 +54,10 @@ const strip = (s: string) =>
 
 const tag = (block: string, name: string): string => {
   // Handles <name>..</name>, CDATA, and self-closing <link href="..."/> (Atom).
+  // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp -- `name` is always a literal tag name from this file (title/link/pubDate/...), never feed or user input
   const m = block.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)</${name}>`, 'i'));
   if (m) return strip(m[1]);
+  // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp -- `name` is always a literal tag name from this file (title/link/pubDate/...), never feed or user input
   const attr = block.match(new RegExp(`<${name}[^>]*href=["']([^"']+)["']`, 'i'));
   return attr ? attr[1].trim() : '';
 };

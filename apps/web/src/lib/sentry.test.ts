@@ -11,6 +11,7 @@ describe('scrubString', () => {
     expect(scrubString('contact jane.doe@example.com now')).toBe('contact [redacted-email] now');
   });
   it('redacts bearer / JWT-ish tokens', () => {
+    // nosemgrep: generic.secrets.security.detected-jwt-token.detected-jwt-token -- fake fixture (payload {"sub":"123"}, made-up signature) that proves the scrubber redacts JWTs
     const jwt = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.abc123def456';
     expect(scrubString(`Authorization: Bearer ${jwt}`)).toContain('[redacted-token]');
     expect(scrubString(`Authorization: Bearer ${jwt}`)).not.toContain(jwt);
