@@ -273,12 +273,26 @@ export function useEditOrder() {
 export function useMarkShipped() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ orderId, carrier, tracking, note }: { orderId: string; carrier: string; tracking: string; note?: string }) => {
+    mutationFn: async ({
+      orderId,
+      carrier,
+      tracking,
+      note,
+      closeShortfalls = false,
+    }: {
+      orderId: string;
+      carrier: string;
+      tracking: string;
+      note?: string;
+      /** Ship what was approved and cancel the order's open shortfalls (the RPC refuses otherwise). */
+      closeShortfalls?: boolean;
+    }) => {
       const { error } = await supabase.rpc('mark_order_shipped', {
         p_order_id: orderId,
         p_carrier: carrier || null,
         p_tracking: tracking || null,
         p_note: note || null,
+        p_close_shortfalls: closeShortfalls,
       });
       if (error) throw new Error(error.message);
     },
@@ -286,6 +300,7 @@ export function useMarkShipped() {
       void qc.invalidateQueries({ queryKey: ['admin-orders'] });
       void qc.invalidateQueries({ queryKey: ['order-events', v.orderId] });
       void qc.invalidateQueries({ queryKey: ['admin-summary'] });
+      void qc.invalidateQueries({ queryKey: ['open-reconciliations'] });
     },
   });
 }

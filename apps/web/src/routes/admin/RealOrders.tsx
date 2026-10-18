@@ -59,12 +59,37 @@ function ShipForm({ order, onDone }: { order: AdminOrder; onDone: () => void }) 
   const [carrier, setCarrier] = useState<string>('UPS');
   const [tracking, setTracking] = useState('');
   const [note, setNote] = useState('');
+  const [closeShortfalls, setCloseShortfalls] = useState(false);
+  // Same rules as mark_order_shipped: nothing approved → nothing to ship; any
+  // line short → the open shortfalls must be closed explicitly on shipping.
+  const approvedUnits = order.lines.reduce((s, l) => s + (l.qtyApproved ?? 0), 0);
+  const shortLines = order.lines.filter((l) => (l.qtyApproved ?? 0) < l.qtyRequested).length;
+  const errorText = (() => {
+    if (!ship.isError) return null;
+    const msg = (ship.error as Error).message;
+    if (msg.includes('nothing_to_ship')) return t('Nothing was approved on this order, so there is nothing to ship.');
+    if (msg.includes('open_shortfall')) return t('This order still has open shortfalls. Tick the box to ship what was approved and close them.');
+    return msg;
+  })();
+  if (approvedUnits === 0) {
+    return (
+      <div className="space-y-2 rounded-xl border border-border bg-muted/30 p-3 text-sm">
+        <p className="text-muted-foreground">{t('Nothing was approved on this order, so there is nothing to ship.')}</p>
+        <Button type="button" variant="outline" onClick={onDone}>
+          {t('Close')}
+        </Button>
+      </div>
+    );
+  }
   return (
     <form
       className="space-y-2 rounded-xl border border-border bg-muted/30 p-3"
       onSubmit={(e) => {
         e.preventDefault();
-        ship.mutate({ orderId: order.id, carrier, tracking: tracking.trim(), note: note.trim() }, { onSuccess: onDone });
+        ship.mutate(
+          { orderId: order.id, carrier, tracking: tracking.trim(), note: note.trim(), closeShortfalls: shortLines > 0 && closeShortfalls },
+          { onSuccess: onDone },
+        );
       }}
     >
       <p className="text-xs font-medium">{t('Mark as shipped')}</p>
@@ -90,9 +115,18 @@ function ShipForm({ order, onDone }: { order: AdminOrder; onDone: () => void }) 
         placeholder={t('Note for the customer (optional)')}
         className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
       />
-      {ship.isError && <p className="text-xs text-destructive">{(ship.error as Error).message}</p>}
+      {shortLines > 0 && (
+        <label className="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 p-2.5 text-xs">
+          <input type="checkbox" className="mt-0.5 h-4 w-4" checked={closeShortfalls} onChange={(e) => setCloseShortfalls(e.target.checked)} />
+          <span>
+            {t('Ship the approved units only')} ({approvedUnits}) {t('and close the open shortfalls on')} {shortLines}{' '}
+            {shortLines === 1 ? t('line') : t('lines')}. {t('The missing units will not be sent later.')}
+          </span>
+        </label>
+      )}
+      {errorText && <p className="text-xs text-destructive">{errorText}</p>}
       <div className="flex gap-2">
-        <Button type="submit" variant="primary" className="flex-1" disabled={ship.isPending}>
+        <Button type="submit" variant="primary" className="flex-1" disabled={ship.isPending || (shortLines > 0 && !closeShortfalls)}>
           <Truck className="h-4 w-4" strokeWidth={2} />
           {ship.isPending ? t('Saving…') : t('Confirm shipped')}
         </Button>

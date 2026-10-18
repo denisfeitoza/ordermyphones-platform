@@ -27,7 +27,9 @@ export default function ReconciliationPage() {
 
       {resolve.isError && (
         <p className="rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          {(resolve.error as Error)?.message ?? t('Action failed.')}
+          {(resolve.error as Error)?.message?.includes('order_not_open')
+            ? t('This order has already shipped or closed, so it can no longer take stock. Close the shortfall instead.')
+            : ((resolve.error as Error)?.message ?? t('Action failed.'))}
         </p>
       )}
 

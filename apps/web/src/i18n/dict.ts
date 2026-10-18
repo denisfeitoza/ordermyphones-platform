@@ -1402,6 +1402,14 @@ export const PT: Record<string, string> = {
   'You are on the list.': 'Pronto, você está na lista.',
   'Too many signups right now. Please try again in a few minutes.': 'Muitas inscrições agora. Tente de novo em alguns minutos.',
   'Type prices without thousands separators, e.g. 1299.00': 'Digite o preço sem separador de milhar, ex.: 1299.00',
+  'Nothing was approved on this order, so there is nothing to ship.': 'Nada foi aprovado neste pedido, então não há o que enviar.',
+  'This order still has open shortfalls. Tick the box to ship what was approved and close them.': 'Este pedido ainda tem faltas em aberto. Marque a caixa para enviar o que foi aprovado e fechá-las.',
+  'Ship the approved units only': 'Enviar só as unidades aprovadas',
+  'and close the open shortfalls on': 'e fechar as faltas em aberto em',
+  'line': 'linha',
+  'lines': 'linhas',
+  'The missing units will not be sent later.': 'As unidades que faltam não serão enviadas depois.',
+  'This order has already shipped or closed, so it can no longer take stock. Close the shortfall instead.': 'Este pedido já foi enviado ou fechado e não pode mais receber estoque. Feche a falta.',
 };
 
 export const ES: Record<string, string> = {
@@ -2804,4 +2812,12 @@ export const ES: Record<string, string> = {
   'You are on the list.': 'Listo, estás en la lista.',
   'Too many signups right now. Please try again in a few minutes.': 'Demasiadas suscripciones ahora. Inténtalo de nuevo en unos minutos.',
   'Type prices without thousands separators, e.g. 1299.00': 'Escribe el precio sin separador de miles, ej.: 1299.00',
+  'Nothing was approved on this order, so there is nothing to ship.': 'No se aprobó nada en este pedido, así que no hay nada que enviar.',
+  'This order still has open shortfalls. Tick the box to ship what was approved and close them.': 'Este pedido aún tiene faltantes abiertos. Marca la casilla para enviar lo aprobado y cerrarlos.',
+  'Ship the approved units only': 'Enviar solo las unidades aprobadas',
+  'and close the open shortfalls on': 'y cerrar los faltantes abiertos en',
+  'line': 'línea',
+  'lines': 'líneas',
+  'The missing units will not be sent later.': 'Las unidades faltantes no se enviarán después.',
+  'This order has already shipped or closed, so it can no longer take stock. Close the shortfall instead.': 'Este pedido ya se envió o se cerró y no puede recibir más stock. Cierra el faltante.',
 };
