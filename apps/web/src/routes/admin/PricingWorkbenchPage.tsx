@@ -9,6 +9,7 @@ import { formatUsd } from '@/lib/format';
 import { tierBg } from '@/lib/tierStyles';
 import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
+import { parseMoneyToCents } from '@/lib/money';
 
 const TIERS: { code: DbTier; label: string; tone: '1' | '2' | '3' | '4' }[] = [
   { code: 'consumer', label: 'Consumer', tone: '1' },
@@ -18,10 +19,9 @@ const TIERS: { code: DbTier; label: string; tone: '1' | '2' | '3' | '4' }[] = [
 ];
 
 const centsToStr = (c: number | null) => (c === null ? '' : (c / 100).toFixed(2));
-const strToCents = (s: string) => {
-  const n = parseFloat(s.replace(',', '.'));
-  return Number.isFinite(n) && n > 0 ? Math.round(n * 100) : null;
-};
+const strToCents = (s: string) => parseMoneyToCents(s);
+/** Non-empty but unreadable ("1,299.00"): block the save instead of clearing the price. */
+const isInvalidPrice = (s: string) => s.trim() !== '' && parseMoneyToCents(s) === null;
 
 function name(r: PricingBreakdownRow) {
   const lock = r.lock_status === 'unlocked' ? 'Unlocked' : 'Locked';
@@ -59,6 +59,7 @@ function WorkbenchRow({ row }: { row: PricingBreakdownRow }) {
     });
   }
 
+  const invalid = TIERS.some((tier) => isInvalidPrice(edits[tier.code]));
   const dirty = TIERS.some((tier) => strToCents(edits[tier.code]) !== current[tier.code]);
 
   async function save() {
@@ -117,7 +118,11 @@ function WorkbenchRow({ row }: { row: PricingBreakdownRow }) {
                 value={edits[tier.code]}
                 onChange={(e) => setEdits((p) => ({ ...p, [tier.code]: e.target.value }))}
                 placeholder="—"
-                className="h-9 w-full rounded-lg border border-border bg-transparent pl-6 pr-2 text-right font-mono text-sm tabular-nums outline-none focus:border-brand"
+                aria-invalid={isInvalidPrice(edits[tier.code]) || undefined}
+                className={cn(
+                  'h-9 w-full rounded-lg border bg-transparent pl-6 pr-2 text-right font-mono text-sm tabular-nums outline-none focus:border-brand',
+                  isInvalidPrice(edits[tier.code]) ? 'border-destructive' : 'border-border',
+                )}
               />
             </div>
           </label>
@@ -135,8 +140,9 @@ function WorkbenchRow({ row }: { row: PricingBreakdownRow }) {
           {t('Fill from highest cost')}
           {row.max_cost ? <span className="font-mono text-xs text-muted-foreground">· {formatUsd(row.max_cost)}</span> : null}
         </Button>
+        {invalid && <span className="text-xs text-destructive">{t('Type prices without thousands separators, e.g. 1299.00')}</span>}
         {saveError && <span className="text-xs text-destructive">{saveError}</span>}
-        <Button size="sm" variant="primary" className="ml-auto" onClick={save} disabled={!dirty || saving || !canEdit} title={!canEdit ? t('Setting sell prices is admin-only.') : undefined}>
+        <Button size="sm" variant="primary" className="ml-auto" onClick={save} disabled={!dirty || invalid || saving || !canEdit} title={!canEdit ? t('Setting sell prices is admin-only.') : undefined}>
           {saved ? <Check className="h-4 w-4" strokeWidth={2.5} /> : null}
           {saving ? t('Saving…') : saved ? t('Saved') : t('Save prices')}
         </Button>

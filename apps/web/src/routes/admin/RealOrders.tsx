@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/Button';
 import { formatDate, formatInt, formatUsd } from '@/lib/format';
 import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
+import { parseMoneyToCents } from '@/lib/money';
 
 const STATUS_LABEL: Record<AdminOrderStatus, string> = {
   pending: 'Pending',
@@ -448,7 +449,8 @@ interface EditLine {
 // on every keystroke (dropping the decimal point mid-typing and clashing with
 // the pt-BR comma), so we hold raw strings and parse here. Accepts "," or ".".
 const qtyOf = (s: string) => Math.max(0, Math.trunc(Number(s.replace(',', '.')) || 0));
-const centsOf = (s: string) => Math.max(0, Math.round((Number(s.replace(',', '.')) || 0) * 100));
+// Unreadable prices ("1,299.00") parse to 0, which canSave refuses — never to $1.30.
+const centsOf = (s: string) => parseMoneyToCents(s) ?? 0;
 
 /** In-place full editor for a pending order. Admin adjusts quantities and unit
  * prices, removes or adds items, and edits the shipping address + note. Saving
@@ -580,7 +582,11 @@ function OrderEditor({ order, onDone }: { order: AdminOrder; onDone: () => void 
                     inputMode="decimal"
                     value={l.priceStr}
                     onChange={(e) => setPriceStr(idx, e.target.value)}
-                    className="w-24 rounded-lg border border-border bg-transparent py-1.5 pl-5 pr-2 text-right font-mono text-sm outline-none focus:border-brand"
+                    aria-invalid={centsOf(l.priceStr) === 0 || undefined}
+                    className={cn(
+                      'w-24 rounded-lg border bg-transparent py-1.5 pl-5 pr-2 text-right font-mono text-sm outline-none focus:border-brand',
+                      centsOf(l.priceStr) === 0 ? 'border-destructive' : 'border-border',
+                    )}
                   />
                 </span>
               </label>

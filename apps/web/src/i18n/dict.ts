@@ -1401,6 +1401,7 @@ export const PT: Record<string, string> = {
   'Showing the newest': 'Mostrando as',
   'You are on the list.': 'Pronto, você está na lista.',
   'Too many signups right now. Please try again in a few minutes.': 'Muitas inscrições agora. Tente de novo em alguns minutos.',
+  'Type prices without thousands separators, e.g. 1299.00': 'Digite o preço sem separador de milhar, ex.: 1299.00',
 };
 
 export const ES: Record<string, string> = {
@@ -2802,4 +2803,5 @@ export const ES: Record<string, string> = {
   'Showing the newest': 'Mostrando las',
   'You are on the list.': 'Listo, estás en la lista.',
   'Too many signups right now. Please try again in a few minutes.': 'Demasiadas suscripciones ahora. Inténtalo de nuevo en unos minutos.',
+  'Type prices without thousands separators, e.g. 1299.00': 'Escribe el precio sin separador de miles, ej.: 1299.00',
 };
