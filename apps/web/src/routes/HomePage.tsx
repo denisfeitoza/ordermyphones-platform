@@ -20,12 +20,13 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAppSetting } from '@/data/adminConfig';
 import { pickFeatured, type FeaturedPins } from '@/lib/realCatalogFacets';
-import { useCatalogSource } from '@/lib/catalogSource';
+import { useCatalogSource, useIsDemoCatalogConfirmed } from '@/lib/catalogSource';
 import { useI18n } from '@/i18n';
 
 export default function HomePage() {
   const { t } = useI18n();
   const source = useCatalogSource();
+  const demoConfirmed = useIsDemoCatalogConfirmed();
   const featured = CATALOG.slice(0, 6);
   // Real catalog is only fetched once the flag is 'real' — mock mode never
   // pays for the network round trip, matching the "zero visual/behavioral
@@ -85,7 +86,8 @@ export default function HomePage() {
 
       <Testimonials />
 
-      <Recommendations />
+      {/* Demo catalog only: fake products and prices must never show on the live store. */}
+      {demoConfirmed && <Recommendations />}
 
       <NewsFeed />
     </div>

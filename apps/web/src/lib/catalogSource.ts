@@ -9,6 +9,16 @@ async function fetchCatalogSource(): Promise<CatalogSource> {
   return data?.value === 'real' ? 'real' : 'mock';
 }
 
+function useCatalogSourceQuery() {
+  return useQuery({
+    queryKey: ['app-settings', 'catalog_source'],
+    queryFn: fetchCatalogSource,
+    placeholderData: 'mock',
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+}
+
 /**
  * Gates the storefront's catalog data source. `'mock'` is the deployed
  * default and the ONLY answer this hook may return before the network
@@ -19,12 +29,16 @@ async function fetchCatalogSource(): Promise<CatalogSource> {
  * storefront's home page.
  */
 export function useCatalogSource(): CatalogSource {
-  const query = useQuery({
-    queryKey: ['app-settings', 'catalog_source'],
-    queryFn: fetchCatalogSource,
-    placeholderData: 'mock',
-    staleTime: 5 * 60 * 1000,
-    retry: false,
-  });
-  return query.data ?? 'mock';
+  return useCatalogSourceQuery().data ?? 'mock';
+}
+
+/**
+ * True only once the server has actually answered 'mock'. Demo-only widgets
+ * (fake products, fake prices) gate on this instead of useCatalogSource(), so
+ * they never flash on the live store while the setting is still loading and
+ * never appear when the request fails.
+ */
+export function useIsDemoCatalogConfirmed(): boolean {
+  const q = useCatalogSourceQuery();
+  return q.isSuccess && !q.isPlaceholderData && q.data === 'mock';
 }
