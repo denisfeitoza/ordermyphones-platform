@@ -208,7 +208,9 @@ export function RealAdminOrders() {
 
           <div className="lg:sticky lg:top-20 lg:self-start">
             {selected ? (
-              <OrderDetailPanel order={selected} onClose={() => setSelectedId(null)} />
+              // key: switching orders must remount the panel, or the editor/reject
+              // state of the previous order would be saved onto this one.
+              <OrderDetailPanel key={selected.id} order={selected} onClose={() => setSelectedId(null)} />
             ) : (
               <Panel>
                 <p className="py-10 text-center text-sm text-muted-foreground">{t('Select an order to review and decide.')}</p>
