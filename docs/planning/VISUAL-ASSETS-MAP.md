@@ -146,6 +146,21 @@ To bring one back: generate its render (add it to `catalog-manifest.mjs`), set
 `update products set published = true where image_url is null;` (only after
 they have images, or they return as placeholders).
 
+### 1.4c Republished with renders (2026-10-18)
+
+39 new studio renders (`catalog-manifest.mjs`, section "2026-10-18") cover all
+51 product rows that 1.4b hid; each render was checked by eye and five were
+regenerated. The bundle with the renders deployed first, then the 51 rows were
+set `published = true` by explicit id (only `ZZUI UI Demo Phone` stays hidden).
+Storefront: 2,674 listings — 2,669 phones, 3 accessories, 2 wearables — which
+is what makes the new Category facet appear.
+
+Per-colour photos: Admin → Inventory → Products → a product → "Photos by
+color". A colour photo wins over the model photo for that colour only
+(`product_color_images`, keyed by `public.color_key()`); colour spellings fold
+through `import_synonyms kind='color_value'`. Auto-fill from an image API is
+still blocked on written commercial licensing (M2-D2).
+
 ### 1.5 Risks / decisions
 
 - **These are AI renders, not manufacturer photos.** That is the safer option
