@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, Inbox, Mail } from 'lucide-react';
+import { ArrowUpRight, AtSign, Inbox, Mail } from 'lucide-react';
 import {
   listProfiles,
   listAccessRequests,
   listContactMessages,
+  listNewsletterSignups,
   markContactMessageHandled,
   setAccessRequestStatus,
   setCustomerTier,
@@ -162,6 +163,34 @@ function ContactMessagesPanel() {
   );
 }
 
+/** Footer "Notify me" signups. Read-only: no e-mail is sent from here yet — copy
+ * the addresses into the mailing tool. */
+function NewsletterSignupsPanel() {
+  const { t, lang } = useI18n();
+  const q = useQuery({ queryKey: ['newsletter-signups'], queryFn: listNewsletterSignups });
+  const total = q.data?.total ?? 0;
+  const rows = q.data?.rows ?? [];
+  if (total === 0) return null;
+
+  return (
+    <Panel title={`${t('Newsletter signups')} (${total})`} action={<AtSign className="h-4 w-4 text-muted-foreground" />}>
+      <ul className="max-h-72 divide-y divide-border overflow-y-auto">
+        {rows.map((s) => (
+          <li key={s.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 py-2.5 first:pt-0">
+            <a href={`mailto:${s.email}`} className="min-w-0 truncate font-mono text-sm hover:underline">{s.email}</a>
+            <span className="shrink-0 text-xs text-muted-foreground">{formatDate(s.created_at, lang)}</span>
+          </li>
+        ))}
+      </ul>
+      {total > rows.length && (
+        <p className="mt-3 text-xs text-muted-foreground">
+          {t('Showing the newest')} {rows.length} {t('of')} {total}.
+        </p>
+      )}
+    </Panel>
+  );
+}
+
 /**
  * Real-mode Customers (go-live). Lists the actual registered accounts from
  * public.profiles (RLS admin/staff) instead of the mock's invented businesses,
@@ -196,6 +225,7 @@ export function RealCustomers() {
 
       <AccessRequestsPanel isAdmin={isAdmin} />
       <ContactMessagesPanel />
+      <NewsletterSignupsPanel />
 
       <InvitePanel />
 

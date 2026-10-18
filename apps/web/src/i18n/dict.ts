@@ -1397,6 +1397,10 @@ export const PT: Record<string, string> = {
   'new': 'novas',
   'Other': 'Outro',
   'Mark handled': 'Marcar como tratada',
+  'Newsletter signups': 'Inscrições na newsletter',
+  'Showing the newest': 'Mostrando as',
+  'You are on the list.': 'Pronto, você está na lista.',
+  'Too many signups right now. Please try again in a few minutes.': 'Muitas inscrições agora. Tente de novo em alguns minutos.',
 };
 
 export const ES: Record<string, string> = {
@@ -2794,4 +2798,8 @@ export const ES: Record<string, string> = {
   'new': 'nuevos',
   'Other': 'Otro',
   'Mark handled': 'Marcar como atendido',
+  'Newsletter signups': 'Suscripciones al boletín',
+  'Showing the newest': 'Mostrando las',
+  'You are on the list.': 'Listo, estás en la lista.',
+  'Too many signups right now. Please try again in a few minutes.': 'Demasiadas suscripciones ahora. Inténtalo de nuevo en unos minutos.',
 };

@@ -439,6 +439,25 @@ export async function listContactMessages(): Promise<ContactMessageRow[]> {
   return (data ?? []) as ContactMessageRow[];
 }
 
+export interface NewsletterSignupRow {
+  id: string;
+  email: string;
+  created_at: string;
+}
+
+/** Active footer newsletter signups (newsletter_signups, staff-readable via RLS):
+ * the newest 100 plus the exact total. */
+export async function listNewsletterSignups(): Promise<{ rows: NewsletterSignupRow[]; total: number }> {
+  const { data, error, count } = await supabase
+    .from('newsletter_signups')
+    .select('id,email,created_at', { count: 'exact' })
+    .is('unsubscribed_at', null)
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error) throw new Error(error.message);
+  return { rows: (data ?? []) as NewsletterSignupRow[], total: count ?? 0 };
+}
+
 export async function markContactMessageHandled(id: string): Promise<void> {
   const { error } = await supabase
     .from('contact_messages')

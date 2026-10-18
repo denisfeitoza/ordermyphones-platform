@@ -3,7 +3,13 @@ import { Link } from 'react-router-dom';
 import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Logo } from './Logo';
+import { supabase } from '@/lib/supabase';
 import { useI18n } from '@/i18n';
+
+const SUBSCRIBE_ERRORS: Record<string, string> = {
+  bad_email: 'Please enter a valid email.',
+  rate_limited: 'Too many signups right now. Please try again in a few minutes.',
+};
 
 const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
   {
@@ -62,10 +68,23 @@ export function Footer() {
   const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [done, setDone] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function subscribe(e: FormEvent) {
+  /** Stores the signup (subscribe_newsletter RPC, anon-callable, idempotent,
+   * rate-limited); staff read the list in Admin → Customers. */
+  async function subscribe(e: FormEvent) {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!email.trim() || sending) return;
+    setError(null);
+    setSending(true);
+    const { error: rpcError } = await supabase.rpc('subscribe_newsletter', { p_email: email });
+    setSending(false);
+    if (rpcError) {
+      const code = Object.keys(SUBSCRIBE_ERRORS).find((k) => rpcError.message.includes(k));
+      setError(t(code ? SUBSCRIBE_ERRORS[code] : 'Something went wrong — please try again.'));
+      return;
+    }
     setDone(true);
   }
 
@@ -81,18 +100,30 @@ export function Footer() {
                 {t('Tier pricing, new-arrival drops, and restock alerts. One email a week — no noise.')}
               </p>
             </div>
-            <form onSubmit={subscribe} className="flex w-full max-w-md gap-2 md:ml-auto">
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={t('you@store.com')}
-                className="h-12 w-full rounded-full border border-white/15 bg-white/5 px-5 text-sm text-background outline-none placeholder:text-background/40 focus:border-brand"
-              />
-              <Button type="submit" variant="brand" size="lg" className="shrink-0">
-                {done ? <Check className="h-4 w-4" strokeWidth={2.5} /> : t('Notify me')}
-              </Button>
+            <form onSubmit={subscribe} className="w-full max-w-md md:ml-auto">
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  required
+                  maxLength={254}
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setDone(false);
+                    setError(null);
+                  }}
+                  aria-label={t('Email')}
+                  aria-invalid={!!error}
+                  placeholder={t('you@store.com')}
+                  className="h-12 w-full rounded-full border border-white/15 bg-white/5 px-5 text-sm text-background outline-none placeholder:text-background/40 focus:border-brand"
+                />
+                <Button type="submit" variant="brand" size="lg" className="shrink-0" disabled={sending || done}>
+                  {done ? <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden /> : t('Notify me')}
+                </Button>
+              </div>
+              <p aria-live="polite" className={`mt-2 min-h-5 px-5 text-xs ${error ? 'text-red-300' : 'text-background/60'}`}>
+                {error ?? (done ? t('You are on the list.') : '')}
+              </p>
             </form>
           </div>
         </div>
