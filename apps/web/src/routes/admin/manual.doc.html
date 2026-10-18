@@ -121,7 +121,10 @@
   .pwbox{margin-top:14px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:14px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
   .pwbox code{font-family:var(--mono);font-size:14px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-weight:600}
 
-  /* real screenshots (captured from production with is_test accounts) */
+  /* real screenshots (captured from production with is_test accounts). They show
+     cost and tier prices, so they live in the private `manual-shots` bucket and
+     ManualPage swaps in short-lived signed URLs (admin/staff only). */
+  .shot img:not([src]){aspect-ratio:16/10;background:var(--surface-2)}
   .shots{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));align-items:start;margin-top:22px}
   .shot{margin:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface)}
   .shot img{display:block;width:100%;height:auto}
@@ -216,10 +219,10 @@
       </div>
     </div>
     <div class="shots">
-      <figure class="shot"><img src="/manual/public-home.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Home pública (visitante, sem preço)" data-en="Public home (visitor, no prices)"></figcaption></figure>
-      <figure class="shot"><img src="/manual/public-request-access.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Pedir acesso" data-en="Request access"></figcaption></figure>
-      <figure class="shot"><img src="/manual/public-contact.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Contato — a mensagem é gravada" data-en="Contact — the message is stored"></figcaption></figure>
-      <figure class="shot"><img src="/manual/public-help.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Ajuda — envio, devoluções, perguntas" data-en="Help — shipping, returns, FAQ"></figcaption></figure>
+      <figure class="shot"><img data-shot="public-home.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Home pública (visitante, sem preço)" data-en="Public home (visitor, no prices)"></figcaption></figure>
+      <figure class="shot"><img data-shot="public-request-access.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Pedir acesso" data-en="Request access"></figcaption></figure>
+      <figure class="shot"><img data-shot="public-contact.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Contato — a mensagem é gravada" data-en="Contact — the message is stored"></figcaption></figure>
+      <figure class="shot"><img data-shot="public-help.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Ajuda — envio, devoluções, perguntas" data-en="Help — shipping, returns, FAQ"></figcaption></figure>
     </div>
   </section>
 
@@ -277,12 +280,12 @@
       </div>
     </div>
     <div class="shots">
-      <figure class="shot"><img src="/manual/cust-catalog.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Catálogo com filtros (cliente Atacado)" data-en="Catalog with filters (Wholesale customer)"></figcaption></figure>
-      <figure class="shot"><img src="/manual/cust-catalog-table.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Visão em tabela, uma linha por SKU" data-en="Table view, one row per SKU"></figcaption></figure>
-      <figure class="shot"><img src="/manual/cust-model.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Página do modelo — melhor oferta" data-en="Model page — best offer"></figcaption></figure>
-      <figure class="shot"><img src="/manual/cust-quick-order.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Pedido rápido" data-en="Quick order"></figcaption></figure>
-      <figure class="shot" style="max-width:260px"><img src="/manual/mobile-catalog.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Catálogo no celular" data-en="Catalog on a phone"></figcaption></figure>
-      <figure class="shot" style="max-width:260px"><img src="/manual/mobile-model.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Modelo no celular" data-en="Model page on a phone"></figcaption></figure>
+      <figure class="shot"><img data-shot="cust-catalog.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Catálogo com filtros (cliente Atacado)" data-en="Catalog with filters (Wholesale customer)"></figcaption></figure>
+      <figure class="shot"><img data-shot="cust-catalog-table.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Visão em tabela, uma linha por SKU" data-en="Table view, one row per SKU"></figcaption></figure>
+      <figure class="shot"><img data-shot="cust-model.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Página do modelo — melhor oferta" data-en="Model page — best offer"></figcaption></figure>
+      <figure class="shot"><img data-shot="cust-quick-order.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Pedido rápido" data-en="Quick order"></figcaption></figure>
+      <figure class="shot" style="max-width:260px"><img data-shot="mobile-catalog.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Catálogo no celular" data-en="Catalog on a phone"></figcaption></figure>
+      <figure class="shot" style="max-width:260px"><img data-shot="mobile-model.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Modelo no celular" data-en="Model page on a phone"></figcaption></figure>
     </div>
   </section>
 
@@ -328,11 +331,11 @@
       </div>
     </div>
     <div class="shots">
-      <figure class="shot"><img src="/manual/cust-portal.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Visão geral do portal" data-en="Portal overview"></figcaption></figure>
-      <figure class="shot"><img src="/manual/cust-orders.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Pedidos" data-en="Orders"></figcaption></figure>
-      <figure class="shot"><img src="/manual/cust-order-detail.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Detalhe do pedido — enviado, com rastreio" data-en="Order detail — shipped, with tracking"></figcaption></figure>
-      <figure class="shot"><img src="/manual/cust-addresses.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Endereços" data-en="Addresses"></figcaption></figure>
-      <figure class="shot"><img src="/manual/cust-team.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Equipe (sub-contas)" data-en="Team (sub-accounts)"></figcaption></figure>
+      <figure class="shot"><img data-shot="cust-portal.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Visão geral do portal" data-en="Portal overview"></figcaption></figure>
+      <figure class="shot"><img data-shot="cust-orders.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Pedidos" data-en="Orders"></figcaption></figure>
+      <figure class="shot"><img data-shot="cust-order-detail.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Detalhe do pedido — enviado, com rastreio" data-en="Order detail — shipped, with tracking"></figcaption></figure>
+      <figure class="shot"><img data-shot="cust-addresses.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Endereços" data-en="Addresses"></figcaption></figure>
+      <figure class="shot"><img data-shot="cust-team.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Equipe (sub-contas)" data-en="Team (sub-accounts)"></figcaption></figure>
     </div>
   </section>
 
@@ -345,19 +348,19 @@
         <h3><span data-pt="Painel" data-en="Dashboard"></span><span class="badge b-beta">Beta</span></h3>
         <p data-pt="Um retrato ao vivo do negócio: cartões de KPI (SKUs ativos, clientes, pedidos, a aprovar, conciliações em aberto, flags de preço), o seletor “ver a loja como” cada tier e os pedidos mais recentes." data-en="A live snapshot of the business: KPI cards (SKUs live, customers, orders, to-approve, open reconciliations, price flags), the “view the store as” tier switcher and the most recent orders."></p>
         <div class="ex"><b data-pt="Exemplo" data-en="Example"></b><span data-pt="“A aprovar: 2” significa dois clientes esperando — clique para ir aos Pedidos e decidir." data-en="“To approve: 2” means two customers are waiting — click through to Orders to decide."></span></div>
-        <figure class="shot"><img src="/manual/admin-dashboard.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Painel" data-en="Dashboard"></figcaption></figure>
+        <figure class="shot"><img data-shot="admin-dashboard.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Painel" data-en="Dashboard"></figcaption></figure>
       </div>
       <div class="tab">
         <h3><span data-pt="Clientes" data-en="Customers"></span><span class="badge b-beta">Beta</span></h3>
         <p data-pt="Todas as contas registradas. Muda o tier na hora, convida direto da fila de solicitações de acesso (escolha o tier → <b>Convidar</b> → copie o link), lê as <b>Mensagens de contato</b> e marca como tratadas. A sub-aba <b>Usuários &amp; roles</b> muda papel e tier (confirmado por senha)." data-en="Every registered account. Change tier inline, invite straight from the access-request queue (pick the tier → <b>Invite</b> → copy the link), read <b>Contact messages</b> and mark them handled. The <b>Users &amp; roles</b> sub-tab changes role and tier (password-confirmed)."></p>
         <div class="ex"><b data-pt="Exemplo" data-en="Example"></b><span data-pt="Um lojista pede preço de atacado → mude o tier dele para Wholesale; no próximo login ele vê os preços de atacado." data-en="A retailer asks for wholesale pricing → change their tier to Wholesale; on next login they see wholesale prices."></span></div>
-        <figure class="shot"><img src="/manual/admin-customers.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Clientes e convites (e-mails reais mascarados)" data-en="Customers and invites (real e-mails masked)"></figcaption></figure>
+        <figure class="shot"><img data-shot="admin-customers.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Clientes e convites (e-mails reais mascarados)" data-en="Customers and invites (real e-mails masked)"></figcaption></figure>
       </div>
       <div class="tab">
         <h3><span data-pt="Pedidos" data-en="Orders"></span><span class="badge b-beta">Beta</span></h3>
         <p data-pt="A fila de pedidos. Abra qualquer pedido para <b>Aprovar</b>, <b>Rejeitar</b> ou <b>Editar por completo</b>. A aprovação baixa o estoque; se faltar, o restante abre uma conciliação. A edição permite mudar quantidades e preços, adicionar ou remover itens e corrigir o endereço — um pedido dividido entre armazéns continua dividido. Cada mudança entra num <b>Histórico do pedido</b> que você e o cliente veem. Depois de aprovado: <b>Folha de separação</b> (PDF) e <b>Marcar como enviado</b> com transportadora e rastreio." data-en="The order queue. Open any order to <b>Approve</b>, <b>Reject</b> or <b>fully Edit</b> it. Approval deducts stock; a shortfall opens a reconciliation. Editing lets you change quantities and prices, add or remove items and fix the address — an order split across warehouses stays split. Every change lands in an <b>Order history</b> both you and the customer see. Once approved: <b>Picking sheet</b> (PDF) and <b>Mark as shipped</b> with carrier and tracking."></p>
         <div class="ex"><b data-pt="Exemplo" data-en="Example"></b><span data-pt="Cliente pediu 10 mas você só tem 8 → abra o pedido, Editar, ajuste para 8 e escreva o motivo; o cliente vê “10 → 8” com a sua nota." data-en="Customer ordered 10 but you only have 8 → open the order, Edit, set qty to 8 and write a reason; the customer sees “10 → 8” with your note."></span></div>
-        <figure class="shot"><img src="/manual/admin-order-detail.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Fila de pedidos + detalhe" data-en="Order queue + detail"></figcaption></figure>
+        <figure class="shot"><img data-shot="admin-order-detail.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Fila de pedidos + detalhe" data-en="Order queue + detail"></figcaption></figure>
       </div>
       <div class="tab">
         <h3><span data-pt="Pedido manual" data-en="Manual order"></span><span class="badge b-soon">Soon</span></h3>
@@ -368,40 +371,40 @@
         <h3><span data-pt="Conciliação" data-en="Reconciliation"></span><span class="badge b-beta">Beta</span></h3>
         <p data-pt="Faltas em aberto vindas de aprovações parciais. <b>Atender</b> quando o estoque chega, ou <b>Fechar pendência</b>. Aprovação e atendimento nunca tiram estoque de um local inativo." data-en="Open shortfalls from partial approvals. <b>Fulfill</b> when stock arrives, or <b>Close shortfall</b>. Approval and fulfil never take stock from an inactive location."></p>
         <div class="ex"><b data-pt="Exemplo" data-en="Example"></b><span data-pt="Você aprovou 10 mas só havia 7 → uma falta de 3 fica aqui até você repor ou fechar." data-en="You approved 10 but only 7 were in stock → a shortfall of 3 sits here until you restock or close it."></span></div>
-        <figure class="shot"><img src="/manual/admin-reconciliation.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Conciliação" data-en="Reconciliation"></figcaption></figure>
+        <figure class="shot"><img data-shot="admin-reconciliation.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Conciliação" data-en="Reconciliation"></figcaption></figure>
       </div>
       <div class="tab">
         <h3><span data-pt="Inventário" data-en="Inventory"></span><span class="badge b-beta">Beta</span></h3>
         <p data-pt="Saldo de estoque por local, com custo unitário e alertas de estoque baixo/zerado. <b>Produtos</b>: foto do modelo, <b>fotos por cor</b>, descrição e publicar/ocultar. <b>Locais</b>: criar, editar, ativar/desativar, mesclar e apagar armazéns (só admin)." data-en="Stock balance per location, with unit cost and low/out-of-stock alerts. <b>Products</b>: model photo, <b>photos by color</b>, description and publish/hide. <b>Locations</b>: create, edit, activate/deactivate, merge and delete warehouses (admin only)."></p>
         <div class="ex"><b data-pt="Exemplo" data-en="Example"></b><span data-pt="iPhone 13 mostra 4 em Miami e 0 em Orlando → reponha Orlando ou direcione os pedidos para Miami." data-en="iPhone 13 shows 4 at Miami and 0 at Orlando → restock Orlando or route orders to Miami."></span></div>
-        <figure class="shot"><img src="/manual/admin-inventory.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Estoque por local" data-en="Stock by location"></figcaption></figure>
-        <figure class="shot"><img src="/manual/admin-products.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Produtos — foto, descrição, publicar" data-en="Products — photo, description, publish"></figcaption></figure>
-        <figure class="shot"><img src="/manual/admin-locations.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Locais (armazéns)" data-en="Locations (warehouses)"></figcaption></figure>
+        <figure class="shot"><img data-shot="admin-inventory.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Estoque por local" data-en="Stock by location"></figcaption></figure>
+        <figure class="shot"><img data-shot="admin-products.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Produtos — foto, descrição, publicar" data-en="Products — photo, description, publish"></figcaption></figure>
+        <figure class="shot"><img data-shot="admin-locations.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Locais (armazéns)" data-en="Locations (warehouses)"></figcaption></figure>
       </div>
       <div class="tab">
         <h3><span data-pt="Importar" data-en="Import"></span><span class="badge b-beta">Beta</span></h3>
         <p data-pt="Wizard de 4 passos (upload → mapear colunas → simular → gravar). Nada mexe no estoque até gravar. Sub-abas: <b>Dicionário</b> (ensina sinônimos de coluna/modelo) e <b>Grade maps</b> (grade do fornecedor → sua grade)." data-en="A 4-step wizard (upload → map columns → dry-run → commit). Nothing touches stock until commit. Sub-tabs: <b>Dictionary</b> (teaches column/model synonyms) and <b>Grade maps</b> (supplier grade → your grade)."></p>
         <div class="ex"><b data-pt="Exemplo" data-en="Example"></b><span data-pt="A planilha do fornecedor chama de “Cap.” → a simulação mostra que foi mapeado para Capacidade antes de você gravar." data-en="A supplier’s sheet calls it “Cap.” → the dry-run shows it mapped to Capacity before you commit."></span></div>
-        <figure class="shot"><img src="/manual/admin-import.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Importação em 4 passos" data-en="4-step import"></figcaption></figure>
+        <figure class="shot"><img data-shot="admin-import.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Importação em 4 passos" data-en="4-step import"></figcaption></figure>
       </div>
       <div class="tab">
         <h3><span data-pt="Preços" data-en="Prices"></span><span class="badge b-beta">Beta</span></h3>
         <p data-pt="<b>Bancada</b> (transforma custo por local em preço por tier com um clique), <b>Tiers &amp; pisos</b> (faixas e preço mínimo de cada tier) e <b>Regras</b> (tetos, bandas e multiplicadores do preço automático)." data-en="<b>Workbench</b> (turns cost-per-location into a price per tier with one click), <b>Tiers &amp; floors</b> (each tier’s ranges and lowest price) and <b>Rules</b> (caps, bands and multipliers the auto-pricer uses)."></p>
         <div class="ex"><b data-pt="Exemplo" data-en="Example"></b><span data-pt="“Preencher pelo custo médio” define o preço de todos os tiers a partir do custo num clique; depois você ajusta." data-en="“Fill from average cost” sets every tier’s price from cost in one click; then you tweak."></span></div>
-        <figure class="shot"><img src="/manual/admin-prices.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Bancada de preços" data-en="Pricing workbench"></figcaption></figure>
-        <figure class="shot"><img src="/manual/admin-tiers.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Tiers e pisos" data-en="Tiers and floors"></figcaption></figure>
+        <figure class="shot"><img data-shot="admin-prices.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Bancada de preços" data-en="Pricing workbench"></figcaption></figure>
+        <figure class="shot"><img data-shot="admin-tiers.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Tiers e pisos" data-en="Tiers and floors"></figcaption></figure>
       </div>
       <div class="tab">
         <h3><span data-pt="Fila de sinalização" data-en="Flag queue"></span><span class="badge b-beta">Beta</span></h3>
         <p data-pt="Preços suspeitos segurados pra sua decisão — margem apertada, tiers fora de ordem, estoque zerado. Aprove ou corrija cada um." data-en="Suspicious prices held for your call — thin margin, tiers out of order, zero stock. Approve or fix each one."></p>
         <div class="ex"><b data-pt="Exemplo" data-en="Example"></b><span data-pt="O Wholesale saiu mais caro que o Retail → é sinalizado aqui pra um cliente nunca ver a inversão." data-en="Wholesale ended up pricier than Retail → it’s flagged here so a customer never sees the inversion."></span></div>
-        <figure class="shot"><img src="/manual/admin-flags.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Fila de sinalização" data-en="Flag queue"></figcaption></figure>
+        <figure class="shot"><img data-shot="admin-flags.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Fila de sinalização" data-en="Flag queue"></figcaption></figure>
       </div>
       <div class="tab">
         <h3><span data-pt="Relatórios" data-en="Reports"></span><span class="badge b-beta">Beta</span></h3>
         <p data-pt="GMV, receita por mês, GMV por tier e produtos mais vendidos — direto do livro de pedidos real." data-en="GMV, revenue by month, GMV by tier and top products — straight from the live order book."></p>
         <div class="ex"><b data-pt="Exemplo" data-en="Example"></b><span data-pt="Se o Distributor gerou 60% do GMV no mês → priorize as reposições dele." data-en="If Distributor drove 60% of GMV last month → prioritize their restocks."></span></div>
-        <figure class="shot"><img src="/manual/admin-reports.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Relatórios (pedidos de teste ocultos)" data-en="Reports (test orders hidden)"></figcaption></figure>
+        <figure class="shot"><img data-shot="admin-reports.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Relatórios (pedidos de teste ocultos)" data-en="Reports (test orders hidden)"></figcaption></figure>
       </div>
       <div class="tab">
         <h3><span data-pt="Ver como cliente" data-en="View as customer"></span><span class="badge b-beta">Beta</span></h3>
@@ -412,7 +415,7 @@
         <h3><span data-pt="Configurações" data-en="Settings"></span><span class="badge b-beta">Beta</span></h3>
         <p data-pt="<b>Go-live &amp; loja</b> (liga o catálogo real, exibição de quantidade, destaques), <b>Enforcement</b> (guarda-corpos que bloqueiam ações arriscadas) e <b>Log de auditoria</b> (quem mudou o quê)." data-en="<b>Go-live &amp; storefront</b> (turn on the real catalog, quantity display, featured products), <b>Enforcement</b> (guardrails that block risky actions) and <b>Audit log</b> (who changed what)."></p>
         <div class="ex"><b data-pt="Exemplo" data-en="Example"></b><span data-pt="Ative o Go-live e a loja troca de demo para o estoque real do seu armazém." data-en="Flip Go-live and the storefront switches from demo to your real warehouse inventory."></span></div>
-        <figure class="shot"><img src="/manual/admin-settings.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Configurações — go-live e loja" data-en="Settings — go-live and storefront"></figcaption></figure>
+        <figure class="shot"><img data-shot="admin-settings.webp" alt="" loading="lazy" decoding="async"><figcaption data-pt="Configurações — go-live e loja" data-en="Settings — go-live and storefront"></figcaption></figure>
       </div>
       <div class="tab">
         <h3><span data-pt="Logs de API" data-en="API logs"></span><span class="badge b-soon">Soon</span></h3>

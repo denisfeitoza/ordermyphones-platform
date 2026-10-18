@@ -1,7 +1,12 @@
-import { useLayoutEffect, useRef, useState, type MouseEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Printer } from 'lucide-react';
 import content from './manual.doc.html?raw';
+import { supabase } from '@/lib/supabase';
+
+// Screenshots show cost and tier prices: private bucket, admin/staff-only read.
+const SHOTS_BUCKET = 'manual-shots';
+const SIGNED_URL_TTL_S = 60 * 60;
 
 // The bar follows the manual's OWN language toggle (not the app's language), so
 // the whole page stays consistent — default English, and everything flips
@@ -35,6 +40,30 @@ export default function ManualPage() {
       else el.textContent = v;
     });
   }, [lang]);
+
+  // Swap each <img data-shot> for a signed URL once the HTML is mounted. One
+  // batched call; RLS on storage.objects rejects anyone who is not staff.
+  useEffect(() => {
+    const root = ref.current;
+    if (!root) return;
+    const imgs = [...root.querySelectorAll<HTMLImageElement>('img[data-shot]')];
+    if (imgs.length === 0) return;
+    let cancelled = false;
+    void supabase.storage
+      .from(SHOTS_BUCKET)
+      .createSignedUrls([...new Set(imgs.map((i) => i.dataset.shot!))], SIGNED_URL_TTL_S)
+      .then(({ data }) => {
+        if (cancelled || !data) return;
+        const byPath = new Map(data.filter((d) => d.signedUrl).map((d) => [d.path, d.signedUrl]));
+        for (const img of imgs) {
+          const url = byPath.get(img.dataset.shot!);
+          if (url) img.src = url;
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // TOC links are <a href="#section">. Native fragment scroll AND scrollIntoView
   // are both no-ops inside this nested flex scroll container, so scroll it
