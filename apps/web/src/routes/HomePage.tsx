@@ -11,6 +11,7 @@ import { TrendingDeals } from '@/components/store/TrendingDeals';
 import { Expertise } from '@/components/store/Expertise';
 import { PartnerWithUs } from '@/components/store/PartnerWithUs';
 import { TopBrands } from '@/components/store/TopBrands';
+import { Testimonials } from '@/components/store/Testimonials';
 import { NewsFeed } from '@/components/store/NewsFeed';
 import { Recommendations } from '@/components/store/Recommendations';
 import { CATALOG } from '@/data/catalog';
@@ -82,6 +83,8 @@ export default function HomePage() {
       <PartnerWithUs />
 
       <TopBrands />
+
+      <Testimonials />
 
       {/* Demo catalog only: fake products and prices must never show on the live store. */}
       {demoConfirmed && <Recommendations />}

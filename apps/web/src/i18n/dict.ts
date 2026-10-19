@@ -1427,6 +1427,8 @@ export const PT: Record<string, string> = {
   'Dedicated support': 'Suporte dedicado',
   'Our team reviews every order and personally handles questions about stock, payment and shipping.': 'Nossa equipe revisa cada pedido e cuida pessoalmente das dúvidas sobre estoque, pagamento e envio.',
   'New stock this week': 'Estoque novo esta semana',
+  'Testimonials': 'Depoimentos',
+  'Trusted across the wholesale channel': 'Confiança em todo o canal de atacado',
 };
 
 export const ES: Record<string, string> = {
@@ -2854,4 +2856,6 @@ export const ES: Record<string, string> = {
   'Dedicated support': 'Soporte dedicado',
   'Our team reviews every order and personally handles questions about stock, payment and shipping.': 'Nuestro equipo revisa cada pedido y atiende personalmente las dudas sobre stock, pago y envío.',
   'New stock this week': 'Stock nuevo esta semana',
+  'Testimonials': 'Testimonios',
+  'Trusted across the wholesale channel': 'Confianza en todo el canal mayorista',
 };
