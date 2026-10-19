@@ -139,8 +139,9 @@ export function RealCatalogTable({ items, initialMeasurements, measurementsRef }
   const desktop = useMediaQuery(MD_QUERY);
   const listRef = useRef<HTMLDivElement>(null);
   const [scrollMargin, setScrollMargin] = useState(0);
-  // Index of the row whose quantity field has focus. It always stays mounted,
-  // so a buyer who scrolls away mid-typing does not lose the typed quantity.
+  // Index of the row whose quantity field has focus. It and the next row
+  // always stay mounted, so a buyer who scrolls away mid-typing keeps the typed
+  // quantity, and Enter still moves to the next row (the next field in DOM order).
   const focusedIndex = useRef<number | null>(null);
 
   // The list starts below the page header, filter chips and banners; the
@@ -168,8 +169,9 @@ export function RealCatalogTable({ items, initialMeasurements, measurementsRef }
     rangeExtractor: (range) => {
       const indexes = defaultRangeExtractor(range);
       const f = focusedIndex.current;
-      if (f === null || f >= range.count || indexes.includes(f)) return indexes;
-      return [...indexes, f].sort((a, b) => a - b);
+      if (f === null) return indexes;
+      const keep = [f, f + 1].filter((i) => i < range.count && !indexes.includes(i));
+      return keep.length ? [...indexes, ...keep].sort((a, b) => a - b) : indexes;
     },
   });
 

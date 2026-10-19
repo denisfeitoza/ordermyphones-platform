@@ -154,8 +154,9 @@ export function RealCatalogView() {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => {
       window.removeEventListener('scroll', onScroll);
-      snap.tableMeasurements = snap.view === 'table' ? measurements.current?.() : undefined;
-      saveSnapshot(key, snap);
+      // A copy: in-page nav (header links) changes the key without a remount,
+      // and each history entry must keep its own state.
+      saveSnapshot(key, { ...snap, tableMeasurements: snap.view === 'table' ? measurements.current?.() : undefined });
     };
   }, [location.key]);
 
