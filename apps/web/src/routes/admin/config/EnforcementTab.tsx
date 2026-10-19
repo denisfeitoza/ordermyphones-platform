@@ -18,12 +18,14 @@ const DEFAULT: Enforcement = {
   g1_business_name: { checkout: false, approval: false },
   g2_tax_certificate: { checkout: false, approval: true },
   shipping_address: { checkout: true, approval: false },
+  g3_master_agreement: { checkout: false, approval: true },
 };
 
 const FIELD_LABELS: Record<string, { label: string; help: string }> = {
   g1_business_name: { label: 'Business name', help: 'Legal business name captured at registration.' },
   g2_tax_certificate: { label: 'Tax certificate', help: 'Resale/exemption certificate for business tiers.' },
   shipping_address: { label: 'Shipping address', help: 'A default shipping address on file.' },
+  g3_master_agreement: { label: 'Signed Master Agreement', help: 'Resellers and up sign the active agreement in the portal (applies once a version is published).' },
 };
 
 export default function EnforcementTab() {
@@ -59,7 +61,7 @@ export default function EnforcementTab() {
         </p>
         <div className="mb-4 flex items-start gap-2 rounded-xl border border-border bg-muted/30 px-3.5 py-2.5 text-xs text-muted-foreground">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          {t('This is the setting the checkout and approval flows read; it does not block anything on its own until those flows are wired to it.')}
+          {t('Checkout items block the order; approval items ask staff to confirm before approving (Approve anyway is recorded in the audit log).')}
         </div>
 
         <div className="overflow-x-auto rounded-xl border border-border">

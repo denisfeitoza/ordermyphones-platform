@@ -469,13 +469,13 @@ export function RealCheckout() {
               {checkoutMissing.length > 0 && (
                 <p className="text-sm text-destructive">
                   {t('Before ordering, add to your account:')} {checkoutMissing.map((k) => t(REQUIREMENT_LABEL[k] ?? k)).join(', ')}.{' '}
-                  <Link to="/portal/settings" className="underline">{t('Open settings')}</Link>
+                  <Link to="/portal/business" className="underline">{t('Open business profile')}</Link>
                 </p>
               )}
               {checkoutMissing.length === 0 && approvalMissing.length > 0 && (
                 <p className="rounded-lg bg-warning/10 px-3 py-2 text-sm">
                   {t('You can place this order, but we approve it only after you add:')} {approvalMissing.map((k) => t(REQUIREMENT_LABEL[k] ?? k)).join(', ')}.{' '}
-                  <Link to="/portal/settings" className="underline">{t('Open settings')}</Link>
+                  <Link to="/portal/business" className="underline">{t('Open business profile')}</Link>
                 </p>
               )}
               {!pricesReady && resolved.length > 0 && <p className="text-sm text-muted-foreground">{t('Loading your prices…')}</p>}

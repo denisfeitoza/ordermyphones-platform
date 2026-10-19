@@ -36,6 +36,8 @@ const AddressesPage = lazy(() => import('@/routes/portal/AddressesPage'));
 const TeamPage = lazy(() => import('@/routes/portal/TeamPage'));
 const PaymentMethodsPage = lazy(() => import('@/routes/portal/PaymentMethodsPage'));
 const SettingsPage = lazy(() => import('@/routes/portal/SettingsPage'));
+const BusinessPage = lazy(() => import('@/routes/portal/BusinessPage'));
+const AgreementTab = lazy(() => import('@/routes/admin/config/AgreementTab'));
 const DashboardPage = lazy(() => import('@/routes/admin/DashboardPage'));
 const AdminCustomersPage = lazy(() => import('@/routes/admin/CustomersPage'));
 const AdminOrdersPage = lazy(() => import('@/routes/admin/OrdersPage'));
@@ -97,6 +99,7 @@ const SETTINGS_TABS: SectionTab[] = [
   { to: '/admin/config', label: 'Go-live & storefront', end: true, title: 'Go-live & storefront', subtitle: 'Switch the storefront to real inventory, control quantity display, and pin featured products.' },
   { to: '/admin/config/home', label: 'Home & promos', title: 'Home & promos', subtitle: 'Manage the storefront home page — benefits bar, promotions, and trending products.' },
   { to: '/admin/config/company', label: 'Company & Sales Order', title: 'Company & Sales Order', subtitle: 'Your company and bank details, and the agreement terms every Sales Order prints.' },
+  { to: '/admin/config/agreement', label: 'Master Agreement', title: 'Master Agreement', subtitle: 'The agreement buyers sign in the portal — publish a version, see who signed.' },
   { to: '/admin/config/enforcement', label: 'Enforcement', title: 'Enforcement', subtitle: 'Guardrails that block risky pricing and stock actions before they happen.' },
   { to: '/admin/config/audit', label: 'Audit log', title: 'Audit log', subtitle: 'A trail of every sensitive change — who changed what, and when.' },
 ];
@@ -179,6 +182,7 @@ export default function App() {
             <Route index element={<CatalogTab />} />
             <Route path="home" element={<HomeContentTab />} />
             <Route path="company" element={<CompanyTab />} />
+            <Route path="agreement" element={<AgreementTab />} />
             <Route path="enforcement" element={<EnforcementTab />} />
             <Route path="audit" element={<AuditTab />} />
           </Route>
@@ -255,6 +259,7 @@ export default function App() {
             <Route path="team" element={<TeamPage />} />
             <Route path="payment-methods" element={<PaymentMethodsPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="business" element={<BusinessPage />} />
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />

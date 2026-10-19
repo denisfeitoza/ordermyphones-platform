@@ -978,6 +978,32 @@ begin
     raise exception 'FAIL(section6): customer called set_order_shipping without staff_only';
   exception when insufficient_privilege then null;
   end;
+  -- Onboarding: a customer sees only its own registration/documents/signatures,
+  -- can't approve itself, can't edit a signature, and can't publish agreements.
+  if exists (select 1 from public.business_profiles where account_id <> (select public.current_account_id()))
+     or exists (select 1 from public.account_documents where account_id <> (select public.current_account_id()))
+     or exists (select 1 from public.agreement_signatures where account_id <> (select public.current_account_id())) then
+    raise exception 'FAIL(section6): customer read another account''s onboarding data';
+  end if;
+  begin
+    insert into public.account_documents (account_id, kind, file_path, status) values (consumer_id, 'w9', consumer_id::text || '/w9/x.pdf', 'approved');
+    raise exception 'FAIL(section6): customer inserted a pre-approved document';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    insert into public.agreement_versions (version, title, body) values ('rls-x', 'x', 'x');
+    raise exception 'FAIL(section6): customer created an agreement version';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.review_document(gen_random_uuid(), 'approved', null);
+    raise exception 'FAIL(section6): customer called review_document without staff_only';
+  exception when insufficient_privilege then null;
+  end;
+  if has_table_privilege('authenticated', 'public.agreement_signatures', 'insert') then
+    raise exception 'FAIL(section6): signatures are writable outside sign_agreement()';
+  end if;
+
   -- Company profile (bank details): signed-in read, never anon; only admins edit.
   if has_table_privilege('anon', 'public.company_profile', 'select') then
     raise exception 'FAIL(section6): anon can read company_profile';

@@ -21,6 +21,9 @@ const MESSAGES: [string, string][] = [
   ['bad_shipping_cost', 'Enter a shipping charge of 0 or more.'],
   ['order_closed', 'This order is closed. Refresh the list.'],
   ['bad_reference', 'Keep the reference under 120 characters.'],
+  ['agreement_published_is_immutable', 'A published agreement cannot change — publish a new version.'],
+  ['agreement_not_active', 'This agreement version is not the active one. Refresh the page.'],
+  ['bad_status', 'That status is not allowed.'],
   ['note_required', 'Write a short reason (up to 500 characters).'],
   ['inventory_not_found', 'This stock line no longer exists. Refresh the list.'],
 ];
