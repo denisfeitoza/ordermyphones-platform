@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion, type Variants } from 'framer-motion';
 import { Minus, Plus, Trash2, X, ArrowRight, ShoppingBag, Smartphone, LogIn } from 'lucide-react';
 import { useAuth, useRealCart, type RealCartAllocation } from '@/store';
 import { useCatalogSource } from '@/lib/catalogSource';
@@ -22,6 +22,18 @@ interface ResolvedLine {
   lineTotalCents: number | null;
 }
 
+// `custom` = close instantly (leaving for another page) instead of animating.
+const overlayVariants: Variants = {
+  hidden: { opacity: 0 },
+  shown: { opacity: 1 },
+  gone: (instant: boolean) => ({ opacity: 0, pointerEvents: 'none', transition: { duration: instant ? 0 : 0.2 } }),
+};
+const panelVariants: Variants = {
+  hidden: { x: '100%' },
+  shown: { x: 0, transition: { type: 'spring' as const, stiffness: 260, damping: 30 } },
+  gone: (instant: boolean) => ({ x: '100%', transition: instant ? { duration: 0 } : { type: 'spring' as const, stiffness: 260, damping: 30 } }),
+};
+
 /**
  * Real-mode cart drawer. Always mounted (like CartDrawer) but only fetches the
  * catalog while it is OPEN in real mode — `useRealCatalog(isReal && open)`
@@ -40,6 +52,24 @@ export function RealCartDrawer() {
   const { items, isLoading, pricesReady: pricesLoaded, pricesError, retryPrices, signedIn } = useRealCatalog(isReal && open);
   const locationSelection = useOrderLocationSelection();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  // Leaving for another page closes the drawer with NO exit animation: the
+  // next page shows at once instead of under a sliding, still-clickable panel.
+  const [instantClose, setInstantClose] = useState(false);
+  useEffect(() => {
+    if (open) setInstantClose(false);
+  }, [open]);
+  // Any route change closes the drawer (header links, back button, a link in
+  // a line), so it can never sit over a page it does not belong to.
+  const lastPath = useRef(pathname);
+  useEffect(() => {
+    if (lastPath.current === pathname) return;
+    lastPath.current = pathname;
+    if (open) {
+      setInstantClose(true);
+      setOpen(false);
+    }
+  }, [pathname, open, setOpen]);
 
   // Warm the checkout chunk while the cart is open, so "Review & place order"
   // does not hide the whole page behind the route loader for a moment.
@@ -93,15 +123,16 @@ export function RealCartDrawer() {
   const unavailable = pricesSettled && signedIn ? resolved.filter((l) => l.lineTotalCents === null) : [];
   const canCheckout = !authLoading && !needsSignIn && allPriced && allocationsValid;
 
-  function checkout() {
-    if (needsSignIn) {
-      setOpen(false);
-      navigate('/auth/sign-in', { state: { from: '/checkout' } });
-      return;
-    }
-    if (!canCheckout) return;
+  function leaveTo(to: string, state?: unknown) {
+    setInstantClose(true);
     setOpen(false);
-    navigate('/checkout');
+    navigate(to, state ? { state } : undefined);
+  }
+
+  function checkout() {
+    if (needsSignIn) return leaveTo('/auth/sign-in', { from: '/checkout' });
+    if (!canCheckout) return;
+    leaveTo('/checkout');
   }
 
   // In mock mode this drawer is inert (its `open` is never set true) and it
@@ -109,9 +140,16 @@ export function RealCartDrawer() {
   if (!isReal) return null;
 
   return (
-    <AnimatePresence>
+    <AnimatePresence custom={instantClose}>
       {open && (
-        <motion.div className="fixed inset-0 z-50" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+        <motion.div
+          className="fixed inset-0 z-50"
+          custom={instantClose}
+          variants={overlayVariants}
+          initial="hidden"
+          animate="shown"
+          exit="gone"
+        >
           <button
             className="absolute inset-0 cursor-default bg-foreground/40 backdrop-blur-sm"
             onClick={() => setOpen(false)}
@@ -119,10 +157,11 @@ export function RealCartDrawer() {
           />
           <motion.aside
             className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-background shadow-2xl"
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', stiffness: 260, damping: 30 }}
+            custom={instantClose}
+            variants={panelVariants}
+            initial="hidden"
+            animate="shown"
+            exit="gone"
           >
             <header className="flex items-center justify-between border-b border-border px-5 py-4">
               <div className="flex items-center gap-2">
