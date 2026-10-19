@@ -1908,6 +1908,15 @@ export const PT: Record<string, string> = {
   'more units to reach': 'unidades a mais para chegar a',
   'You are on the top tier.': 'Você está no nível mais alto.',
   'Eligible for a higher tier': 'Prontos para subir de nível',
+  'off retail on every device': 'de desconto sobre o varejo em todo aparelho',
+  'Retail pricing on every device': 'Preço de varejo em todo aparelho',
+  'Live stock confirmed and reserved at source before any charge': 'Estoque real confirmado e reservado na origem antes de qualquer cobrança',
+  'Per-shipment tracking from your portal': 'Rastreio de cada envio no seu portal',
+  'Priority fulfillment on bulk orders': 'Prioridade no atendimento de pedidos grandes',
+  'Retail': 'Varejo',
+  'No codes, no quotes — your price is applied at checkout.': 'Sem cupom, sem cotação — seu preço já entra no checkout.',
+  'Buying at higher volume? Your account manager can review your pricing.': 'Comprando mais volume? Seu gerente de conta pode revisar seus preços.',
+  'Contact sales': 'Falar com vendas',
 };
 
 export const ES: Record<string, string> = {
@@ -3816,4 +3825,13 @@ export const ES: Record<string, string> = {
   'more units to reach': 'unidades más para llegar a',
   'You are on the top tier.': 'Estás en el nivel más alto.',
   'Eligible for a higher tier': 'Listos para subir de nivel',
+  'off retail on every device': 'de descuento sobre minorista en todo equipo',
+  'Retail pricing on every device': 'Precio minorista en todo equipo',
+  'Live stock confirmed and reserved at source before any charge': 'Stock real confirmado y reservado en origen antes de cualquier cobro',
+  'Per-shipment tracking from your portal': 'Rastreo de cada envío en tu portal',
+  'Priority fulfillment on bulk orders': 'Prioridad en la preparación de pedidos grandes',
+  'Retail': 'Minorista',
+  'No codes, no quotes — your price is applied at checkout.': 'Sin cupones ni cotizaciones — tu precio se aplica en el checkout.',
+  'Buying at higher volume? Your account manager can review your pricing.': '¿Compras más volumen? Tu gerente de cuenta puede revisar tus precios.',
+  'Contact sales': 'Hablar con ventas',
 };

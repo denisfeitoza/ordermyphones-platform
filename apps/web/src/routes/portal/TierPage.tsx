@@ -26,10 +26,10 @@ export default function TierPage() {
   const pct = progress.data && next ? Math.min(100, Math.round((progress.data.units / next.at) * 100)) : 100;
 
   const benefits = [
-    tier.discount > 0 ? `${Math.round(tier.discount * 100)}% off retail on every device` : 'Retail pricing on every device',
-    'Live stock confirmed and reserved at source before any charge',
-    'Per-shipment tracking from your portal',
-    'Priority fulfillment on bulk orders',
+    tier.discount > 0 ? `${Math.round(tier.discount * 100)}% ${t('off retail on every device')}` : t('Retail pricing on every device'),
+    t('Live stock confirmed and reserved at source before any charge'),
+    t('Per-shipment tracking from your portal'),
+    t('Priority fulfillment on bulk orders'),
   ];
 
   return (
@@ -40,10 +40,10 @@ export default function TierPage() {
         <div className="flex items-center justify-between gap-3">
           <TierBadge tier={tier} />
           <span className={cn('font-mono text-2xl font-semibold tabular-nums', tierText[tier.tone])}>
-            {tier.discount > 0 ? `−${Math.round(tier.discount * 100)}%` : 'Retail'}
+            {tier.discount > 0 ? `−${Math.round(tier.discount * 100)}%` : t('Retail')}
           </span>
         </div>
-        <p className="mt-2 text-sm text-muted-foreground">No codes, no quotes — your price is applied at checkout.</p>
+        <p className="mt-2 text-sm text-muted-foreground">{t('No codes, no quotes — your price is applied at checkout.')}</p>
 
         <ul className="mt-5 space-y-2.5">
           {benefits.map((b) => (
@@ -80,10 +80,10 @@ export default function TierPage() {
 
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-muted/30 p-5">
         <p className="flex-1 text-sm text-muted-foreground">
-          Buying at higher volume? Your account manager can review your pricing.
+          {t('Buying at higher volume? Your account manager can review your pricing.')}
         </p>
         <Link to="/contact" className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}>
-          Contact sales
+          {t('Contact sales')}
           <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
         </Link>
       </div>
