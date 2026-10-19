@@ -908,6 +908,18 @@ begin
   exception when insufficient_privilege then null;
   end;
 
+  -- Margin (costs) and price reverts are staff/admin only.
+  if has_function_privilege('anon', 'public.margin_by_model(boolean)', 'execute') then
+    raise exception 'FAIL(section6): anon can execute margin_by_model';
+  end if;
+  select count(*) into n from public.margin_by_model(true);
+  if n <> 0 then raise exception 'FAIL(section6): customer read % margin rows', n; end if;
+  begin
+    perform public.revert_tier_price_to_auto(gen_random_uuid(), 'wholesale');
+    raise exception 'FAIL(section6): customer called revert_tier_price_to_auto without admin_only';
+  exception when insufficient_privilege then null;
+  end;
+
   -- POSITIVE CONTROL: an admin identity reads >=1 from both sensitive
   -- tables without a permission error — proves the staff policies actually
   -- grant, not merely that nothing is readable by anyone.
