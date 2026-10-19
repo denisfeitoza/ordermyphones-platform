@@ -66,3 +66,36 @@ S1 foundation (schema+RLS+auth+roles, HYLA import proving real stock — Friday
 live demo) · S2 catalog + automatic T3/T4 pricing + export ·
 S3 invites + customer ordering + approval/reconciliation ·
 S4 full admin config panel + observability + QA + first real invites.
+
+## RFC-001 — payments, shipping, onboarding, auctions (2026-10-19)
+
+Client answers to RFC-001 and what is built from them. Items marked
+*assumption* wait for OMP confirmation.
+
+- **D1 Payments:** no card gateway before Nov 15. Wire/ACH only. Staff mark
+  an order paid (reference + date). Gateway choice (Fiserv or other) is open.
+- **D2 Terms per customer:** COD, Cash on Order (ACH/Wire), Net 7/10/15/30,
+  optional credit limit. Approval warns on missing or exceeded credit (soft
+  gate with override). A Cash-on-Order order cannot ship unpaid.
+- **D3 Shipping:** OMP ships and bills shipping by default; the customer can
+  give a carrier account; or the customer sends a label after OMP packs
+  (not for retailers). Label upload goes to a private bucket.
+- **D4 Auctions:** bids are binding (raise only, never withdrawn). New
+  accounts need a $2,500 deposit, toggled per account by staff. Portal closes
+  20 min before the supplier deadline. *Assumptions:* sealed bids, per-unit
+  price unless the event says per lot, ties go to the earliest bid, a won lot
+  does not create an order automatically.
+- **Q3 Sales Order:** PDF + QuickBooks CSV export ship now with a draft
+  layout; OMP's QuickBooks template will replace the column mapping.
+- **Onboarding:** business profile (CX Reg, provisional fields), document
+  slots (resale certificate satisfies the tax gate), Master Agreement with
+  versioned, hashed text and append-only signatures. The agreement gate only
+  applies once a version is published.
+- **E-mail:** every business event queues a row in `email_outbox` with
+  EN/PT/ES templates. Nothing is sent until an SMTP sender is connected.
+- **Tiers by volume:** lifetime approved units suggest a tier (*assumption:*
+  retailer 10, wholesale 50, distributor 401 units). Staff change tiers by
+  hand; nothing upgrades on its own.
+- **Still integration work (not built):** SMTP sender, mailbox ingestion,
+  Verizon zip/e-mail parser, B-Stock/Rexi automation, auction award → order,
+  FedEx production labels/rates, payment gateway.
