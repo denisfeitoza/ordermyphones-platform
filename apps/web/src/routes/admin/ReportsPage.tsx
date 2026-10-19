@@ -257,7 +257,7 @@ function RealReports({ orders: allOrders }: { orders: AdminOrder[] }) {
         <Stat label="Units sold" value={formatInt(agg.units)} />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2 [&>*]:min-w-0">
         <Section title="Revenue by month">
           <div className="flex h-40 gap-2">
             {agg.monthlyArr.map((m) => (
@@ -368,7 +368,7 @@ function MockReports() {
     <div className="space-y-6">
       <AdminHeading title="Reports" subtitle="Sales, inventory mix, and tier distribution — derived from the live order book." />
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2 [&>*]:min-w-0">
         <Section title="Revenue by month">
           <div className="flex h-40 gap-2">
             {kpis.monthly.map((m) => (
