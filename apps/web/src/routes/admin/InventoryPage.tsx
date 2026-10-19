@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { Download, PackageSearch, UploadCloud } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Download, PackageSearch, Pencil, UploadCloud, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { AdminHeading, Panel, StatCard, Table, Td } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
@@ -9,6 +9,7 @@ import { formatInt, formatUsd } from '@/lib/format';
 import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { downloadCanonicalExport } from '@/lib/canonicalExport';
+import { adminErrorMessage } from '@/lib/adminErrors';
 
 /** Raw shape of the nested PostgREST select — supabase-js has no generated Database types here, so this mirrors the query below by hand. */
 interface RawInventoryRow {
@@ -167,11 +168,133 @@ function ExportMenu() {
   );
 }
 
+/**
+ * Stock count: staff type the number they physically counted at one location.
+ * The server (adjust_stock_count) writes the difference to the stock ledger as
+ * a 'manual_adjust' movement with the reason, so the balance never drifts from
+ * the ledger and the change is audited.
+ */
+function AdjustStockDialog({ row, onClose }: { row: InventoryRow; onClose: () => void }) {
+  const { t } = useI18n();
+  const qc = useQueryClient();
+  const [counted, setCounted] = useState(String(row.qty));
+  const [note, setNote] = useState('');
+  const n = counted.trim() === '' ? NaN : Number(counted);
+  const valid = Number.isInteger(n) && n >= 0 && n <= 1_000_000 && note.trim().length > 0;
+  const delta = Number.isInteger(n) ? n - row.qty : 0;
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc('adjust_stock_count', { p_inventory_id: row.id, p_counted: n, p_note: note.trim() });
+      if (error) throw new Error(error.message);
+      return data as { before: number; after: number; delta: number };
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin-inventory'] });
+      void qc.invalidateQueries({ queryKey: ['catalog-listing'] });
+      void qc.invalidateQueries({ queryKey: ['admin-summary'] });
+      onClose();
+    },
+  });
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    if (valid && !save.isPending) save.mutate();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center" onClick={onClose}>
+      <form
+        onSubmit={submit}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="adjust-title"
+        className="w-full max-w-md space-y-4 rounded-t-2xl border border-border bg-card p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-xl sm:rounded-2xl sm:pb-5"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 id="adjust-title" className="font-medium">{t('Adjust stock count')}</h2>
+            <p className="mt-0.5 truncate text-sm text-muted-foreground">
+              {row.make} {row.model} · {row.capacity}
+              {row.color ? ` · ${row.color}` : ''} · {row.locationName}
+            </p>
+          </div>
+          <button type="button" onClick={onClose} aria-label={t('Close')} className="-m-2 grid h-11 w-11 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-muted">
+            <X className="h-4 w-4" strokeWidth={2} />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl bg-muted/50 px-3.5 py-2.5">
+            <p className="text-xs text-muted-foreground">{t('On hand now')}</p>
+            <p className="font-mono text-lg font-semibold tabular-nums">
+              {formatInt(row.qty)}
+              {row.qtyIsFloor ? '+' : ''}
+            </p>
+          </div>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">{t('Counted')}</span>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={1000000}
+              step={1}
+              value={counted}
+              onChange={(e) => setCounted(e.target.value)}
+              autoFocus
+              className="h-11 rounded-xl border border-border bg-background px-3.5 font-mono text-sm tabular-nums outline-none focus:border-brand"
+            />
+          </label>
+        </div>
+
+        <label className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium">{t('Reason')}</span>
+          <input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            maxLength={500}
+            placeholder={t('e.g. cycle count, damaged unit, found in back room')}
+            className="h-11 rounded-xl border border-border bg-background px-3.5 text-sm outline-none focus:border-brand"
+          />
+        </label>
+
+        <p className="text-sm text-muted-foreground" aria-live="polite">
+          {!Number.isInteger(n) || n < 0
+            ? t('Enter a whole number, 0 or more.')
+            : delta === 0
+              ? t('No change to the balance.')
+              : `${delta > 0 ? '+' : '−'}${formatInt(Math.abs(delta))} ${Math.abs(delta) === 1 ? t('unit') : t('units')} · ${t('recorded in the stock history with your name')}`}
+        </p>
+
+        {save.isError && <p className="text-sm text-destructive">{adminErrorMessage(t, save.error.message)}</p>}
+
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
+            {t('Cancel')}
+          </Button>
+          <Button type="submit" variant="brand" className="flex-1" disabled={!valid || save.isPending}>
+            {save.isPending ? t('Saving…') : t('Save count')}
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 export default function InventoryPage() {
   const { t } = useI18n();
   const query = useQuery({ queryKey: ['admin-inventory'], queryFn: fetchInventory });
   const rows = query.data ?? [];
   const [search, setSearch] = useState('');
+  const [adjusting, setAdjusting] = useState<InventoryRow | null>(null);
   const needle = search.trim().toLowerCase();
   const shownRows = needle
     ? rows.filter((r) => `${r.make} ${r.model} ${r.modelNumber} ${r.sku} ${r.capacity} ${r.color ?? ''} ${r.locationName}`.toLowerCase().includes(needle))
@@ -258,7 +381,7 @@ export default function InventoryPage() {
             />
           </label>
           <Table
-            minWidth={960}
+            minWidth={1040}
             columns={[
               { key: 'model', label: t('Model') },
               { key: 'variant', label: t('Variant') },
@@ -269,6 +392,7 @@ export default function InventoryPage() {
               { key: 'cost', label: t('Unit cost'), align: 'right' },
               { key: 'age', label: t('As of') },
               { key: 'status', label: t('Status') },
+              { key: 'adjust', label: '' },
             ]}
           >
             {shownRows.map((r) => {
@@ -298,12 +422,25 @@ export default function InventoryPage() {
                       <span className={st.text}>{t(st.label)}</span>
                     </span>
                   </Td>
+                  <Td align="right" className="py-1">
+                    <button
+                      type="button"
+                      onClick={() => setAdjusting(r)}
+                      aria-label={`${t('Adjust stock count')} · ${r.model} · ${r.locationName}`}
+                      className="inline-flex h-11 items-center gap-1.5 rounded-lg px-3 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                    >
+                      <Pencil className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                      {t('Adjust')}
+                    </button>
+                  </Td>
                 </tr>
               );
             })}
           </Table>
         </>
       )}
+
+      {adjusting && <AdjustStockDialog row={adjusting} onClose={() => setAdjusting(null)} />}
     </div>
   );
 }

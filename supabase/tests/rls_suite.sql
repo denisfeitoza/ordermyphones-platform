@@ -885,6 +885,17 @@ begin
   select count(*) into n from public.import_synonyms where id = synonym_id;
   if n <> 0 then raise exception 'FAIL(section6): customer read import_synonyms (%) — staff-only since 2026-10-18', n; end if;
 
+  -- Stock counts are staff-only: anon cannot even call the RPC, and a
+  -- customer is refused before any row is looked up.
+  if has_function_privilege('anon', 'public.adjust_stock_count(uuid,integer,text)', 'execute') then
+    raise exception 'FAIL(section6): anon can execute adjust_stock_count';
+  end if;
+  begin
+    perform public.adjust_stock_count(gen_random_uuid(), 0, 'rls suite');
+    raise exception 'FAIL(section6): customer called adjust_stock_count without staff_only';
+  exception when insufficient_privilege then null;
+  end;
+
   -- POSITIVE CONTROL: an admin identity reads >=1 from both sensitive
   -- tables without a permission error — proves the staff policies actually
   -- grant, not merely that nothing is readable by anyone.

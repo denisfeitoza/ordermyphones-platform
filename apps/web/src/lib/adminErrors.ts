@@ -11,6 +11,8 @@ const MESSAGES: [string, string][] = [
   ['bad_price', 'Every line needs a price above zero.'],
   ['bad_qty', 'Every line needs a quantity above zero.'],
   ['empty_order', 'An order needs at least one line.'],
+  ['note_required', 'Write a short reason (up to 500 characters).'],
+  ['inventory_not_found', 'This stock line no longer exists. Refresh the list.'],
 ];
 
 export function adminErrorMessage(t: (s: string) => string, message: string | undefined | null): string {

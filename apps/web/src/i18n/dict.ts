@@ -1504,6 +1504,17 @@ export const PT: Record<string, string> = {
   'models added to your cart at today’s prices.': 'modelos adicionados ao carrinho com os preços de hoje.',
   'model is no longer available and was skipped.': 'modelo não está mais disponível e ficou de fora.',
   'models are no longer available and were skipped.': 'modelos não estão mais disponíveis e ficaram de fora.',
+  'Adjust': 'Ajustar',
+  'Adjust stock count': 'Ajustar contagem de estoque',
+  'On hand now': 'Em estoque agora',
+  'Counted': 'Contado',
+  'e.g. cycle count, damaged unit, found in back room': 'ex.: contagem cíclica, unidade com defeito, achado no depósito',
+  'Enter a whole number, 0 or more.': 'Digite um número inteiro, 0 ou mais.',
+  'No change to the balance.': 'O saldo não muda.',
+  'recorded in the stock history with your name': 'registrado no histórico de estoque com o seu nome',
+  'Save count': 'Salvar contagem',
+  'Write a short reason (up to 500 characters).': 'Escreva um motivo curto (até 500 caracteres).',
+  'This stock line no longer exists. Refresh the list.': 'Esta linha de estoque não existe mais. Atualize a lista.',
 };
 
 export const ES: Record<string, string> = {
@@ -3008,4 +3019,15 @@ export const ES: Record<string, string> = {
   'models added to your cart at today’s prices.': 'modelos añadidos al carrito con los precios de hoy.',
   'model is no longer available and was skipped.': 'modelo ya no está disponible y se omitió.',
   'models are no longer available and were skipped.': 'modelos ya no están disponibles y se omitieron.',
+  'Adjust': 'Ajustar',
+  'Adjust stock count': 'Ajustar conteo de stock',
+  'On hand now': 'En stock ahora',
+  'Counted': 'Contado',
+  'e.g. cycle count, damaged unit, found in back room': 'ej.: conteo cíclico, unidad dañada, encontrado en el depósito',
+  'Enter a whole number, 0 or more.': 'Escribe un número entero, 0 o más.',
+  'No change to the balance.': 'El saldo no cambia.',
+  'recorded in the stock history with your name': 'registrado en el historial de stock con tu nombre',
+  'Save count': 'Guardar conteo',
+  'Write a short reason (up to 500 characters).': 'Escribe un motivo breve (hasta 500 caracteres).',
+  'This stock line no longer exists. Refresh the list.': 'Esta línea de stock ya no existe. Actualiza la lista.',
 };
