@@ -54,6 +54,8 @@ const ReportsPage = lazy(() => import('@/routes/admin/ReportsPage'));
 const CatalogTab = lazy(() => import('@/routes/admin/config/CatalogTab'));
 const ProductsTab = lazy(() => import('@/routes/admin/config/ProductsTab'));
 const CustomerAccountPage = lazy(() => import('@/routes/admin/CustomerAccountPage'));
+const AdminAuctionsPage = lazy(() => import('@/routes/admin/AuctionsPage'));
+const PortalAuctionsPage = lazy(() => import('@/routes/portal/AuctionsPage'));
 const AttentionTab = lazy(() => import('@/routes/admin/config/AttentionTab'));
 const TiersTab = lazy(() => import('@/routes/admin/config/TiersTab'));
 const PricingTab = lazy(() => import('@/routes/admin/config/PricingTab'));
@@ -154,6 +156,7 @@ export default function App() {
 
           <Route path="manual-order" element={<ManualOrderPage />} />
           <Route path="reconciliation" element={<ReconciliationPage />} />
+          <Route path="auctions" element={<AdminAuctionsPage />} />
 
           <Route path="inventory" element={<SectionTabs tabs={INVENTORY_TABS} />}>
             <Route index element={<InventoryPage />} />
@@ -263,6 +266,7 @@ export default function App() {
             <Route path="payment-methods" element={<PaymentMethodsPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="business" element={<BusinessPage />} />
+            <Route path="auctions" element={<PortalAuctionsPage />} />
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />

@@ -13,6 +13,7 @@ const portalNav = [
   { to: '/portal', label: 'Overview', end: true },
   { to: '/portal/orders', label: 'Orders' },
   { to: '/portal/business', label: 'Business profile' },
+  { to: '/portal/auctions', label: 'Auctions', gate: 'team' as const },
   // mockOnly: demo-era pages (wishlist on the demo catalog, Stripe cards,
   // Partner API key) are hidden in real mode — v1.1 scope (audit P0-5).
   { to: '/portal/wishlist', label: 'Wishlist', mockOnly: true },

@@ -88,3 +88,15 @@ export function useMyAccountSummary(enabled = true) {
     },
   });
 }
+
+/** Staff record an auction-deposit wire (positive) or a refund (negative). */
+export function useRecordDeposit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { accountId: string; deltaCents: number; note: string }) => {
+      const { error } = await supabase.rpc('record_auction_deposit', { p_account_id: v.accountId, p_delta_cents: v.deltaCents, p_note: v.note || null });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['account-terms'] }),
+  });
+}

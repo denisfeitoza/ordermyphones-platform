@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { AdminHeading, Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
-import { useAllAccountTerms, useSetAccountTerms } from '@/data/accounts';
+import { useAllAccountTerms, useRecordDeposit, useSetAccountTerms } from '@/data/accounts';
 import { PAYMENT_TERMS, TERMS_LABEL, type PaymentTerms } from '@/lib/payment';
 import { DB_TIER_LABELS, type DbTier } from '@/lib/invites';
 import { parseMoneyToCents } from '@/lib/money';
@@ -117,6 +117,7 @@ function TermsPanel({ accountId }: { accountId: string }) {
             ? t('COD and Net terms use credit: without a limit, every approval asks you to confirm.')
             : `${t('Approval checks the open balance plus the new order against')} ${formatUsd(limitCents ?? 0)}, ${t('and blocks while an invoice is overdue (you can approve anyway).')}`}
       </p>
+      <DepositRow accountId={accountId} receivedCents={current?.auctionDepositReceivedCents ?? 0} required={deposit} />
       {save.isError && <p className="mt-2 text-sm text-destructive">{adminErrorMessage(t, save.error.message)}</p>}
       <div className="mt-4 flex items-center gap-3">
         <Button variant="brand" disabled={save.isPending || limitInvalid} onClick={() => save.mutate({ accountId, terms, creditLimitCents: limitCents, depositRequired: deposit })}>
@@ -245,5 +246,31 @@ function OnboardingPanels({ accountId }: { accountId: string }) {
         )}
       </Panel>
     </>
+  );
+}
+
+/** Auction deposit: what was received by wire, and recording a new wire or refund. */
+function DepositRow({ accountId, receivedCents, required }: { accountId: string; receivedCents: number; required: boolean }) {
+  const { t } = useI18n();
+  const rec = useRecordDeposit();
+  const [amount, setAmount] = useState('');
+  const cents = parseMoneyToCents(amount);
+  return (
+    <div className="mt-4 flex flex-wrap items-end gap-2 rounded-xl bg-muted/40 p-3 text-sm">
+      <p className="min-w-0 flex-1 basis-48">
+        {t('Auction deposit received')}: <b className="font-mono">{formatUsd(receivedCents)}</b>
+        <span className="block text-xs text-muted-foreground">
+          {!required ? t('Not required for this account.') : receivedCents >= 250_000 ? t('Enough to bid.') : t('Bidding opens at $2,500.')}
+        </span>
+      </p>
+      <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" placeholder="2500.00" aria-label={t('Wire amount (USD)')} className="h-11 w-28 rounded-xl border border-border bg-background px-3 text-right font-mono text-sm outline-none focus:border-brand" />
+      <Button size="sm" variant="outline" disabled={rec.isPending || !cents} onClick={() => rec.mutate({ accountId, deltaCents: cents ?? 0, note: 'wire' }, { onSuccess: () => setAmount('') })}>
+        {t('Record wire')}
+      </Button>
+      <Button size="sm" variant="outline" disabled={rec.isPending || !cents} onClick={() => rec.mutate({ accountId, deltaCents: -(cents ?? 0), note: 'refund' }, { onSuccess: () => setAmount('') })}>
+        {t('Record refund')}
+      </Button>
+      {rec.isError && <p className="basis-full text-xs text-destructive">{adminErrorMessage(t, rec.error.message)}</p>}
+    </div>
   );
 }

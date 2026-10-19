@@ -1004,6 +1004,24 @@ begin
     raise exception 'FAIL(section6): signatures are writable outside sign_agreement()';
   end if;
 
+  -- Auctions: a consumer sees no events, can't bid, can't read results;
+  -- bids are only writable through place_bid().
+  select count(*) into n from public.auction_events;
+  if n <> 0 then raise exception 'FAIL(section6): consumer sees % auction events', n; end if;
+  begin
+    perform public.auction_results(gen_random_uuid());
+    raise exception 'FAIL(section6): consumer called auction_results without staff_only';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.record_auction_deposit(consumer_id, 250000, null);
+    raise exception 'FAIL(section6): consumer recorded its own deposit';
+  exception when insufficient_privilege then null;
+  end;
+  if has_table_privilege('authenticated', 'public.auction_bids', 'insert') then
+    raise exception 'FAIL(section6): bids are writable outside place_bid()';
+  end if;
+
   -- E-mail outbox: staff-only read, nobody writes through the API.
   select count(*) into n from public.email_outbox;
   if n <> 0 then raise exception 'FAIL(section6): customer read % outbox rows', n; end if;

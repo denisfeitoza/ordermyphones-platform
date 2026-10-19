@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { BarChart3, BookOpen, Boxes, FilePlus2, Flag, LayoutDashboard, LogOut, PackageSearch, Receipt, Settings, Tag, UploadCloud, Users } from 'lucide-react';
+import { BarChart3, BookOpen, Boxes, FilePlus2, Flag, Gavel, LayoutDashboard, LogOut, PackageSearch, Receipt, Settings, Tag, UploadCloud, Users } from 'lucide-react';
 import { useAuth, useTier } from '@/store';
 import { TIERS } from '@/data/tiers';
 import { Logo } from '@/components/store/Logo';
@@ -16,6 +16,7 @@ const NAV = [
   { to: '/admin/orders', label: 'Orders', icon: Receipt, beta: true },
   { to: '/admin/manual-order', label: 'Manual order', icon: FilePlus2, beta: true },
   { to: '/admin/reconciliation', label: 'Reconciliation', icon: PackageSearch, beta: true },
+  { to: '/admin/auctions', label: 'Auctions', icon: Gavel, beta: true },
   { to: '/admin/inventory', label: 'Inventory', icon: Boxes, beta: true },
   { to: '/admin/import', label: 'Import', icon: UploadCloud, beta: true },
   { to: '/admin/prices', label: 'Prices', icon: Tag, beta: true },
