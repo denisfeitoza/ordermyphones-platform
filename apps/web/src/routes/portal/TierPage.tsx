@@ -7,6 +7,11 @@ import { TierBadge } from '@/components/store/TierBadge';
 import { buttonVariants } from '@/components/ui/Button';
 import { tierBg, tierText } from '@/lib/tierStyles';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/store';
+import { useI18n } from '@/i18n';
+import { formatInt } from '@/lib/format';
+import { DB_TIER_LABELS } from '@/lib/invites';
+import { nextBand, useMyTierProgress } from '@/data/tierProgress';
 
 export default function TierPage() {
   // Real mode: the tier comes from the profile (useEffectiveTier); the mock
@@ -14,6 +19,11 @@ export default function TierPage() {
   const mock = useTier();
   const { tierDef } = useEffectiveTier();
   const tier = tierDef ?? mock.tier;
+  const { t } = useI18n();
+  const { signedIn } = useAuth();
+  const progress = useMyTierProgress(signedIn);
+  const next = progress.data ? nextBand(progress.data) : null;
+  const pct = progress.data && next ? Math.min(100, Math.round((progress.data.units / next.at) * 100)) : 100;
 
   const benefits = [
     tier.discount > 0 ? `${Math.round(tier.discount * 100)}% off retail on every device` : 'Retail pricing on every device',
@@ -46,6 +56,27 @@ export default function TierPage() {
           ))}
         </ul>
       </section>
+
+      {progress.data && (
+        <section className="space-y-3 rounded-2xl border border-border bg-card p-6">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="font-medium">{t('Your volume')}</h2>
+            <span className="font-mono text-sm tabular-nums">
+              {formatInt(progress.data.units)} {t('units bought')}
+            </span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
+            <div className="h-full rounded-full bg-brand transition-[width]" style={{ width: `${pct}%` }} />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {next
+              ? progress.data.units >= next.at
+                ? `${t('Your volume reaches')} ${t(DB_TIER_LABELS[next.tier])}. ${t('Our team reviews tier upgrades — no action needed.')}`
+                : `${formatInt(next.at - progress.data.units)} ${t('more units to reach')} ${t(DB_TIER_LABELS[next.tier])}.`
+              : t('You are on the top tier.')}
+          </p>
+        </section>
+      )}
 
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-muted/30 p-5">
         <p className="flex-1 text-sm text-muted-foreground">

@@ -1018,6 +1018,13 @@ begin
     raise exception 'FAIL(section6): consumer recorded its own deposit';
   exception when insufficient_privilege then null;
   end;
+  -- Tier progress: the consumer reads its own volume; the upgrade list is staff only.
+  perform public.my_tier_progress();
+  begin
+    perform public.tier_upgrade_candidates();
+    raise exception 'FAIL(section6): consumer called tier_upgrade_candidates without staff_only';
+  exception when insufficient_privilege then null;
+  end;
   if has_table_privilege('authenticated', 'public.auction_bids', 'insert') then
     raise exception 'FAIL(section6): bids are writable outside place_bid()';
   end if;

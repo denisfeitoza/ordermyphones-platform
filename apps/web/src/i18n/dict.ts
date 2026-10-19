@@ -1901,6 +1901,13 @@ export const PT: Record<string, string> = {
   'per lot': 'por lote',
   'Closed': 'Fechado',
   'Open now': 'Aberto agora',
+  'Your volume': 'Seu volume',
+  'units bought': 'unidades compradas',
+  'Your volume reaches': 'Seu volume já alcança',
+  'Our team reviews tier upgrades — no action needed.': 'Nossa equipe revisa as mudanças de nível — você não precisa fazer nada.',
+  'more units to reach': 'unidades a mais para chegar a',
+  'You are on the top tier.': 'Você está no nível mais alto.',
+  'Eligible for a higher tier': 'Prontos para subir de nível',
 };
 
 export const ES: Record<string, string> = {
@@ -3802,4 +3809,11 @@ export const ES: Record<string, string> = {
   'per lot': 'por lote',
   'Closed': 'Cerrado',
   'Open now': 'Abierto ahora',
+  'Your volume': 'Tu volumen',
+  'units bought': 'unidades compradas',
+  'Your volume reaches': 'Tu volumen ya alcanza',
+  'Our team reviews tier upgrades — no action needed.': 'Nuestro equipo revisa los cambios de nivel — no necesitas hacer nada.',
+  'more units to reach': 'unidades más para llegar a',
+  'You are on the top tier.': 'Estás en el nivel más alto.',
+  'Eligible for a higher tier': 'Listos para subir de nivel',
 };

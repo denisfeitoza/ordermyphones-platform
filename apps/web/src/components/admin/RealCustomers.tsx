@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/i18n';
 import { formatDate } from '@/lib/format';
 import { useAllAccountTerms } from '@/data/accounts';
+import { useTierUpgradeCandidates } from '@/data/tierProgress';
 import { TERMS_LABEL } from '@/lib/payment';
 
 /** Pending "request access" submissions from the public form. An admin picks
@@ -226,6 +227,7 @@ export function RealCustomers() {
         subtitle={`${customers.length} ${t('registered accounts')}${isAdmin ? ` · ${t('change a tier inline')}` : ` · ${t('manage tiers & roles in the Users & roles tab')}`}`}
       />
 
+      <UpgradeCandidatesPanel />
       <AccessRequestsPanel isAdmin={isAdmin} />
       <ContactMessagesPanel />
       <NewsletterSignupsPanel />
@@ -311,5 +313,32 @@ export function RealCustomers() {
         onConfirmed={() => pending && setTier.mutate({ userId: pending.user.id, tier: pending.tier })}
       />
     </div>
+  );
+}
+
+/** Accounts whose lifetime volume earns a higher tier (staff decide; nothing changes on its own). */
+function UpgradeCandidatesPanel() {
+  const { t } = useI18n();
+  const q = useTierUpgradeCandidates();
+  const rows = q.data ?? [];
+  if (rows.length === 0) return null;
+  return (
+    <Panel title={`${t('Eligible for a higher tier')} · ${rows.length}`}>
+      <ul className="divide-y divide-border rounded-xl border border-border text-sm">
+        {rows.map((r) => (
+          <li key={r.account_id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
+            <span className="min-w-0">
+              <span className="block truncate font-medium">{r.display_name ?? r.email}</span>
+              <span className="block text-xs text-muted-foreground">
+                {r.units} {t('units bought')} · {r.tier ? t(DB_TIER_LABELS[r.tier]) : t('No tier')} → {t(DB_TIER_LABELS[r.volume_tier])}
+              </span>
+            </span>
+            <Link to={`/admin/customers/account/${r.account_id}`} className="inline-flex min-h-11 items-center gap-1 text-xs font-medium text-brand hover:underline">
+              {t('Account')} <ArrowUpRight className="h-3 w-3" strokeWidth={2} />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </Panel>
   );
 }
