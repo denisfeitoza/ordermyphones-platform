@@ -62,6 +62,7 @@ const ImportDictTab = lazy(() => import('@/routes/admin/config/ImportDictTab'));
 const UsersTab = lazy(() => import('@/routes/admin/config/UsersTab'));
 const EnforcementTab = lazy(() => import('@/routes/admin/config/EnforcementTab'));
 const HomeContentTab = lazy(() => import('@/routes/admin/config/HomeContentTab'));
+const CompanyTab = lazy(() => import('@/routes/admin/config/CompanyTab'));
 const AuditTab = lazy(() => import('@/routes/admin/config/AuditTab'));
 const ViewAsPage = lazy(() => import('@/routes/admin/ViewAsPage'));
 
@@ -95,6 +96,7 @@ const ORDERS_TABS: SectionTab[] = [
 const SETTINGS_TABS: SectionTab[] = [
   { to: '/admin/config', label: 'Go-live & storefront', end: true, title: 'Go-live & storefront', subtitle: 'Switch the storefront to real inventory, control quantity display, and pin featured products.' },
   { to: '/admin/config/home', label: 'Home & promos', title: 'Home & promos', subtitle: 'Manage the storefront home page — benefits bar, promotions, and trending products.' },
+  { to: '/admin/config/company', label: 'Company & Sales Order', title: 'Company & Sales Order', subtitle: 'Your company and bank details, and the agreement terms every Sales Order prints.' },
   { to: '/admin/config/enforcement', label: 'Enforcement', title: 'Enforcement', subtitle: 'Guardrails that block risky pricing and stock actions before they happen.' },
   { to: '/admin/config/audit', label: 'Audit log', title: 'Audit log', subtitle: 'A trail of every sensitive change — who changed what, and when.' },
 ];
@@ -176,6 +178,7 @@ export default function App() {
           <Route path="config" element={<SectionTabs tabs={SETTINGS_TABS} />}>
             <Route index element={<CatalogTab />} />
             <Route path="home" element={<HomeContentTab />} />
+            <Route path="company" element={<CompanyTab />} />
             <Route path="enforcement" element={<EnforcementTab />} />
             <Route path="audit" element={<AuditTab />} />
           </Route>

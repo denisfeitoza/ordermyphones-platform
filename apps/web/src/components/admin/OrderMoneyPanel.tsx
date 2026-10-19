@@ -8,6 +8,8 @@ import { parseMoneyToCents } from '@/lib/money';
 import { adminErrorMessage } from '@/lib/adminErrors';
 import { formatDate, formatUsd } from '@/lib/format';
 import { useI18n } from '@/i18n';
+import { SalesOrderButton } from '@/components/orders/SalesOrderButton';
+import { addressLines, billedLines, soNumber } from '@/lib/salesOrder';
 import { cn } from '@/lib/utils';
 
 const inputCls = 'h-11 w-full rounded-lg border border-border bg-background px-2.5 text-sm outline-none focus:border-brand sm:h-9';
@@ -77,6 +79,26 @@ export function OrderMoneyPanel({ order }: { order: AdminOrder }) {
           </>
         )}
       </dl>
+
+      <SalesOrderButton
+        build={() => ({
+          number: soNumber(order.id),
+          orderDate: order.placedAt,
+          invoiceDate: order.invoicedAt,
+          dueDate: order.dueAt,
+          terms: order.paymentTerms,
+          status: order.status,
+          billTo: [order.customerName, order.customerEmail].filter(Boolean) as string[],
+          shipTo: addressLines(order.shippingAddress),
+          shippingMethod: order.shippingMethod,
+          shippingAccount: order.shippingAccount ? `${order.shippingAccount.carrier} ${order.shippingAccount.account_number}` : null,
+          shippingCents: order.shippingCents,
+          note: order.note,
+          lines: billedLines(order.status, order.lines, (l) => l.name),
+          paid: order.paymentStatus === 'paid',
+          isTest: order.isTest,
+        })}
+      />
 
       {(state === 'unpaid' || state === 'overdue') && (
         <div className="flex flex-wrap items-end gap-2">

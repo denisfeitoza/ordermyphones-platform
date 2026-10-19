@@ -257,7 +257,7 @@ export function RealOrderDetail() {
 
       {order.status === 'pending' && <CancelPendingOrder orderId={order.id} />}
       <ReorderButton lines={order.lines} />
-      {profile && <OrderPaymentShipping order={order} accountId={profile.parent_account_id ?? profile.id} />}
+      {profile && <OrderPaymentShipping order={order} accountId={profile.parent_account_id ?? profile.id} describe={(l) => lineName(l, t)} />}
 
       {order.status === 'rejected' && order.decisionReason && (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">

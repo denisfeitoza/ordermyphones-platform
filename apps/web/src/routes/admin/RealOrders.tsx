@@ -20,6 +20,7 @@ import { isShortOrder, orderValueCents } from '@/lib/orderTotals';
 import { REQUIREMENT_LABEL } from '@/lib/requirements';
 import { OrderMoneyPanel } from '@/components/admin/OrderMoneyPanel';
 import { PAYMENT_STATE_STYLE, paymentState } from '@/lib/payment';
+import { billedLines, salesOrdersQuickBooksCsv, soNumber } from '@/lib/salesOrder';
 
 const STATUS_LABEL: Record<AdminOrderStatus, string> = {
   pending: 'Pending',
@@ -198,6 +199,38 @@ const ORDERS_PAGE = 50;
 
 /** Real-mode admin order queue. Master list + detail panel with Approve /
  * Reject, live per-line availability, and post-approval approved/short summary. */
+/** Invoiced orders in the current list → QuickBooks invoice-import CSV (draft column set). */
+function exportQuickBooks(orders: AdminOrder[]) {
+  const docs = orders
+    .filter((o) => o.invoicedAt && ['approved', 'partially_approved', 'shipped'].includes(o.status))
+    .map((o) => ({
+      number: soNumber(o.id),
+      orderDate: o.placedAt,
+      invoiceDate: o.invoicedAt,
+      dueDate: o.dueAt,
+      terms: o.paymentTerms,
+      status: o.status,
+      billTo: [],
+      shipTo: [],
+      shippingMethod: o.shippingMethod,
+      shippingAccount: null,
+      shippingCents: o.shippingCents,
+      note: o.note,
+      lines: billedLines(o.status, o.lines, (l) => l.name),
+      paid: o.paymentStatus === 'paid',
+      isTest: o.isTest,
+      customer: o.customerName ?? o.customerEmail ?? '',
+    }));
+  const url = URL.createObjectURL(new Blob([salesOrdersQuickBooksCsv(docs)], { type: 'text/csv;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `quickbooks-sales-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 export function RealAdminOrders() {
   const { t, lang } = useI18n();
   const { data: orders, isLoading, isError } = useAdminOrders();
@@ -240,6 +273,14 @@ export function RealAdminOrders() {
         subtitle="Approve or reject placed orders · stock deducts on approval, shortfalls open reconciliation"
         action={
           <div className="scrollbar-hide flex gap-1 overflow-x-auto">
+            <button
+              type="button"
+              onClick={() => exportQuickBooks(filtered)}
+              className="inline-flex whitespace-nowrap rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted"
+              title={t('Sales Orders of the invoiced orders in this list, as a QuickBooks invoice import')}
+            >
+              {t('QuickBooks CSV')}
+            </button>
             {FILTERS.map((f) => (
               <button
                 key={f.key}

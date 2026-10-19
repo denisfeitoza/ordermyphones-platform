@@ -9,6 +9,9 @@ import { orderValueCents } from '@/lib/orderTotals';
 import { formatDate, formatUsd } from '@/lib/format';
 import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
+import { SalesOrderButton } from '@/components/orders/SalesOrderButton';
+import { addressLines, billedLines, soNumber } from '@/lib/salesOrder';
+import { useAuth } from '@/store';
 
 const LABEL_TYPES = new Set(['application/pdf', 'image/png', 'image/jpeg']);
 
@@ -17,8 +20,9 @@ const LABEL_TYPES = new Set(['application/pdf', 'image/png', 'image/jpeg']);
  * (goods + shipping), due date and paid state; for "send your own label"
  * orders, the packed box and the label upload.
  */
-export function OrderPaymentShipping({ order, accountId }: { order: RealOrder; accountId: string }) {
+export function OrderPaymentShipping({ order, accountId, describe }: { order: RealOrder; accountId: string; describe: (l: RealOrder['lines'][number]) => string }) {
   const { t, lang } = useI18n();
+  const { profile } = useAuth();
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -72,6 +76,28 @@ export function OrderPaymentShipping({ order, accountId }: { order: RealOrder; a
           </>
         )}
       </dl>
+
+      {state !== 'not_invoiced' && (
+        <SalesOrderButton
+          build={() => ({
+            number: soNumber(order.id),
+            orderDate: order.placedAt,
+            invoiceDate: order.invoicedAt,
+            dueDate: order.dueAt,
+            terms: order.paymentTerms,
+            status: order.status,
+            billTo: [profile?.display_name, profile?.email].filter(Boolean) as string[],
+            shipTo: addressLines(order.shippingAddress),
+            shippingMethod: order.shippingMethod,
+            shippingAccount: order.shippingAccount ? `${order.shippingAccount.carrier} ${order.shippingAccount.account_number}` : null,
+            shippingCents: order.shippingCents,
+            note: order.notes,
+            lines: billedLines(order.status, order.lines, describe),
+            paid: order.paymentStatus === 'paid',
+            isTest: order.isTest,
+          })}
+        />
+      )}
 
       <div className="space-y-2 border-t border-border pt-3">
         <p className="flex items-center gap-1.5 font-medium">

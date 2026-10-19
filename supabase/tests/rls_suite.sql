@@ -978,6 +978,13 @@ begin
     raise exception 'FAIL(section6): customer called set_order_shipping without staff_only';
   exception when insufficient_privilege then null;
   end;
+  -- Company profile (bank details): signed-in read, never anon; only admins edit.
+  if has_table_privilege('anon', 'public.company_profile', 'select') then
+    raise exception 'FAIL(section6): anon can read company_profile';
+  end if;
+  update public.company_profile set legal_name = 'hacked' where id = 1;
+  get diagnostics n = row_count;
+  if n <> 0 then raise exception 'FAIL(section6): customer updated company_profile'; end if;
   if has_function_privilege('authenticated', 'public.order_credit_problems(uuid)', 'execute') then
     raise exception 'FAIL(section6): order_credit_problems callable through the API';
   end if;
