@@ -1,70 +1,30 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import {
-  BarChart3,
-  BookOpen,
-  Boxes,
-  FilePlus2,
-  Flag,
-  Gavel,
-  LayoutDashboard,
-  LogOut,
-  PackageSearch,
-  Receipt,
-  Settings,
-  Tag,
-  UploadCloud,
-  Users,
-} from "lucide-react";
-import { useAuth, useTier } from "@/store";
-import { TIERS } from "@/data/tiers";
-import { Logo } from "@/components/store/Logo";
-import { LangSwitch, useI18n } from "@/i18n";
-import { PulseDot } from "@/components/store/SyncHeartbeat";
-import { cn } from "@/lib/utils";
-import { usePendingOrderCount } from "@/data/adminOrders";
-import { AUCTIONS_ENABLED } from "@/lib/features";
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { BarChart3, BookOpen, Boxes, FilePlus2, Flag, Gavel, LayoutDashboard, LogOut, PackageSearch, Receipt, Settings, Tag, UploadCloud, Users } from 'lucide-react';
+import { useAuth, useTier } from '@/store';
+import { TIERS } from '@/data/tiers';
+import { Logo } from '@/components/store/Logo';
+import { LangSwitch, useI18n } from '@/i18n';
+import { PulseDot } from '@/components/store/SyncHeartbeat';
+import { cn } from '@/lib/utils';
+import { usePendingOrderCount } from '@/data/adminOrders';
+import { AUCTIONS_ENABLED } from '@/lib/features';
 
 // Every tab carries a `beta` badge for v1 (owner-facing signal that the
 // console is live but still hardening).
 const NAV = [
-  {
-    to: "/admin",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    end: true,
-    beta: true,
-  },
-  { to: "/admin/customers", label: "Customers", icon: Users, beta: true },
-  { to: "/admin/orders", label: "Orders", icon: Receipt, beta: true },
-  {
-    to: "/admin/manual-order",
-    label: "Manual order",
-    icon: FilePlus2,
-    beta: true,
-  },
-  {
-    to: "/admin/reconciliation",
-    label: "Reconciliation",
-    icon: PackageSearch,
-    beta: true,
-  },
-  ...(AUCTIONS_ENABLED
-    ? [
-        {
-          to: "/admin/auctions",
-          label: "Auctions",
-          icon: Gavel,
-          beta: true,
-        } as const,
-      ]
-    : []),
-  { to: "/admin/inventory", label: "Inventory", icon: Boxes, beta: true },
-  { to: "/admin/import", label: "Import", icon: UploadCloud, beta: true },
-  { to: "/admin/prices", label: "Prices", icon: Tag, beta: true },
-  { to: "/admin/pricing-flags", label: "Flag queue", icon: Flag, beta: true },
-  { to: "/admin/reports", label: "Reports", icon: BarChart3, beta: true },
-  { to: "/admin/config", label: "Settings", icon: Settings, beta: true },
-  { to: "/admin/manual", label: "Manual", icon: BookOpen },
+  { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true, beta: true },
+  { to: '/admin/customers', label: 'Customers', icon: Users, beta: true },
+  { to: '/admin/orders', label: 'Orders', icon: Receipt, beta: true },
+  { to: '/admin/manual-order', label: 'Manual order', icon: FilePlus2, beta: true },
+  { to: '/admin/reconciliation', label: 'Reconciliation', icon: PackageSearch, beta: true },
+  ...(AUCTIONS_ENABLED ? [{ to: '/admin/auctions', label: 'Auctions', icon: Gavel, beta: true } as const] : []),
+  { to: '/admin/inventory', label: 'Inventory', icon: Boxes, beta: true },
+  { to: '/admin/import', label: 'Import', icon: UploadCloud, beta: true },
+  { to: '/admin/prices', label: 'Prices', icon: Tag, beta: true },
+  { to: '/admin/pricing-flags', label: 'Flag queue', icon: Flag, beta: true },
+  { to: '/admin/reports', label: 'Reports', icon: BarChart3, beta: true },
+  { to: '/admin/config', label: 'Settings', icon: Settings, beta: true },
+  { to: '/admin/manual', label: 'Manual', icon: BookOpen },
 ] as const;
 
 export default function AdminLayout() {
@@ -76,8 +36,8 @@ export default function AdminLayout() {
 
   function viewStoreAs(code: string) {
     if (!code) return;
-    startPreview(code as (typeof TIERS)[number]["code"]);
-    navigate("/");
+    startPreview(code as (typeof TIERS)[number]['code']);
+    navigate('/');
   }
 
   return (
@@ -87,59 +47,40 @@ export default function AdminLayout() {
           <Logo invert />
           <span className="hidden items-center gap-2 border-l border-white/15 pl-4 text-sm text-background/70 sm:flex">
             <PulseDot />
-            {t("Admin console")}
+            {t('Admin console')}
           </span>
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
             {/* Hidden on phones: with the logo, language switch and sign-out it
                 pushed the whole console wider than a 375px screen. */}
             <label className="relative hidden items-center sm:inline-flex">
-              <span className="sr-only">{t("View store as tier")}</span>
+              <span className="sr-only">{t('View store as tier')}</span>
               <select
                 value=""
                 onChange={(e) => viewStoreAs(e.target.value)}
                 className="h-8 cursor-pointer appearance-none rounded-full border border-white/15 bg-transparent pl-3 pr-7 text-xs font-medium text-background/80 outline-none transition-colors hover:bg-white/10 [&>option]:text-foreground"
               >
-                <option value="" disabled>
-                  {t("View store as…")}
-                </option>
+                <option value="" disabled>{t('View store as…')}</option>
                 {TIERS.map((tr) => (
-                  <option key={tr.code} value={tr.code}>
-                    {tr.short} · {tr.label}
-                  </option>
+                  <option key={tr.code} value={tr.code}>{tr.short} · {tr.label}</option>
                 ))}
               </select>
-              <svg
-                className="pointer-events-none absolute right-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-background/50"
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden
-              >
-                <path
-                  d="m6 9 6 6 6-6"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+              <svg className="pointer-events-none absolute right-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-background/50" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </label>
             <LangSwitch tone="dark" />
-            {user && (
-              <span className="hidden font-mono text-xs text-background/50 md:inline">
-                {user.email}
-              </span>
-            )}
+            {user && <span className="hidden font-mono text-xs text-background/50 md:inline">{user.email}</span>}
             <button
               type="button"
-              aria-label={t("Sign out")}
+              aria-label={t('Sign out')}
               onClick={() => {
                 signOut();
-                navigate("/");
+                navigate('/');
               }}
               className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs text-background/70 transition-colors hover:bg-white/10"
             >
               <LogOut className="h-3.5 w-3.5" strokeWidth={2} />
-              <span className="hidden sm:inline">{t("Sign out")}</span>
+              <span className="hidden sm:inline">{t('Sign out')}</span>
             </button>
           </div>
         </div>
@@ -152,30 +93,26 @@ export default function AdminLayout() {
               <NavLink
                 key={l.to}
                 to={l.to}
-                end={"end" in l ? l.end : false}
+                end={'end' in l ? l.end : false}
                 className={({ isActive }) =>
                   cn(
-                    "inline-flex min-h-[42px] items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm transition-colors",
-                    isActive
-                      ? "bg-secondary font-medium text-foreground"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    'inline-flex min-h-[42px] items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm transition-colors',
+                    isActive ? 'bg-secondary font-medium text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                   )
                 }
               >
                 <l.icon className="h-4 w-4" strokeWidth={2} />
                 {t(l.label)}
-                {l.to === "/admin/orders" && pendingCount > 0 && (
+                {l.to === '/admin/orders' && pendingCount > 0 && (
                   <span
                     className="grid h-5 min-w-5 place-items-center rounded-full bg-brand px-1.5 font-mono text-[0.7rem] font-semibold text-white"
-                    aria-label={`${pendingCount} ${t("pending")}`}
+                    aria-label={`${pendingCount} ${t('pending')}`}
                   >
                     {pendingCount}
                   </span>
                 )}
-                {"beta" in l && l.beta && (
-                  <span className="ml-auto rounded-full bg-sky-500/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-sky-600 dark:text-sky-300">
-                    beta
-                  </span>
+                {'beta' in l && l.beta && (
+                  <span className="ml-auto rounded-full bg-sky-500/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-sky-600 dark:text-sky-300">beta</span>
                 )}
               </NavLink>
             ))}

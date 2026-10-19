@@ -1,45 +1,38 @@
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
-import { ArrowUpRight, Lock, LogOut } from "lucide-react";
-import { useAccount, useAuth } from "@/store";
-import { useCatalogSource } from "@/lib/catalogSource";
-import { useEffectiveTier } from "@/lib/effectiveTier";
-import { TierBadge } from "@/components/store/TierBadge";
-import { hasApiAccess } from "@/data/inventoryApi";
-import { canManageSubAccounts } from "@/data/subAccounts";
-import { cn } from "@/lib/utils";
-import { useI18n } from "@/i18n";
-import { AUCTIONS_ENABLED } from "@/lib/features";
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { ArrowUpRight, Lock, LogOut } from 'lucide-react';
+import { useAccount, useAuth } from '@/store';
+import { useCatalogSource } from '@/lib/catalogSource';
+import { useEffectiveTier } from '@/lib/effectiveTier';
+import { TierBadge } from '@/components/store/TierBadge';
+import { hasApiAccess } from '@/data/inventoryApi';
+import { canManageSubAccounts } from '@/data/subAccounts';
+import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
+import { AUCTIONS_ENABLED } from '@/lib/features';
 
 const portalNav = [
-  { to: "/portal", label: "Overview", end: true },
-  { to: "/portal/orders", label: "Orders" },
-  { to: "/portal/business", label: "Business profile" },
-  ...(AUCTIONS_ENABLED
-    ? [{ to: "/portal/auctions", label: "Auctions", gate: "team" as const }]
-    : []),
+  { to: '/portal', label: 'Overview', end: true },
+  { to: '/portal/orders', label: 'Orders' },
+  { to: '/portal/business', label: 'Business profile' },
+  ...(AUCTIONS_ENABLED ? [{ to: '/portal/auctions', label: 'Auctions', gate: 'team' as const }] : []),
   // mockOnly: demo-era pages (wishlist on the demo catalog, Stripe cards,
   // Partner API key) are hidden in real mode — v1.1 scope (audit P0-5).
-  { to: "/portal/wishlist", label: "Wishlist", mockOnly: true },
-  { to: "/portal/tier", label: "Tier" },
-  {
-    to: "/portal/inventory-api",
-    label: "Inventory API",
-    gate: "api" as const,
-    mockOnly: true,
-  },
-  { to: "/portal/addresses", label: "Addresses" },
-  { to: "/portal/team", label: "Team", gate: "team" as const },
-  { to: "/portal/payment-methods", label: "Payment", mockOnly: true },
-  { to: "/portal/settings", label: "Settings" },
+  { to: '/portal/wishlist', label: 'Wishlist', mockOnly: true },
+  { to: '/portal/tier', label: 'Tier' },
+  { to: '/portal/inventory-api', label: 'Inventory API', gate: 'api' as const, mockOnly: true },
+  { to: '/portal/addresses', label: 'Addresses' },
+  { to: '/portal/team', label: 'Team', gate: 'team' as const },
+  { to: '/portal/payment-methods', label: 'Payment', mockOnly: true },
+  { to: '/portal/settings', label: 'Settings' },
 ];
 
 function initials(name: string): string {
   return name
     .split(/\s+/)
-    .filter((w) => /[A-Za-z0-9]/.test(w[0] ?? ""))
+    .filter((w) => /[A-Za-z0-9]/.test(w[0] ?? ''))
     .slice(0, 2)
     .map((w) => w[0]!.toUpperCase())
-    .join("");
+    .join('');
 }
 
 export default function PortalLayout() {
@@ -47,25 +40,18 @@ export default function PortalLayout() {
   const { businessName: mockName } = useAccount();
   const { user, profile, role, signOut } = useAuth();
   const { tierDef, code } = useEffectiveTier();
-  const isStaff = role === "admin" || role === "staff";
+  const isStaff = role === 'admin' || role === 'staff';
   const apiUnlocked = hasApiAccess(code);
-  const teamUnlocked =
-    canManageSubAccounts(
-      profile?.tier ?? null,
-      profile?.parent_account_id ?? null,
-    ) || !!profile?.parent_account_id;
+  const teamUnlocked = canManageSubAccounts(profile?.tier ?? null, profile?.parent_account_id ?? null) || !!profile?.parent_account_id;
   const { t } = useI18n();
   const navigate = useNavigate();
 
   // Real mode: the actual account identity; mock mode: the demo business.
-  const displayName =
-    source === "real"
-      ? (profile?.display_name ?? profile?.email ?? "Account")
-      : mockName;
+  const displayName = source === 'real' ? (profile?.display_name ?? profile?.email ?? 'Account') : mockName;
 
   function handleSignOut() {
     signOut();
-    navigate("/");
+    navigate('/');
   }
 
   return (
@@ -78,9 +64,7 @@ export default function PortalLayout() {
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{displayName}</p>
-              <p className="text-xs text-muted-foreground">
-                {t("Business account")}
-              </p>
+              <p className="text-xs text-muted-foreground">{t('Business account')}</p>
             </div>
           </div>
 
@@ -95,60 +79,40 @@ export default function PortalLayout() {
               to="/admin"
               className="mt-4 inline-flex w-full items-center justify-between rounded-xl border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
-              {t("Admin console")}
+              {t('Admin console')}
               <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2} />
             </Link>
           )}
 
           <nav className="scrollbar-hide mt-4 flex gap-1 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible">
-            {portalNav
-              .filter((l) => !(source === "real" && l.mockOnly))
-              .map((l) => (
-                <NavLink
-                  key={l.to}
-                  to={l.to}
-                  end={l.end ?? false}
-                  className={({ isActive }) =>
-                    cn(
-                      "inline-flex min-h-[42px] items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm transition-colors",
-                      isActive
-                        ? "bg-secondary font-medium text-foreground"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                    )
-                  }
-                >
-                  {t(l.label)}
-                  {l.gate === "api" && !apiUnlocked && (
-                    <Lock
-                      className="h-3 w-3 opacity-60"
-                      strokeWidth={2}
-                      aria-label={t("Wholesale and up")}
-                    />
-                  )}
-                  {l.gate === "team" && !teamUnlocked && (
-                    <Lock
-                      className="h-3 w-3 opacity-60"
-                      strokeWidth={2}
-                      aria-label={t("Wholesale and up")}
-                    />
-                  )}
-                </NavLink>
-              ))}
+            {portalNav.filter((l) => !(source === 'real' && l.mockOnly)).map((l) => (
+              <NavLink
+                key={l.to}
+                to={l.to}
+                end={l.end ?? false}
+                className={({ isActive }) =>
+                  cn(
+                    'inline-flex min-h-[42px] items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm transition-colors',
+                    isActive ? 'bg-secondary font-medium text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                  )
+                }
+              >
+                {t(l.label)}
+                {l.gate === 'api' && !apiUnlocked && <Lock className="h-3 w-3 opacity-60" strokeWidth={2} aria-label={t('Wholesale and up')} />}
+                {l.gate === 'team' && !teamUnlocked && <Lock className="h-3 w-3 opacity-60" strokeWidth={2} aria-label={t('Wholesale and up')} />}
+              </NavLink>
+            ))}
           </nav>
 
           <div className="mt-5 border-t border-border pt-4">
-            {user && (
-              <p className="truncate px-3 pb-1.5 text-xs text-muted-foreground">
-                {t("Signed in as")} {user.email}
-              </p>
-            )}
+            {user && <p className="truncate px-3 pb-1.5 text-xs text-muted-foreground">{t('Signed in as')} {user.email}</p>}
             <button
               type="button"
               onClick={handleSignOut}
               className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <LogOut className="h-4 w-4" strokeWidth={2} />
-              {t("Sign out")}
+              {t('Sign out')}
             </button>
           </div>
         </aside>
