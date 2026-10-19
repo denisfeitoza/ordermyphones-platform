@@ -2,13 +2,14 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Check, MapPin, PackageCheck, Plus, ShoppingBag } from 'lucide-react';
+import { Check, MapPin, PackageCheck, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import { useAuth, useRealCart } from '@/store';
 import { supabase } from '@/lib/supabase';
 import { expandCartToOrderItems } from '@/lib/orderItems';
 import { listAddresses, createAddress, type AddressRow } from '@/data/addresses';
 import { useRealCatalog, buildDisplayName, type PricedRealListing } from '@/data/realCatalog';
 import { ShippingEstimate } from '@/components/store/ShippingEstimate';
+import { allocationValid } from '@/components/store/CartLineLocations';
 import { Button } from '@/components/ui/Button';
 import { formatUsd } from '@/lib/format';
 import { useI18n } from '@/i18n';
@@ -32,6 +33,11 @@ interface ShippingForm {
 function placeOrderError(t: (s: string) => string, message: string | undefined): string {
   const m = message ?? '';
   if (m.includes('no_price')) return t('One or more items are no longer priced for your tier. Remove them and try again.');
+  if (m.includes('partial_allocation')) return t('A warehouse split no longer adds up to the quantity. Fix it in the cart and try again.');
+  if (m.includes('bad_location')) return t('A warehouse you picked is no longer available. Choose another one in the cart.');
+  if (m.includes('bad_qty')) return t('One of the quantities is not valid. Check the cart and try again.');
+  if (m.includes('bad_variant')) return t('One of the items is no longer available. Remove it and try again.');
+  if (m.includes('not_authenticated')) return t('Your session expired. Sign in again to place the order.');
   if (m.includes('no_tier')) return t('Your account has no pricing tier yet. Contact us to finish setup.');
   if (m.includes('empty_order')) return t('Your cart is empty.');
   if (m.includes('customer_only')) return t('Only customer accounts can place orders.');
@@ -64,8 +70,8 @@ export function RealCheckout() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, profile, role, loading: authLoading } = useAuth();
-  const { lines, clear } = useRealCart();
-  const { items } = useRealCatalog(true);
+  const { lines, clear, remove, setOpen: openCart } = useRealCart();
+  const { items, pricesReady } = useRealCatalog(true);
 
   const [phase, setPhase] = useState<Phase>('review');
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -129,6 +135,12 @@ export function RealCheckout() {
     [lines, byVariant],
   );
   const liveSubtotalCents = resolved.reduce((s, l) => s + (l.lineTotalCents ?? 0), 0);
+  // Same rules as the cart drawer (audit 2026-10-18): every line priced and
+  // every warehouse split adding up to its quantity, or no order is placed —
+  // otherwise the summary would show a total the order does not match.
+  const unpricedLines = pricesReady ? resolved.filter((l) => l.price === null).length : 0;
+  const badSplitLines = resolved.filter((l) => !allocationValid(l)).length;
+  const canPlace = resolved.length > 0 && pricesReady && unpricedLines === 0 && badSplitLines === 0;
   const liveUnitCount = lines.reduce((s, l) => s + l.qty, 0);
   const subtotalCents = placedSummary?.subtotalCents ?? liveSubtotalCents;
   const unitCount = placedSummary?.units ?? liveUnitCount;
@@ -166,6 +178,7 @@ export function RealCheckout() {
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    if (!canPlace) return;
 
     // Resolve the ship-to from the chosen saved address or the typed form. The
     // order snapshot stays {street,city,state,zip} — place_order and the admin
@@ -316,7 +329,19 @@ export function RealCheckout() {
                 <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">{error}</div>
               )}
 
-              <Button type="submit" size="lg" className="w-full" disabled={phase === 'placing'}>
+              {!pricesReady && resolved.length > 0 && <p className="text-sm text-muted-foreground">{t('Loading your prices…')}</p>}
+              {unpricedLines > 0 && (
+                <p className="text-sm text-destructive">{t('Some items are not priced for your tier. Remove them from the summary to continue.')}</p>
+              )}
+              {badSplitLines > 0 && (
+                <p className="text-sm text-destructive">
+                  {t('A warehouse split does not add up to its quantity.')}{' '}
+                  <button type="button" onClick={() => openCart(true)} className="underline">
+                    {t('Fix it in the cart')}
+                  </button>
+                </p>
+              )}
+              <Button type="submit" size="lg" className="w-full" disabled={phase === 'placing' || !canPlace}>
                 {phase === 'placing' ? t('Placing your order…') : t('Place order')}
               </Button>
             </form>
@@ -371,18 +396,34 @@ export function RealCheckout() {
                   <li key={l.variantId} className="flex items-center justify-between gap-2 py-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{l.item ? buildDisplayName(l.item) : t('Item')}</p>
-                      <p className="text-xs text-muted-foreground">×{l.qty}</p>
+                      <p className="text-xs text-muted-foreground">
+                        ×{l.qty}
+                        {pricesReady && l.price === null && <span className="text-destructive"> · {t('Not priced for your tier')}</span>}
+                        {!allocationValid(l) && <span className="text-destructive"> · {t('Split does not add up')}</span>}
+                      </p>
                     </div>
-                    <span className="font-mono text-sm font-medium tabular-nums">
-                      {l.lineTotalCents === null ? '—' : formatUsd(l.lineTotalCents)}
-                    </span>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <span className="font-mono text-sm font-medium tabular-nums">
+                        {l.lineTotalCents === null ? '—' : formatUsd(l.lineTotalCents)}
+                      </span>
+                      {phase !== 'done' && (
+                        <button
+                          type="button"
+                          onClick={() => remove(l.variantId)}
+                          className="grid h-11 w-11 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-destructive"
+                          aria-label={t('Remove')}
+                        >
+                          <Trash2 className="h-4 w-4" strokeWidth={2} />
+                        </button>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>
             )}
 
             <div className="mt-3 space-y-2 border-t border-border pt-4 text-sm">
-              <ShippingEstimate zip={form.zip} state={form.state} city={form.city} units={unitCount} />
+              <ShippingEstimate zip={(selectedAddress ?? form).zip} state={(selectedAddress ?? form).state} city={(selectedAddress ?? form).city} units={unitCount} />
               <div className="flex items-center justify-between border-t border-border pt-3">
                 <span className="font-medium">{t('Subtotal')}</span>
                 <span className="font-mono text-xl font-semibold tabular-nums">{formatUsd(subtotalCents)}</span>

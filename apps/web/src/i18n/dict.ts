@@ -1417,6 +1417,16 @@ export const PT: Record<string, string> = {
   'Loading price': 'Carregando preço',
   'Price unavailable': 'Preço indisponível',
   'Could not load your prices. Products are still listed, but you cannot add them to the cart until prices load.': 'Não foi possível carregar seus preços. Os produtos continuam listados, mas só dá para adicionar ao carrinho quando os preços carregarem.',
+  'A warehouse split no longer adds up to the quantity. Fix it in the cart and try again.': 'A divisão por armazém não soma mais a quantidade. Corrija no carrinho e tente de novo.',
+  'A warehouse you picked is no longer available. Choose another one in the cart.': 'Um armazém que você escolheu não está mais disponível. Escolha outro no carrinho.',
+  'One of the quantities is not valid. Check the cart and try again.': 'Uma das quantidades não é válida. Confira o carrinho e tente de novo.',
+  'One of the items is no longer available. Remove it and try again.': 'Um dos itens não está mais disponível. Remova e tente de novo.',
+  'Your session expired. Sign in again to place the order.': 'Sua sessão expirou. Entre de novo para fazer o pedido.',
+  'Loading your prices…': 'Carregando seus preços…',
+  'Some items are not priced for your tier. Remove them from the summary to continue.': 'Alguns itens não têm preço para o seu tier. Remova-os do resumo para continuar.',
+  'A warehouse split does not add up to its quantity.': 'Uma divisão por armazém não soma a quantidade.',
+  'Fix it in the cart': 'Corrigir no carrinho',
+  'Split does not add up': 'Divisão não fecha',
 };
 
 export const ES: Record<string, string> = {
@@ -2834,4 +2844,14 @@ export const ES: Record<string, string> = {
   'Loading price': 'Cargando precio',
   'Price unavailable': 'Precio no disponible',
   'Could not load your prices. Products are still listed, but you cannot add them to the cart until prices load.': 'No se pudieron cargar tus precios. Los productos siguen listados, pero no puedes añadirlos al carrito hasta que carguen los precios.',
+  'A warehouse split no longer adds up to the quantity. Fix it in the cart and try again.': 'La división por almacén ya no suma la cantidad. Corrígela en el carrito e inténtalo de nuevo.',
+  'A warehouse you picked is no longer available. Choose another one in the cart.': 'Un almacén que elegiste ya no está disponible. Elige otro en el carrito.',
+  'One of the quantities is not valid. Check the cart and try again.': 'Una de las cantidades no es válida. Revisa el carrito e inténtalo de nuevo.',
+  'One of the items is no longer available. Remove it and try again.': 'Uno de los artículos ya no está disponible. Quítalo e inténtalo de nuevo.',
+  'Your session expired. Sign in again to place the order.': 'Tu sesión expiró. Vuelve a entrar para hacer el pedido.',
+  'Loading your prices…': 'Cargando tus precios…',
+  'Some items are not priced for your tier. Remove them from the summary to continue.': 'Algunos artículos no tienen precio para tu nivel. Quítalos del resumen para continuar.',
+  'A warehouse split does not add up to its quantity.': 'Una división por almacén no suma la cantidad.',
+  'Fix it in the cart': 'Corregir en el carrito',
+  'Split does not add up': 'La división no cuadra',
 };
