@@ -1,63 +1,67 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppProviders } from '@/store';
 import TestEnvBadge from '@/components/layout/TestEnvBadge';
 import RootLayout from '@/components/layout/RootLayout';
-import PortalLayout from '@/components/layout/PortalLayout';
-import AdminLayout from '@/components/layout/AdminLayout';
 import HomePage from '@/routes/HomePage';
 import CatalogPage from '@/routes/CatalogPage';
-import ProductPage from '@/routes/ProductPage';
 import ModelPage from '@/routes/ModelPage';
-import CartPage from '@/routes/CartPage';
-import CheckoutPage from '@/routes/CheckoutPage';
-import ContactPage from '@/routes/ContactPage';
-import RequestAccessPage from '@/routes/RequestAccessPage';
-import HelpPage from '@/routes/HelpPage';
 import NotFoundPage from '@/routes/NotFoundPage';
-import OpsPage from '@/routes/OpsPage';
-import SignInPage from '@/routes/auth/SignInPage';
-import SignUpPage from '@/routes/auth/SignUpPage';
-import ResetPage from '@/routes/auth/ResetPage';
-import CallbackPage from '@/routes/auth/CallbackPage';
-import InvitePage from '@/routes/auth/InvitePage';
 import { RequireAuth } from '@/components/auth/RequireAuth';
-import OverviewPage from '@/routes/portal/OverviewPage';
-import OrdersPage from '@/routes/portal/OrdersPage';
-import OrderDetailPage from '@/routes/portal/OrderDetailPage';
-import WishlistPage from '@/routes/portal/WishlistPage';
-import TierPage from '@/routes/portal/TierPage';
-import InventoryApiPage from '@/routes/portal/InventoryApiPage';
-import AddressesPage from '@/routes/portal/AddressesPage';
-import TeamPage from '@/routes/portal/TeamPage';
-import PaymentMethodsPage from '@/routes/portal/PaymentMethodsPage';
-import SettingsPage from '@/routes/portal/SettingsPage';
-import DashboardPage from '@/routes/admin/DashboardPage';
-import AdminCustomersPage from '@/routes/admin/CustomersPage';
-import AdminOrdersPage from '@/routes/admin/OrdersPage';
-import ReconciliationPage from '@/routes/admin/ReconciliationPage';
-import InventoryPage from '@/routes/admin/InventoryPage';
-import ImportPage from '@/routes/admin/ImportPage';
-import PricingWorkbenchPage from '@/routes/admin/PricingWorkbenchPage';
-import ManualOrderPage from '@/routes/admin/ManualOrderPage';
-import ManualPage from '@/routes/admin/ManualPage';
-import PricingFlagsPage from '@/routes/admin/PricingFlagsPage';
-import ApiLogsPage from '@/routes/admin/ApiLogsPage';
-import AiBotsPage from '@/routes/admin/AiBotsPage';
-import ReportsPage from '@/routes/admin/ReportsPage';
 import { SectionTabs, type SectionTab } from '@/components/admin/SectionTabs';
-import CatalogTab from '@/routes/admin/config/CatalogTab';
-import ProductsTab from '@/routes/admin/config/ProductsTab';
-import TiersTab from '@/routes/admin/config/TiersTab';
-import PricingTab from '@/routes/admin/config/PricingTab';
-import QuantityRulesTab from '@/routes/admin/config/QuantityRulesTab';
-import LocationsTab from '@/routes/admin/config/LocationsTab';
-import GradesTab from '@/routes/admin/config/GradesTab';
-import ImportDictTab from '@/routes/admin/config/ImportDictTab';
-import UsersTab from '@/routes/admin/config/UsersTab';
-import EnforcementTab from '@/routes/admin/config/EnforcementTab';
-import HomeContentTab from '@/routes/admin/config/HomeContentTab';
-import AuditTab from '@/routes/admin/config/AuditTab';
-import ViewAsPage from '@/routes/admin/ViewAsPage';
+
+// Everything but the storefront entry pages loads on demand: admin, portal,
+// auth and the manual are their own chunks, so a buyer never downloads them.
+const PortalLayout = lazy(() => import('@/components/layout/PortalLayout'));
+const AdminLayout = lazy(() => import('@/components/layout/AdminLayout'));
+const ProductPage = lazy(() => import('@/routes/ProductPage'));
+const CartPage = lazy(() => import('@/routes/CartPage'));
+const CheckoutPage = lazy(() => import('@/routes/CheckoutPage'));
+const ContactPage = lazy(() => import('@/routes/ContactPage'));
+const RequestAccessPage = lazy(() => import('@/routes/RequestAccessPage'));
+const HelpPage = lazy(() => import('@/routes/HelpPage'));
+const OpsPage = lazy(() => import('@/routes/OpsPage'));
+const SignInPage = lazy(() => import('@/routes/auth/SignInPage'));
+const SignUpPage = lazy(() => import('@/routes/auth/SignUpPage'));
+const ResetPage = lazy(() => import('@/routes/auth/ResetPage'));
+const CallbackPage = lazy(() => import('@/routes/auth/CallbackPage'));
+const InvitePage = lazy(() => import('@/routes/auth/InvitePage'));
+const OverviewPage = lazy(() => import('@/routes/portal/OverviewPage'));
+const OrdersPage = lazy(() => import('@/routes/portal/OrdersPage'));
+const OrderDetailPage = lazy(() => import('@/routes/portal/OrderDetailPage'));
+const WishlistPage = lazy(() => import('@/routes/portal/WishlistPage'));
+const TierPage = lazy(() => import('@/routes/portal/TierPage'));
+const InventoryApiPage = lazy(() => import('@/routes/portal/InventoryApiPage'));
+const AddressesPage = lazy(() => import('@/routes/portal/AddressesPage'));
+const TeamPage = lazy(() => import('@/routes/portal/TeamPage'));
+const PaymentMethodsPage = lazy(() => import('@/routes/portal/PaymentMethodsPage'));
+const SettingsPage = lazy(() => import('@/routes/portal/SettingsPage'));
+const DashboardPage = lazy(() => import('@/routes/admin/DashboardPage'));
+const AdminCustomersPage = lazy(() => import('@/routes/admin/CustomersPage'));
+const AdminOrdersPage = lazy(() => import('@/routes/admin/OrdersPage'));
+const ReconciliationPage = lazy(() => import('@/routes/admin/ReconciliationPage'));
+const InventoryPage = lazy(() => import('@/routes/admin/InventoryPage'));
+const ImportPage = lazy(() => import('@/routes/admin/ImportPage'));
+const PricingWorkbenchPage = lazy(() => import('@/routes/admin/PricingWorkbenchPage'));
+const ManualOrderPage = lazy(() => import('@/routes/admin/ManualOrderPage'));
+const ManualPage = lazy(() => import('@/routes/admin/ManualPage'));
+const PricingFlagsPage = lazy(() => import('@/routes/admin/PricingFlagsPage'));
+const ApiLogsPage = lazy(() => import('@/routes/admin/ApiLogsPage'));
+const AiBotsPage = lazy(() => import('@/routes/admin/AiBotsPage'));
+const ReportsPage = lazy(() => import('@/routes/admin/ReportsPage'));
+const CatalogTab = lazy(() => import('@/routes/admin/config/CatalogTab'));
+const ProductsTab = lazy(() => import('@/routes/admin/config/ProductsTab'));
+const TiersTab = lazy(() => import('@/routes/admin/config/TiersTab'));
+const PricingTab = lazy(() => import('@/routes/admin/config/PricingTab'));
+const QuantityRulesTab = lazy(() => import('@/routes/admin/config/QuantityRulesTab'));
+const LocationsTab = lazy(() => import('@/routes/admin/config/LocationsTab'));
+const GradesTab = lazy(() => import('@/routes/admin/config/GradesTab'));
+const ImportDictTab = lazy(() => import('@/routes/admin/config/ImportDictTab'));
+const UsersTab = lazy(() => import('@/routes/admin/config/UsersTab'));
+const EnforcementTab = lazy(() => import('@/routes/admin/config/EnforcementTab'));
+const HomeContentTab = lazy(() => import('@/routes/admin/config/HomeContentTab'));
+const AuditTab = lazy(() => import('@/routes/admin/config/AuditTab'));
+const ViewAsPage = lazy(() => import('@/routes/admin/ViewAsPage'));
 
 // Co-located admin sub-tabs (IA rethink): each area owns its configuration.
 // Index tabs (end:true) map to a page that already renders its own AdminHeading,
@@ -96,6 +100,7 @@ export default function App() {
   return (
     <AppProviders>
       <TestEnvBadge />
+      <Suspense fallback={<RouteFallback />}>
       <Routes>
         {/* Internal ops console — admin/staff only (leak audit Finding 2). Not a
             customer-facing showcase; the footer link was removed to match. */}
@@ -247,6 +252,16 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
+      </Suspense>
     </AppProviders>
+  );
+}
+
+/** Shown for the instant a lazy page chunk is loading. */
+function RouteFallback() {
+  return (
+    <div className="grid min-h-[40vh] place-items-center" role="status" aria-live="polite">
+      <span className="h-6 w-6 animate-spin rounded-full border-2 border-muted border-t-foreground" />
+    </div>
   );
 }

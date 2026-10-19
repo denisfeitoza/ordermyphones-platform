@@ -168,12 +168,17 @@ export function useTierPriceQuery(enabled = true) {
     queryKey: previewTier ? ['tier-prices', previewTier] : ['my-prices'],
     queryFn: previewTier ? () => fetchTierPrices(previewTier) : fetchMyPrices,
     enabled: enabled && (previewTier ? true : signedIn),
+    staleTime: 3 * 60_000,
+    gcTime: 15 * 60_000,
   });
   return { query, previewTier, signedIn };
 }
 
 export function useRealCatalog(enabled = true): UseRealCatalogResult {
-  const listingQuery = useQuery({ queryKey: ['catalog-listing'], queryFn: fetchCatalogListing, enabled });
+  // The listing is ~1.4 MB across 6 pages; keep it for a few minutes so moving
+  // between catalog, model pages and checkout does not download it again.
+  // Imports and repricing invalidate it explicitly.
+  const listingQuery = useQuery({ queryKey: ['catalog-listing'], queryFn: fetchCatalogListing, enabled, staleTime: 3 * 60_000, gcTime: 15 * 60_000 });
   const { query: priceQuery, previewTier, signedIn } = useTierPriceQuery(enabled);
 
   const prices = priceQuery.data;
