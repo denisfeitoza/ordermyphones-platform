@@ -23,18 +23,19 @@ interface ResolvedLine {
 
 /**
  * Real-mode cart drawer. Always mounted (like CartDrawer) but only fetches the
- * catalog when catalog_source is 'real' — `useRealCatalog(isReal)` gates BOTH
- * queries so mock mode pays no round trip. The listing query shares React
- * Query's 'catalog-listing' cache with the catalog page, so opening the drawer
- * in real mode adds no extra network. Prices are resolved here from the
- * server-tier-priced feed, never carried in the cart itself.
+ * catalog while it is OPEN in real mode — `useRealCatalog(isReal && open)`
+ * gates BOTH queries, so mock mode and pages that never open the cart (portal
+ * orders, account) skip the ~1.4 MB listing download. The listing query shares
+ * React Query's 'catalog-listing' cache with the catalog page, so opening the
+ * drawer after browsing adds no extra network. Prices are resolved here from
+ * the server-tier-priced feed, never carried in the cart itself.
  */
 export function RealCartDrawer() {
   const { t } = useI18n();
   const source = useCatalogSource();
   const isReal = source === 'real';
   const { open, setOpen, lines, unitCount, setQty, setAllocations, remove } = useRealCart();
-  const { items } = useRealCatalog(isReal);
+  const { items, isLoading } = useRealCatalog(isReal && open);
   const locationSelection = useOrderLocationSelection();
   const navigate = useNavigate();
 
@@ -134,7 +135,7 @@ export function RealCartDrawer() {
                 <ul className="flex-1 divide-y divide-border overflow-y-auto px-5">
                   {resolved.map((l) => {
                     const image = l.item ? listingImage(l.item) : null;
-                    const name = l.item ? buildDisplayName(l.item) : t('Item unavailable');
+                    const name = l.item ? buildDisplayName(l.item) : isLoading ? t('Loading…') : t('Item unavailable');
                     return (
                       <li key={l.variantId} className="flex gap-3 py-4">
                         <div className="grid h-20 w-20 shrink-0 place-items-center rounded-xl bg-muted/40">
