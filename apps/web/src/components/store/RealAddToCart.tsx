@@ -4,6 +4,7 @@ import { useAuth, useRealCart } from '@/store';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
+import { QtyInput, clampQty } from './QtyInput';
 
 export type AddToCartLayout = 'button' | 'stepper' | 'row';
 
@@ -72,15 +73,13 @@ export function RealAddToCart({
           <button type="button" onClick={() => setQty((n) => Math.max(1, n - 1))} className="grid h-9 w-9 place-items-center rounded-l-full hover:bg-muted" aria-label={t('Decrease')}>
             <Minus className="h-3.5 w-3.5" strokeWidth={2} />
           </button>
-          <input
-            type="number"
-            min={1}
+          <QtyInput
             value={qty}
-            onChange={(e) => setQty(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
-            className="h-9 w-11 border-x border-border bg-transparent text-center font-mono text-sm tabular-nums outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+            onChange={setQty}
+            className="h-9 w-14 border-x border-border bg-transparent text-center font-mono text-sm tabular-nums outline-none"
             aria-label={t('Quantity')}
           />
-          <button type="button" onClick={() => setQty((n) => n + 1)} className="grid h-9 w-9 place-items-center rounded-r-full hover:bg-muted" aria-label={t('Increase')}>
+          <button type="button" onClick={() => setQty((n) => clampQty(n + 1))} className="grid h-9 w-9 place-items-center rounded-r-full hover:bg-muted" aria-label={t('Increase')}>
             <Plus className="h-3.5 w-3.5" strokeWidth={2} />
           </button>
         </div>
@@ -107,17 +106,15 @@ export function RealAddToCart({
                   <button type="button" onClick={() => setQty((n) => Math.max(1, n - 1))} className="grid h-9 w-9 shrink-0 place-items-center rounded-l-full hover:bg-muted" aria-label={t('Decrease')}>
                     <Minus className="h-3.5 w-3.5" strokeWidth={2} />
                   </button>
-                  <input
-                    type="number"
-                    min={1}
+                  <QtyInput
                     autoFocus
                     value={qty}
-                    onChange={(e) => setQty(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
+                    onChange={setQty}
                     onKeyDown={(e) => e.key === 'Enter' && confirmFromPopover()}
-                    className="h-9 w-full min-w-0 border-x border-border bg-transparent text-center font-mono text-sm tabular-nums outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+                    className="h-9 w-full min-w-0 border-x border-border bg-transparent text-center font-mono text-sm tabular-nums outline-none"
                     aria-label={t('Quantity')}
                   />
-                  <button type="button" onClick={() => setQty((n) => n + 1)} className="grid h-9 w-9 shrink-0 place-items-center rounded-r-full hover:bg-muted" aria-label={t('Increase')}>
+                  <button type="button" onClick={() => setQty((n) => clampQty(n + 1))} className="grid h-9 w-9 shrink-0 place-items-center rounded-r-full hover:bg-muted" aria-label={t('Increase')}>
                     <Plus className="h-3.5 w-3.5" strokeWidth={2} />
                   </button>
                 </div>
@@ -143,17 +140,15 @@ export function RealAddToCart({
         >
           <Minus className="h-4 w-4" strokeWidth={2} />
         </button>
-        <input
-          type="number"
-          min={1}
+        <QtyInput
           value={qty}
-          onChange={(e) => setQty(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
-          className="h-11 w-14 border-x border-border bg-transparent text-center font-mono text-sm tabular-nums outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+          onChange={setQty}
+          className="h-11 w-14 border-x border-border bg-transparent text-center font-mono text-sm tabular-nums outline-none"
           aria-label={t('Quantity')}
         />
         <button
           type="button"
-          onClick={() => setQty((n) => n + 1)}
+          onClick={() => setQty((n) => clampQty(n + 1))}
           className="grid h-11 w-11 place-items-center rounded-r-full hover:bg-muted"
           aria-label={t('Increase')}
         >

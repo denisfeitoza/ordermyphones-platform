@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { MapPin, Wand2 } from 'lucide-react';
 import type { PricedRealListing } from '@/data/realCatalog';
 import type { RealCartAllocation } from '@/store/realCart';
-import { formatInt } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n';
+import { useStockLabel } from '@/lib/stockDisplay';
 
 /**
  * Per-location panel for one cart line (M2-P3).
@@ -40,6 +40,7 @@ export function CartLineLocations({
   enabled: boolean;
   onChange: (allocations: RealCartAllocation[] | undefined) => void;
 }) {
+  const stock = useStockLabel();
   const { t } = useI18n();
   const locations = item.locations;
   const multi = locations.length > 1;
@@ -82,7 +83,7 @@ export function CartLineLocations({
         <MapPin className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
         {locations.map((loc, i) => (
           <span key={loc.id}>
-            {loc.name} <span className="font-mono tabular-nums text-foreground">{formatInt(loc.qty)}</span>
+            {loc.name} <span className="font-mono tabular-nums text-foreground">{stock(loc.qty)}</span>
             {i < locations.length - 1 && <span className="text-muted-foreground/50"> · </span>}
           </span>
         ))}
@@ -106,7 +107,7 @@ export function CartLineLocations({
                 {locations.map((loc) => (
                   <div key={loc.id} className="flex items-center justify-between gap-2">
                     <span className="min-w-0 truncate">
-                      {loc.name} <span className="text-muted-foreground">({formatInt(loc.qty)})</span>
+                      {loc.name} <span className="text-muted-foreground">({stock(loc.qty)})</span>
                     </span>
                     <input
                       type="number"

@@ -13,6 +13,7 @@ import { RealProductGrid } from './RealProductGrid';
 import { PulseDot } from './SyncHeartbeat';
 import { formatInt } from '@/lib/format';
 import { useI18n } from '@/i18n';
+import { useStockLabel } from '@/lib/stockDisplay';
 
 function gradeTone(grade: PricedRealListing['ctiaGrade']): 'success' | 'dark' | 'neutral' {
   if (grade === 'NEW') return 'success';
@@ -48,6 +49,7 @@ function ZoomImage({ src, alt, sku }: { src: string; alt: string; sku: string })
 }
 
 export function RealProductDetail({ item, related }: { item: PricedRealListing; related: PricedRealListing[] }) {
+  const stock = useStockLabel();
   const { t } = useI18n();
   const { data: home } = useHomeContent();
   const trust = home?.benefits.enabled ? home.benefits.items.slice(0, 3) : [];
@@ -128,7 +130,7 @@ export function RealProductDetail({ item, related }: { item: PricedRealListing; 
                       <MapPin className="h-3.5 w-3.5" strokeWidth={2} />
                       {loc.name}
                     </span>
-                    <span className="font-mono font-medium tabular-nums">{formatInt(loc.qty)}</span>
+                    <span className="font-mono font-medium tabular-nums">{stock(loc.qty)}</span>
                   </li>
                 ))}
               </ul>
@@ -186,7 +188,7 @@ export function RealProductDetail({ item, related }: { item: PricedRealListing; 
                       <td className="px-4 py-3"><Badge tone={gradeTone(ci.ctiaGrade)}>{t(ci.ctiaLabel)}</Badge></td>
                       <td className="px-4 py-3 text-muted-foreground">{carrierLabel(ci.carrier)}</td>
                       <td className="px-4 py-3 text-muted-foreground">{ci.lockStatus === 'unlocked' ? t('Unlocked') : t('Locked')}</td>
-                      <td className="px-4 py-3 font-mono tabular-nums text-muted-foreground">{formatInt(ci.totalQty)}</td>
+                      <td className="px-4 py-3 font-mono tabular-nums text-muted-foreground">{stock(ci.totalQty)}</td>
                       <td className="px-4 py-3 text-right"><RealPriceTag priceCents={ci.priceCents} /></td>
                     </tr>
                   );

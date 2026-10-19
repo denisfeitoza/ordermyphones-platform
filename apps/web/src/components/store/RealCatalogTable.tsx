@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom';
 import { buildDisplayName, carrierLabel, type PricedRealListing } from '@/data/realCatalog';
 import { Badge } from '@/components/ui/Badge';
-import { formatInt } from '@/lib/format';
 import { useAuth } from '@/store/auth';
 import { useI18n } from '@/i18n';
 import { RealPriceTag } from './RealPriceTag';
 import { RealAddToCart, canOrder } from './RealAddToCart';
 import { gradeTone } from './RealProductCard';
+import { useStockLabel } from '@/lib/stockDisplay';
 
 /**
  * Dense table/list view for the real catalog (M2-P2) — the order-building
@@ -31,6 +31,7 @@ function lockLabel(i: PricedRealListing): string {
 }
 
 function Row({ item }: { item: PricedRealListing }) {
+  const stock = useStockLabel();
   const { t } = useI18n();
   const { signedIn, role } = useAuth();
   const soldOut = item.totalQty === 0;
@@ -54,7 +55,7 @@ function Row({ item }: { item: PricedRealListing }) {
           <Badge tone={gradeTone(item.ctiaGrade)}>{t(item.ctiaLabel)}</Badge>
         </div>
         <div className="text-right font-mono tabular-nums">
-          {soldOut ? <span className="text-muted-foreground">—</span> : formatInt(item.totalQty)}
+          {soldOut ? <span className="text-muted-foreground">—</span> : stock(item.totalQty)}
         </div>
         <div className="text-right">
           <RealPriceTag priceCents={item.priceCents} size="sm" />
@@ -89,7 +90,7 @@ function Row({ item }: { item: PricedRealListing }) {
                 t('Restocking soon')
               ) : (
                 <>
-                  <span className="font-mono font-semibold tabular-nums text-foreground">{formatInt(item.totalQty)}</span> {t('in stock')}
+                  <span className="font-mono font-semibold tabular-nums text-foreground">{stock(item.totalQty)}</span> {t('in stock')}
                 </>
               )}
               {' · '}

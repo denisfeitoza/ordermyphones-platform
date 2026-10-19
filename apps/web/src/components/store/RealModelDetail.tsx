@@ -9,6 +9,7 @@ import { allocateQty, allocationTotal, rankOffers } from '@/lib/bestOffer';
 import { resolveProductImage } from '@/lib/productImage';
 import { formatInt, formatUsd } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { QtyInput, clampQty } from './QtyInput';
 import { useAuth, useRealCart } from '@/store';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -17,6 +18,7 @@ import { canOrder } from './RealAddToCart';
 import { gradeTone } from './RealProductCard';
 import { PulseDot } from './SyncHeartbeat';
 import { useI18n } from '@/i18n';
+import { useStockLabel } from '@/lib/stockDisplay';
 
 type Axis = 'capacity' | 'condition' | 'network' | 'color';
 type Selection = Record<Axis, string | null>;
@@ -69,6 +71,7 @@ function offerSummary(o: PricedRealListing, networkLabel: (v: string) => string)
  * buyer who only cares about price gets the cheapest in-stock unit straight away.
  */
 export function RealModelDetail({ group }: { group: ModelGroup }) {
+  const stock = useStockLabel();
   const { t } = useI18n();
   const [params] = useSearchParams();
   const { signedIn, role } = useAuth();
@@ -150,7 +153,7 @@ export function RealModelDetail({ group }: { group: ModelGroup }) {
           <span className="text-sm font-medium text-muted-foreground">{group.make}</span>
           <h1 className="mt-1.5 font-display text-3xl font-semibold tracking-tight md:text-4xl">{group.model}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            <span className="font-mono font-semibold text-foreground">{formatInt(group.totalQty)}</span> {t('in stock')} ·{' '}
+            <span className="font-mono font-semibold text-foreground">{stock(group.totalQty)}</span> {t('in stock')} ·{' '}
             <span className="font-mono">{formatInt(group.offers.length)}</span> {t('options')}
             {group.locations.length > 0 && <> · {group.locations.join(' · ')}</>}
           </p>
@@ -220,7 +223,7 @@ export function RealModelDetail({ group }: { group: ModelGroup }) {
                             {l.offer.locations.map((loc) => loc.name).join(' · ') || t('Restocking soon')}
                           </span>
                           <span>
-                            <span className="font-mono">{formatInt(l.offer.totalQty)}</span> {t('in stock')}
+                            <span className="font-mono">{stock(l.offer.totalQty)}</span> {t('in stock')}
                           </span>
                           <Link to={`/p/${l.offer.sku}`} className="font-mono hover:text-brand">{l.offer.sku}</Link>
                         </p>
@@ -258,15 +261,13 @@ export function RealModelDetail({ group }: { group: ModelGroup }) {
                       <button type="button" onClick={() => setQty((n) => Math.max(1, n - 1))} className="grid h-11 w-11 place-items-center rounded-l-full hover:bg-muted" aria-label={t('Decrease')}>
                         <Minus className="h-4 w-4" strokeWidth={2} />
                       </button>
-                      <input
-                        type="number"
-                        min={1}
+                      <QtyInput
                         value={qty}
-                        onChange={(e) => setQty(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
-                        className="h-11 w-16 border-x border-border bg-transparent text-center font-mono text-sm tabular-nums outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+                        onChange={setQty}
+                        className="h-11 w-16 border-x border-border bg-transparent text-center font-mono text-sm tabular-nums outline-none"
                         aria-label={t('Quantity')}
                       />
-                      <button type="button" onClick={() => setQty((n) => n + 1)} className="grid h-11 w-11 place-items-center rounded-r-full hover:bg-muted" aria-label={t('Increase')}>
+                      <button type="button" onClick={() => setQty((n) => clampQty(n + 1))} className="grid h-11 w-11 place-items-center rounded-r-full hover:bg-muted" aria-label={t('Increase')}>
                         <Plus className="h-4 w-4" strokeWidth={2} />
                       </button>
                     </div>
@@ -330,7 +331,7 @@ export function RealModelDetail({ group }: { group: ModelGroup }) {
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center gap-1.5 font-mono tabular-nums text-muted-foreground">
                         <PulseDot status={o.totalQty > 0 ? 'online' : 'degraded'} />
-                        {formatInt(o.totalQty)}
+                        {stock(o.totalQty)}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right"><RealPriceTag priceCents={o.priceCents} size="sm" /></td>

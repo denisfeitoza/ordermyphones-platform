@@ -70,4 +70,12 @@ describe('allocateQty', () => {
   it('reports an unknown total when a line is unpriced', () => {
     expect(allocationTotal(allocateQty([offer('N', null, 5)], 2))).toBeNull();
   });
+
+  it('stays on priced offers when the quantity exceeds priced stock', () => {
+    const priced = offer('P', 100, 2);
+    const unpriced = offer('U', null, 50);
+    const lines = allocateQty([priced, unpriced], 5);
+    expect(lines.map((l) => [l.offer.sku, l.qty])).toEqual([['P', 5]]);
+    expect(allocationTotal(lines)).toBe(500);
+  });
 });

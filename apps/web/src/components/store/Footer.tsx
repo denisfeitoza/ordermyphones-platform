@@ -24,8 +24,8 @@ const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
   {
     title: 'Business',
     links: [
-      { label: 'Bulk orders', to: '/portal/wishlist' },
-      { label: 'Become a reseller', to: '/contact' },
+      { label: 'Bulk orders', to: '/catalog' },
+      { label: 'Become a reseller', to: '/request-access' },
       { label: 'Your orders', to: '/portal/orders' },
     ],
   },
@@ -40,11 +40,6 @@ const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
   },
 ];
 
-const SOCIALS: { label: string; path: string }[] = [
-  { label: 'X', path: 'M18.9 2H22l-7 8 8.2 12h-6.4l-5-7-5.7 7H2l7.5-8.6L1.6 2H8l4.5 6.4L18.9 2Z' },
-  { label: 'Instagram', path: 'M12 7.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Zm0 2a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM17 6.3a1 1 0 1 0 0 2 1 1 0 0 0 0-2ZM7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4Zm0 2a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H7Z' },
-  { label: 'LinkedIn', path: 'M6.94 5a1.94 1.94 0 1 1-3.88 0 1.94 1.94 0 0 1 3.88 0ZM3.3 8.4h3.3V21H3.3V8.4Zm5.6 0h3.16v1.72h.05c.44-.83 1.5-1.72 3.1-1.72 3.32 0 3.93 2.18 3.93 5.02V21h-3.3v-5.9c0-1.4-.02-3.22-1.96-3.22-1.96 0-2.26 1.53-2.26 3.11V21H8.9V8.4Z' },
-];
 
 function FooterColumn({ title, links }: { title: string; links: { label: string; to: string }[] }) {
   const { t } = useI18n();
@@ -136,20 +131,6 @@ export function Footer() {
             <p className="mt-4 max-w-xs text-sm text-background/55">
               {t('U.S. mobile devices for consumers, retailers, and wholesale. Real-time inventory, tier-based pricing.')}
             </p>
-            <div className="mt-5 flex gap-2">
-              {SOCIALS.map((s) => (
-                <a
-                  key={s.label}
-                  href="#"
-                  aria-label={s.label}
-                  className="grid h-9 w-9 place-items-center rounded-full ring-1 ring-white/15 transition-colors hover:bg-white/10"
-                >
-                  <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden>
-                    <path d={s.path} />
-                  </svg>
-                </a>
-              ))}
-            </div>
           </div>
           {COLUMNS.map((c) => (
             <FooterColumn key={c.title} title={c.title} links={c.links} />

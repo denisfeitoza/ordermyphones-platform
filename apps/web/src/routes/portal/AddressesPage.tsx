@@ -37,6 +37,7 @@ export default function AddressesPage() {
     },
   });
   const remove = useMutation({ mutationFn: (id: string) => deleteAddress(id), onSuccess: invalidate });
+  const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const makeDefault = useMutation({ mutationFn: (id: string) => setDefaultAddress(id), onSuccess: invalidate });
 
   const editRow = editing?.id ? addresses.find((a) => a.id === editing.id) : undefined;
@@ -140,11 +141,28 @@ export default function AddressesPage() {
                   <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
                   {t('Edit')}
                 </button>
-                <button type="button" onClick={() => remove.mutate(a.id)} disabled={remove.isPending} className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-destructive">
-                  <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
-                  {t('Remove')}
-                </button>
+                {confirmRemove === a.id ? (
+                  <span className="inline-flex items-center gap-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => remove.mutate(a.id, { onSuccess: () => setConfirmRemove(null) })}
+                      disabled={remove.isPending}
+                      className="min-h-11 font-medium text-destructive hover:underline sm:min-h-0"
+                    >
+                      {t('Yes, remove')}
+                    </button>
+                    <button type="button" onClick={() => setConfirmRemove(null)} className="min-h-11 text-muted-foreground hover:text-foreground sm:min-h-0">
+                      {t('Cancel')}
+                    </button>
+                  </span>
+                ) : (
+                  <button type="button" onClick={() => setConfirmRemove(a.id)} disabled={remove.isPending} className="inline-flex min-h-11 items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-destructive sm:min-h-0">
+                    <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
+                    {t('Remove')}
+                  </button>
+                )}
               </div>
+              {remove.isError && confirmRemove === a.id && <p className="mt-2 text-xs text-destructive">{t('Could not remove this address. Try again.')}</p>}
             </div>
           ))}
         </div>

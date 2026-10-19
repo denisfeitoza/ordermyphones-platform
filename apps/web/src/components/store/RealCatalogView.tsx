@@ -17,7 +17,11 @@ const VIEW_KEY = 'omp_catalog_view';
 
 function readView(): CatalogView {
   if (typeof window === 'undefined') return 'grid';
-  return window.localStorage.getItem(VIEW_KEY) === 'table' ? 'table' : 'grid';
+  try {
+    return window.localStorage.getItem(VIEW_KEY) === 'table' ? 'table' : 'grid';
+  } catch {
+    return 'grid'; // storage blocked (private mode, policy)
+  }
 }
 import {
   computeFacetedCatalog,
@@ -96,7 +100,11 @@ export function RealCatalogView() {
 
   function selectView(next: CatalogView) {
     setView(next);
-    if (typeof window !== 'undefined') window.localStorage.setItem(VIEW_KEY, next);
+    try {
+      window.localStorage.setItem(VIEW_KEY, next);
+    } catch {
+      /* storage blocked — the choice just isn't remembered */
+    }
   }
 
   const { filtered, counts } = useMemo(

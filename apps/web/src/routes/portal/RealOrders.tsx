@@ -324,7 +324,7 @@ export function RealOrderDetail() {
               </div>
               <div className="flex items-center justify-between text-muted-foreground">
                 <dt>{t('Shipping')}</dt>
-                <dd>{t('Arranged separately')}</dd>
+                <dd>{t('Free on approved orders')}</dd>
               </div>
               {isShortOrder(order.status, order.subtotalCents, order.lines) && (
                 <div className="flex items-center justify-between text-muted-foreground">

@@ -28,7 +28,7 @@ export default function SignUpPage() {
           )}
         </p>
         <Link
-          to="/contact"
+          to="/request-access"
           className={cn(buttonVariants({ size: 'md' }), 'w-full')}
         >
           <MailPlus className="h-4 w-4" strokeWidth={2} />

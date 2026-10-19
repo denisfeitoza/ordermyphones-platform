@@ -7,6 +7,7 @@ import { formatInt } from '@/lib/format';
 import { PulseDot } from './SyncHeartbeat';
 import { RealPriceTag } from './RealPriceTag';
 import { useI18n } from '@/i18n';
+import { useStockLabel } from '@/lib/stockDisplay';
 
 /** Storage range for the card subtitle: "128GB" or "128GB – 1TB". */
 function capacityRange(capacities: string[]): string | null {
@@ -18,6 +19,7 @@ function capacityRange(capacities: string[]): string | null {
 /** One card per model (see lib/modelGroups.ts). `search` carries the catalog's
  * single-valued filters to the model page so it opens preselected. */
 export function RealModelCard({ group, search = '' }: { group: ModelGroup; search?: string | undefined }) {
+  const stock = useStockLabel();
   const { t } = useI18n();
   const href = `/m/${group.slug}${search}`;
   const image = group.imageUrl ?? resolveProductImage(group.model);
@@ -65,7 +67,7 @@ export function RealModelCard({ group, search = '' }: { group: ModelGroup; searc
               <span className="text-muted-foreground">{t('Restocking soon')}</span>
             ) : (
               <span className="text-muted-foreground">
-                <span className="font-mono font-semibold tabular-nums text-foreground">{formatInt(group.totalQty)}</span> {t('in stock')}
+                <span className="font-mono font-semibold tabular-nums text-foreground">{stock(group.totalQty)}</span> {t('in stock')}
               </span>
             )}
           </div>

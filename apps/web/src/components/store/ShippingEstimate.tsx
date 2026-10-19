@@ -8,8 +8,8 @@ const MAX_SHOWN = 3;
 /**
  * On-demand FedEx estimate at checkout. Deliberately a button, not a reactive
  * quote: every call is a billed FedEx transaction, and the amount is an
- * ESTIMATE — the order total stays tier price × qty (D4/D8), so shipping is
- * still invoiced separately by the team.
+ * ESTIMATE shown for reference only: the order total stays tier price × qty
+ * (D4/D8) and the storefront policy is free shipping on approved orders.
  */
 export function ShippingEstimate({
   zip,
@@ -31,7 +31,7 @@ export function ShippingEstimate({
     return (
       <div className="flex items-center justify-between text-muted-foreground">
         <span>{t('Shipping')}</span>
-        <span>{t('Arranged separately')}</span>
+        <span>{t('Free on approved orders')}</span>
       </div>
     );
   }
@@ -69,7 +69,7 @@ export function ShippingEstimate({
           ))}
           <li className="border-t border-border pt-1.5 text-muted-foreground">
             {t('Estimate for')} {quote.data.parcels.count} {quote.data.parcels.count === 1 ? t('parcel') : t('parcels')} ·{' '}
-            {t('*not included in the total — shipping is invoiced separately')}
+            {t('*for reference only — approved orders ship free')}
           </li>
         </ul>
       )}

@@ -13,23 +13,23 @@ function useCatalogSourceQuery() {
   return useQuery({
     queryKey: ['app-settings', 'catalog_source'],
     queryFn: fetchCatalogSource,
-    placeholderData: 'mock',
+    // The store runs on the real catalog; a slow or failed settings request
+    // must never swap in the demo catalog (fake products, and a demo checkout
+    // that pretends to place orders). Retry a few times instead of giving up.
+    placeholderData: 'real',
     staleTime: 5 * 60 * 1000,
-    retry: false,
+    retry: 3,
   });
 }
 
 /**
- * Gates the storefront's catalog data source. `'mock'` is the deployed
- * default and the ONLY answer this hook may return before the network
- * settles — `placeholderData` makes that synchronous, so first paint is
- * byte-identical to today with zero dependency on the request resolving.
- * Any error (RLS misconfig, offline, table not migrated yet) also falls
- * back to `'mock'` rather than surfacing a loading/error state on the
- * storefront's home page.
+ * Gates the storefront's catalog data source. Production runs 'real', so
+ * that is the answer before the network settles and on any error: the live
+ * store never falls back to the demo catalog. Only a successful 'mock'
+ * answer from app_settings switches the site to demo mode.
  */
 export function useCatalogSource(): CatalogSource {
-  return useCatalogSourceQuery().data ?? 'mock';
+  return useCatalogSourceQuery().data ?? 'real';
 }
 
 /**

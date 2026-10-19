@@ -32,7 +32,10 @@ export interface OfferAllocation {
  */
 export function allocateQty(offers: PricedRealListing[], qty: number): OfferAllocation[] {
   const want = Math.max(0, Math.floor(qty));
-  const ranked = rankOffers(offers);
+  // Never mix unpriced offers into a priced allocation: the total would turn
+  // null and the buyer could no longer see or change the quantity.
+  const all = rankOffers(offers);
+  const ranked = all.some((o) => o.priceCents !== null) ? all.filter((o) => o.priceCents !== null) : all;
   if (want === 0 || ranked.length === 0) return [];
 
   const lines: OfferAllocation[] = [];

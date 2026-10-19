@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
+import { MAX_LINE_QTY } from '@/components/store/QtyInput';
 
 /**
  * Real-mode cart — the storefront's cart when app_settings.catalog_source is
@@ -143,14 +144,14 @@ export function RealCartProvider({ children }: { children: ReactNode }) {
       const existing = prev.find((l) => l.variantId === variantId);
       // Changing qty invalidates a prior per-location split (the sum must equal
       // qty), so adding more units drops any existing allocation for this line.
-      if (existing) return prev.map((l) => (l.variantId === variantId ? { ...l, qty: l.qty + inc, allocations: undefined } : l));
+      if (existing) return prev.map((l) => (l.variantId === variantId ? { ...l, qty: Math.min(MAX_LINE_QTY, l.qty + inc), allocations: undefined } : l));
       return [...prev, { variantId, qty: inc }];
     });
     setOpen(true);
   }, []);
 
   const setQty = useCallback((variantId: string, qty: number) => {
-    const next = Math.floor(qty);
+    const next = Math.min(MAX_LINE_QTY, Math.floor(qty));
     setLines((prev) =>
       next <= 0
         ? prev.filter((l) => l.variantId !== variantId)

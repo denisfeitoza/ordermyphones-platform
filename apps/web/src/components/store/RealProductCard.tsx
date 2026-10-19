@@ -3,11 +3,11 @@ import { Smartphone } from 'lucide-react';
 import { buildDisplayName, type PricedRealListing } from '@/data/realCatalog';
 import { listingImage } from '@/lib/productImage';
 import { Badge } from '@/components/ui/Badge';
-import { formatInt } from '@/lib/format';
 import { PulseDot } from './SyncHeartbeat';
 import { RealPriceTag } from './RealPriceTag';
 import { RealAddToCart } from './RealAddToCart';
 import { useI18n } from '@/i18n';
+import { useStockLabel } from '@/lib/stockDisplay';
 
 export function gradeTone(grade: PricedRealListing['ctiaGrade']): 'success' | 'dark' | 'neutral' {
   if (grade === 'NEW') return 'success';
@@ -22,6 +22,7 @@ export function gradeTone(grade: PricedRealListing['ctiaGrade']): 'success' | 'd
  * the dedicated real cart (store/realCart.tsx) and renders only for a signed-in
  * customer with a visible tier price — everyone else still gets View details. */
 export function RealProductCard({ item }: { item: PricedRealListing }) {
+  const stock = useStockLabel();
   const { t } = useI18n();
   // Staff photo first; the mock-family render is only the fallback.
   const image = listingImage(item);
@@ -66,7 +67,7 @@ export function RealProductCard({ item }: { item: PricedRealListing }) {
             <span className="text-muted-foreground">{t('Restocking soon')}</span>
           ) : (
             <span className="text-muted-foreground">
-              <span className="font-mono font-semibold tabular-nums text-foreground">{formatInt(item.totalQty)}</span>{' '}
+              <span className="font-mono font-semibold tabular-nums text-foreground">{stock(item.totalQty)}</span>{' '}
               {t('in stock')}
             </span>
           )}

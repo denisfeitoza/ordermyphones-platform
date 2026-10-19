@@ -8,6 +8,7 @@ import { useOrderLocationSelection } from '@/lib/orderSettings';
 import { useRealCatalog, buildDisplayName, type PricedRealListing } from '@/data/realCatalog';
 import { listingImage } from '@/lib/productImage';
 import { CartLineLocations, allocationValid } from './CartLineLocations';
+import { QtyInput, clampQty } from './QtyInput';
 import { Button } from '@/components/ui/Button';
 import { formatUsd } from '@/lib/format';
 import { useI18n } from '@/i18n';
@@ -41,10 +42,15 @@ export function RealCartDrawer() {
     if (!open) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = prev;
+      window.removeEventListener('keydown', onKey);
     };
-  }, [open]);
+  }, [open, setOpen]);
 
   const byVariant = useMemo(() => new Map(items.map((i) => [i.variantId, i])), [items]);
   const resolved: ResolvedLine[] = useMemo(
@@ -155,16 +161,24 @@ export function RealCartDrawer() {
                           <div className="mt-auto flex items-center justify-between pt-2">
                             <div className="inline-flex items-center rounded-full border border-border">
                               <button
+                                type="button"
                                 onClick={() => setQty(l.variantId, l.qty - 1)}
-                                className="grid h-8 w-8 place-items-center rounded-l-full hover:bg-muted"
+                                className="grid h-11 w-11 place-items-center rounded-l-full hover:bg-muted"
                                 aria-label={t('Decrease')}
                               >
                                 <Minus className="h-3.5 w-3.5" strokeWidth={2} />
                               </button>
-                              <span className="w-9 text-center font-mono text-sm tabular-nums">{l.qty}</span>
+                              {/* Typeable: going from 300 to 250 is one edit, not 50 taps. */}
+                              <QtyInput
+                                value={l.qty}
+                                onChange={(n) => setQty(l.variantId, n)}
+                                aria-label={t('Quantity')}
+                                className="h-11 w-14 border-x border-border bg-transparent text-center font-mono text-sm tabular-nums outline-none"
+                              />
                               <button
-                                onClick={() => setQty(l.variantId, l.qty + 1)}
-                                className="grid h-8 w-8 place-items-center rounded-r-full hover:bg-muted"
+                                type="button"
+                                onClick={() => setQty(l.variantId, clampQty(l.qty + 1))}
+                                className="grid h-11 w-11 place-items-center rounded-r-full hover:bg-muted"
                                 aria-label={t('Increase')}
                               >
                                 <Plus className="h-3.5 w-3.5" strokeWidth={2} />
