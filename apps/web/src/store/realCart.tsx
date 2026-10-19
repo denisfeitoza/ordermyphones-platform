@@ -91,6 +91,17 @@ export function RealCartProvider({ children }: { children: ReactNode }) {
     }
   }, [lines, uid]);
 
+  // Keep tabs in sync: a cart cleared or edited in another tab (e.g. after an
+  // order was placed there) must not be checked out again from this one.
+  // The storage event fires only in OTHER tabs, and only on a real change.
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === storageKey(uid)) setLines(load(uid));
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [uid]);
+
   // Follow the auth session: on sign-in, merge the anonymous cart into the
   // user's saved cart (and clear the anon one); on sign-out, drop back to an
   // EMPTY anonymous cart so nothing of the previous user lingers on screen.

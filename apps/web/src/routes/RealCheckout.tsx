@@ -141,6 +141,12 @@ export function RealCheckout() {
   const unpricedLines = pricesReady ? resolved.filter((l) => l.price === null).length : 0;
   const badSplitLines = resolved.filter((l) => !allocationValid(l)).length;
   const canPlace = resolved.length > 0 && pricesReady && unpricedLines === 0 && badSplitLines === 0;
+  // One id per checkout attempt, stable while the cart is unchanged: a retry
+  // after a dropped response returns the order already placed instead of a
+  // duplicate (place_order is idempotent on p_client_ref).
+  const cartSignature = JSON.stringify(lines);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- regenerate only when the cart contents change
+  const clientRef = useMemo(() => crypto.randomUUID(), [cartSignature]);
   const liveUnitCount = lines.reduce((s, l) => s + l.qty, 0);
   const subtotalCents = placedSummary?.subtotalCents ?? liveSubtotalCents;
   const unitCount = placedSummary?.units ?? liveUnitCount;
@@ -197,6 +203,7 @@ export function RealCheckout() {
       p_items,
       p_shipping_address: shipping_address,
       p_note: null,
+      p_client_ref: clientRef,
     });
 
     if (rpcError) {
