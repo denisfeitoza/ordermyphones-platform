@@ -51,6 +51,7 @@ const AiBotsPage = lazy(() => import('@/routes/admin/AiBotsPage'));
 const ReportsPage = lazy(() => import('@/routes/admin/ReportsPage'));
 const CatalogTab = lazy(() => import('@/routes/admin/config/CatalogTab'));
 const ProductsTab = lazy(() => import('@/routes/admin/config/ProductsTab'));
+const CustomerAccountPage = lazy(() => import('@/routes/admin/CustomerAccountPage'));
 const AttentionTab = lazy(() => import('@/routes/admin/config/AttentionTab'));
 const TiersTab = lazy(() => import('@/routes/admin/config/TiersTab'));
 const PricingTab = lazy(() => import('@/routes/admin/config/PricingTab'));
@@ -137,6 +138,7 @@ export default function App() {
             <Route index element={<AdminCustomersPage />} />
             <Route path="users" element={<UsersTab />} />
           </Route>
+          <Route path="customers/account/:id" element={<CustomerAccountPage />} />
 
           <Route path="orders" element={<SectionTabs tabs={ORDERS_TABS} />}>
             <Route index element={<AdminOrdersPage />} />

@@ -101,6 +101,15 @@ export function OrderTimeline({
   const shippedEvents = events.filter((e) => e.kind === 'shipped');
   for (const e of events) {
     if (e.kind === 'shipped' || e.kind === 'cancelled' || e.kind === 'placed_by_staff') continue; // shipped after the decision row; cancelled IS the decision row; placed_by_staff relabels the placed row
+    if (e.kind === 'paid' || e.kind === 'label_requested' || e.kind === 'label_received') {
+      rows.push({
+        key: e.id,
+        at: e.createdAt,
+        dot: <Dot tone={e.kind === 'paid' ? 'bg-emerald-500 text-white' : 'bg-sky-500 text-white'} icon={e.kind === 'paid' ? Check : Truck} />,
+        title: e.kind === 'paid' ? t('Payment received') : e.kind === 'label_requested' ? t('Packed — label requested') : t('Shipping label received'),
+      });
+      continue;
+    }
     rows.push({
       key: e.id,
       at: e.createdAt,
@@ -138,6 +147,9 @@ export function OrderTimeline({
       reason: e.summary,
     });
   }
+
+  // Payments and labels happen after the decision; keep every row in time order.
+  rows.sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
 
   return (
     <ol className="relative">

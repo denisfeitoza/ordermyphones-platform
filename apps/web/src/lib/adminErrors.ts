@@ -16,6 +16,11 @@ const MESSAGES: [string, string][] = [
   ['requirements_missing', 'The customer is missing required details. Approve it from its detail panel.'],
   ['consumer_is_manual', 'Consumer prices are always set by hand; edit the number instead.'],
   ['not_manual', 'This price is already automatic. Refresh the list.'],
+  ['payment_required', 'Cash-in-advance order: mark it as paid before shipping.'],
+  ['label_required', 'Waiting for the buyer’s shipping label.'],
+  ['bad_shipping_cost', 'Enter a shipping charge of 0 or more.'],
+  ['order_closed', 'This order is closed. Refresh the list.'],
+  ['bad_reference', 'Keep the reference under 120 characters.'],
   ['note_required', 'Write a short reason (up to 500 characters).'],
   ['inventory_not_found', 'This stock line no longer exists. Refresh the list.'],
 ];

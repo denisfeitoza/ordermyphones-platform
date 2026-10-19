@@ -8,6 +8,8 @@ import { PageHeading, Stat } from '@/components/portal/parts';
 import { formatDate, formatInt, formatUsd } from '@/lib/format';
 import { useI18n } from '@/i18n';
 import { orderValueCents } from '@/lib/orderTotals';
+import { useMyAccountSummary } from '@/data/accounts';
+import { TERMS_LABEL } from '@/lib/payment';
 
 const STATUS_LABEL: Record<RealOrder['status'], string> = {
   pending: 'Pending approval',
@@ -40,6 +42,7 @@ export function RealPortalOverview() {
   const activeOrders = orders.filter((o) => o.status === 'pending' || o.status === 'partially_approved').length;
   const recent = orders.slice(0, 3);
 
+  const account = useMyAccountSummary();
   return (
     <div className="space-y-6">
       <PageHeading title={name ? `${t('Welcome back,')} ${name}` : t('Welcome back')} subtitle={t('Your account, orders, and pricing — all in one place.')} />
@@ -75,6 +78,18 @@ export function RealPortalOverview() {
         <Stat label="Orders" value={String(orders.length)} />
         <Stat label="Active orders" value={String(activeOrders)} sub="in fulfillment" />
       </div>
+
+      {account.data && (
+        <div className="grid grid-cols-2 divide-x divide-y divide-border overflow-hidden rounded-2xl border border-border sm:grid-cols-4 sm:divide-y-0">
+          <Stat label="Payment terms" value={t(TERMS_LABEL[account.data.paymentTerms])} />
+          <Stat label="Open balance" value={formatUsd(account.data.openBalanceCents, true)} />
+          <Stat label="Overdue" value={formatUsd(account.data.overdueCents, true)} accent={account.data.overdueCents > 0 ? 'text-destructive' : ''} />
+          <Stat
+            label="Credit available"
+            value={account.data.creditLimitCents === null ? '—' : formatUsd(Math.max(0, account.data.creditLimitCents - account.data.openBalanceCents), true)}
+          />
+        </div>
+      )}
 
       <section className="space-y-3">
         <div className="flex items-center justify-between">

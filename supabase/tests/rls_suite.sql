@@ -898,8 +898,8 @@ begin
 
   -- Manual orders: the core that takes any customer id is not callable
   -- through the API at all, and the staff wrapper refuses a customer.
-  if has_function_privilege('authenticated', 'public.place_order_core(uuid,uuid,jsonb,jsonb,text,uuid,boolean)', 'execute')
-     or has_function_privilege('anon', 'public.place_order_core(uuid,uuid,jsonb,jsonb,text,uuid,boolean)', 'execute') then
+  if has_function_privilege('authenticated', 'public.place_order_core(uuid,uuid,jsonb,jsonb,text,uuid,boolean,jsonb)', 'execute')
+     or has_function_privilege('anon', 'public.place_order_core(uuid,uuid,jsonb,jsonb,text,uuid,boolean,jsonb)', 'execute') then
     raise exception 'FAIL(section6): place_order_core is executable through the API';
   end if;
   begin
@@ -953,6 +953,35 @@ begin
   if has_function_privilege('authenticated', 'public.best_image_asset(text,text)', 'execute') then
     raise exception 'FAIL(section6): best_image_asset callable through the API';
   end if;
+  -- Payment terms / credit: a customer reads only its own account terms and
+  -- cannot write them; paying, terms and shipping charges are staff-only.
+  if exists (select 1 from public.account_terms where account_id <> (select public.current_account_id())) then
+    raise exception 'FAIL(section6): customer read another account''s terms';
+  end if;
+  begin
+    insert into public.account_terms (account_id, payment_terms) values ((select public.current_account_id()), 'net30');
+    raise exception 'FAIL(section6): customer wrote its own account terms';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.set_account_terms(consumer_id, 'net30', 999999999, false);
+    raise exception 'FAIL(section6): customer called set_account_terms without staff_only';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.mark_order_paid(gen_random_uuid(), 'x', null);
+    raise exception 'FAIL(section6): customer called mark_order_paid without staff_only';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.set_order_shipping(gen_random_uuid(), 0, null);
+    raise exception 'FAIL(section6): customer called set_order_shipping without staff_only';
+  exception when insufficient_privilege then null;
+  end;
+  if has_function_privilege('authenticated', 'public.order_credit_problems(uuid)', 'execute') then
+    raise exception 'FAIL(section6): order_credit_problems callable through the API';
+  end if;
+
   -- Reprice queue: the internal drain is not API-callable; the staff one refuses a customer.
   if has_function_privilege('authenticated', 'public._drain_reprice_queue(integer)', 'execute') then
     raise exception 'FAIL(section6): _drain_reprice_queue callable through the API';

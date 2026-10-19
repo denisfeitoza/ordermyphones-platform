@@ -17,6 +17,9 @@ import { adminErrorMessage } from '@/lib/adminErrors';
 import { supabase } from '@/lib/supabase';
 import { useCancelOrder } from '@/data/realOrders';
 import { isShortOrder, orderValueCents } from '@/lib/orderTotals';
+import { REQUIREMENT_LABEL } from '@/lib/requirements';
+import { OrderMoneyPanel } from '@/components/admin/OrderMoneyPanel';
+import { PAYMENT_STATE_STYLE, paymentState } from '@/lib/payment';
 
 const STATUS_LABEL: Record<AdminOrderStatus, string> = {
   pending: 'Pending',
@@ -45,13 +48,6 @@ const FILTERS: { key: AdminOrderStatus | 'all'; label: string }[] = [
 ];
 
 const CARRIERS = ['UPS', 'FedEx', 'USPS', 'DHL', 'Other'] as const;
-
-/** app_settings.enforcement_points keys → readable names (order_requirements_missing). */
-const REQUIREMENT_LABEL: Record<string, string> = {
-  tax_certificate: 'Tax certificate',
-  business_name: 'Business name',
-  shipping_address: 'Shipping address',
-};
 
 /** Approved (or partially approved) → shipped, with the manual carrier + tracking the plan calls for (J2 step 5). */
 function ShipForm({ order, onDone }: { order: AdminOrder; onDone: () => void }) {
@@ -388,6 +384,12 @@ export function RealAdminOrders() {
                   </div>
                   <div className="flex shrink-0 items-center gap-3">
                     <span className="font-mono text-sm font-semibold tabular-nums">{formatUsd(orderValueCents(o.status, o.subtotalCents, o.lines))}</span>
+                    {(() => {
+                      const ps = paymentState(o);
+                      return ps === 'overdue' || ps === 'paid' ? (
+                        <span className={cn('hidden rounded-full px-2 py-0.5 text-[0.65rem] font-semibold sm:inline', PAYMENT_STATE_STYLE[ps].cls)}>{t(PAYMENT_STATE_STYLE[ps].label)}</span>
+                      ) : null;
+                    })()}
                     <StatusChip status={o.status} />
                   </div>
                 </button>
@@ -517,6 +519,8 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
               )}
             </div>
           )}
+
+          <OrderMoneyPanel order={order} />
 
           {order.status === 'rejected' && order.decisionReason && (
             <p className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-800 dark:bg-rose-500/10 dark:text-rose-300">

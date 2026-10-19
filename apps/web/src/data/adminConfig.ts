@@ -290,6 +290,8 @@ export interface ProfileRow {
   is_test: boolean;
   display_name: string | null;
   created_at: string;
+  /** Sub-accounts buy on their owner's account (terms, documents, agreement). */
+  parent_account_id: string | null;
 }
 
 export interface AccessRequestRow {
@@ -322,7 +324,7 @@ export async function setAccessRequestStatus(id: string, status: 'dismissed'): P
 export async function listProfiles(): Promise<ProfileRow[]> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id,email,role,tier,is_test,display_name,created_at')
+    .select('id,email,role,tier,is_test,display_name,created_at,parent_account_id')
     .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []) as ProfileRow[];

@@ -22,6 +22,8 @@ import { AdminHeading, Panel, Table, Td } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/i18n';
 import { formatDate } from '@/lib/format';
+import { useAllAccountTerms } from '@/data/accounts';
+import { TERMS_LABEL } from '@/lib/payment';
 
 /** Pending "request access" submissions from the public form. An admin picks
  * the tier and clicks Invite: invite_from_access_request creates the invite and
@@ -204,6 +206,7 @@ export function RealCustomers() {
   const isAdmin = role === 'admin';
   const q = useQuery({ queryKey: ['config-profiles'], queryFn: listProfiles });
   const customers = (q.data ?? []).filter((p) => p.role === 'customer');
+  const terms = useAllAccountTerms();
 
   // Inline tier change is a sensitive action → confirm with password (same gate
   // as Settings → Users), then apply. Only admins may change a tier server-side.
@@ -237,6 +240,7 @@ export function RealCustomers() {
           columns={[
             { key: 'name', label: t('Account') },
             { key: 'tier', label: t('Tier') },
+            { key: 'terms', label: t('Terms') },
             { key: 'joined', label: t('Joined') },
             { key: 'manage', label: '', align: 'right' },
           ]}
@@ -275,10 +279,11 @@ export function RealCustomers() {
                   </span>
                 )}
               </Td>
+              <Td className="text-xs text-muted-foreground">{t(TERMS_LABEL[terms.data?.get(c.parent_account_id ?? c.id)?.paymentTerms ?? 'cia'])}</Td>
               <Td className="text-muted-foreground">{formatDate(c.created_at, lang)}</Td>
               <Td align="right">
-                <Link to="/admin/config/users" className="inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline">
-                  {t('Manage')} <ArrowUpRight className="h-3 w-3" strokeWidth={2} />
+                <Link to={`/admin/customers/account/${c.parent_account_id ?? c.id}`} className="inline-flex min-h-11 items-center gap-1 text-xs font-medium text-brand hover:underline">
+                  {t('Account')} <ArrowUpRight className="h-3 w-3" strokeWidth={2} />
                 </Link>
               </Td>
             </tr>

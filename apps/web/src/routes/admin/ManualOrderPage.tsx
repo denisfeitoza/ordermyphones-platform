@@ -14,6 +14,7 @@ import { adminErrorMessage } from '@/lib/adminErrors';
 import { formatInt, formatUsd, formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n';
+import { REQUIREMENT_LABEL } from '@/lib/requirements';
 
 /**
  * Manual order: staff build an order on a customer's behalf (phone/WhatsApp
@@ -37,12 +38,6 @@ interface Line {
   variantId: string;
   qty: number;
 }
-
-const REQUIREMENT_LABEL: Record<string, string> = {
-  tax_certificate: 'Tax certificate',
-  business_name: 'Business name',
-  shipping_address: 'Shipping address',
-};
 
 const EMPTY_ADDRESS = { street: '', city: '', state: '', zip: '' };
 

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, ShoppingBag, PackageCheck, Clock, XCircle, AlertTriangle, Ban, FileDown, FileText, Truck, RotateCcw } from 'lucide-react';
 import { useCancelOrder, useMyOrders, type RealOrder, type RealOrderLine, type RealOrderStatus } from '@/data/realOrders';
 import { useAuth, useRealCart } from '@/store';
+import { OrderPaymentShipping } from '@/components/portal/OrderPaymentShipping';
 import { carrierLabel, useRealCatalog } from '@/data/realCatalog';
 import { clampQty } from '@/components/store/QtyInput';
 import { useOrderEvents } from '@/data/orderEvents';
@@ -174,6 +175,7 @@ export function RealOrdersList() {
 /** Real-mode portal order detail — per-line requested vs approved, prices, status. */
 export function RealOrderDetail() {
   const { t, lang } = useI18n();
+  const { profile } = useAuth();
   const { id } = useParams();
   const { data: orders, isLoading, isError, refetch } = useMyOrders();
   const { data: events } = useOrderEvents(id);
@@ -255,6 +257,7 @@ export function RealOrderDetail() {
 
       {order.status === 'pending' && <CancelPendingOrder orderId={order.id} />}
       <ReorderButton lines={order.lines} />
+      {profile && <OrderPaymentShipping order={order} accountId={profile.parent_account_id ?? profile.id} />}
 
       {order.status === 'rejected' && order.decisionReason && (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { fetchAllPagesParallel } from '@/lib/supabasePaginate';
+import { ORDER_PAYMENT_COLUMNS, mapPaymentFields, type OrderPaymentFields, type RawOrderPaymentFields } from '@/lib/payment';
 import { useAuth } from '@/store/auth';
 import { carrierLabel } from './realCatalog';
 
@@ -22,7 +23,7 @@ export interface RealOrderLine {
   lineTotalCents: number;
 }
 
-export interface RealOrder {
+export interface RealOrder extends OrderPaymentFields {
   id: string;
   status: RealOrderStatus;
   tier: string;
@@ -41,7 +42,7 @@ export interface RealOrder {
   lines: RealOrderLine[];
 }
 
-interface RawOrderRow {
+interface RawOrderRow extends RawOrderPaymentFields {
   id: string;
   status: RealOrderStatus;
   tier_at_order: string;
@@ -103,7 +104,7 @@ async function fetchMyOrders(): Promise<RealOrder[]> {
     (from, to) =>
       supabase
         .from('orders')
-        .select('id, status, tier_at_order, subtotal_cents, placed_at, decided_at, decision_reason, notes, shipping_address, is_test, customer_id, shipped_at, tracking_carrier, tracking_number')
+        .select(`id, status, tier_at_order, subtotal_cents, placed_at, decided_at, decision_reason, notes, shipping_address, is_test, customer_id, shipped_at, tracking_carrier, tracking_number, ${ORDER_PAYMENT_COLUMNS}`)
         .order('placed_at', { ascending: false })
         .order('id')
         .range(from, to),
@@ -131,6 +132,7 @@ async function fetchMyOrders(): Promise<RealOrder[]> {
   }
 
   return rows.map((o) => ({
+    ...mapPaymentFields(o),
     id: o.id,
     status: o.status,
     tier: o.tier_at_order,

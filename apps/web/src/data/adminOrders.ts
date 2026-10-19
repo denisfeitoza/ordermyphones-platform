@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { fetchAllPagesParallel } from '@/lib/supabasePaginate';
+import { ORDER_PAYMENT_COLUMNS, mapPaymentFields, type OrderPaymentFields, type RawOrderPaymentFields } from '@/lib/payment';
 import { carrierLabel } from './realCatalog';
 
 export type AdminOrderStatus = 'pending' | 'approved' | 'partially_approved' | 'rejected' | 'cancelled' | 'shipped';
@@ -28,8 +29,9 @@ export interface ShippingAddress {
   zip?: string;
 }
 
-export interface AdminOrder {
+export interface AdminOrder extends OrderPaymentFields {
   id: string;
+  customerId: string;
   status: AdminOrderStatus;
   tier: string;
   subtotalCents: number;
@@ -67,8 +69,9 @@ interface RawItem {
   requested_location_id: string | null;
   requested_location: { display_name: string } | null;
 }
-interface RawOrder {
+interface RawOrder extends RawOrderPaymentFields {
   id: string;
+  customer_id: string;
   status: AdminOrderStatus;
   tier_at_order: string;
   subtotal_cents: number;
@@ -98,8 +101,8 @@ async function fetchAdminOrders(): Promise<AdminOrder[]> {
       supabase
         .from('orders')
         .select(
-      `id, status, tier_at_order, subtotal_cents, placed_at, decided_at, decision_reason, notes, shipping_address, is_test,
-       shipped_at, tracking_carrier, tracking_number,
+      `id, customer_id, status, tier_at_order, subtotal_cents, placed_at, decided_at, decision_reason, notes, shipping_address, is_test,
+       shipped_at, tracking_carrier, tracking_number, ${ORDER_PAYMENT_COLUMNS},
        customer:profiles!orders_customer_id_fkey(email, display_name),
        order_items(id, variant_id, qty_requested, qty_approved, unit_price_cents, requested_location_id,
          location:stock_locations!order_items_location_id_fkey(display_name),
@@ -114,7 +117,9 @@ async function fetchAdminOrders(): Promise<AdminOrder[]> {
   );
 
   return data.map((o) => ({
+    ...mapPaymentFields(o),
     id: o.id,
+    customerId: o.customer_id,
     status: o.status,
     tier: o.tier_at_order,
     subtotalCents: o.subtotal_cents,
@@ -459,4 +464,52 @@ export function usePendingOrderCount(enabled = true) {
       return count ?? 0;
     },
   });
+}
+
+/** Staff: record the ACH/wire/check that paid this order (or undo it). */
+export function useMarkPaid() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ orderId, reference, paidOn }: { orderId: string; reference: string; paidOn: string | null }) => {
+      const { error } = await supabase.rpc('mark_order_paid', { p_order_id: orderId, p_reference: reference || null, p_paid_on: paidOn });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: (_d, v) => {
+      void qc.invalidateQueries({ queryKey: ['admin-orders'] });
+      void qc.invalidateQueries({ queryKey: ['order-events', v.orderId] });
+    },
+  });
+}
+
+export function useMarkUnpaid() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (orderId: string) => {
+      const { error } = await supabase.rpc('mark_order_unpaid', { p_order_id: orderId });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['admin-orders'] }),
+  });
+}
+
+/** Staff: shipping charge and the packed box (asks for the label on customer-label orders). */
+export function useSetOrderShipping() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ orderId, shippingCents, pkg }: { orderId: string; shippingCents: number; pkg: Record<string, number> | null }) => {
+      const { error } = await supabase.rpc('set_order_shipping', { p_order_id: orderId, p_shipping_cents: shippingCents, p_package: pkg });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: (_d, v) => {
+      void qc.invalidateQueries({ queryKey: ['admin-orders'] });
+      void qc.invalidateQueries({ queryKey: ['order-events', v.orderId] });
+    },
+  });
+}
+
+/** A short-lived link to a buyer-uploaded shipping label (private bucket). */
+export async function shippingLabelUrl(path: string): Promise<string> {
+  const { data, error } = await supabase.storage.from('shipping-labels').createSignedUrl(path, 300);
+  if (error || !data) throw new Error(error?.message ?? 'Could not open the label.');
+  return data.signedUrl;
 }

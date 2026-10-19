@@ -14,6 +14,9 @@ import { Button } from '@/components/ui/Button';
 import { formatUsd } from '@/lib/format';
 import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
+import { REQUIREMENT_LABEL } from '@/lib/requirements';
+import { SHIPPING_LABEL, TERMS_LABEL, type ShippingMethod } from '@/lib/payment';
+import { useMyAccountSummary } from '@/data/accounts';
 
 type Phase = 'review' | 'placing' | 'done';
 
@@ -40,6 +43,7 @@ function placeOrderError(t: (s: string) => string, message: string | undefined):
   if (m.includes('not_authenticated')) return t('Your session expired. Sign in again to place the order.');
   if (m.includes('too_many_items')) return t('This order has too many lines. Split it into smaller orders.');
   if (m.includes('bad_address')) return t('The shipping address is too long. Shorten it and try again.');
+  if (m.includes('bad_shipping')) return t('Check the shipping choice: a carrier account needs the carrier and the account number.');
   if (m.includes('bad_note')) return t('The note is too long. Keep it under 500 characters.');
   if (m.includes('requirements_missing')) return t('Your account is missing details required before ordering. Complete them in Settings and try again.');
   if (m.includes('no_tier')) return t('Your account has no pricing tier yet. Contact us to finish setup.');
@@ -47,13 +51,6 @@ function placeOrderError(t: (s: string) => string, message: string | undefined):
   if (m.includes('customer_only')) return t('Only customer accounts can place orders.');
   return t('We could not place your order. Please try again.');
 }
-
-/** app_settings.enforcement_points keys → readable names. */
-const REQUIREMENT_LABEL: Record<string, string> = {
-  tax_certificate: 'Tax certificate',
-  business_name: 'Business name',
-  shipping_address: 'Shipping address',
-};
 
 /** Random id (crypto.randomUUID where available — it is missing on older iOS). */
 function randomId(): string {
@@ -120,6 +117,14 @@ export function RealCheckout() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saveNew, setSaveNew] = useState(true);
   const [note, setNote] = useState('');
+  // Shipping (RFC D3): OMP ships by default; resellers and up may use their own
+  // carrier account or send a label after OMP packs.
+  const [shipMethod, setShipMethod] = useState<ShippingMethod>('omp');
+  const [carrierName, setCarrierName] = useState('');
+  const [carrierAccount, setCarrierAccount] = useState('');
+  const canChooseShipping = !!profile?.tier && profile.tier !== 'consumer';
+  const shippingIncomplete = shipMethod === 'customer_account' && (!carrierName.trim() || !carrierAccount.trim());
+  const account = useMyAccountSummary(!!user);
 
   // The saved address book (#06). Default first — we pre-select it so a returning
   // buyer never re-types ("não perguntar de novo").
@@ -197,7 +202,7 @@ export function RealCheckout() {
   const orderLineCount = useMemo(() => expandCartToOrderItems(lines).length, [lines]);
   const tooManyLines = orderLineCount > 500;
   const canPlace =
-    resolved.length > 0 && pricesReady && !pricesError && unpricedLines === 0 && badSplitLines === 0 && !tooManyLines && checkoutMissing.length === 0;
+    resolved.length > 0 && pricesReady && !pricesError && unpricedLines === 0 && badSplitLines === 0 && !tooManyLines && !shippingIncomplete && checkoutMissing.length === 0;
   // One id per checkout attempt, stable while the cart is unchanged: a retry
   // after a dropped response returns the order already placed instead of a
   // duplicate (place_order is idempotent on p_client_ref).
@@ -262,6 +267,10 @@ export function RealCheckout() {
       p_shipping_address: shipping_address,
       p_note: note.trim() || null,
       p_client_ref: clientRef,
+      p_shipping:
+        shipMethod === 'customer_account'
+          ? { method: shipMethod, carrier: carrierName.trim(), account_number: carrierAccount.trim() }
+          : { method: shipMethod },
     });
 
     if (rpcError) {
@@ -385,6 +394,54 @@ export function RealCheckout() {
                   </div>
                 )}
               </section>
+
+              {canChooseShipping && (
+                <fieldset className="space-y-2 rounded-2xl border border-border p-5">
+                  <legend className="px-1 font-medium">{t('Shipping')}</legend>
+                  {(['omp', 'customer_account', 'customer_label'] as const).map((m) => (
+                    <label
+                      key={m}
+                      className={cn('flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border p-3.5 text-sm', shipMethod === m ? 'border-brand bg-brand/5' : 'border-border hover:bg-muted/50')}
+                    >
+                      <input type="radio" name="ship-method" value={m} checked={shipMethod === m} onChange={() => setShipMethod(m)} className="mt-0.5 h-4 w-4 accent-brand" />
+                      <span>
+                        <span className="block font-medium">{t(SHIPPING_LABEL[m])}</span>
+                        <span className="block text-xs text-muted-foreground">
+                          {m === 'omp'
+                            ? t('We ship and add the shipping charge to your Sales Order.')
+                            : m === 'customer_account'
+                              ? t('We ship on your FedEx/UPS account — no shipping charge from us.')
+                              : t('We pack the order, send you the box size and weight, and you upload your label.')}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                  {shipMethod === 'customer_account' && (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <Field label="Carrier" value={carrierName} onChange={(e) => setCarrierName(e.target.value)} placeholder="FedEx" maxLength={40} />
+                      <Field label="Account number" value={carrierAccount} onChange={(e) => setCarrierAccount(e.target.value)} maxLength={60} />
+                    </div>
+                  )}
+                </fieldset>
+              )}
+
+              {account.data && (
+                <section className="rounded-2xl border border-border p-5 text-sm">
+                  <p className="font-medium">{t('Payment')}: {t(TERMS_LABEL[account.data.paymentTerms])}</p>
+                  <p className="mt-1 text-muted-foreground">
+                    {account.data.paymentTerms === 'cia'
+                      ? t('Pay by ACH or wire after approval — the Sales Order carries our bank details. We ship once the payment is in.')
+                      : account.data.paymentTerms === 'cod'
+                        ? t('Pay on delivery. The Sales Order comes with the approval.')
+                        : t('Pay by ACH or wire by the due date on the Sales Order you receive at approval.')}
+                  </p>
+                  {account.data.overdueCents > 0 && (
+                    <p className="mt-2 text-destructive">
+                      {t('You have overdue invoices')} ({formatUsd(account.data.overdueCents)}). {t('New orders wait for them to be paid.')}
+                    </p>
+                  )}
+                </section>
+              )}
 
               <section className="space-y-2 rounded-2xl border border-border p-5">
                 <label htmlFor="order-note" className="block font-medium">
