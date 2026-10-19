@@ -673,10 +673,6 @@ export const PT: Record<string, string> = {
   'override, acknowledge, watch, or resolve each one': 'sobreponha, reconheça, monitore ou resolva cada uma',
   'Pricing engine flags waiting on an admin decision': 'Sinalizações do motor de preço aguardando decisão do admin',
   'open shortfalls awaiting stock': 'pendências abertas aguardando estoque',
-  'Accounts are invite-only. Create an invite, then copy the link and send it to the customer — email delivery is off in this build (toggle':
-    'Contas são apenas por convite. Crie um convite, copie o link e envie ao cliente — o envio de e-mail está desligado nesta versão (chave',
-  '). The link carries the tier and email; the customer only sets a name and password.':
-    '). O link já carrega o tier e o e-mail; o cliente só define nome e senha.',
   // Pricing rules panel
   "Example": "Exemplo",
   "Cost above the last band": "Custo acima da última banda",
@@ -1834,6 +1830,18 @@ export const PT: Record<string, string> = {
   'Year established': 'Ano de fundação',
   'Your company registration, documents and the agreement we sign together.': 'O cadastro da sua empresa, os documentos e o contrato que assinamos juntos.',
   'Document title': 'Título do documento',
+  'E-mails': 'E-mails',
+  'Every e-mail the system queued for customers and staff, and whether it went out.': 'Todo e-mail que o sistema colocou na fila para clientes e equipe, e se saiu.',
+  'E-mail sending is not connected yet: messages wait here and go out once the SMTP provider is set up.': 'O envio de e-mail ainda não está conectado: as mensagens esperam aqui e saem quando o SMTP for configurado.',
+  'waiting': 'aguardando',
+  'Outbox': 'Fila de saída',
+  'Nothing queued yet.': 'Nada na fila ainda.',
+  'queued': 'na fila',
+  'sent': 'enviado',
+  'failed': 'falhou',
+  'skipped': 'ignorado',
+  'Staff': 'Equipe',
+  'Accounts are invite-only. Each invite is queued as an e-mail (Settings → E-mails) and goes out once e-mail sending is connected; until then, copy the link and send it yourself. The link carries the tier and email; the customer only sets a name and password.': 'As contas são só por convite. Cada convite entra na fila de e-mail (Configurações → E-mails) e sai quando o envio estiver conectado; até lá, copie o link e mande você mesmo. O link leva a faixa e o e-mail; o cliente só define nome e senha.',
 };
 
 export const ES: Record<string, string> = {
@@ -2507,10 +2515,6 @@ export const ES: Record<string, string> = {
   'override, acknowledge, watch, or resolve each one': 'anula, reconoce, vigila o resuelve cada una',
   'Pricing engine flags waiting on an admin decision': 'Señales del motor de precios esperando una decisión del admin',
   'open shortfalls awaiting stock': 'faltantes abiertos esperando stock',
-  'Accounts are invite-only. Create an invite, then copy the link and send it to the customer — email delivery is off in this build (toggle':
-    'Las cuentas son solo por invitación. Crea una invitación, copia el enlace y envíaselo al cliente — el envío de correo está desactivado en esta versión (clave',
-  '). The link carries the tier and email; the customer only sets a name and password.':
-    '). El enlace ya lleva el tier y el correo; el cliente solo define nombre y contraseña.',
   // Pricing rules panel
   "Example": "Ejemplo",
   "Cost above the last band": "Costo por encima de la última banda",
@@ -3668,4 +3672,16 @@ export const ES: Record<string, string> = {
   'Year established': 'Año de fundación',
   'Your company registration, documents and the agreement we sign together.': 'El registro de tu empresa, los documentos y el contrato que firmamos juntos.',
   'Document title': 'Título del documento',
+  'E-mails': 'Correos',
+  'Every e-mail the system queued for customers and staff, and whether it went out.': 'Cada correo que el sistema puso en cola para clientes y equipo, y si salió.',
+  'E-mail sending is not connected yet: messages wait here and go out once the SMTP provider is set up.': 'El envío de correo aún no está conectado: los mensajes esperan aquí y salen cuando se configure el SMTP.',
+  'waiting': 'esperando',
+  'Outbox': 'Bandeja de salida',
+  'Nothing queued yet.': 'Nada en cola aún.',
+  'queued': 'en cola',
+  'sent': 'enviado',
+  'failed': 'falló',
+  'skipped': 'omitido',
+  'Staff': 'Equipo',
+  'Accounts are invite-only. Each invite is queued as an e-mail (Settings → E-mails) and goes out once e-mail sending is connected; until then, copy the link and send it yourself. The link carries the tier and email; the customer only sets a name and password.': 'Las cuentas son solo por invitación. Cada invitación entra en la cola de correo (Configuración → Correos) y sale cuando el envío esté conectado; mientras tanto, copia el enlace y envíalo tú. El enlace lleva el nivel y el correo; el cliente solo define nombre y contraseña.',
 };

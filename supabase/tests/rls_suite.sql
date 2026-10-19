@@ -1004,6 +1004,14 @@ begin
     raise exception 'FAIL(section6): signatures are writable outside sign_agreement()';
   end if;
 
+  -- E-mail outbox: staff-only read, nobody writes through the API.
+  select count(*) into n from public.email_outbox;
+  if n <> 0 then raise exception 'FAIL(section6): customer read % outbox rows', n; end if;
+  if has_table_privilege('authenticated', 'public.email_outbox', 'insert')
+     or has_function_privilege('authenticated', 'public.queue_email(text,text,text,boolean,text,jsonb)', 'execute') then
+    raise exception 'FAIL(section6): the outbox is writable through the API';
+  end if;
+
   -- Company profile (bank details): signed-in read, never anon; only admins edit.
   if has_table_privilege('anon', 'public.company_profile', 'select') then
     raise exception 'FAIL(section6): anon can read company_profile';
