@@ -1555,6 +1555,12 @@ export const PT: Record<string, string> = {
   'Select order': 'Selecionar pedido',
   'This order has open shortfalls. Ship it from its detail panel to close them.': 'Este pedido tem faltas abertas. Envie pelo painel do pedido para fechá-las.',
   'The customer is missing required details. Approve it from its detail panel.': 'Faltam dados obrigatórios do cliente. Aprove pelo painel do pedido.',
+  'Below highest cost': 'Abaixo do maior custo',
+  'Prices set by hand': 'Preços definidos à mão',
+  'below cost': 'abaixo do custo',
+  'Revert to auto': 'Voltar ao automático',
+  'Consumer prices are always set by hand; edit the number instead.': 'Preços de consumidor são sempre definidos à mão; edite o valor.',
+  'This price is already automatic. Refresh the list.': 'Este preço já é automático. Atualize a lista.',
 };
 
 export const ES: Record<string, string> = {
@@ -3110,4 +3116,10 @@ export const ES: Record<string, string> = {
   'Select order': 'Seleccionar pedido',
   'This order has open shortfalls. Ship it from its detail panel to close them.': 'Este pedido tiene faltantes abiertos. Envíalo desde su panel para cerrarlos.',
   'The customer is missing required details. Approve it from its detail panel.': 'Faltan datos obligatorios del cliente. Apruébalo desde su panel.',
+  'Below highest cost': 'Por debajo del costo más alto',
+  'Prices set by hand': 'Precios fijados a mano',
+  'below cost': 'por debajo del costo',
+  'Revert to auto': 'Volver a automático',
+  'Consumer prices are always set by hand; edit the number instead.': 'Los precios de consumidor siempre se fijan a mano; edita el valor.',
+  'This price is already automatic. Refresh the list.': 'Este precio ya es automático. Actualiza la lista.',
 };

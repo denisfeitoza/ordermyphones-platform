@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { Search, MapPin, Wand2, Check } from 'lucide-react';
-import { usePricingBreakdown, setTierPrice, TIER_MARKUP, type PricingBreakdownRow, type DbTier } from '@/data/adminPricing';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Search, MapPin, Wand2, Check, AlertTriangle, RotateCcw } from 'lucide-react';
+import { usePricingBreakdown, setTierPrice, useManualPrices, isBelowCost, revertTierPriceToAuto, TIER_MARKUP, type ManualPriceRow, type PricingBreakdownRow, type DbTier } from '@/data/adminPricing';
 import { useAuth } from '@/store';
 import { AdminHeading, Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
@@ -10,6 +10,7 @@ import { tierBg } from '@/lib/tierStyles';
 import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { parseMoneyToCents } from '@/lib/money';
+import { adminErrorMessage } from '@/lib/adminErrors';
 
 const TIERS: { code: DbTier; label: string; tone: '1' | '2' | '3' | '4' }[] = [
   { code: 'consumer', label: 'Consumer', tone: '1' },
@@ -79,6 +80,7 @@ function WorkbenchRow({ row }: { row: PricingBreakdownRow }) {
       setSaveError(e instanceof Error ? e.message : t('Could not save prices'));
     } finally {
       await qc.invalidateQueries({ queryKey: ['pricing-breakdown'] });
+      void qc.invalidateQueries({ queryKey: ['manual-prices'] });
       setSaving(false);
     }
   }
@@ -125,6 +127,9 @@ function WorkbenchRow({ row }: { row: PricingBreakdownRow }) {
                 )}
               />
             </div>
+            {row.max_cost !== null && (strToCents(edits[tier.code]) ?? Infinity) < row.max_cost && (
+              <span className="text-[0.7rem] font-medium text-destructive">{t('Below highest cost')}</span>
+            )}
           </label>
         ))}
       </div>
@@ -151,6 +156,69 @@ function WorkbenchRow({ row }: { row: PricingBreakdownRow }) {
   );
 }
 
+/** Every hand-set price, below-cost ones first, each with "Revert to auto". */
+function ManualPricesPanel() {
+  const { t } = useI18n();
+  const qc = useQueryClient();
+  const { role } = useAuth();
+  const q = useManualPrices();
+  const [open, setOpen] = useState(false);
+  const revert = useMutation({
+    mutationFn: (r: ManualPriceRow) => revertTierPriceToAuto(r.variantId, r.tier),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['manual-prices'] });
+      void qc.invalidateQueries({ queryKey: ['pricing-breakdown'] });
+      void qc.invalidateQueries({ queryKey: ['catalog-listing'] });
+    },
+  });
+  const rows = q.data ?? [];
+  if (rows.length === 0) return null;
+  const below = rows.filter(isBelowCost).length;
+  const shown = open ? rows : rows.slice(0, 5);
+
+  return (
+    <Panel
+      title={`${t('Prices set by hand')} · ${rows.length}`}
+      action={below > 0 ? (
+        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-destructive">
+          <AlertTriangle className="h-3.5 w-3.5" strokeWidth={2} />
+          {below} {t('below cost')}
+        </span>
+      ) : undefined}
+    >
+      <ul className="divide-y divide-border">
+        {shown.map((r) => {
+          const low = isBelowCost(r);
+          return (
+            <li key={`${r.variantId}-${r.tier}`} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-2.5 text-sm">
+              <div className="min-w-0 flex-1 basis-56">
+                <p className="truncate font-medium">{r.name}</p>
+                <p className="font-mono text-xs text-muted-foreground">{r.sku} · {t(TIERS.find((x) => x.code === r.tier)?.label ?? r.tier)}</p>
+              </div>
+              <div className="text-right font-mono text-sm tabular-nums">
+                <span className={cn(low && 'text-destructive')}>{r.visible ? formatUsd(r.priceCents) : t('Hidden')}</span>
+                <span className="block text-xs text-muted-foreground">{t('cost')} {r.basisCostCents === null ? '—' : formatUsd(r.basisCostCents)}</span>
+              </div>
+              {r.tier !== 'consumer' && role === 'admin' && (
+                <Button size="sm" variant="outline" disabled={revert.isPending} onClick={() => revert.mutate(r)}>
+                  <RotateCcw className="h-3.5 w-3.5" strokeWidth={2} />
+                  {t('Revert to auto')}
+                </Button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {revert.isError && <p className="px-5 pb-3 text-xs text-destructive">{adminErrorMessage(t, revert.error.message)}</p>}
+      {rows.length > 5 && (
+        <button type="button" onClick={() => setOpen((v) => !v)} className="w-full border-t border-border px-5 py-3 text-sm font-medium text-brand hover:bg-muted/40">
+          {open ? t('Show less') : `${t('Show all')} (${rows.length})`}
+        </button>
+      )}
+    </Panel>
+  );
+}
+
 export default function PricingWorkbenchPage() {
   const { t } = useI18n();
   const [query, setQuery] = useState('');
@@ -164,6 +232,8 @@ export default function PricingWorkbenchPage() {
       <div className="rounded-2xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm text-muted-foreground">
         <b className="text-foreground">{t('How this works:')}</b> {t('search a model, see its cost in each warehouse, and set each tier’s price. Use')} <b className="text-foreground">{t('the fill buttons')}</b> {t('to auto-price from the average or highest cost plus a margin — then tweak any number. Saved prices go live immediately for that tier.')}
       </div>
+
+      <ManualPricesPanel />
 
       <label className="relative block max-w-md">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" strokeWidth={2} />

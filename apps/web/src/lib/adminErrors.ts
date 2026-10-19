@@ -14,6 +14,8 @@ const MESSAGES: [string, string][] = [
   ['open_shortfall', 'This order has open shortfalls. Ship it from its detail panel to close them.'],
   ['nothing_to_ship', 'Nothing was approved on this order, so there is nothing to ship.'],
   ['requirements_missing', 'The customer is missing required details. Approve it from its detail panel.'],
+  ['consumer_is_manual', 'Consumer prices are always set by hand; edit the number instead.'],
+  ['not_manual', 'This price is already automatic. Refresh the list.'],
   ['note_required', 'Write a short reason (up to 500 characters).'],
   ['inventory_not_found', 'This stock line no longer exists. Refresh the list.'],
 ];
