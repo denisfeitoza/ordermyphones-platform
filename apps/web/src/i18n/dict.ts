@@ -1499,6 +1499,11 @@ export const PT: Record<string, string> = {
   'e.g. PO-1042, deliver after 2 pm': 'ex.: PO-1042, entregar depois das 14h',
   'The note is too long. Keep it under 500 characters.': 'A observação está longa demais. Use até 500 caracteres.',
   'Export CSV': 'Exportar CSV',
+  'Order again': 'Pedir de novo',
+  'model added to your cart at today’s price.': 'modelo adicionado ao carrinho com o preço de hoje.',
+  'models added to your cart at today’s prices.': 'modelos adicionados ao carrinho com os preços de hoje.',
+  'model is no longer available and was skipped.': 'modelo não está mais disponível e ficou de fora.',
+  'models are no longer available and were skipped.': 'modelos não estão mais disponíveis e ficaram de fora.',
 };
 
 export const ES: Record<string, string> = {
@@ -2998,4 +3003,9 @@ export const ES: Record<string, string> = {
   'e.g. PO-1042, deliver after 2 pm': 'ej.: OC-1042, entregar después de las 14 h',
   'The note is too long. Keep it under 500 characters.': 'La nota es demasiado larga. Usa hasta 500 caracteres.',
   'Export CSV': 'Exportar CSV',
+  'Order again': 'Pedir de nuevo',
+  'model added to your cart at today’s price.': 'modelo añadido al carrito con el precio de hoy.',
+  'models added to your cart at today’s prices.': 'modelos añadidos al carrito con los precios de hoy.',
+  'model is no longer available and was skipped.': 'modelo ya no está disponible y se omitió.',
+  'models are no longer available and were skipped.': 'modelos ya no están disponibles y se omitieron.',
 };

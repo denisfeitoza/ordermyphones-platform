@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ShoppingBag, PackageCheck, Clock, XCircle, AlertTriangle, Ban, FileDown, FileText, Truck } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, PackageCheck, Clock, XCircle, AlertTriangle, Ban, FileDown, FileText, Truck, RotateCcw } from 'lucide-react';
 import { useCancelOrder, useMyOrders, type RealOrder, type RealOrderLine, type RealOrderStatus } from '@/data/realOrders';
-import { useAuth } from '@/store';
+import { useAuth, useRealCart } from '@/store';
+import { useRealCatalog } from '@/data/realCatalog';
+import { clampQty } from '@/components/store/QtyInput';
 import { useOrderEvents } from '@/data/orderEvents';
 import { OrderTimeline } from '@/components/orders/OrderTimeline';
 import { TrackingTimeline } from '@/components/store/TrackingTimeline';
@@ -252,6 +254,7 @@ export function RealOrderDetail() {
       </div>
 
       {order.status === 'pending' && <CancelPendingOrder orderId={order.id} />}
+      <ReorderButton lines={order.lines} />
 
       {order.status === 'rejected' && order.decisionReason && (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
@@ -382,6 +385,52 @@ export function RealOrderDetail() {
         </aside>
       </div>
     </motion.div>
+  );
+}
+
+/**
+ * "Order again": puts this order's models back in the cart at the quantities
+ * first requested. Only the variant and quantity are copied — the cart and
+ * checkout price everything again at today's tier price. Models that are no
+ * longer listed or priced for the buyer are skipped, and the buyer is told.
+ */
+function ReorderButton({ lines }: { lines: RealOrderLine[] }) {
+  const { t } = useI18n();
+  const { add } = useRealCart();
+  const { items, pricesReady, pricesError, isLoading } = useRealCatalog(true);
+  const [result, setResult] = useState<{ added: number; skipped: number } | null>(null);
+  const ready = !isLoading && pricesReady && !pricesError;
+
+  function reorder() {
+    const priced = new Set(items.filter((i) => i.priceCents !== null).map((i) => i.variantId));
+    const qtyByVariant = new Map<string, number>();
+    for (const l of lines) qtyByVariant.set(l.variantId, (qtyByVariant.get(l.variantId) ?? 0) + l.qtyRequested);
+    let added = 0;
+    let skipped = 0;
+    for (const [variantId, qty] of qtyByVariant) {
+      if (!priced.has(variantId) || qty <= 0) {
+        skipped++;
+        continue;
+      }
+      add(variantId, clampQty(qty));
+      added++;
+    }
+    setResult({ added, skipped });
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <Button variant="outline" size="sm" onClick={reorder} disabled={!ready}>
+        <RotateCcw className="h-4 w-4" strokeWidth={2} aria-hidden />
+        {ready ? t('Order again') : t('Loading your prices…')}
+      </Button>
+      {result && (
+        <p className="text-sm text-muted-foreground" role="status">
+          {result.added > 0 && `${result.added} ${result.added === 1 ? t('model added to your cart at today’s price.') : t('models added to your cart at today’s prices.')} `}
+          {result.skipped > 0 && `${result.skipped} ${result.skipped === 1 ? t('model is no longer available and was skipped.') : t('models are no longer available and were skipped.')}`}
+        </p>
+      )}
+    </div>
   );
 }
 
