@@ -380,7 +380,7 @@ export default function ManualOrderPage() {
         </div>
 
         {/* Summary */}
-        <aside className="lg:sticky lg:top-6 lg:self-start">
+        <aside className="lg:sticky lg:top-20 lg:self-start">
           <div className="space-y-4 rounded-2xl border border-border bg-card p-5">
             <h2 className="text-sm font-medium">{t('Summary')}</h2>
             <dl className="space-y-2 text-sm">
