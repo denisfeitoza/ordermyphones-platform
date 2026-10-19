@@ -40,6 +40,7 @@ function placeOrderError(t: (s: string) => string, message: string | undefined):
   if (m.includes('not_authenticated')) return t('Your session expired. Sign in again to place the order.');
   if (m.includes('too_many_items')) return t('This order has too many lines. Split it into smaller orders.');
   if (m.includes('bad_address')) return t('The shipping address is too long. Shorten it and try again.');
+  if (m.includes('bad_note')) return t('The note is too long. Keep it under 500 characters.');
   if (m.includes('requirements_missing')) return t('Your account is missing details required before ordering. Complete them in Settings and try again.');
   if (m.includes('no_tier')) return t('Your account has no pricing tier yet. Contact us to finish setup.');
   if (m.includes('empty_order')) return t('Your cart is empty.');
@@ -118,6 +119,7 @@ export function RealCheckout() {
   // Which saved address is chosen, or NEW to type one. null until the book loads.
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saveNew, setSaveNew] = useState(true);
+  const [note, setNote] = useState('');
 
   // The saved address book (#06). Default first — we pre-select it so a returning
   // buyer never re-types ("não perguntar de novo").
@@ -255,7 +257,7 @@ export function RealCheckout() {
     const { data, error: rpcError } = await supabase.rpc('place_order', {
       p_items,
       p_shipping_address: shipping_address,
-      p_note: null,
+      p_note: note.trim() || null,
       p_client_ref: clientRef,
     });
 
@@ -379,6 +381,21 @@ export function RealCheckout() {
                     )}
                   </div>
                 )}
+              </section>
+
+              <section className="space-y-2 rounded-2xl border border-border p-5">
+                <label htmlFor="order-note" className="block font-medium">
+                  {t('PO number or note')} <span className="text-sm font-normal text-muted-foreground">({t('optional')})</span>
+                </label>
+                <textarea
+                  id="order-note"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  maxLength={500}
+                  rows={2}
+                  placeholder={t('e.g. PO-1042, deliver after 2 pm')}
+                  className="w-full resize-y rounded-xl border border-border bg-background px-3.5 py-3 text-sm outline-none transition-colors focus:border-brand"
+                />
               </section>
 
               <section className="rounded-2xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground">

@@ -347,6 +347,12 @@ export function RealOrderDetail() {
                 </p>
               </div>
             )}
+            {order.notes && (
+              <div className="mt-4 border-t border-border pt-4 text-sm text-muted-foreground">
+                <p className="mb-1 font-medium text-foreground">{t('PO number or note')}</p>
+                <p className="whitespace-pre-line break-words">{order.notes}</p>
+              </div>
+            )}
           </div>
         </aside>
       </div>

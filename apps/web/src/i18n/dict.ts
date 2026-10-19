@@ -1494,6 +1494,10 @@ export const PT: Record<string, string> = {
   'The shipping address is too long. Shorten it and try again.': 'O endereço de entrega está longo demais. Encurte e tente de novo.',
   'We already received several requests from you. We will reply by e-mail.': 'Já recebemos vários pedidos seus. Vamos responder por e-mail.',
   'Too many signups from this connection. Please try again later.': 'Muitas inscrições a partir desta conexão. Tente mais tarde.',
+  'PO number or note': 'Número do PO ou observação',
+  'optional': 'opcional',
+  'e.g. PO-1042, deliver after 2 pm': 'ex.: PO-1042, entregar depois das 14h',
+  'The note is too long. Keep it under 500 characters.': 'A observação está longa demais. Use até 500 caracteres.',
 };
 
 export const ES: Record<string, string> = {
@@ -2988,4 +2992,8 @@ export const ES: Record<string, string> = {
   'The shipping address is too long. Shorten it and try again.': 'La dirección de envío es demasiado larga. Acórtala e inténtalo de nuevo.',
   'We already received several requests from you. We will reply by e-mail.': 'Ya recibimos varias solicitudes tuyas. Responderemos por correo.',
   'Too many signups from this connection. Please try again later.': 'Demasiadas suscripciones desde esta conexión. Inténtalo más tarde.',
+  'PO number or note': 'Número de OC o nota',
+  'optional': 'opcional',
+  'e.g. PO-1042, deliver after 2 pm': 'ej.: OC-1042, entregar después de las 14 h',
+  'The note is too long. Keep it under 500 characters.': 'La nota es demasiado larga. Usa hasta 500 caracteres.',
 };
