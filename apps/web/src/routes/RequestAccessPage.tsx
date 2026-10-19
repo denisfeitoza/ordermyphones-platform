@@ -53,7 +53,13 @@ export default function RequestAccessPage() {
       p_note: form.note || null,
     });
     if (rpcError) {
-      setError(rpcError.message.includes('bad_email') ? t('Please enter a valid email.') : t('Something went wrong — please try again.'));
+      setError(
+        rpcError.message.includes('bad_email')
+          ? t('Please enter a valid email.')
+          : rpcError.message.includes('rate_limited')
+            ? t('We already received several requests from you. We will reply by e-mail.')
+            : t('Something went wrong — please try again.'),
+      );
       setPhase('form');
       return;
     }

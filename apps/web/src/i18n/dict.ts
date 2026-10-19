@@ -1393,7 +1393,6 @@ export const PT: Record<string, string> = {
   'Newsletter signups': 'Inscrições na newsletter',
   'Showing the newest': 'Mostrando as',
   'You are on the list.': 'Pronto, você está na lista.',
-  'Too many signups right now. Please try again in a few minutes.': 'Muitas inscrições agora. Tente de novo em alguns minutos.',
   'Type prices without thousands separators, e.g. 1299.00': 'Digite o preço sem separador de milhar, ex.: 1299.00',
   'Nothing was approved on this order, so there is nothing to ship.': 'Nada foi aprovado neste pedido, então não há o que enviar.',
   'This order still has open shortfalls. Tick the box to ship what was approved and close them.': 'Este pedido ainda tem faltas em aberto. Marque a caixa para enviar o que foi aprovado e fechá-las.',
@@ -1491,6 +1490,10 @@ export const PT: Record<string, string> = {
   'New arrivals': 'Novidades',
   'Yes, remove': 'Sim, remover',
   'Could not remove this address. Try again.': 'Não foi possível remover este endereço. Tente de novo.',
+  'This order has too many lines. Split it into smaller orders.': 'Este pedido tem linhas demais. Divida em pedidos menores.',
+  'The shipping address is too long. Shorten it and try again.': 'O endereço de entrega está longo demais. Encurte e tente de novo.',
+  'We already received several requests from you. We will reply by e-mail.': 'Já recebemos vários pedidos seus. Vamos responder por e-mail.',
+  'Too many signups from this connection. Please try again later.': 'Muitas inscrições a partir desta conexão. Tente mais tarde.',
 };
 
 export const ES: Record<string, string> = {
@@ -2884,7 +2887,6 @@ export const ES: Record<string, string> = {
   'Newsletter signups': 'Suscripciones al boletín',
   'Showing the newest': 'Mostrando las',
   'You are on the list.': 'Listo, estás en la lista.',
-  'Too many signups right now. Please try again in a few minutes.': 'Demasiadas suscripciones ahora. Inténtalo de nuevo en unos minutos.',
   'Type prices without thousands separators, e.g. 1299.00': 'Escribe el precio sin separador de miles, ej.: 1299.00',
   'Nothing was approved on this order, so there is nothing to ship.': 'No se aprobó nada en este pedido, así que no hay nada que enviar.',
   'This order still has open shortfalls. Tick the box to ship what was approved and close them.': 'Este pedido aún tiene faltantes abiertos. Marca la casilla para enviar lo aprobado y cerrarlos.',
@@ -2982,4 +2984,8 @@ export const ES: Record<string, string> = {
   'New arrivals': 'Novedades',
   'Yes, remove': 'Sí, quitar',
   'Could not remove this address. Try again.': 'No se pudo quitar esta dirección. Inténtalo de nuevo.',
+  'This order has too many lines. Split it into smaller orders.': 'Este pedido tiene demasiadas líneas. Divídelo en pedidos más pequeños.',
+  'The shipping address is too long. Shorten it and try again.': 'La dirección de envío es demasiado larga. Acórtala e inténtalo de nuevo.',
+  'We already received several requests from you. We will reply by e-mail.': 'Ya recibimos varias solicitudes tuyas. Responderemos por correo.',
+  'Too many signups from this connection. Please try again later.': 'Demasiadas suscripciones desde esta conexión. Inténtalo más tarde.',
 };

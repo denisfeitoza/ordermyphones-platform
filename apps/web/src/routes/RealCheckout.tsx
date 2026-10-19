@@ -38,6 +38,8 @@ function placeOrderError(t: (s: string) => string, message: string | undefined):
   if (m.includes('bad_qty')) return t('One of the quantities is not valid. Check the cart and try again.');
   if (m.includes('bad_variant')) return t('One of the items is no longer available. Remove it and try again.');
   if (m.includes('not_authenticated')) return t('Your session expired. Sign in again to place the order.');
+  if (m.includes('too_many_items')) return t('This order has too many lines. Split it into smaller orders.');
+  if (m.includes('bad_address')) return t('The shipping address is too long. Shorten it and try again.');
   if (m.includes('requirements_missing')) return t('Your account is missing details required before ordering. Complete them in Settings and try again.');
   if (m.includes('no_tier')) return t('Your account has no pricing tier yet. Contact us to finish setup.');
   if (m.includes('empty_order')) return t('Your cart is empty.');

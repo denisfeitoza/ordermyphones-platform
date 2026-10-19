@@ -8,7 +8,7 @@ import { useI18n } from '@/i18n';
 
 const SUBSCRIBE_ERRORS: Record<string, string> = {
   bad_email: 'Please enter a valid email.',
-  rate_limited: 'Too many signups right now. Please try again in a few minutes.',
+  rate_limited: 'Too many signups from this connection. Please try again later.',
 };
 
 const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
