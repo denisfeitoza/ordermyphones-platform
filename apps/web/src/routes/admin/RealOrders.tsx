@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, ArrowRight, Check, ClipboardList, Minus, Pencil, Plus, Search, Trash2, Truck, X } from 'lucide-react';
-import { useAdminOrders, useVariantAvailability, useApproveOrder, useRejectOrder, useEditOrder, useMarkShipped, type AdminOrder, type AdminOrderStatus, type ShippingAddress, useOpenReconciliations } from '@/data/adminOrders';
+import { useAdminOrders, useVariantAvailability, useApproveOrder, useRejectOrder, useEditOrder, useMarkShipped, useBulkOrderAction, type AdminOrder, type AdminOrderStatus, type ShippingAddress, type BulkResult, useOpenReconciliations } from '@/data/adminOrders';
 import { exportPickingSheetPdf } from '@/lib/export';
 import { useOrderEvents } from '@/data/orderEvents';
 import { useRealCatalog } from '@/data/realCatalog';
@@ -209,6 +209,19 @@ export function RealAdminOrders() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [shown, setShown] = useState(ORDERS_PAGE);
+  // Bulk mode: approve many pending orders, or ship many approved ones.
+  const bulkAction: 'approve' | 'ship' | null = filter === 'pending' ? 'approve' : filter === 'approved' || filter === 'partially_approved' ? 'ship' : null;
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [confirmBulk, setConfirmBulk] = useState(false);
+  const [bulkResult, setBulkResult] = useState<BulkResult | null>(null);
+  const bulk = useBulkOrderAction();
+  const togglePick = (id: string) =>
+    setPicked((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const filtered = useMemo(() => {
     const all = orders ?? [];
@@ -236,6 +249,9 @@ export function RealAdminOrders() {
                 onClick={() => {
                   setFilter(f.key);
                   setShown(ORDERS_PAGE);
+                  setPicked(new Set());
+                  setConfirmBulk(false);
+                  setBulkResult(null);
                 }}
                 className={cn(
                   'whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
@@ -272,18 +288,88 @@ export function RealAdminOrders() {
                 className="h-11 w-full rounded-xl border border-border bg-background pl-9 pr-3 text-sm outline-none focus:border-brand"
               />
             </label>
+            {bulkAction && list.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card px-4 py-2.5 text-sm">
+                <label className="flex min-h-11 items-center gap-2">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-brand"
+                    checked={picked.size > 0 && list.every((o) => picked.has(o.id))}
+                    onChange={(e) => setPicked(e.target.checked ? new Set(list.map((o) => o.id)) : new Set())}
+                  />
+                  {picked.size > 0 ? `${picked.size} ${t('selected')}` : t('Select all shown')}
+                </label>
+                {picked.size > 0 && !confirmBulk && (
+                  <Button size="sm" variant="brand" className="ml-auto" onClick={() => { setBulkResult(null); setConfirmBulk(true); }}>
+                    {bulkAction === 'approve' ? <Check className="h-4 w-4" strokeWidth={2.5} /> : <Truck className="h-4 w-4" strokeWidth={2} />}
+                    {bulkAction === 'approve' ? t('Approve selected') : t('Mark selected shipped')}
+                  </Button>
+                )}
+                {confirmBulk && (
+                  <div className="flex basis-full flex-wrap items-center gap-2 border-t border-border pt-2.5">
+                    <p className="min-w-0 flex-1 text-sm">
+                      {bulkAction === 'approve'
+                        ? `${t('Approve')} ${picked.size} ${picked.size === 1 ? t('order') : t('orders')}? ${t('Stock deducts now; shortfalls open reconciliations.')}`
+                        : `${t('Mark')} ${picked.size} ${picked.size === 1 ? t('order') : t('orders')} ${t('as shipped, without tracking?')}`}
+                    </p>
+                    <Button size="sm" variant="outline" onClick={() => setConfirmBulk(false)} disabled={bulk.isPending}>
+                      {t('Cancel')}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="brand"
+                      disabled={bulk.isPending}
+                      onClick={() =>
+                        bulk.mutate(
+                          { action: bulkAction, orderIds: [...picked] },
+                          {
+                            onSuccess: (r) => {
+                              setBulkResult(r);
+                              setPicked(new Set(r.failed.map((f) => f.orderId)));
+                              setConfirmBulk(false);
+                            },
+                          },
+                        )
+                      }
+                    >
+                      {bulk.isPending ? t('Working…') : t('Confirm')}
+                    </Button>
+                  </div>
+                )}
+                {bulkResult && (
+                  <div className="basis-full space-y-1 border-t border-border pt-2.5 text-sm" role="status">
+                    <p>
+                      {bulkResult.done} {bulkAction === 'approve' ? t('approved') : t('marked shipped')}
+                      {bulkResult.short > 0 ? ` · ${bulkResult.short} ${t('with shortfalls in reconciliation')}` : ''}
+                      {bulkResult.failed.length > 0 ? ` · ${bulkResult.failed.length} ${t('failed (still selected)')}` : ''}
+                    </p>
+                    {bulkResult.failed.map((f) => (
+                      <p key={f.orderId} className="text-xs text-destructive">
+                        <span className="font-mono">{f.orderId.slice(0, 8).toUpperCase()}</span> · {adminErrorMessage(t, f.message)}
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             {list.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-border py-12 text-center text-sm text-muted-foreground">
                 {t('No orders in this status.')}
               </p>
             ) : (
               list.map((o) => (
+                <div key={o.id} className="flex items-stretch gap-2">
+                {bulkAction && (
+                  <label className="grid w-11 shrink-0 cursor-pointer place-items-center rounded-2xl border border-border bg-card">
+                    <span className="sr-only">{t('Select order')} {o.id.slice(0, 8).toUpperCase()}</span>
+                    <input type="checkbox" className="h-4 w-4 accent-brand" checked={picked.has(o.id)} onChange={() => togglePick(o.id)} />
+                  </label>
+                )}
                 <button
-                  key={o.id}
                   type="button"
                   onClick={() => setSelectedId(o.id)}
                   className={cn(
-                    'flex w-full items-center justify-between gap-3 rounded-2xl border bg-card p-4 text-left transition-colors',
+                    'flex w-full min-w-0 items-center justify-between gap-3 rounded-2xl border bg-card p-4 text-left transition-colors',
                     selectedId === o.id ? 'border-foreground' : 'border-border hover:border-border/70 hover:bg-muted/40',
                   )}
                 >
@@ -298,6 +384,7 @@ export function RealAdminOrders() {
                     <StatusChip status={o.status} />
                   </div>
                 </button>
+                </div>
               ))
             )}
             {filtered.length > list.length && (

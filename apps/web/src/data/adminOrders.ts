@@ -271,6 +271,47 @@ export function useApproveOrder() {
   });
 }
 
+export interface BulkResult {
+  done: number;
+  /** Approvals that left part of the order short (a reconciliation opened). */
+  short: number;
+  failed: { orderId: string; message: string }[];
+}
+
+/**
+ * Approve or ship several orders. Runs one RPC at a time, in order: each call
+ * is its own transaction, so one failure (missing requirements, an open
+ * shortfall) never undoes or blocks the others, and two approvals never race
+ * for the same stock. Bulk approval never overrides requirements; bulk ship
+ * sends no carrier or tracking and never closes shortfalls.
+ */
+export function useBulkOrderAction() {
+  const invalidate = useInvalidateOrderData();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ action, orderIds }: { action: 'approve' | 'ship'; orderIds: string[] }): Promise<BulkResult> => {
+      const result: BulkResult = { done: 0, short: 0, failed: [] };
+      for (const orderId of orderIds) {
+        const { data, error } =
+          action === 'approve'
+            ? await supabase.rpc('approve_order', { p_order_id: orderId, p_override_requirements: false })
+            : await supabase.rpc('mark_order_shipped', { p_order_id: orderId, p_carrier: null, p_tracking: null, p_note: null, p_close_shortfalls: false });
+        if (error) {
+          result.failed.push({ orderId, message: error.message });
+          continue;
+        }
+        result.done += 1;
+        if (action === 'approve' && (data as { short_lines?: number } | null)?.short_lines) result.short += 1;
+      }
+      return result;
+    },
+    onSettled: () => {
+      invalidate();
+      void qc.invalidateQueries({ queryKey: ['admin-summary'] });
+    },
+  });
+}
+
 export interface EditOrderItem {
   variant_id: string;
   /** Keeps a split-location line on its warehouse; null = any warehouse. */
