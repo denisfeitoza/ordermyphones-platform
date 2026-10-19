@@ -28,6 +28,10 @@ const SWEEP_SECRET = Deno.env.get('FEDEX_TRACK_SWEEP_SECRET') ?? '';
 const OPEN_STATUSES = ['queued', 'in_transit', 'out_for_delivery', 'exception', 'unknown'];
 const STALE_MINUTES = 30;
 const SWEEP_LIMIT = 50;
+/** A single-order refresh inside this window returns the stored row instead of calling FedEx. */
+const REFRESH_COOLDOWN_MINUTES = 5;
+/** Per-user cap on single-order refreshes that reach FedEx. */
+const USER_REFRESHES_PER_HOUR = 30;
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
@@ -123,22 +127,33 @@ serve(async (req) => {
     if (!SWEEP_SECRET || auth !== `Bearer ${SWEEP_SECRET}`) return json({ error: 'forbidden' }, 403);
 
     const staleBefore = new Date(Date.now() - STALE_MINUTES * 60_000).toISOString();
-    const { data: orders, error } = await admin
+    // Both queries filter in the database, so delivered shipments never use up
+    // the batch (the old version read 200 shipped orders and filtered here,
+    // and stopped tracking anything once 200 were delivered).
+    // 1. Shipped FedEx orders never polled yet.
+    const { data: fresh, error: freshError } = await admin
       .from('orders')
-      .select('id, tracking_carrier, tracking_number, shipment_tracking(status, polled_at)')
+      .select('id, tracking_carrier, tracking_number, shipment_tracking!left(order_id)')
       .eq('status', 'shipped')
       .not('tracking_number', 'is', null)
-      .limit(SWEEP_LIMIT * 4);
-    if (error) return json({ error: `db_error:${error.message}` }, 500);
+      .ilike('tracking_carrier', '%fedex%')
+      .is('shipment_tracking', null)
+      .order('shipped_at', { ascending: true })
+      .limit(SWEEP_LIMIT);
+    if (freshError) return json({ error: `db_error:${freshError.message}` }, 500);
+    // 2. Open shipments not polled for STALE_MINUTES, oldest poll first.
+    const { data: stale, error: staleError } = await admin
+      .from('shipment_tracking')
+      .select('order_id, polled_at, orders!inner(id, status, tracking_carrier, tracking_number)')
+      .in('status', OPEN_STATUSES)
+      .or(`polled_at.is.null,polled_at.lt.${staleBefore}`)
+      .eq('orders.status', 'shipped')
+      .order('polled_at', { ascending: true, nullsFirst: true })
+      .limit(SWEEP_LIMIT);
+    if (staleError) return json({ error: `db_error:${staleError.message}` }, 500);
 
-    const due = (orders ?? [])
-      .filter((o: any) => isFedex(o.tracking_carrier) && (o.tracking_number ?? '').trim())
-      .filter((o: any) => {
-        const t = Array.isArray(o.shipment_tracking) ? o.shipment_tracking[0] : o.shipment_tracking;
-        if (!t) return true;
-        if (!OPEN_STATUSES.includes(t.status)) return false;
-        return !t.polled_at || t.polled_at < staleBefore;
-      })
+    const due = [...(fresh ?? []), ...(stale ?? []).map((t: any) => t.orders)]
+      .filter((o: any) => o && isFedex(o.tracking_carrier) && (o.tracking_number ?? '').trim())
       .slice(0, SWEEP_LIMIT);
 
     let ok = 0;
@@ -161,6 +176,9 @@ serve(async (req) => {
   if (typeof orderId !== 'string' || !orderId) return json({ error: 'order_id_required' }, 400);
   if (!auth.startsWith('Bearer ')) return json({ error: 'unauthorized' }, 401);
 
+  const { data: caller } = await admin.auth.getUser(auth.replace('Bearer ', ''));
+  if (!caller?.user) return json({ error: 'unauthorized' }, 401);
+
   const asCaller = createClient(SUPABASE_URL, ANON_KEY, {
     auth: { persistSession: false },
     global: { headers: { Authorization: auth } },
@@ -176,6 +194,21 @@ serve(async (req) => {
   if (!order.tracking_number) return json({ error: 'no_tracking_number' }, 409);
   if (!isFedex(order.tracking_carrier)) {
     return json({ error: 'carrier_not_supported', carrier: order.tracking_carrier }, 409);
+  }
+
+  // Recently polled: answer from the stored row, no FedEx call.
+  const { data: stored } = await admin.from('shipment_tracking').select('*').eq('order_id', order.id).maybeSingle();
+  if (stored?.polled_at && !stored.poll_error && Date.parse(stored.polled_at) > Date.now() - REFRESH_COOLDOWN_MINUTES * 60_000) {
+    return json({ tracking: stored, cached: true });
+  }
+  const { error: limitError } = await admin.rpc('hit_rate_limit', {
+    p_bucket: 'fedex_track',
+    p_key: caller.user.id,
+    p_max: USER_REFRESHES_PER_HOUR,
+    p_window: '1 hour',
+  });
+  if (limitError) {
+    return limitError.message.includes('rate_limited') ? json({ error: 'rate_limited' }, 429) : json({ error: `db_error:${limitError.message}` }, 500);
   }
 
   try {

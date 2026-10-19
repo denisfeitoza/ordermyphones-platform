@@ -21,6 +21,8 @@ const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
 const MAX_UNITS = 5000;
+/** Per-user cap on quotes (each one calls FedEx once per active warehouse). */
+const USER_QUOTES_PER_HOUR = 60;
 const PACKAGE_FALLBACK = {
   unit_weight_lb: 0.6,
   box_weight_lb: 0.4,
@@ -78,6 +80,17 @@ serve(async (req) => {
   if (!auth.startsWith('Bearer ')) return json({ error: 'unauthorized' }, 401);
   const { data: caller } = await admin.auth.getUser(auth.replace('Bearer ', ''));
   if (!caller?.user) return json({ error: 'unauthorized' }, 401);
+
+  // Per-user cap: each quote is one FedEx call per active warehouse.
+  const { error: limitError } = await admin.rpc('hit_rate_limit', {
+    p_bucket: 'fedex_rate',
+    p_key: caller.user.id,
+    p_max: USER_QUOTES_PER_HOUR,
+    p_window: '1 hour',
+  });
+  if (limitError) {
+    return limitError.message.includes('rate_limited') ? json({ error: 'rate_limited' }, 429) : json({ error: `db_error:${limitError.message}` }, 500);
+  }
 
   const body = await req.json().catch(() => ({}));
   const dest = body?.destination ?? {};
