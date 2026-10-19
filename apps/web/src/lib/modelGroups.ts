@@ -88,6 +88,13 @@ export function groupByModel(items: PricedRealListing[]): ModelGroup[] {
   });
 }
 
+/** SKU rows in the order of their (already sorted) model groups; inside a
+ * model, deepest stock first. The table's 'featured' order, so it agrees with
+ * the grid instead of following raw SKU order (which leads with AirPods). */
+export function listingsByGroup(groups: ModelGroup[]): PricedRealListing[] {
+  return groups.flatMap((g) => [...g.offers].sort((a, b) => b.totalQty - a.totalQty));
+}
+
 /** Same sort options as the SKU list, applied at model level. 'featured' puts
  * the deepest stock first (the SKU list's native order is alphabetical by SKU,
  * which would lead with Galaxy S22s); price sorts use the "from" price, unpriced last. */

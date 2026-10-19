@@ -233,8 +233,21 @@ export function carrierLabel(code: string): string {
  * "iPhone 11 Pro" 256GB variant renders "iPhone 11 Pro · 256GB · Unlocked".
  */
 export function buildDisplayName(l: Pick<RealListing, 'model' | 'capacity' | 'carrier' | 'lockStatus'>): string {
+  return localizedDisplayName(l, (en) => en);
+}
+
+/**
+ * buildDisplayName with the lock words passed through `t` — what a PT/ES
+ * buyer reads ("· Desbloqueado", "· AT&T Bloqueado"). Render-only:
+ * search text, exports and admin keep the English buildDisplayName.
+ */
+export function localizedDisplayName(
+  l: Pick<RealListing, 'model' | 'capacity' | 'carrier' | 'lockStatus'>,
+  t: (en: string) => string,
+): string {
   // "Other Locked" (carrier OTH) says nothing to a buyer — just "Locked".
-  const lockPart = l.lockStatus === 'unlocked' ? 'Unlocked' : l.carrier === 'OTH' ? 'Locked' : `${carrierLabel(l.carrier)} Locked`;
+  const lockPart =
+    l.lockStatus === 'unlocked' ? t('Unlocked') : l.carrier === 'OTH' ? t('Locked') : `${carrierLabel(l.carrier)} ${t('Locked')}`;
   // Accessories come through the phone import with a placeholder "1GB"
   // capacity (AirPods, Watch…); no phone ships with 1GB, so hide it.
   const cap = l.capacity && !/^1\s*GB$/i.test(l.capacity.trim()) ? l.capacity : null;

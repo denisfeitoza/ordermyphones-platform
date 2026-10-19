@@ -5,7 +5,7 @@ import { Minus, Plus, Trash2, X, ArrowRight, ShoppingBag, Smartphone } from 'luc
 import { useRealCart, type RealCartAllocation } from '@/store';
 import { useCatalogSource } from '@/lib/catalogSource';
 import { useOrderLocationSelection } from '@/lib/orderSettings';
-import { useRealCatalog, buildDisplayName, type PricedRealListing } from '@/data/realCatalog';
+import { useRealCatalog, localizedDisplayName, type PricedRealListing } from '@/data/realCatalog';
 import { listingImage } from '@/lib/productImage';
 import { CartLineLocations, allocationValid } from './CartLineLocations';
 import { QtyInput, clampQty } from './QtyInput';
@@ -154,7 +154,7 @@ export function RealCartDrawer() {
                 <ul className="flex-1 divide-y divide-border overflow-y-auto px-5">
                   {resolved.map((l) => {
                     const image = l.item ? listingImage(l.item) : null;
-                    const name = l.item ? buildDisplayName(l.item) : isLoading ? t('Loading…') : t('Item unavailable');
+                    const name = l.item ? localizedDisplayName(l.item, t) : isLoading ? t('Loading…') : t('Item unavailable');
                     return (
                       <li key={l.variantId} className="flex gap-3 py-4">
                         <div className="grid h-20 w-20 shrink-0 place-items-center rounded-xl bg-muted/40">

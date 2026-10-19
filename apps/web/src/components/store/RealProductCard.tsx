@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Smartphone } from 'lucide-react';
-import { buildDisplayName, type PricedRealListing } from '@/data/realCatalog';
+import { localizedDisplayName, type PricedRealListing } from '@/data/realCatalog';
 import { isIllustrative, listingImage } from '@/lib/productImage';
 import { IllustrativeTag } from './IllustrativeTag';
 import { Badge } from '@/components/ui/Badge';
@@ -27,7 +27,7 @@ export function RealProductCard({ item }: { item: PricedRealListing }) {
   const { t } = useI18n();
   // Staff photo first; the mock-family render is only the fallback.
   const image = listingImage(item);
-  const name = buildDisplayName(item);
+  const name = localizedDisplayName(item, t);
   const soldOut = item.totalQty === 0;
 
   return (

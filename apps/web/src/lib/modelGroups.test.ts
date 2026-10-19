@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupByModel, modelSlug, sortCapacities, sortGroups } from './modelGroups';
+import { groupByModel, listingsByGroup, modelSlug, sortCapacities, sortGroups } from './modelGroups';
 import type { PricedRealListing } from '@/data/realCatalog';
 
 function listing(over: Partial<PricedRealListing>): PricedRealListing {
@@ -84,5 +84,18 @@ describe('groupByModel', () => {
     const unpriced = { ...groups[1], slug: 'none', fromPriceCents: null };
     expect(sortGroups([unpriced, ...groups], 'price-asc').map((g) => g.slug)).toEqual(['apple-iphone-14-pro-max', 'samsung-galaxy-s24-ultra', 'none']);
     expect(sortGroups([unpriced, ...groups], 'price-desc').map((g) => g.slug)).toEqual(['samsung-galaxy-s24-ultra', 'apple-iphone-14-pro-max', 'none']);
+  });
+});
+
+describe('listingsByGroup', () => {
+  it("orders SKU rows like the grid's featured sort, not raw SKU order", () => {
+    const items = [
+      listing({ sku: 'AIRPODS-1', make: 'Apple', model: 'AirPods Pro', category: 'accessories', totalQty: 3 }),
+      listing({ sku: 'IP14PM-A', totalQty: 10 }),
+      listing({ sku: 'IP14PM-B', totalQty: 40 }),
+      listing({ sku: 'S24U-A', make: 'Samsung', model: 'Galaxy S24 Ultra', totalQty: 20 }),
+    ];
+    const rows = listingsByGroup(sortGroups(groupByModel(items), 'featured'));
+    expect(rows.map((r) => r.sku)).toEqual(['IP14PM-B', 'IP14PM-A', 'S24U-A', 'AIRPODS-1']);
   });
 });

@@ -21,6 +21,10 @@ const KEY_CUSTOMER_STRINGS = [
   'How does ordering work?',
   'Phones',
   'All products',
+  'product',
+  'products',
+  'Unlocked',
+  'Locked',
   // storefront + cart
   'Add to cart',
   'Browse catalog',

@@ -7,7 +7,7 @@ import { useAuth, useRealCart } from '@/store';
 import { supabase } from '@/lib/supabase';
 import { expandCartToOrderItems } from '@/lib/orderItems';
 import { listAddresses, createAddress, type AddressRow } from '@/data/addresses';
-import { useRealCatalog, buildDisplayName, type PricedRealListing } from '@/data/realCatalog';
+import { useRealCatalog, localizedDisplayName, type PricedRealListing } from '@/data/realCatalog';
 import { ShippingEstimate } from '@/components/store/ShippingEstimate';
 import { allocationValid } from '@/components/store/CartLineLocations';
 import { Button } from '@/components/ui/Button';
@@ -500,7 +500,7 @@ export function RealCheckout() {
                 {resolved.map((l) => (
                   <li key={l.variantId} className="flex items-center justify-between gap-2 py-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{l.item ? buildDisplayName(l.item) : t('No longer available')}</p>
+                      <p className="truncate text-sm font-medium">{l.item ? localizedDisplayName(l.item, t) : t('No longer available')}</p>
                       <p className="text-xs text-muted-foreground">
                         {l.item && `${t(l.item.ctiaLabel)}${l.item.color ? ` · ${l.item.color}` : ''} · `}×{l.qty}
                         {pricesReady && l.price === null && <span className="text-destructive"> · {t('Not priced for your tier')}</span>}

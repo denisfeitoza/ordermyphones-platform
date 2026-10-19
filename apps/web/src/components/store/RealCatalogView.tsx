@@ -1,5 +1,6 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigationType, useSearchParams } from 'react-router-dom';
+import type { VirtualItem } from '@tanstack/react-virtual';
 import { Search, SlidersHorizontal, X, LayoutGrid, Rows3, ClipboardList } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRealCatalog } from '@/data/realCatalog';
@@ -32,7 +33,7 @@ import {
   type FacetState,
   type Sort,
 } from '@/lib/realCatalogFacets';
-import { groupByModel, sortGroups } from '@/lib/modelGroups';
+import { groupByModel, listingsByGroup, sortGroups } from '@/lib/modelGroups';
 
 const SORTS = [
   { id: 'featured', label: 'Featured' },
@@ -43,13 +44,36 @@ const SORTS = [
 ] as const;
 
 /**
- * How many cards to paint into the DOM per page in real mode. The real HYLA
- * catalog is ~2,675 variants; the *full* filtered+sorted set still powers
- * search/sort/facets and the total-count label, but only this many cards are
- * mounted at once. Load-more appends another WINDOW. Keeps the mock path
- * untouched — that page never mounts this component.
+ * How many model cards the grid paints per page. The *full* filtered+sorted
+ * set still powers search/sort/facets and the total-count label; Load more
+ * appends another WINDOW. The table does not page: it is virtualized
+ * (RealCatalogTable), so it lists every SKU at the DOM cost of a screenful.
  */
 const WINDOW = 48;
+
+/**
+ * What a buyer had on screen when they left the catalog (to a model or product
+ * page), keyed by the history entry. Back (a POP to the same entry) restores
+ * the filters, the grid page count and the scroll position. In memory only:
+ * a reload starts fresh, like any other page.
+ */
+interface CatalogSnapshot {
+  q: string;
+  sort: Sort;
+  facets: FacetState;
+  view: CatalogView;
+  visibleCount: number;
+  scrollY: number;
+  tableMeasurements: VirtualItem[] | undefined;
+}
+const snapshots = new Map<string, CatalogSnapshot>();
+const MAX_SNAPSHOTS = 20;
+
+function saveSnapshot(key: string, snap: CatalogSnapshot) {
+  snapshots.delete(key);
+  snapshots.set(key, snap);
+  if (snapshots.size > MAX_SNAPSHOTS) snapshots.delete(snapshots.keys().next().value as string);
+}
 
 /**
  * Real-mode catalog page (M2-P1). Facet filters (make, condition, storage,
@@ -62,17 +86,28 @@ const WINDOW = 48;
 export function RealCatalogView() {
   const { t } = useI18n();
   const real = useRealCatalog();
-  const [q, setQ] = useState('');
-  const [sort, setSort] = useState<Sort>('featured');
-  const [facets, setFacets] = useState<FacetState>(emptyFacetState);
+  const location = useLocation();
+  const navigationType = useNavigationType();
+  // Copied once at mount: the live snapshot below is a new object, so scroll
+  // events before the restore cannot overwrite the position we restore to.
+  const [restored] = useState<CatalogSnapshot | undefined>(() =>
+    navigationType === 'POP' ? snapshots.get(location.key) : undefined,
+  );
+  const [q, setQ] = useState(restored?.q ?? '');
+  const [sort, setSort] = useState<Sort>(restored?.sort ?? 'featured');
+  const [facets, setFacets] = useState<FacetState>(restored?.facets ?? emptyFacetState);
   // Bounded render window. Reset to the first page whenever search, sort, or a
   // facet changes (in the handlers below, not a useEffect) so the slice never
   // renders a stale over-large page for a frame.
-  const [visibleCount, setVisibleCount] = useState(WINDOW);
+  const [visibleCount, setVisibleCount] = useState(restored?.visibleCount ?? WINDOW);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
-  const [view, setView] = useState<CatalogView>(readView);
+  const [view, setView] = useState<CatalogView>(restored?.view ?? readView);
   const [params] = useSearchParams();
+  // A restored visit already holds the filters the URL params produced (plus
+  // what the buyer picked after), so the params sync below skips its mount run.
+  const skipParamsSync = useRef(restored !== undefined);
+  const tableMeasurements = useRef<(() => VirtualItem[]) | null>(null);
 
   // Sync the header's category nav (?brand=Apple, ?condition=cpo, ?q=…) into the
   // facet state. The mock catalog reads these params directly; the real view
@@ -80,6 +115,10 @@ export function RealCatalogView() {
   // Pre-Owned" links navigate but never filter. Runs only when the params
   // change (i.e. a nav click / deep link), so user-picked facets are preserved.
   useEffect(() => {
+    if (skipParamsSync.current) {
+      skipParamsSync.current = false;
+      return;
+    }
     const brand = params.get('brand');
     const condition = params.get('condition');
     const category = params.get('category');
@@ -95,8 +134,42 @@ export function RealCatalogView() {
     setFacets(next);
     setQ(urlQ ?? '');
     setVisibleCount(WINDOW);
-     
   }, [params]);
+
+  // Keep this history entry's snapshot current. The scroll position is saved
+  // from the scroll listener, not on unmount: by then the page has already
+  // shrunk and the browser has clamped scrollY. That clamp also fires a scroll
+  // event before this effect is cleaned up, so ignore scrolls once the
+  // catalog is out of the document.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const live = useRef<CatalogSnapshot>({ q, sort, facets, view, visibleCount, scrollY: 0, tableMeasurements: undefined });
+  Object.assign(live.current, { q, sort, facets, view, visibleCount });
+  useEffect(() => {
+    const snap = live.current;
+    const key = location.key;
+    const measurements = tableMeasurements; // the table re-points .current; read it at leave time
+    const onScroll = () => {
+      if (rootRef.current?.isConnected) snap.scrollY = window.scrollY;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      snap.tableMeasurements = snap.view === 'table' ? measurements.current?.() : undefined;
+      saveSnapshot(key, snap);
+    };
+  }, [location.key]);
+
+  // Back: return to where the buyer was once the rows exist. ScrollToHash
+  // jumps to the top on every route change, so retry after it, as it does.
+  const pendingScroll = useRef(restored?.scrollY);
+  useEffect(() => {
+    const top = pendingScroll.current;
+    if (top === undefined || real.isLoading) return;
+    pendingScroll.current = undefined;
+    const jump = () => window.scroll({ top, left: 0, behavior: 'instant' as ScrollBehavior });
+    const timers = [0, 60, 250].map((ms) => window.setTimeout(jump, ms));
+    return () => timers.forEach(clearTimeout);
+  }, [real.isLoading]);
 
   function selectView(next: CatalogView) {
     setView(next);
@@ -117,6 +190,7 @@ export function RealCatalogView() {
   // Grid browses by model (one card per model, options picked on /m/:slug);
   // the table stays one row per SKU for wholesale buyers who order by line.
   const groups = useMemo(() => sortGroups(groupByModel(filtered), sort), [filtered, sort]);
+  const tableItems = useMemo(() => (sort === 'featured' ? listingsByGroup(groups) : filtered), [sort, groups, filtered]);
   const total = view === 'grid' ? groups.length : filtered.length;
 
   // Single-valued filters travel to the model page so it opens preselected.
@@ -136,6 +210,9 @@ export function RealCatalogView() {
   const pickedCategory = facets.category.size === 1 ? [...facets.category][0] : null;
   const onlyPhones = real.items.every((i) => i.category === 'phones');
   const heading = pickedCategory ? (CATEGORY_LABEL[pickedCategory] ?? pickedCategory) : onlyPhones ? 'All phones' : 'All products';
+  // The SKU counter follows the heading: "phones" only when only phones are listed.
+  const phonesOnly = pickedCategory ? pickedCategory === 'phones' : onlyPhones;
+  const unit = phonesOnly ? ['phone', 'phones'] : ['product', 'products'];
 
   function toggleFacet(key: FacetKey, value: string) {
     setFacets((prev) => {
@@ -155,15 +232,13 @@ export function RealCatalogView() {
   const activeFilters = FACET_KEYS.flatMap((key) => [...facets[key]].map((value) => ({ key, value })));
   const hasActiveFilters = anyFacetActive(facets);
 
-  // Only this slice is mounted into the DOM; `filtered` (the full set) still
-  // drives facets, sort and the total-count label.
-  const visibleItems = filtered.slice(0, visibleCount);
+  // The grid mounts only this slice; `filtered` (the full set) still drives
+  // facets, sort and the total-count label.
   const visibleGroups = groups.slice(0, visibleCount);
-  const shown = view === 'grid' ? visibleGroups.length : visibleItems.length;
-  const hasMore = visibleCount < total;
+  const hasMore = view === 'grid' && visibleCount < groups.length;
 
   return (
-    <div className="container py-8 md:py-12">
+    <div ref={rootRef} className="container py-8 md:py-12">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">{t(heading)}</h1>
@@ -175,7 +250,7 @@ export function RealCatalogView() {
               </>
             ) : (
               <>
-                <span className="font-mono">{filtered.length}</span> {filtered.length === 1 ? t('phone') : t('phones')}
+                <span className="font-mono">{filtered.length}</span> {t(filtered.length === 1 ? unit[0] : unit[1])}
               </>
             )}{' '}
             · {t('live tier pricing & inventory')}
@@ -306,12 +381,16 @@ export function RealCatalogView() {
             </div>
           ) : filtered.length > 0 ? (
             <>
-              {view === 'table' ? <RealCatalogTable items={visibleItems} /> : <RealModelGrid groups={visibleGroups} search={modelSearch} />}
+              {view === 'table' ? (
+                <RealCatalogTable items={tableItems} initialMeasurements={restored?.tableMeasurements} measurementsRef={tableMeasurements} />
+              ) : (
+                <RealModelGrid groups={visibleGroups} search={modelSearch} />
+              )}
               {hasMore && (
                 <div className="mt-8 flex flex-col items-center gap-3">
                   <p className="text-sm text-muted-foreground">
-                    {t('Showing')} <span className="font-mono">{shown}</span> {t('of')}{' '}
-                    <span className="font-mono">{total}</span>
+                    {t('Showing')} <span className="font-mono">{visibleGroups.length}</span> {t('of')}{' '}
+                    <span className="font-mono">{groups.length}</span>
                   </p>
                   <Button variant="outline" className="min-h-11 w-full sm:w-auto sm:min-w-48" onClick={() => setVisibleCount((c) => c + WINDOW)}>
                     {t('Load more')}

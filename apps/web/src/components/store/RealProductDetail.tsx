@@ -2,7 +2,7 @@ import { useRef, type MouseEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronRight, MapPin, ShieldCheck, Smartphone } from 'lucide-react';
-import { buildDisplayName, carrierLabel, type PricedRealListing } from '@/data/realCatalog';
+import { localizedDisplayName, carrierLabel, type PricedRealListing } from '@/data/realCatalog';
 import { HOME_ICONS, useHomeContent } from '@/data/homeContent';
 import { isIllustrative, listingImage } from '@/lib/productImage';
 import { IllustrativeTag } from './IllustrativeTag';
@@ -55,7 +55,7 @@ export function RealProductDetail({ item, related }: { item: PricedRealListing; 
   const { data: home } = useHomeContent();
   const trust = home?.benefits.enabled ? home.benefits.items.slice(0, 3) : [];
   const image = listingImage(item);
-  const name = buildDisplayName(item);
+  const name = localizedDisplayName(item, t);
   const available = item.totalQty;
   const soldOut = available === 0;
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildDisplayName, carrierLabel } from './realCatalog';
+import { buildDisplayName, carrierLabel, localizedDisplayName } from './realCatalog';
+import { PT, ES } from '@/i18n/dict';
 
 describe('buildDisplayName', () => {
   it('renders the exact canonical example from the Phase 4 task spec', () => {
@@ -59,5 +60,20 @@ describe('buildDisplayName — accessories and unknown carriers (audit 2026-09-1
   it('keeps the named carrier for real carriers', () => {
     expect(buildDisplayName({ model: 'iPhone 11', capacity: '64GB', carrier: 'ATT', lockStatus: 'locked' })).toContain('Locked');
     expect(buildDisplayName({ model: 'iPhone 11', capacity: '64GB', carrier: 'ATT', lockStatus: 'locked' })).not.toBe('iPhone 11 · 64GB · Locked');
+  });
+});
+
+describe('localizedDisplayName', () => {
+  const pt = (en: string) => PT[en] ?? en;
+  const es = (en: string) => ES[en] ?? en;
+
+  it('translates the lock words for PT/ES buyers', () => {
+    expect(localizedDisplayName({ model: 'iPhone 13', capacity: '128GB', carrier: 'UNL', lockStatus: 'unlocked' }, pt)).toBe('iPhone 13 · 128GB · Desbloqueado');
+    expect(localizedDisplayName({ model: 'iPhone 13', capacity: '128GB', carrier: 'ATT', lockStatus: 'locked' }, es)).toBe('iPhone 13 · 128GB · AT&T Bloqueado');
+    expect(localizedDisplayName({ model: 'AirPods Max', capacity: '1GB', carrier: 'OTH', lockStatus: 'locked' }, pt)).toBe('AirPods Max · Bloqueado');
+  });
+
+  it('leaves buildDisplayName (search text, exports) in English', () => {
+    expect(buildDisplayName({ model: 'iPhone 13', capacity: '128GB', carrier: 'ATT', lockStatus: 'locked' })).toBe('iPhone 13 · 128GB · AT&T Locked');
   });
 });

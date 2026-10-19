@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, ClipboardList, ShoppingBag, Plus, Trash2, Search, Eye } from 'lucide-react';
 import { useAuth, useRealCart, useTier } from '@/store';
-import { useRealCatalog, buildDisplayName, type PricedRealListing } from '@/data/realCatalog';
+import { useRealCatalog, localizedDisplayName, type PricedRealListing } from '@/data/realCatalog';
 import { canOrder } from '@/components/store/RealAddToCart';
 import { TIERS } from '@/data/tiers';
 import { Button } from '@/components/ui/Button';
@@ -210,7 +210,7 @@ export function QuickOrderDialog({ open, onClose }: { open: boolean; onClose: ()
                               className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50 disabled:cursor-default disabled:opacity-55"
                             >
                               <span className="min-w-0">
-                                <span className="block truncate font-medium">{buildDisplayName(i)}</span>
+                                <span className="block truncate font-medium">{localizedDisplayName(i, t)}</span>
                                 <span className="block truncate text-xs text-muted-foreground">
                                   {t(i.ctiaLabel)}
                                   {i.color ? ` · ${i.color}` : ''} · <span className="font-mono">{i.sku}</span>
@@ -242,7 +242,7 @@ export function QuickOrderDialog({ open, onClose }: { open: boolean; onClose: ()
                   {stagedResolved.map((s) => (
                     <li key={s.variantId} className="flex items-center gap-3 rounded-xl border border-border p-2.5">
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-medium">{buildDisplayName(s.item)}</span>
+                        <span className="block truncate text-sm font-medium">{localizedDisplayName(s.item, t)}</span>
                         <span className="block truncate text-xs text-muted-foreground">
                           {t(s.item.ctiaLabel)}
                           {s.item.color ? ` · ${s.item.color}` : ''} · <span className="font-mono">{formatUsd(s.item.priceCents ?? 0)} · {formatUsd((s.item.priceCents ?? 0) * s.qty)}</span>
