@@ -38,11 +38,19 @@ function placeOrderError(t: (s: string) => string, message: string | undefined):
   if (m.includes('bad_qty')) return t('One of the quantities is not valid. Check the cart and try again.');
   if (m.includes('bad_variant')) return t('One of the items is no longer available. Remove it and try again.');
   if (m.includes('not_authenticated')) return t('Your session expired. Sign in again to place the order.');
+  if (m.includes('requirements_missing')) return t('Your account is missing details required before ordering. Complete them in Settings and try again.');
   if (m.includes('no_tier')) return t('Your account has no pricing tier yet. Contact us to finish setup.');
   if (m.includes('empty_order')) return t('Your cart is empty.');
   if (m.includes('customer_only')) return t('Only customer accounts can place orders.');
   return t('We could not place your order. Please try again.');
 }
+
+/** app_settings.enforcement_points keys → readable names. */
+const REQUIREMENT_LABEL: Record<string, string> = {
+  tax_certificate: 'Tax certificate',
+  business_name: 'Business name',
+  shipping_address: 'Shipping address',
+};
 
 /** Random id (crypto.randomUUID where available — it is missing on older iOS). */
 function randomId(): string {
@@ -113,6 +121,21 @@ export function RealCheckout() {
   // buyer never re-types ("não perguntar de novo").
   const { data: addresses = [], isLoading: addressesLoading } = useQuery({ queryKey: ['addresses'], queryFn: listAddresses, enabled: !!user });
 
+  // What app_settings.enforcement_points will ask of this account
+  // (my_order_requirements). Checkout items block the order; approval items
+  // only delay it, so the buyer is told before placing it.
+  const { data: requirements } = useQuery({
+    queryKey: ['my-order-requirements', user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('my_order_requirements');
+      if (error) throw new Error(error.message);
+      return data as { checkout: string[]; approval: string[] };
+    },
+  });
+  const checkoutMissing = requirements?.checkout ?? [];
+  const approvalMissing = requirements?.approval ?? [];
+
   // Once the book resolves, pre-select the default (or the first). With an empty
   // book, fall back to the typed-address form.
   useEffect(() => {
@@ -166,7 +189,8 @@ export function RealCheckout() {
   // A failed price request is not "not priced": show a retry instead.
   const unpricedLines = pricesReady && !pricesError ? resolved.filter((l) => l.price === null).length : 0;
   const badSplitLines = resolved.filter((l) => !allocationValid(l)).length;
-  const canPlace = resolved.length > 0 && pricesReady && !pricesError && unpricedLines === 0 && badSplitLines === 0;
+  const canPlace =
+    resolved.length > 0 && pricesReady && !pricesError && unpricedLines === 0 && badSplitLines === 0 && checkoutMissing.length === 0;
   // One id per checkout attempt, stable while the cart is unchanged: a retry
   // after a dropped response returns the order already placed instead of a
   // duplicate (place_order is idempotent on p_client_ref).
@@ -363,6 +387,18 @@ export function RealCheckout() {
                 <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">{error}</div>
               )}
 
+              {checkoutMissing.length > 0 && (
+                <p className="text-sm text-destructive">
+                  {t('Before ordering, add to your account:')} {checkoutMissing.map((k) => t(REQUIREMENT_LABEL[k] ?? k)).join(', ')}.{' '}
+                  <Link to="/portal/settings" className="underline">{t('Open settings')}</Link>
+                </p>
+              )}
+              {checkoutMissing.length === 0 && approvalMissing.length > 0 && (
+                <p className="rounded-lg bg-warning/10 px-3 py-2 text-sm">
+                  {t('You can place this order, but we approve it only after you add:')} {approvalMissing.map((k) => t(REQUIREMENT_LABEL[k] ?? k)).join(', ')}.{' '}
+                  <Link to="/portal/settings" className="underline">{t('Open settings')}</Link>
+                </p>
+              )}
               {!pricesReady && resolved.length > 0 && <p className="text-sm text-muted-foreground">{t('Loading your prices…')}</p>}
               {pricesError && (
                 <p className="text-sm text-destructive">

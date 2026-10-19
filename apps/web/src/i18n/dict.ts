@@ -1437,6 +1437,12 @@ export const PT: Record<string, string> = {
   'Every device is backed by a 90-day warranty and a responsive support team — purchases stay protected, risk-free, and personally handled.': 'Todo aparelho tem garantia de 90 dias e uma equipe de suporte ágil — compras protegidas, sem risco e com atendimento pessoal.',
   'Approved total': 'Total aprovado',
   'Units sold': 'Unidades vendidas',
+  'This customer is missing what Enforcement requires before approval:': 'Falta a este cliente o que o Enforcement exige antes da aprovação:',
+  'Approve anyway (recorded in the audit log)': 'Aprovar mesmo assim (fica no log de auditoria)',
+  'Your account is missing details required before ordering. Complete them in Settings and try again.': 'Faltam dados obrigatórios na sua conta para fazer pedidos. Complete em Configurações e tente de novo.',
+  'Before ordering, add to your account:': 'Antes de pedir, adicione à sua conta:',
+  'You can place this order, but we approve it only after you add:': 'Você pode fazer este pedido, mas só aprovamos depois que você adicionar:',
+  'Open settings': 'Abrir configurações',
 };
 
 export const ES: Record<string, string> = {
@@ -2874,4 +2880,10 @@ export const ES: Record<string, string> = {
   'Every device is backed by a 90-day warranty and a responsive support team — purchases stay protected, risk-free, and personally handled.': 'Cada equipo tiene garantía de 90 días y un equipo de soporte ágil — compras protegidas, sin riesgo y con atención personal.',
   'Approved total': 'Total aprobado',
   'Units sold': 'Unidades vendidas',
+  'This customer is missing what Enforcement requires before approval:': 'A este cliente le falta lo que Enforcement exige antes de la aprobación:',
+  'Approve anyway (recorded in the audit log)': 'Aprobar de todos modos (queda en el registro de auditoría)',
+  'Your account is missing details required before ordering. Complete them in Settings and try again.': 'Faltan datos obligatorios en tu cuenta para hacer pedidos. Complétalos en Configuración e inténtalo de nuevo.',
+  'Before ordering, add to your account:': 'Antes de pedir, añade a tu cuenta:',
+  'You can place this order, but we approve it only after you add:': 'Puedes hacer este pedido, pero solo lo aprobamos después de que añadas:',
+  'Open settings': 'Abrir configuración',
 };

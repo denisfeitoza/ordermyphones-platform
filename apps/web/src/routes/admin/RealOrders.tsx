@@ -43,6 +43,13 @@ const FILTERS: { key: AdminOrderStatus | 'all'; label: string }[] = [
 
 const CARRIERS = ['UPS', 'FedEx', 'USPS', 'DHL', 'Other'] as const;
 
+/** app_settings.enforcement_points keys → readable names (order_requirements_missing). */
+const REQUIREMENT_LABEL: Record<string, string> = {
+  tax_certificate: 'Tax certificate',
+  business_name: 'Business name',
+  shipping_address: 'Shipping address',
+};
+
 /** Approved (or partially approved) → shipped, with the manual carrier + tracking the plan calls for (J2 step 5). */
 function ShipForm({ order, onDone }: { order: AdminOrder; onDone: () => void }) {
   const { t } = useI18n();
@@ -406,10 +413,29 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
             </div>
           )}
 
-          {(approve.isError || reject.isError) && (
-            <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
-              {(approve.error as Error)?.message ?? (reject.error as Error)?.message ?? t('Action failed.')}
-            </p>
+          {approve.isError && (approve.error as Error).message.includes('requirements_missing') ? (
+            <div role="alert" className="space-y-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2.5 text-xs">
+              <p>
+                {t('This customer is missing what Enforcement requires before approval:')}{' '}
+                <b>
+                  {String((approve.error as Error & { details?: string }).details ?? '')
+                    .split(',')
+                    .filter(Boolean)
+                    .map((k) => t(REQUIREMENT_LABEL[k] ?? k))
+                    .join(', ')}
+                </b>
+                .
+              </p>
+              <Button size="sm" variant="outline" disabled={busy} onClick={() => approve.mutate({ orderId: order.id, overrideRequirements: true })}>
+                {t('Approve anyway (recorded in the audit log)')}
+              </Button>
+            </div>
+          ) : (
+            (approve.isError || reject.isError) && (
+              <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                {(approve.error as Error)?.message ?? (reject.error as Error)?.message ?? t('Action failed.')}
+              </p>
+            )
           )}
 
           {isPending && !rejecting && (

@@ -222,9 +222,11 @@ function useInvalidateOrderData() {
 export function useApproveOrder() {
   const invalidate = useInvalidateOrderData();
   return useMutation({
-    mutationFn: async (orderId: string) => {
-      const { data, error } = await supabase.rpc('approve_order', { p_order_id: orderId });
-      if (error) throw new Error(error.message);
+    mutationFn: async (input: string | { orderId: string; overrideRequirements?: boolean }) => {
+      const { orderId, overrideRequirements = false } = typeof input === 'string' ? { orderId: input } : input;
+      const { data, error } = await supabase.rpc('approve_order', { p_order_id: orderId, p_override_requirements: overrideRequirements });
+      // Keep the Postgres detail: requirements_missing lists what is missing.
+      if (error) throw Object.assign(new Error(error.message), { details: error.details ?? null });
       return data as { status: string; approved_lines: number; short_lines: number; reconciliation_ids: string[] };
     },
     onSuccess: invalidate,
