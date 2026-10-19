@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Minus, Plus, Trash2, X, ArrowRight, ShoppingBag, Smartphone, LogIn } from 'lucide-react';
-import { useRealCart, type RealCartAllocation } from '@/store';
+import { useAuth, useRealCart, type RealCartAllocation } from '@/store';
 import { useCatalogSource } from '@/lib/catalogSource';
 import { useOrderLocationSelection } from '@/lib/orderSettings';
 import { useRealCatalog, localizedDisplayName, type PricedRealListing } from '@/data/realCatalog';
@@ -78,7 +78,10 @@ export function RealCartDrawer() {
   const allocationsValid = resolved.every((l) => allocationValid(l));
   // A guest has no tier price: prices are never fetched, so every line reads
   // "—". Sending them to sign in is the next step, not a dead button.
-  const needsSignIn = !signedIn;
+  // Wait for the session to restore: right after a reload a signed-in buyer
+  // briefly reads as signed out and must not be sent to sign-in.
+  const { loading: authLoading } = useAuth();
+  const needsSignIn = !authLoading && !signedIn;
   // Prices still on the way (or failed) are NOT "no longer available": only a
   // line missing from the listing, or unpriced once prices loaded fine, is.
   const pricesLoading = signedIn && !pricesLoaded;
@@ -88,7 +91,7 @@ export function RealCartDrawer() {
   // buyer never saw (audit 2026-09-13 P2).
   const allPriced = resolved.length > 0 && resolved.every((l) => l.lineTotalCents !== null);
   const unavailable = pricesSettled && signedIn ? resolved.filter((l) => l.lineTotalCents === null) : [];
-  const canCheckout = !needsSignIn && allPriced && allocationsValid;
+  const canCheckout = !authLoading && !needsSignIn && allPriced && allocationsValid;
 
   function checkout() {
     if (needsSignIn) {
@@ -262,8 +265,8 @@ export function RealCartDrawer() {
                     </Button>
                   ) : (
                     <Button variant="primary" size="lg" className="w-full" onClick={checkout} disabled={!canCheckout}>
-                      {pricesLoading || isLoading ? t('Loading your prices…') : t('Review & place order')}
-                      {!(pricesLoading || isLoading) && <ArrowRight className="h-4 w-4" strokeWidth={2} />}
+                      {pricesLoading || isLoading || authLoading ? t('Loading your prices…') : t('Review & place order')}
+                      {!(pricesLoading || isLoading || authLoading) && <ArrowRight className="h-4 w-4" strokeWidth={2} />}
                     </Button>
                   )}
                   {pricesError && (
