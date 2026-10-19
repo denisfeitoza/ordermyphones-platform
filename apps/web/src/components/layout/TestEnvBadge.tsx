@@ -27,11 +27,13 @@ export default function TestEnvBadge() {
     <div
       role="status"
       aria-live="off"
-      className="pointer-events-none fixed bottom-3 left-3 z-[60] select-none"
+      className="pointer-events-none fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-3 z-[60] select-none opacity-80"
     >
       <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-100/95 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wide text-amber-900 shadow-sm backdrop-blur">
         <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-        {label}
+        {/* Short on phones so it covers less of the page under it. */}
+        <span className="sm:hidden">TEST</span>
+        <span className="hidden sm:inline">{label}</span>
       </span>
     </div>
   );

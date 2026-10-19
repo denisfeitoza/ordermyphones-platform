@@ -210,7 +210,9 @@ export function RealAdminOrders() {
   const [query, setQuery] = useState('');
   const [shown, setShown] = useState(ORDERS_PAGE);
   // Bulk mode: approve many pending orders, or ship many approved ones.
-  const bulkAction: 'approve' | 'ship' | null = filter === 'pending' ? 'approve' : filter === 'approved' || filter === 'partially_approved' ? 'ship' : null;
+  // Partial orders are left out: shipping them must close their shortfalls,
+  // a per-order decision made in the detail panel.
+  const bulkAction: 'approve' | 'ship' | null = filter === 'pending' ? 'approve' : filter === 'approved' ? 'ship' : null;
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [confirmBulk, setConfirmBulk] = useState(false);
   const [bulkResult, setBulkResult] = useState<BulkResult | null>(null);
@@ -273,7 +275,9 @@ export function RealAdminOrders() {
         <p className="rounded-2xl border border-border bg-card p-16 text-center text-sm text-muted-foreground">{t('Loading…')}</p>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[1fr_420px] [&>*]:min-w-0">
-          <div className="space-y-2">
+          {/* Phones show either the list or the open order, never the order
+              below a long list. */}
+          <div className={cn('space-y-2', selected && 'hidden lg:block')}>
             <label className="relative block">
               <span className="sr-only">{t('Search orders')}</span>
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" strokeWidth={2} />
@@ -367,7 +371,10 @@ export function RealAdminOrders() {
                 )}
                 <button
                   type="button"
-                  onClick={() => setSelectedId(o.id)}
+                  onClick={() => {
+                    setSelectedId(o.id);
+                    if (window.matchMedia('(max-width: 1023px)').matches) window.scrollTo({ top: 0 });
+                  }}
                   className={cn(
                     'flex w-full min-w-0 items-center justify-between gap-3 rounded-2xl border bg-card p-4 text-left transition-colors',
                     selectedId === o.id ? 'border-foreground' : 'border-border hover:border-border/70 hover:bg-muted/40',
@@ -394,7 +401,7 @@ export function RealAdminOrders() {
             )}
           </div>
 
-          <div className="lg:sticky lg:top-20 lg:self-start">
+          <div className={cn('lg:sticky lg:top-20 lg:self-start', !selected && 'hidden lg:block')}>
             {selected ? (
               // key: switching orders must remount the panel, or the editor/reject
               // state of the previous order would be saved onto this one.
@@ -434,7 +441,7 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
     <Panel
       title={`${t('Order')} ${order.id.slice(0, 8).toUpperCase()}`}
       action={
-        <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-full hover:bg-muted" aria-label={t('Close')}>
+        <button onClick={onClose} className="-m-1.5 grid h-11 w-11 place-items-center rounded-full hover:bg-muted" aria-label={t('Close')}>
           <X className="h-4 w-4" />
         </button>
       }

@@ -305,7 +305,31 @@ export function RealModelDetail({ group }: { group: ModelGroup }) {
           <h2 className="mb-4 font-display text-xl font-semibold tracking-tight md:text-2xl">
             {t('All offers')} <span className="font-mono text-base text-muted-foreground">({formatInt(others.length)})</span>
           </h2>
-          <div className="overflow-x-auto rounded-2xl border border-border">
+          {/* Phones: one card per offer, nothing to scroll sideways. */}
+          <ul className="divide-y divide-border rounded-2xl border border-border md:hidden">
+            {others.slice(0, otherLimit).map((o) => (
+              <li key={o.variantId} className={cn('flex items-start justify-between gap-3 px-4 py-3', lines.some((l) => l.offer.variantId === o.variantId) && 'bg-secondary/40')}>
+                <div className="min-w-0 space-y-1">
+                  <Link to={`/p/${o.sku}`} className="block truncate text-sm font-medium hover:text-brand">
+                    {[axisValue(o, 'capacity'), o.color].filter(Boolean).join(' · ') || o.sku}
+                  </Link>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                    <Badge tone={gradeTone(o.ctiaGrade)}>{t(o.ctiaLabel)}</Badge>
+                    <span>{networkLabel(axisValue(o, 'network') ?? '')}</span>
+                    <span className="inline-flex items-center gap-1.5 font-mono tabular-nums">
+                      <PulseDot status={o.totalQty > 0 ? 'online' : 'degraded'} />
+                      {stock(o.totalQty)}
+                    </span>
+                  </div>
+                  {o.locations.length > 0 && <p className="truncate text-xs text-muted-foreground">{o.locations.map((l) => l.name).join(' · ')}</p>}
+                </div>
+                <div className="shrink-0 text-right">
+                  <RealPriceTag priceCents={o.priceCents} size="sm" />
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="hidden overflow-x-auto rounded-2xl border border-border md:block">
             <table className="w-full text-sm" style={{ minWidth: 720 }}>
               <thead>
                 <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">

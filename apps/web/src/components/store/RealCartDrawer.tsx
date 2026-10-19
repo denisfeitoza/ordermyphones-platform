@@ -109,7 +109,7 @@ export function RealCartDrawer() {
               </div>
               <button
                 onClick={() => setOpen(false)}
-                className="grid h-9 w-9 place-items-center rounded-full hover:bg-muted"
+                className="-mr-1.5 grid h-11 w-11 place-items-center rounded-full hover:bg-muted"
                 aria-label={t('Close')}
               >
                 <X className="h-5 w-5" />
@@ -152,7 +152,7 @@ export function RealCartDrawer() {
                             </div>
                             <button
                               onClick={() => remove(l.variantId)}
-                              className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-destructive"
+                              className="-m-2 grid h-11 w-11 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-destructive"
                               aria-label={t('Remove')}
                             >
                               <Trash2 className="h-4 w-4" strokeWidth={1.75} />

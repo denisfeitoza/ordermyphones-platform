@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ShoppingBag, PackageCheck, Clock, XCircle, AlertTriangle, Ban, FileDown, FileText, Truck, RotateCcw } from 'lucide-react';
@@ -397,9 +397,20 @@ export function RealOrderDetail() {
 function ReorderButton({ lines }: { lines: RealOrderLine[] }) {
   const { t } = useI18n();
   const { add } = useRealCart();
-  const { items, pricesReady, pricesError, isLoading } = useRealCatalog(true);
+  // The catalog (~1.4 MB) loads only after the click, not on every order view.
+  const [requested, setRequested] = useState(false);
+  const { items, pricesReady, pricesError, isLoading, isError, retryPrices } = useRealCatalog(requested);
   const [result, setResult] = useState<{ added: number; skipped: number } | null>(null);
-  const ready = !isLoading && pricesReady && !pricesError;
+  const ready = requested && !isLoading && pricesReady && !pricesError && !isError;
+  const failed = requested && (isError || pricesError);
+
+  useEffect(() => {
+    if (!ready) return;
+    reorder();
+    setRequested(false);
+    // reorder reads the freshly loaded items; run once per click.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready]);
 
   function reorder() {
     const priced = new Set(items.filter((i) => i.priceCents !== null).map((i) => i.variantId));
@@ -420,10 +431,11 @@ function ReorderButton({ lines }: { lines: RealOrderLine[] }) {
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <Button variant="outline" size="sm" onClick={reorder} disabled={!ready}>
+      <Button variant="outline" size="sm" onClick={() => { setResult(null); if (failed) retryPrices(); setRequested(true); }} disabled={requested && !failed}>
         <RotateCcw className="h-4 w-4" strokeWidth={2} aria-hidden />
-        {ready ? t('Order again') : t('Loading your prices…')}
+        {requested && !failed ? t('Loading your prices…') : t('Order again')}
       </Button>
+      {failed && <p className="text-sm text-destructive">{t('Could not load your prices.')}</p>}
       {result && (
         <p className="text-sm text-muted-foreground" role="status">
           {result.added > 0 && `${result.added} ${result.added === 1 ? t('model added to your cart at today’s price.') : t('models added to your cart at today’s prices.')} `}
