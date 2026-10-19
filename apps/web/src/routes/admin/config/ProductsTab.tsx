@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff, ImagePlus, Plus, Search, Smartphone, Trash2, X } from 'lucide-react';
 import {
   useAdminProducts,
@@ -32,7 +33,9 @@ export default function ProductsTab() {
   const update = useUpdateProduct();
   const [query, setQuery] = useState('');
   const [onlyUnpublished, setOnlyUnpublished] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // ?id=<product> opens that product (links from Needs attention).
+  const [params] = useSearchParams();
+  const [selectedId, setSelectedId] = useState<string | null>(params.get('id'));
   const [creating, setCreating] = useState(false);
 
   const rows = useMemo(() => {
@@ -88,7 +91,8 @@ export default function ProductsTab() {
       </div>
 
       <div className={cn('grid gap-6 [&>*]:min-w-0', selected && 'lg:grid-cols-[1fr_380px]')}>
-        <Panel title={t('Products')}>
+        {/* Phones show the list or the open product, never the product below a long list. */}
+        <Panel title={t('Products')} className={cn(selected && 'hidden lg:block')}>
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <label className="relative flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" strokeWidth={2} />
@@ -118,7 +122,10 @@ export default function ProductsTab() {
                 <li
                   key={p.id}
                   className={cn('flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm hover:bg-muted/40', selectedId === p.id && 'bg-muted/60')}
-                  onClick={() => setSelectedId(p.id)}
+                  onClick={() => {
+                    setSelectedId(p.id);
+                    if (window.matchMedia('(max-width: 1023px)').matches) window.scrollTo({ top: 0 });
+                  }}
                 >
                   <Thumb url={p.imageUrl} alt={p.model} />
                   <div className="min-w-0 flex-1">

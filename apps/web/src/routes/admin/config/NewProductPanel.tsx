@@ -110,6 +110,7 @@ export function NewProductPanel({ onClose, onCreated }: { onClose: () => void; o
       }),
     onSuccess: (id) => {
       void qc.invalidateQueries({ queryKey: ['admin-products'] });
+      void qc.invalidateQueries({ queryKey: ['product-health'] });
       void qc.invalidateQueries({ queryKey: ['catalog-listing'] });
       void qc.invalidateQueries({ queryKey: ['admin-inventory'] });
       void qc.invalidateQueries({ queryKey: ['image-suggestions'] });

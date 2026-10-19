@@ -51,6 +51,7 @@ const AiBotsPage = lazy(() => import('@/routes/admin/AiBotsPage'));
 const ReportsPage = lazy(() => import('@/routes/admin/ReportsPage'));
 const CatalogTab = lazy(() => import('@/routes/admin/config/CatalogTab'));
 const ProductsTab = lazy(() => import('@/routes/admin/config/ProductsTab'));
+const AttentionTab = lazy(() => import('@/routes/admin/config/AttentionTab'));
 const TiersTab = lazy(() => import('@/routes/admin/config/TiersTab'));
 const PricingTab = lazy(() => import('@/routes/admin/config/PricingTab'));
 const QuantityRulesTab = lazy(() => import('@/routes/admin/config/QuantityRulesTab'));
@@ -78,6 +79,7 @@ const IMPORT_TABS: SectionTab[] = [
 ];
 const INVENTORY_TABS: SectionTab[] = [
   { to: '/admin/inventory', label: 'Stock', end: true },
+  { to: '/admin/inventory/attention', label: 'Needs attention', title: 'Needs attention', subtitle: 'Products still missing an image, a price, stock or the publish switch — fix them here, one by one or all at once.' },
   { to: '/admin/inventory/products', label: 'Products', title: 'Products', subtitle: 'Photos, descriptions and the publish switch for every model the import brought in.' },
   { to: '/admin/inventory/locations', label: 'Locations', title: 'Stock locations', subtitle: 'Your warehouses and storages — create, rename, deactivate, merge, and choose which ones customers see.' },
 ];
@@ -146,6 +148,7 @@ export default function App() {
 
           <Route path="inventory" element={<SectionTabs tabs={INVENTORY_TABS} />}>
             <Route index element={<InventoryPage />} />
+            <Route path="attention" element={<AttentionTab />} />
             <Route path="products" element={<ProductsTab />} />
             <Route path="locations" element={<LocationsTab />} />
           </Route>

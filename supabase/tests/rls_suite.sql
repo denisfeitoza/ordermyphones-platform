@@ -939,6 +939,21 @@ begin
   exception when insufficient_privilege then null;
   end;
 
+  -- Needs-attention list and its bulk actions are staff-only.
+  begin
+    perform public.product_health();
+    raise exception 'FAIL(section6): customer called product_health without staff_only';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.set_products_published(array[gen_random_uuid()], true);
+    raise exception 'FAIL(section6): customer called set_products_published without staff_only';
+  exception when insufficient_privilege then null;
+  end;
+  if has_function_privilege('authenticated', 'public.best_image_asset(text,text)', 'execute') then
+    raise exception 'FAIL(section6): best_image_asset callable through the API';
+  end if;
+
   -- POSITIVE CONTROL: an admin identity reads >=1 from both sensitive
   -- tables without a permission error — proves the staff policies actually
   -- grant, not merely that nothing is readable by anyone.

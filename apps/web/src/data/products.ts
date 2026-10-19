@@ -87,6 +87,7 @@ function useInvalidateProducts() {
   const qc = useQueryClient();
   return () => {
     void qc.invalidateQueries({ queryKey: ['admin-products'] });
+    void qc.invalidateQueries({ queryKey: ['product-health'] });
     void qc.invalidateQueries({ queryKey: ['catalog-listing'] });
   };
 }
