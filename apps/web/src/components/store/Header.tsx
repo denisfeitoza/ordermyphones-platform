@@ -26,7 +26,6 @@ const SECTION_LINKS = [
   { to: '/#expertise', label: 'Expertise' },
   { to: '/#partner', label: 'Partner With Us' },
   { to: '/#brands', label: 'Top Brands' },
-  { to: '/#testimonials', label: 'Testimonials' },
   { to: '/#news', label: 'News' },
 ];
 

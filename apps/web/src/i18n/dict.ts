@@ -861,8 +861,6 @@ export const PT: Record<string, string> = {
   'Explore our recommendations': 'Explore nossas recomendações',
   'Previous': 'Anterior',
   'Next': 'Próximo',
-  'Testimonials': 'Depoimentos',
-  'Trusted across the wholesale channel': 'Confiança em todo o canal de atacado',
   'Retailers, marketplaces, and distributors source through Order My Phones every day.':
     'Lojistas, marketplaces e distribuidores compram pela Order My Phones todos os dias.',
   // Sync bar
@@ -1182,7 +1180,6 @@ export const PT: Record<string, string> = {
   'Benefits bar': 'Barra de benefícios',
   'Show benefits bar': 'Mostrar barra de benefícios',
   'The slim strip above the hero. Each item is an icon + a short line.': 'A faixa fina acima do banner. Cada item é um ícone + uma linha curta.',
-  'Free shipping on approved orders': 'Frete grátis em pedidos aprovados',
   'Add item': 'Adicionar item',
   'Call-to-action label': 'Texto do botão',
   'Call-to-action link': 'Link do botão',
@@ -1192,8 +1189,6 @@ export const PT: Record<string, string> = {
   'Section title': 'Título da seção',
   'Deals & promotions': 'Ofertas e promoções',
   'Promo': 'Promoção',
-  'Save up to $500': 'Economize até US$ 500',
-  'Limited time': 'Por tempo limitado',
   'Short supporting line': 'Linha curta de apoio',
   'Add promo': 'Adicionar promoção',
   'Trending products': 'Produtos em alta',
@@ -1428,6 +1423,10 @@ export const PT: Record<string, string> = {
   'Fix it in the cart': 'Corrigir no carrinho',
   'Split does not add up': 'Divisão não fecha',
   'Could not load your prices.': 'Não foi possível carregar seus preços.',
+  'Exclusive pricing for your tier': 'Preço exclusivo para o seu tier',
+  'Dedicated support': 'Suporte dedicado',
+  'Our team reviews every order and personally handles questions about stock, payment and shipping.': 'Nossa equipe revisa cada pedido e cuida pessoalmente das dúvidas sobre estoque, pagamento e envio.',
+  'New stock this week': 'Estoque novo esta semana',
 };
 
 export const ES: Record<string, string> = {
@@ -2289,8 +2288,6 @@ export const ES: Record<string, string> = {
   'Explore our recommendations': 'Explora nuestras recomendaciones',
   'Previous': 'Anterior',
   'Next': 'Siguiente',
-  'Testimonials': 'Testimonios',
-  'Trusted across the wholesale channel': 'Confianza en todo el canal mayorista',
   'Retailers, marketplaces, and distributors source through Order My Phones every day.':
     'Minoristas, marketplaces y distribuidores compran a través de Order My Phones todos los días.',
   // Sync bar
@@ -2610,7 +2607,6 @@ export const ES: Record<string, string> = {
   'Benefits bar': 'Barra de beneficios',
   'Show benefits bar': 'Mostrar barra de beneficios',
   'The slim strip above the hero. Each item is an icon + a short line.': 'La franja delgada sobre el banner. Cada elemento es un ícono + una línea corta.',
-  'Free shipping on approved orders': 'Envío gratis en pedidos aprobados',
   'Add item': 'Agregar elemento',
   'Call-to-action label': 'Texto del botón',
   'Call-to-action link': 'Enlace del botón',
@@ -2620,8 +2616,6 @@ export const ES: Record<string, string> = {
   'Section title': 'Título de la sección',
   'Deals & promotions': 'Ofertas y promociones',
   'Promo': 'Promoción',
-  'Save up to $500': 'Ahorra hasta US$ 500',
-  'Limited time': 'Por tiempo limitado',
   'Short supporting line': 'Línea corta de apoyo',
   'Add promo': 'Agregar promoción',
   'Trending products': 'Productos en tendencia',
@@ -2856,4 +2850,8 @@ export const ES: Record<string, string> = {
   'Fix it in the cart': 'Corregir en el carrito',
   'Split does not add up': 'La división no cuadra',
   'Could not load your prices.': 'No se pudieron cargar tus precios.',
+  'Exclusive pricing for your tier': 'Precio exclusivo para tu nivel',
+  'Dedicated support': 'Soporte dedicado',
+  'Our team reviews every order and personally handles questions about stock, payment and shipping.': 'Nuestro equipo revisa cada pedido y atiende personalmente las dudas sobre stock, pago y envío.',
+  'New stock this week': 'Stock nuevo esta semana',
 };

@@ -62,33 +62,18 @@ export interface HomeContent {
 export const DEFAULT_HOME_CONTENT: HomeContent = {
   benefits: {
     enabled: true,
-    items: [
-      { icon: 'Truck', text: 'Free shipping on approved orders' },
-      { icon: 'Tag', text: 'Exclusive pricing for your tier' },
-      { icon: 'ShieldCheck', text: '90-day warranty on every device' },
-    ],
+    // Only what the system does today. Shipping and warranty terms stay off
+    // until the business confirms its policy (removed 2026-10-18).
+    items: [{ icon: 'Tag', text: 'Exclusive pricing for your tier' }],
     ctaLabel: 'Request access',
     ctaHref: '/request-access',
   },
   promos: {
     enabled: true,
     title: 'Deals & promotions',
-    cards: [
-      {
-        id: 'promo-cpo',
-        title: 'Save up to $500',
-        subtitle: 'On select certified pre-owned iPhones, while stock lasts.',
-        badge: 'Limited time',
-        href: '/catalog?condition=cpo',
-      },
-      {
-        id: 'promo-bulk',
-        title: 'Better rates at volume',
-        subtitle: 'Wholesale and distributor pricing on 50+ unit orders.',
-        badge: 'Wholesale',
-        href: '/catalog',
-      },
-    ],
+    // No default promotions: there is no discount in the pricing engine behind
+    // "Save up to $500" or volume rates. Admins add real ones in Home & promos.
+    cards: [],
   },
   trending: {
     enabled: false,

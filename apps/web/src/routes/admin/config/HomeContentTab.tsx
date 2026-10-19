@@ -121,7 +121,7 @@ export default function HomeContentTab() {
               <input
                 value={item.text}
                 onChange={(e) => setBenefits({ items: draft.benefits.items.map((it, j) => (j === i ? { ...it, text: e.target.value } : it)) })}
-                placeholder={t('Free shipping on approved orders')}
+                placeholder={t('Exclusive pricing for your tier')}
                 className={`${input} min-w-[180px] flex-1`}
               />
               <button
@@ -184,8 +184,8 @@ export default function HomeContentTab() {
                   </button>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  <input value={card.title} onChange={(e) => patch({ title: e.target.value })} placeholder={t('Save up to $500')} className={input} />
-                  <input value={card.badge} onChange={(e) => patch({ badge: e.target.value })} placeholder={t('Limited time')} className={input} />
+                  <input value={card.title} onChange={(e) => patch({ title: e.target.value })} placeholder={t('New stock this week')} className={input} />
+                  <input value={card.badge} onChange={(e) => patch({ badge: e.target.value })} placeholder={t('New')} className={input} />
                   <input value={card.subtitle} onChange={(e) => patch({ subtitle: e.target.value })} placeholder={t('Short supporting line')} className={`${input} sm:col-span-2`} />
                   <input value={card.href} onChange={(e) => patch({ href: e.target.value })} placeholder="/catalog?condition=cpo" className={`${input} sm:col-span-2`} />
                 </div>
