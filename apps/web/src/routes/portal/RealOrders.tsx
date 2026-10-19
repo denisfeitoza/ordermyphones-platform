@@ -9,11 +9,11 @@ import { OrderTimeline } from '@/components/orders/OrderTimeline';
 import { TrackingTimeline } from '@/components/store/TrackingTimeline';
 import { PageHeading } from '@/components/portal/parts';
 import { Button, buttonVariants } from '@/components/ui/Button';
-import { exportDocCsv, exportDocPdf, type ExportDoc } from '@/lib/export';
+import { exportDocCsv, exportDocPdf, exportOrderListCsv, type ExportDoc } from '@/lib/export';
 import { formatUsd, formatInt, formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n';
-import { isShortOrder, orderValueCents } from '@/lib/orderTotals';
+import { isShortOrder, orderUnits, orderValueCents } from '@/lib/orderTotals';
 
 /** Build the printable/export doc for a real order. isTest carries through so
  *  a rehearsal order is stamped TEST on the PDF/CSV (TEST-READY-V1 §4). */
@@ -90,6 +90,31 @@ export function RealOrdersList() {
       <PageHeading
         title="Orders"
         subtitle={`${list.length} ${list.length === 1 ? t('order') : t('orders')} · ${t('tap any order for line status & approval detail')}`}
+        action={
+          list.length > 0 ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                exportOrderListCsv(
+                  list.map((o) => ({
+                    reference: o.id.slice(0, 8).toUpperCase(),
+                    dateLabel: fmtDate(o.placedAt),
+                    status: STATUS[o.status].label,
+                    units: orderUnits(o.status, o.lines),
+                    totalCents: orderValueCents(o.status, o.subtotalCents, o.lines),
+                    note: o.notes,
+                    isTest: o.isTest,
+                  })),
+                  `orders-${new Date().toISOString().slice(0, 10)}.csv`,
+                )
+              }
+            >
+              <FileText className="h-4 w-4" strokeWidth={2} aria-hidden />
+              {t('Export CSV')}
+            </Button>
+          ) : undefined
+        }
       />
 
       {isError ? (

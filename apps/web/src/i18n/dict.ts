@@ -1498,6 +1498,7 @@ export const PT: Record<string, string> = {
   'optional': 'opcional',
   'e.g. PO-1042, deliver after 2 pm': 'ex.: PO-1042, entregar depois das 14h',
   'The note is too long. Keep it under 500 characters.': 'A observação está longa demais. Use até 500 caracteres.',
+  'Export CSV': 'Exportar CSV',
 };
 
 export const ES: Record<string, string> = {
@@ -2996,4 +2997,5 @@ export const ES: Record<string, string> = {
   'optional': 'opcional',
   'e.g. PO-1042, deliver after 2 pm': 'ej.: OC-1042, entregar después de las 14 h',
   'The note is too long. Keep it under 500 characters.': 'La nota es demasiado larga. Usa hasta 500 caracteres.',
+  'Export CSV': 'Exportar CSV',
 };

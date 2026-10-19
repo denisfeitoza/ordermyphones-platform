@@ -39,9 +39,20 @@ function downloadBlob(filename: string, content: string, type: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+/**
+ * One quoted CSV cell. Text that starts with = + - @ (or tab/CR) is prefixed
+ * with ' so Excel/Sheets shows it as text and never runs it as a formula (CSV
+ * injection through a note or a product name). Plain numbers pass unchanged.
+ */
+export function csvCell(v: string | number): string {
+  let s = String(v);
+  if (/^[=+\-@\t\r]/.test(s) && !/^-?\d+(\.\d+)?$/.test(s)) s = `'${s}`;
+  return `"${s.replace(/"/g, '""')}"`;
+}
+
 /** CSV / spreadsheet export. */
 export function exportDocCsv(d: ExportDoc) {
-  const esc = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
+  const esc = csvCell;
   const rows: (string | number)[][] = [
     ...(d.isTest ? [['*** TEST DATA — NOT FOR FULFILLMENT ***'] as (string | number)[], [] as (string | number)[]] : []),
     ['Reference', d.reference],
@@ -57,6 +68,26 @@ export function exportDocCsv(d: ExportDoc) {
   ];
   const csv = rows.map((r) => r.map(esc).join(',')).join('\n');
   downloadBlob(`${d.reference}.csv`, csv, 'text/csv;charset=utf-8');
+}
+
+/** One row of the customer's order-history spreadsheet. */
+export interface OrderListRow {
+  reference: string;
+  dateLabel: string;
+  status: string;
+  units: number;
+  totalCents: number;
+  note: string | null;
+  isTest: boolean;
+}
+
+/** The customer's order history as one spreadsheet (portal → Orders → CSV). */
+export function exportOrderListCsv(rows: OrderListRow[], filename: string) {
+  const out: (string | number)[][] = [
+    ['Order', 'Date', 'Status', 'Units', 'Total (USD)', 'PO number / note', 'Test'],
+    ...rows.map((r) => [r.reference, r.dateLabel, r.status, r.units, (r.totalCents / 100).toFixed(2), r.note ?? '', r.isTest ? 'TEST' : '']),
+  ];
+  downloadBlob(filename, out.map((r) => r.map(csvCell).join(',')).join('\n'), 'text/csv;charset=utf-8');
 }
 
 /** Picking sheet (romaneio) for the warehouse — J2 step 4 of the v1.0 plan. */
