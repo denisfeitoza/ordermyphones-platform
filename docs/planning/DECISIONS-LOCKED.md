@@ -99,3 +99,18 @@ Client answers to RFC-001 and what is built from them. Items marked
 - **Still integration work (not built):** SMTP sender, mailbox ingestion,
   Verizon zip/e-mail parser, B-Stock/Rexi automation, auction award → order,
   FedEx production labels/rates, payment gateway.
+
+### Scope boundary vs. the signed Agreement (2026-10-19)
+
+- **Auctions: switched off.** Outside the Agreement (§1, Schedule A). Built,
+  but hidden (`AUCTIONS_ENABLED = false`) and the bid/results/deposit RPCs are
+  revoked (`20261019117000_auctions_off.sql`). On again only with a signed
+  Change Order (§8), together with the Verizon/B-Stock/Rexi/Sumitomo automation.
+- **Credit terms (Net/COD, credit limit, Wire/ACH paid state): outside the
+  Agreement**, which covers card payment via Stripe. Live; to be covered by a
+  Change Order. A gateway other than Stripe (Fiserv) is also a Change Order.
+- **QuickBooks:** we export files OMP imports by hand (Sales Order PDF, CSV).
+  No native integration — Schedule A.3 excludes ERP integrations.
+- **Master Agreement:** basic flow only (publish text, sign in portal, record
+  each signature). Outside the Agreement; a legal e-signature service needs a
+  Change Order.
