@@ -41,14 +41,16 @@ export default function AdminLayout() {
   return (
     <div className="min-h-dvh bg-muted/20">
       <header className="sticky top-0 z-40 border-b border-white/10 bg-foreground text-background">
-        <div className="mx-auto flex h-14 max-w-[1500px] items-center gap-4 px-4">
+        <div className="mx-auto flex h-14 max-w-[1500px] items-center gap-2 px-4 sm:gap-4">
           <Logo invert />
           <span className="hidden items-center gap-2 border-l border-white/15 pl-4 text-sm text-background/70 sm:flex">
             <PulseDot />
             {t('Admin console')}
           </span>
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
-            <label className="relative inline-flex items-center">
+            {/* Hidden on phones: with the logo, language switch and sign-out it
+                pushed the whole console wider than a 375px screen. */}
+            <label className="relative hidden items-center sm:inline-flex">
               <span className="sr-only">{t('View store as tier')}</span>
               <select
                 value=""
