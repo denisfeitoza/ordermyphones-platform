@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type KeyboardEvent } from 'react';
 import { Minus, Plus, ShoppingBag, Check } from 'lucide-react';
 import { useAuth, useRealCart } from '@/store';
 import { Button } from '@/components/ui/Button';
@@ -39,7 +39,8 @@ export function RealAddToCart({
 }) {
   const { t } = useI18n();
   const { signedIn, role } = useAuth();
-  const { add } = useRealCart();
+  const { add, lines } = useRealCart();
+  const inCart = lines.find((l) => l.variantId === variantId)?.qty ?? 0;
   const [qty, setQty] = useState(1);
   const [justAdded, setJustAdded] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -65,6 +66,21 @@ export function RealAddToCart({
     setTimeout(() => setJustAdded(false), 1400);
   }
 
+  // Dense table typing: type a quantity, press Enter — the line is added, the
+  // field goes back to 1 and focus moves to the next row's quantity.
+  function onRowKey(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    addToCart();
+    setQty(1);
+    const fields = [...document.querySelectorAll<HTMLInputElement>('input[data-qty-row]')].filter((el) => el.offsetParent !== null);
+    const next = fields[fields.indexOf(e.currentTarget) + 1];
+    if (next) {
+      next.focus();
+      next.select();
+    }
+  }
+
   // Compact inline control for dense table rows: small stepper + icon add.
   if (mode === 'row') {
     return (
@@ -76,6 +92,10 @@ export function RealAddToCart({
           <QtyInput
             value={qty}
             onChange={setQty}
+            onKeyDown={onRowKey}
+            onFocus={(e) => e.currentTarget.select()}
+            data-qty-row=""
+            enterKeyHint="next"
             className="h-9 w-14 border-x border-border bg-transparent text-center font-mono text-sm tabular-nums outline-none"
             aria-label={t('Quantity')}
           />
@@ -83,8 +103,13 @@ export function RealAddToCart({
             <Plus className="h-3.5 w-3.5" strokeWidth={2} />
           </button>
         </div>
-        <Button variant="primary" size="sm" className="h-9 px-3" onClick={addToCart} aria-label={t('Add to cart')}>
+        <Button variant="primary" size="sm" className="relative h-9 px-3" onClick={addToCart} aria-label={t('Add to cart')}>
           {justAdded ? <Check className="h-4 w-4" strokeWidth={2.5} /> : <ShoppingBag className="h-4 w-4" strokeWidth={2} />}
+          {inCart > 0 && (
+            <span className="absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-brand px-1 font-mono text-[0.65rem] font-semibold text-white" aria-label={`${t('In cart')}: ${inCart}`}>
+              {inCart > 999 ? '999+' : inCart}
+            </span>
+          )}
         </Button>
       </div>
     );

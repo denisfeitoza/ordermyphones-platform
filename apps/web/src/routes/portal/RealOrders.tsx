@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, ShoppingBag, PackageCheck, Clock, XCircle, AlertTriangle, Ban, FileDown, FileText, Truck, RotateCcw } from 'lucide-react';
 import { useCancelOrder, useMyOrders, type RealOrder, type RealOrderLine, type RealOrderStatus } from '@/data/realOrders';
 import { useAuth, useRealCart } from '@/store';
-import { useRealCatalog } from '@/data/realCatalog';
+import { carrierLabel, useRealCatalog } from '@/data/realCatalog';
 import { clampQty } from '@/components/store/QtyInput';
 import { useOrderEvents } from '@/data/orderEvents';
 import { OrderTimeline } from '@/components/orders/OrderTimeline';
@@ -28,7 +28,7 @@ function realOrderToDoc(o: RealOrder): ExportDoc {
     dateLabel: fmtDate(o.placedAt),
     lines: o.lines.map((l) => ({
       model: l.model,
-      variant: `${l.capacity} · ${l.lockStatus === 'unlocked' ? 'Unlocked' : `${l.carrier} Locked`}`,
+      variant: `${l.capacity} · ${l.lockStatus === 'unlocked' ? 'Unlocked' : `${carrierLabel(l.carrier)} Locked`}`,
       qty: ['approved', 'partially_approved', 'shipped'].includes(o.status) ? (l.qtyApproved ?? 0) : l.qtyRequested,
       unitPriceCents: l.unitPriceCents,
       lineTotalCents: ['approved', 'partially_approved', 'shipped'].includes(o.status) ? (l.qtyApproved ?? 0) * l.unitPriceCents : l.lineTotalCents,
@@ -68,9 +68,9 @@ function StatusPill({ status }: { status: RealOrderStatus }) {
   );
 }
 
-function lineName(l: RealOrderLine): string {
-  const lock = l.lockStatus === 'unlocked' ? 'Unlocked' : `${l.carrier} Locked`;
-  return `${l.model} · ${l.capacity} · ${lock}`;
+function lineName(l: RealOrderLine, t: (s: string) => string): string {
+  const lock = l.lockStatus === 'unlocked' ? t('Unlocked') : `${carrierLabel(l.carrier)} · ${t('Locked')}`;
+  return [l.model, l.capacity, l.color, lock].filter(Boolean).join(' · ');
 }
 
 function units(o: RealOrder): number {
@@ -301,7 +301,7 @@ export function RealOrderDetail() {
               return (
                 <li key={l.id} className="flex items-center justify-between gap-3 px-5 py-4">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{lineName(l)}</p>
+                    <p className="truncate text-sm font-medium">{lineName(l, t)}</p>
                     <p className="text-xs text-muted-foreground">
                       {t('Qty')} {formatInt(l.qtyRequested)}
                       {showApproved && l.qtyApproved !== null && (
@@ -315,7 +315,10 @@ export function RealOrderDetail() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-mono text-sm font-semibold tabular-nums">{formatUsd(l.lineTotalCents)}</p>
+                    {short && <p className="font-mono text-xs text-muted-foreground line-through tabular-nums">{formatUsd(l.lineTotalCents)}</p>}
+                    <p className="font-mono text-sm font-semibold tabular-nums">
+                      {formatUsd(showApproved && l.qtyApproved !== null ? l.qtyApproved * l.unitPriceCents : l.lineTotalCents)}
+                    </p>
                     <p className="font-mono text-xs text-muted-foreground">{formatUsd(l.unitPriceCents)} {t('ea')}</p>
                   </div>
                 </li>

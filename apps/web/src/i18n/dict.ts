@@ -1650,6 +1650,7 @@ export const PT: Record<string, string> = {
   'Remove them': 'Remover',
   'One order takes up to 500 lines (each warehouse split counts as a line). This cart has': 'Um pedido aceita até 500 linhas (cada divisão por armazém conta como uma linha). Este carrinho tem',
   'Place part of it now and the rest in a second order.': 'Faça uma parte agora e o resto num segundo pedido.',
+  'In cart': 'No carrinho',
 };
 
 export const ES: Record<string, string> = {
@@ -3300,4 +3301,5 @@ export const ES: Record<string, string> = {
   'Remove them': 'Quitarlas',
   'One order takes up to 500 lines (each warehouse split counts as a line). This cart has': 'Un pedido acepta hasta 500 líneas (cada división por almacén cuenta como una línea). Este carrito tiene',
   'Place part of it now and the rest in a second order.': 'Haz una parte ahora y el resto en un segundo pedido.',
+  'In cart': 'En el carrito',
 };
