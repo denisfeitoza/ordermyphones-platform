@@ -1414,6 +1414,9 @@ export const PT: Record<string, string> = {
   'Replace sets every item at this location that is not in the accepted rows to 0. Rejected rows keep their current stock.': 'Substituir zera todo item deste local que não está nas linhas aceitas. As linhas recusadas mantêm o estoque atual.',
   'Cancel and check the file': 'Cancelar e conferir o arquivo',
   'Replace anyway': 'Substituir mesmo assim',
+  'Loading price': 'Carregando preço',
+  'Price unavailable': 'Preço indisponível',
+  'Could not load your prices. Products are still listed, but you cannot add them to the cart until prices load.': 'Não foi possível carregar seus preços. Os produtos continuam listados, mas só dá para adicionar ao carrinho quando os preços carregarem.',
 };
 
 export const ES: Record<string, string> = {
@@ -2828,4 +2831,7 @@ export const ES: Record<string, string> = {
   'Replace sets every item at this location that is not in the accepted rows to 0. Rejected rows keep their current stock.': 'Reemplazar pone en 0 todo artículo de esta ubicación que no está en las filas aceptadas. Las filas rechazadas mantienen su stock actual.',
   'Cancel and check the file': 'Cancelar y revisar el archivo',
   'Replace anyway': 'Reemplazar de todos modos',
+  'Loading price': 'Cargando precio',
+  'Price unavailable': 'Precio no disponible',
+  'Could not load your prices. Products are still listed, but you cannot add them to the cart until prices load.': 'No se pudieron cargar tus precios. Los productos siguen listados, pero no puedes añadirlos al carrito hasta que carguen los precios.',
 };

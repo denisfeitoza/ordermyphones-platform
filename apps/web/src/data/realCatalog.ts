@@ -141,6 +141,9 @@ export interface UseRealCatalogResult {
   error: unknown;
   /** True once pricing has resolved (or will never apply, for a signed-out visitor). */
   pricesReady: boolean;
+  /** The tier-price request failed: every price would read "not priced" — show an error instead. */
+  pricesError: boolean;
+  retryPrices: () => void;
   signedIn: boolean;
 }
 
@@ -150,19 +153,28 @@ export interface UseRealCatalogResult {
  * is on the mock catalog source so mock mode never pays for the round trip
  * (the "zero visual/behavioral change while mock" contract extends to zero
  * network activity, not just zero rendered difference). */
-export function useRealCatalog(enabled = true): UseRealCatalogResult {
+/**
+ * The caller's tier-price query (own tier, or the previewed tier for admin
+ * "view store as…"). Shared by useRealCatalog and RealPriceTag: same key, so
+ * TanStack Query dedupes it — one request, one cache entry.
+ */
+export function useTierPriceQuery(enabled = true) {
   const { signedIn, role } = useAuth();
   const { previewCode } = useTier();
   // Admin/staff previewing a tier ("view store as…") price the catalog for that
   // tier; everyone else sees their own server-resolved tier price.
   const previewTier = (role === 'admin' || role === 'staff') && previewCode ? (CODE_TO_DB_TIER[previewCode] ?? null) : null;
-
-  const listingQuery = useQuery({ queryKey: ['catalog-listing'], queryFn: fetchCatalogListing, enabled });
-  const priceQuery = useQuery({
+  const query = useQuery({
     queryKey: previewTier ? ['tier-prices', previewTier] : ['my-prices'],
     queryFn: previewTier ? () => fetchTierPrices(previewTier) : fetchMyPrices,
     enabled: enabled && (previewTier ? true : signedIn),
   });
+  return { query, previewTier, signedIn };
+}
+
+export function useRealCatalog(enabled = true): UseRealCatalogResult {
+  const listingQuery = useQuery({ queryKey: ['catalog-listing'], queryFn: fetchCatalogListing, enabled });
+  const { query: priceQuery, previewTier, signedIn } = useTierPriceQuery(enabled);
 
   const prices = priceQuery.data;
   const items: PricedRealListing[] = (listingQuery.data ?? []).map((l) => ({
@@ -176,6 +188,8 @@ export function useRealCatalog(enabled = true): UseRealCatalogResult {
     isError: listingQuery.isError,
     error: listingQuery.error,
     pricesReady: (!signedIn && !previewTier) || priceQuery.isSuccess || priceQuery.isError,
+    pricesError: priceQuery.isError,
+    retryPrices: () => void priceQuery.refetch(),
     signedIn,
   };
 }

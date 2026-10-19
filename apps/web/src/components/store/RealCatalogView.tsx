@@ -242,6 +242,15 @@ export function RealCatalogView() {
         </div>
       </div>
 
+      {real.pricesError && (
+        <div role="alert" className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          <span>{t('Could not load your prices. Products are still listed, but you cannot add them to the cart until prices load.')}</span>
+          <Button variant="outline" size="sm" onClick={real.retryPrices}>
+            {t('Try again')}
+          </Button>
+        </div>
+      )}
+
       {real.isError && (
         <div className="mb-6 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           {t('Could not load the live catalog. Please try again shortly.')}
