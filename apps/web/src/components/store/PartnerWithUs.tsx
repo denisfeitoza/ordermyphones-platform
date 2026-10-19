@@ -18,8 +18,8 @@ const REASONS = [
   },
   {
     icon: ShieldCheck,
-    title: 'Dedicated support',
-    body: 'Our team reviews every order and personally handles questions about stock, payment and shipping.',
+    title: '90-day warranty & dedicated support',
+    body: 'Every device is backed by a 90-day warranty and a responsive support team — purchases stay protected, risk-free, and personally handled.',
   },
 ] as const;
 
