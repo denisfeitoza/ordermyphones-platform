@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Smartphone } from 'lucide-react';
 import type { ModelGroup } from '@/lib/modelGroups';
 import { resolveProductImage } from '@/lib/productImage';
+import { IllustrativeTag } from './IllustrativeTag';
 import { Badge } from '@/components/ui/Badge';
 import { formatInt } from '@/lib/format';
 import { PulseDot } from './SyncHeartbeat';
@@ -48,6 +49,7 @@ export function RealModelCard({ group, search = '' }: { group: ModelGroup; searc
             <Smartphone className="h-14 w-14 text-muted-foreground/50" strokeWidth={1.25} />
           </div>
         )}
+        {group.imageUrl && group.imageApprox && <IllustrativeTag />}
       </Link>
 
       <div className="flex flex-1 flex-col gap-3 p-4">

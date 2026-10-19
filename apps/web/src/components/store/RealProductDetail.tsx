@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import { ChevronRight, MapPin, ShieldCheck, Smartphone } from 'lucide-react';
 import { buildDisplayName, carrierLabel, type PricedRealListing } from '@/data/realCatalog';
 import { HOME_ICONS, useHomeContent } from '@/data/homeContent';
-import { listingImage } from '@/lib/productImage';
+import { isIllustrative, listingImage } from '@/lib/productImage';
+import { IllustrativeTag } from './IllustrativeTag';
 import { modelSlug } from '@/lib/modelGroups';
 import { Badge } from '@/components/ui/Badge';
 import { RealPriceTag } from './RealPriceTag';
@@ -79,6 +80,7 @@ export function RealProductDetail({ item, related }: { item: PricedRealListing; 
                 <Smartphone className="h-24 w-24 text-muted-foreground/40" strokeWidth={1} />
               </div>
             )}
+            {isIllustrative(item) && <IllustrativeTag className="bottom-4 left-4" />}
           </div>
         </div>
 

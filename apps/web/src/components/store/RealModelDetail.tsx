@@ -7,6 +7,7 @@ import type { ModelGroup } from '@/lib/modelGroups';
 import { sortCapacities } from '@/lib/modelGroups';
 import { allocateQty, allocationTotal, rankOffers } from '@/lib/bestOffer';
 import { resolveProductImage } from '@/lib/productImage';
+import { IllustrativeTag } from './IllustrativeTag';
 import { formatInt, formatUsd } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { QtyInput, clampQty } from './QtyInput';
@@ -146,6 +147,7 @@ export function RealModelDetail({ group }: { group: ModelGroup }) {
                 <Smartphone className="h-24 w-24 text-muted-foreground/40" strokeWidth={1} />
               </div>
             )}
+            {!colorImage && group.imageUrl && group.imageApprox && <IllustrativeTag className="bottom-4 left-4" />}
           </div>
         </div>
 

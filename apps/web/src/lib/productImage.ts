@@ -36,6 +36,13 @@ export function resolveProductImage(model: string): string | null {
  * staff photo for the model → studio render for the model → null
  * (the caller shows the brand/category placeholder).
  */
+/** True when the image shown is the model image and staff marked it as only
+ * illustrating the model (another device of the family). A colour photo is
+ * always the real thing. */
+export function isIllustrative(l: { colorImageUrl?: string | null; imageUrl: string | null; imageApprox?: boolean }): boolean {
+  return !l.colorImageUrl && !!l.imageUrl && l.imageApprox === true;
+}
+
 export function listingImage(l: { colorImageUrl?: string | null; imageUrl: string | null; model: string }): string | null {
   return l.colorImageUrl ?? l.imageUrl ?? resolveProductImage(l.model);
 }

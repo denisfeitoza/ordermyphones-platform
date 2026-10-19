@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { listingImage, normalizeModel, resolveProductImage } from './productImage';
+import { isIllustrative, listingImage, normalizeModel, resolveProductImage } from './productImage';
 
 describe('normalizeModel', () => {
   it.each([
@@ -41,5 +41,14 @@ describe('listingImage waterfall', () => {
     expect(listingImage({ colorImageUrl: null, imageUrl: 'https://x/m.jpg', model: 'iPhone 14' })).toBe('https://x/m.jpg');
     expect(listingImage({ colorImageUrl: null, imageUrl: null, model: 'iPhone 14' })).toBe(resolveProductImage('iPhone 14'));
     expect(listingImage({ imageUrl: null, model: 'No Such Phone 9000' })).toBeNull();
+  });
+});
+
+describe('isIllustrative', () => {
+  it('labels only a model image marked approximate', () => {
+    expect(isIllustrative({ colorImageUrl: null, imageUrl: '/generated/catalog/iphone-15.webp', imageApprox: true })).toBe(true);
+    expect(isIllustrative({ colorImageUrl: null, imageUrl: '/generated/catalog/iphone-15.webp', imageApprox: false })).toBe(false);
+    expect(isIllustrative({ colorImageUrl: 'https://x/c.webp', imageUrl: '/generated/catalog/iphone-15.webp', imageApprox: true })).toBe(false);
+    expect(isIllustrative({ colorImageUrl: null, imageUrl: null, imageApprox: true })).toBe(false);
   });
 });

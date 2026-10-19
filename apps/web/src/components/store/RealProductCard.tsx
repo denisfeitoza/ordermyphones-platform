@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Smartphone } from 'lucide-react';
 import { buildDisplayName, type PricedRealListing } from '@/data/realCatalog';
-import { listingImage } from '@/lib/productImage';
+import { isIllustrative, listingImage } from '@/lib/productImage';
+import { IllustrativeTag } from './IllustrativeTag';
 import { Badge } from '@/components/ui/Badge';
 import { PulseDot } from './SyncHeartbeat';
 import { RealPriceTag } from './RealPriceTag';
@@ -48,6 +49,7 @@ export function RealProductCard({ item }: { item: PricedRealListing }) {
             <Smartphone className="h-14 w-14 text-muted-foreground/50" strokeWidth={1.25} />
           </div>
         )}
+        {isIllustrative(item) && <IllustrativeTag />}
       </Link>
 
       <div className="flex flex-1 flex-col gap-3 p-4">

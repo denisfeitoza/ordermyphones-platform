@@ -17,6 +17,8 @@ export interface ModelGroup {
   make: string;
   model: string;
   imageUrl: string | null;
+  /** imageUrl is an illustrative image (another model of the family). */
+  imageApprox: boolean;
   offers: PricedRealListing[];
   totalQty: number;
   /** Lowest tier price among in-stock offers (any priced offer if none in stock); null when unpriced. */
@@ -73,6 +75,7 @@ export function groupByModel(items: PricedRealListing[]): ModelGroup[] {
       make: offers[0].make,
       model,
       imageUrl: offers.find((o) => o.imageUrl)?.imageUrl ?? null,
+      imageApprox: offers.find((o) => o.imageUrl)?.imageApprox ?? false,
       offers,
       totalQty: offers.reduce((sum, o) => sum + o.totalQty, 0),
       fromPriceCents: minPrice(inStock) ?? minPrice(offers),

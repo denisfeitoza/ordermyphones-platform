@@ -1602,6 +1602,7 @@ export const PT: Record<string, string> = {
   'Model number is required (up to 60 characters).': 'O número de modelo é obrigatório (até 60 caracteres).',
   'Model is required (up to 120 characters).': 'O modelo é obrigatório (até 120 caracteres).',
   'Make is required (up to 40 characters).': 'A marca é obrigatória (até 40 caracteres).',
+  'Illustrative image': 'Imagem ilustrativa',
 };
 
 export const ES: Record<string, string> = {
@@ -3204,4 +3205,5 @@ export const ES: Record<string, string> = {
   'Model number is required (up to 60 characters).': 'El número de modelo es obligatorio (hasta 60 caracteres).',
   'Model is required (up to 120 characters).': 'El modelo es obligatorio (hasta 120 caracteres).',
   'Make is required (up to 40 characters).': 'La marca es obligatoria (hasta 40 caracteres).',
+  'Illustrative image': 'Imagen ilustrativa',
 };

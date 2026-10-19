@@ -30,8 +30,10 @@ export interface RealListing {
   locations: RealLocationStock[];
   createdAt: string;
   soldQty: number;
-  /** Staff-uploaded photo (products.image_url); null = placeholder / mock-family fallback. */
+  /** The model's image (products.image_url, from the image bank); null = placeholder. */
   imageUrl: string | null;
+  /** imageUrl shows another model of the family; the store labels it illustrative. */
+  imageApprox: boolean;
   description: string | null;
   /** products.category — 'phones' | 'accessories' | 'wearables'. */
   category: string;
@@ -63,6 +65,7 @@ interface RawCatalogListingRow {
   description: string | null;
   category: string | null;
   color_image_url: string | null;
+  image_approx: boolean | null;
 }
 
 interface RawPriceRow {
@@ -78,7 +81,7 @@ export async function fetchCatalogListing(): Promise<RealListing[]> {
       supabase
         .from('catalog_listing')
         .select(
-          'variant_id, sku, make, model, capacity, color, carrier, lock_status, ctia_grade, ctia_label, total_qty, locations, created_at, sold_qty, image_url, description, category, color_image_url',
+          'variant_id, sku, make, model, capacity, color, carrier, lock_status, ctia_grade, ctia_label, total_qty, locations, created_at, sold_qty, image_url, description, category, color_image_url, image_approx',
         )
         .order('sku')
         .range(from, to),
@@ -101,6 +104,7 @@ export async function fetchCatalogListing(): Promise<RealListing[]> {
     createdAt: r.created_at,
     soldQty: r.sold_qty ?? 0,
     imageUrl: r.image_url ?? null,
+    imageApprox: r.image_approx === true,
     description: r.description ?? null,
     category: r.category ?? 'phones',
     colorImageUrl: r.color_image_url ?? null,
