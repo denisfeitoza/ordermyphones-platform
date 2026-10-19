@@ -13,6 +13,7 @@ import { formatDate, formatInt, formatUsd } from '@/lib/format';
 import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { parseMoneyToCents } from '@/lib/money';
+import { isShortOrder, orderValueCents } from '@/lib/orderTotals';
 
 const STATUS_LABEL: Record<AdminOrderStatus, string> = {
   pending: 'Pending',
@@ -227,7 +228,7 @@ export function RealAdminOrders() {
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-3">
-                    <span className="font-mono text-sm font-semibold tabular-nums">{formatUsd(o.subtotalCents)}</span>
+                    <span className="font-mono text-sm font-semibold tabular-nums">{formatUsd(orderValueCents(o.status, o.subtotalCents, o.lines))}</span>
                     <StatusChip status={o.status} />
                   </div>
                 </button>
@@ -322,9 +323,15 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
             })}
           </ul>
 
+          {isShortOrder(order.status, order.subtotalCents, order.lines) && (
+            <div className="flex items-center justify-between border-t border-border pt-3 text-sm text-muted-foreground">
+              <span>{t('Ordered total')}</span>
+              <span className="font-mono tabular-nums line-through">{formatUsd(order.subtotalCents)}</span>
+            </div>
+          )}
           <div className="flex items-center justify-between border-t border-border pt-3 text-sm">
-            <span className="font-medium">{t('Total')}</span>
-            <span className="font-mono text-base font-semibold tabular-nums">{formatUsd(order.subtotalCents)}</span>
+            <span className="font-medium">{isShortOrder(order.status, order.subtotalCents, order.lines) ? t('Approved total') : t('Total')}</span>
+            <span className="font-mono text-base font-semibold tabular-nums">{formatUsd(orderValueCents(order.status, order.subtotalCents, order.lines))}</span>
           </div>
 
           {(order.shippingAddress?.street || order.note) && (

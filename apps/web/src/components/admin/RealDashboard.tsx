@@ -9,6 +9,7 @@ import { StatusChip } from '@/routes/admin/RealOrders';
 import { AdminHeading, StatCard, Table, Td } from '@/components/admin/parts';
 import { tierBg } from '@/lib/tierStyles';
 import { formatInt, formatUsd } from '@/lib/format';
+import { orderValueCents } from '@/lib/orderTotals';
 
 /**
  * Real-mode admin dashboard (go-live). Honest operational snapshot from live
@@ -107,7 +108,7 @@ export function RealDashboard() {
                     <span className="block truncate text-xs capitalize text-muted-foreground">{o.tier}</span>
                   </Td>
                   <Td align="right" className="font-mono tabular-nums">{formatInt(unitsOf(o))}</Td>
-                  <Td align="right" className="font-mono font-medium tabular-nums">{formatUsd(o.subtotalCents)}</Td>
+                  <Td align="right" className="font-mono font-medium tabular-nums">{formatUsd(orderValueCents(o.status, o.subtotalCents, o.lines))}</Td>
                   <Td><StatusChip status={o.status} /></Td>
                 </tr>
               ))}

@@ -7,6 +7,7 @@ import { TierBadge } from '@/components/store/TierBadge';
 import { PageHeading, Stat } from '@/components/portal/parts';
 import { formatDate, formatInt, formatUsd } from '@/lib/format';
 import { useI18n } from '@/i18n';
+import { orderValueCents } from '@/lib/orderTotals';
 
 const STATUS_LABEL: Record<RealOrder['status'], string> = {
   pending: 'Pending approval',
@@ -35,7 +36,7 @@ export function RealPortalOverview() {
   const tierDef = profile?.tier ? TIERS.find((t) => t.label.toLowerCase() === profile.tier) : undefined;
   const name = profile?.display_name ?? profile?.email ?? 'there';
   const lifetimeUnits = orders.reduce((s, o) => s + unitsOf(o), 0);
-  const lifetimeSpentCents = orders.reduce((s, o) => s + o.subtotalCents, 0);
+  const lifetimeSpentCents = orders.reduce((s, o) => s + orderValueCents(o.status, o.subtotalCents, o.lines), 0);
   const activeOrders = orders.filter((o) => o.status === 'pending' || o.status === 'partially_approved').length;
   const recent = orders.slice(0, 3);
 
@@ -94,7 +95,7 @@ export function RealPortalOverview() {
               <div key={o.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4">
                 <div className="min-w-0">
                   <span className="block font-mono text-xs text-muted-foreground">{o.id.slice(0, 8)} · {formatDate(o.placedAt, lang)}</span>
-                  <span className="block text-sm font-medium">{formatInt(unitsOf(o))} units · {formatUsd(o.subtotalCents)}</span>
+                  <span className="block text-sm font-medium">{formatInt(unitsOf(o))} units · {formatUsd(orderValueCents(o.status, o.subtotalCents, o.lines))}</span>
                 </div>
                 <span className="shrink-0 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium">{STATUS_LABEL[o.status]}</span>
               </div>

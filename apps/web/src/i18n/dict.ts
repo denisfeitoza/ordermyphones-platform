@@ -1435,6 +1435,8 @@ export const PT: Record<string, string> = {
   'Wholesale and distributor pricing on 50+ unit orders.': 'Preço de atacado e distribuidor em pedidos de 50+ unidades.',
   '90-day warranty & dedicated support': 'Garantia de 90 dias e suporte dedicado',
   'Every device is backed by a 90-day warranty and a responsive support team — purchases stay protected, risk-free, and personally handled.': 'Todo aparelho tem garantia de 90 dias e uma equipe de suporte ágil — compras protegidas, sem risco e com atendimento pessoal.',
+  'Approved total': 'Total aprovado',
+  'Units sold': 'Unidades vendidas',
 };
 
 export const ES: Record<string, string> = {
@@ -2870,4 +2872,6 @@ export const ES: Record<string, string> = {
   'Wholesale and distributor pricing on 50+ unit orders.': 'Precio mayorista y de distribuidor en pedidos de 50+ unidades.',
   '90-day warranty & dedicated support': 'Garantía de 90 días y soporte dedicado',
   'Every device is backed by a 90-day warranty and a responsive support team — purchases stay protected, risk-free, and personally handled.': 'Cada equipo tiene garantía de 90 días y un equipo de soporte ágil — compras protegidas, sin riesgo y con atención personal.',
+  'Approved total': 'Total aprobado',
+  'Units sold': 'Unidades vendidas',
 };

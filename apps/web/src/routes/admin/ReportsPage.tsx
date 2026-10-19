@@ -12,6 +12,7 @@ import { tierBg } from '@/lib/tierStyles';
 import { formatInt, formatUsd, LOCALE_FOR } from '@/lib/format';
 import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
+import { orderValueCents } from '@/lib/orderTotals';
 
 const monthLabel = (m: string, lang: 'en' | 'pt' | 'es' = 'en') =>
   new Date(`${m}-01T00:00:00`).toLocaleDateString(LOCALE_FOR[lang], { month: 'short', year: '2-digit' });
@@ -100,17 +101,24 @@ function RealReports({ orders: allOrders }: { orders: AdminOrder[] }) {
     const byModel = new Map<string, { units: number; gmv: number }>();
     let gmv = 0;
     let units = 0;
+    let counted = 0;
+    // Revenue = approved/partially approved/shipped orders at their approved
+    // units; pending, rejected and cancelled orders are not sales.
     for (const o of orders) {
-      gmv += o.subtotalCents;
+      if (!['approved', 'partially_approved', 'shipped'].includes(o.status)) continue;
+      const value = orderValueCents(o.status, o.subtotalCents, o.lines);
+      counted += 1;
+      gmv += value;
       const month = o.placedAt.slice(0, 7);
-      monthly.set(month, (monthly.get(month) ?? 0) + o.subtotalCents);
-      tierMix.set(o.tier, (tierMix.get(o.tier) ?? 0) + o.subtotalCents);
+      monthly.set(month, (monthly.get(month) ?? 0) + value);
+      tierMix.set(o.tier, (tierMix.get(o.tier) ?? 0) + value);
       for (const l of o.lines) {
-        units += l.qtyRequested;
+        const q = l.qtyApproved ?? 0;
+        units += q;
         const model = l.name.split(' · ')[0];
         const e = byModel.get(model) ?? { units: 0, gmv: 0 };
-        e.units += l.qtyRequested;
-        e.gmv += l.lineTotalCents;
+        e.units += q;
+        e.gmv += q * l.unitPriceCents;
         byModel.set(model, e);
       }
     }
@@ -119,7 +127,7 @@ function RealReports({ orders: allOrders }: { orders: AdminOrder[] }) {
       .map((code) => ({ code, gmvCents: tierMix.get(code) ?? 0 }))
       .filter((t) => t.gmvCents > 0);
     const topProducts = [...byModel.entries()].map(([model, v]) => ({ model, ...v })).sort((a, b) => b.units - a.units).slice(0, 8);
-    return { monthlyArr, tierArr, topProducts, gmv, units, count: orders.length };
+    return { monthlyArr, tierArr, topProducts, gmv, units, count: counted };
   }, [orders]);
 
   if (orders.length === 0) {
@@ -145,7 +153,7 @@ function RealReports({ orders: allOrders }: { orders: AdminOrder[] }) {
       <div className="grid gap-3 sm:grid-cols-3">
         <Stat label="Gross merchandise value" value={formatUsd(agg.gmv, true)} />
         <Stat label="Orders" value={formatInt(agg.count)} />
-        <Stat label="Units ordered" value={formatInt(agg.units)} />
+        <Stat label="Units sold" value={formatInt(agg.units)} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

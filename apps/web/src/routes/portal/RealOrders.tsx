@@ -12,6 +12,7 @@ import { exportDocCsv, exportDocPdf, type ExportDoc } from '@/lib/export';
 import { formatUsd, formatInt, formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n';
+import { isShortOrder, orderValueCents } from '@/lib/orderTotals';
 
 /** Build the printable/export doc for a real order. isTest carries through so
  *  a rehearsal order is stamped TEST on the PDF/CSV (TEST-READY-V1 §4). */
@@ -25,11 +26,11 @@ function realOrderToDoc(o: RealOrder): ExportDoc {
     lines: o.lines.map((l) => ({
       model: l.model,
       variant: `${l.capacity} · ${l.lockStatus === 'unlocked' ? 'Unlocked' : `${l.carrier} Locked`}`,
-      qty: l.qtyRequested,
+      qty: ['approved', 'partially_approved', 'shipped'].includes(o.status) ? (l.qtyApproved ?? 0) : l.qtyRequested,
       unitPriceCents: l.unitPriceCents,
-      lineTotalCents: l.lineTotalCents,
+      lineTotalCents: ['approved', 'partially_approved', 'shipped'].includes(o.status) ? (l.qtyApproved ?? 0) * l.unitPriceCents : l.lineTotalCents,
     })),
-    subtotalCents: o.subtotalCents,
+    subtotalCents: orderValueCents(o.status, o.subtotalCents, o.lines),
     savingsCents: 0,
     isTest: o.isTest,
   };
@@ -131,7 +132,7 @@ export function RealOrdersList() {
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-3">
-                <span className="font-mono text-sm font-semibold tabular-nums">{formatUsd(o.subtotalCents)}</span>
+                <span className="font-mono text-sm font-semibold tabular-nums">{formatUsd(orderValueCents(o.status, o.subtotalCents, o.lines))}</span>
                 <StatusPill status={o.status} />
               </div>
             </Link>
@@ -186,10 +187,6 @@ export function RealOrderDetail() {
   }
 
   const showApproved = order.status === 'approved' || order.status === 'partially_approved' || order.status === 'shipped';
-  // On a partial, line totals are priced for the REQUESTED qty (matching the
-  // placement-time subtotal), so label the total as ordered — not approved — to
-  // avoid implying the shipped/approved amount. Billing is off-system (D8).
-  const anyShort = order.lines.some((l) => l.qtyApproved !== null && l.qtyApproved < l.qtyRequested);
 
   return (
     <motion.div
@@ -326,9 +323,15 @@ export function RealOrderDetail() {
                 <dt>{t('Shipping')}</dt>
                 <dd>{t('Arranged separately')}</dd>
               </div>
+              {isShortOrder(order.status, order.subtotalCents, order.lines) && (
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <dt>{t('Ordered total')}</dt>
+                  <dd className="font-mono tabular-nums line-through">{formatUsd(order.subtotalCents)}</dd>
+                </div>
+              )}
               <div className="flex items-center justify-between border-t border-border pt-3">
-                <dt className="font-medium">{showApproved && anyShort ? t('Ordered total') : t('Total')}</dt>
-                <dd className="font-mono text-lg font-semibold tabular-nums">{formatUsd(order.subtotalCents)}</dd>
+                <dt className="font-medium">{isShortOrder(order.status, order.subtotalCents, order.lines) ? t('Approved total') : t('Total')}</dt>
+                <dd className="font-mono text-lg font-semibold tabular-nums">{formatUsd(orderValueCents(order.status, order.subtotalCents, order.lines))}</dd>
               </div>
             </dl>
 
