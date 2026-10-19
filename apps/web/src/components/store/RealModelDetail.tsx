@@ -130,7 +130,10 @@ export function RealModelDetail({ group }: { group: ModelGroup }) {
         <span className="text-foreground">{group.model}</span>
       </nav>
 
-      <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
+      {/* min-w-0 on both columns: a grid item defaults to its min-content width,
+          so one non-wrapping row (e.g. the longer PT/ES "Add to cart") would
+          widen the whole page past the phone screen and clip the cart drawer. */}
+      <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 [&>*]:min-w-0">
         <div className="lg:sticky lg:top-28 lg:self-start">
           <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-b from-muted/50 to-muted/20">
             {image ? (
@@ -250,7 +253,7 @@ export function RealModelDetail({ group }: { group: ModelGroup }) {
                     <span className="font-mono text-3xl font-semibold tabular-nums">{formatUsd(total)}</span>
                   </div>
 
-                  <div className="mt-4 flex items-center gap-3">
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
                     <div className="inline-flex items-center rounded-full border border-border">
                       <button type="button" onClick={() => setQty((n) => Math.max(1, n - 1))} className="grid h-11 w-11 place-items-center rounded-l-full hover:bg-muted" aria-label={t('Decrease')}>
                         <Minus className="h-4 w-4" strokeWidth={2} />
@@ -268,7 +271,7 @@ export function RealModelDetail({ group }: { group: ModelGroup }) {
                       </button>
                     </div>
                     {orderable && (
-                      <Button variant="primary" size="lg" className="flex-1" onClick={addToCart}>
+                      <Button variant="primary" size="lg" className="min-w-[12rem] flex-1" onClick={addToCart}>
                         {justAdded ? <Check className="h-4 w-4" strokeWidth={2.5} /> : <ShoppingBag className="h-4 w-4" strokeWidth={2} />}
                         {justAdded ? t('Added to cart') : t('Add to cart')}
                       </Button>
