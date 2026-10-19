@@ -95,11 +95,12 @@ export function OrderTimeline({
     key: 'placed',
     at: placedAt,
     dot: <Dot tone="bg-foreground text-background" icon={ShoppingBag} />,
-    title: t('Order placed'),
+    // A manual order (place_order_for) carries a 'placed_by_staff' event.
+    title: events.some((e) => e.kind === 'placed_by_staff') ? t('Order placed by our team') : t('Order placed'),
   });
   const shippedEvents = events.filter((e) => e.kind === 'shipped');
   for (const e of events) {
-    if (e.kind === 'shipped' || e.kind === 'cancelled') continue; // shipped after the decision row; cancelled IS the decision row
+    if (e.kind === 'shipped' || e.kind === 'cancelled' || e.kind === 'placed_by_staff') continue; // shipped after the decision row; cancelled IS the decision row; placed_by_staff relabels the placed row
     rows.push({
       key: e.id,
       at: e.createdAt,

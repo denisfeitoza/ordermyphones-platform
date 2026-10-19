@@ -8,14 +8,13 @@ import { PulseDot } from '@/components/store/SyncHeartbeat';
 import { cn } from '@/lib/utils';
 import { usePendingOrderCount } from '@/data/adminOrders';
 
-// Every shipping tab carries a `beta` badge for v1 (owner-facing signal that
-// the console is live but still hardening); only genuinely not-yet-built tabs
-// keep `soon`. A tab is never both.
+// Every tab carries a `beta` badge for v1 (owner-facing signal that the
+// console is live but still hardening).
 const NAV = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true, beta: true },
   { to: '/admin/customers', label: 'Customers', icon: Users, beta: true },
   { to: '/admin/orders', label: 'Orders', icon: Receipt, beta: true },
-  { to: '/admin/manual-order', label: 'Manual order', icon: FilePlus2, soon: true },
+  { to: '/admin/manual-order', label: 'Manual order', icon: FilePlus2, beta: true },
   { to: '/admin/reconciliation', label: 'Reconciliation', icon: PackageSearch, beta: true },
   { to: '/admin/inventory', label: 'Inventory', icon: Boxes, beta: true },
   { to: '/admin/import', label: 'Import', icon: UploadCloud, beta: true },
@@ -107,9 +106,6 @@ export default function AdminLayout() {
                   >
                     {pendingCount}
                   </span>
-                )}
-                {'soon' in l && l.soon && (
-                  <span className="ml-auto rounded-full bg-brand/10 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-brand">soon</span>
                 )}
                 {'beta' in l && l.beta && (
                   <span className="ml-auto rounded-full bg-sky-500/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-sky-600 dark:text-sky-300">beta</span>

@@ -896,6 +896,18 @@ begin
   exception when insufficient_privilege then null;
   end;
 
+  -- Manual orders: the core that takes any customer id is not callable
+  -- through the API at all, and the staff wrapper refuses a customer.
+  if has_function_privilege('authenticated', 'public.place_order_core(uuid,uuid,jsonb,jsonb,text,uuid,boolean)', 'execute')
+     or has_function_privilege('anon', 'public.place_order_core(uuid,uuid,jsonb,jsonb,text,uuid,boolean)', 'execute') then
+    raise exception 'FAIL(section6): place_order_core is executable through the API';
+  end if;
+  begin
+    perform public.place_order_for(admin_id, '[]'::jsonb);
+    raise exception 'FAIL(section6): customer called place_order_for without staff_only';
+  exception when insufficient_privilege then null;
+  end;
+
   -- POSITIVE CONTROL: an admin identity reads >=1 from both sensitive
   -- tables without a permission error — proves the staff policies actually
   -- grant, not merely that nothing is readable by anyone.

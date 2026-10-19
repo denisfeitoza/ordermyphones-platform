@@ -309,6 +309,35 @@ export function useEditOrder() {
   });
 }
 
+/** Manual order: staff place an order for a customer (RPC place_order_for).
+ * Prices, test flag and limits come from the customer server-side; the client
+ * sends only variants and quantities. */
+export function usePlaceOrderFor() {
+  const invalidate = useInvalidateOrderData();
+  return useMutation({
+    mutationFn: async (input: {
+      customerId: string;
+      items: { variant_id: string; qty: number }[];
+      shippingAddress: ShippingAddress | null;
+      note: string | null;
+      clientRef: string;
+      overrideRequirements: boolean;
+    }) => {
+      const { data, error } = await supabase.rpc('place_order_for', {
+        p_customer_id: input.customerId,
+        p_items: input.items,
+        p_shipping_address: input.shippingAddress,
+        p_note: input.note,
+        p_client_ref: input.clientRef,
+        p_override_requirements: input.overrideRequirements,
+      });
+      if (error) throw Object.assign(new Error(error.message), { details: error.details ?? null });
+      return data as { id: string; subtotal_cents: number };
+    },
+    onSuccess: () => invalidate(),
+  });
+}
+
 /** J2 step 5: approved → shipped with a manual carrier + tracking number (RPC mark_order_shipped). */
 export function useMarkShipped() {
   const qc = useQueryClient();

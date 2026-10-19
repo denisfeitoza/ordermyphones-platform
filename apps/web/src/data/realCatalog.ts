@@ -72,7 +72,7 @@ interface RawPriceRow {
 
 const PAGE_SIZE = 500;
 
-async function fetchCatalogListing(): Promise<RealListing[]> {
+export async function fetchCatalogListing(): Promise<RealListing[]> {
   const rows = await fetchAllPages<RawCatalogListingRow>(
     (from, to) =>
       supabase
