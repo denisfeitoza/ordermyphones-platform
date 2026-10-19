@@ -4,6 +4,8 @@ import { Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/store';
+import { NEW_OPTION, NewLocationForm } from '@/components/admin/InlineCreate';
 import type { ImportMode, LocationOption, SupplierOption } from './types';
 
 const ACCEPTED_EXT = ['.xls', '.xlsx', '.csv', '.tsv'];
@@ -40,6 +42,10 @@ export function UploadStep({
   const { t } = useI18n();
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
+  // New locations are admin-only (RLS on stock_locations).
+  const { role } = useAuth();
+  const canCreateLocation = role === 'admin';
+  const [creatingLocation, setCreatingLocation] = useState(false);
 
   function pickFile(f: File | null | undefined) {
     if (!f) return;
@@ -148,7 +154,10 @@ export function UploadStep({
             </span>
             <select
               value={locationCode ?? ''}
-              onChange={(e) => onLocationChange(e.target.value || null)}
+              onChange={(e) => {
+                if (e.target.value === NEW_OPTION) setCreatingLocation(true);
+                else onLocationChange(e.target.value || null);
+              }}
               className="h-11 rounded-xl border border-border bg-background px-3.5 text-sm outline-none transition-colors focus:border-brand"
             >
               <option value="">
@@ -159,7 +168,17 @@ export function UploadStep({
                   {l.displayName} ({l.code})
                 </option>
               ))}
+              {canCreateLocation && <option value={NEW_OPTION}>+ {t('New location…')}</option>}
             </select>
+            {creatingLocation && (
+              <NewLocationForm
+                onCreated={(row) => {
+                  onLocationChange(row.code);
+                  setCreatingLocation(false);
+                }}
+                onCancel={() => setCreatingLocation(false)}
+              />
+            )}
           </label>
         </div>
         {mode === 'replace_location' && (

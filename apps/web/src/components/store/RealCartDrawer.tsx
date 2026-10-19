@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Minus, Plus, Trash2, X, ArrowRight, ShoppingBag, Smartphone } from 'lucide-react';
+import { Minus, Plus, Trash2, X, ArrowRight, ShoppingBag, Smartphone, LogIn } from 'lucide-react';
 import { useRealCart, type RealCartAllocation } from '@/store';
 import { useCatalogSource } from '@/lib/catalogSource';
 import { useOrderLocationSelection } from '@/lib/orderSettings';
@@ -37,9 +37,15 @@ export function RealCartDrawer() {
   const isReal = source === 'real';
   const { open, setOpen, lines, unitCount, setQty, setAllocations, remove, clear } = useRealCart();
   const [confirmClear, setConfirmClear] = useState(false);
-  const { items, isLoading } = useRealCatalog(isReal && open);
+  const { items, isLoading, pricesReady: pricesLoaded, pricesError, retryPrices, signedIn } = useRealCatalog(isReal && open);
   const locationSelection = useOrderLocationSelection();
   const navigate = useNavigate();
+
+  // Warm the checkout chunk while the cart is open, so "Review & place order"
+  // does not hide the whole page behind the route loader for a moment.
+  useEffect(() => {
+    if (open && isReal) void import('@/routes/CheckoutPage');
+  }, [open, isReal]);
 
   useEffect(() => {
     if (!open) return;
@@ -70,15 +76,27 @@ export function RealCartDrawer() {
   // Block checkout only when a line has an in-progress split that doesn't sum to
   // its qty (all-or-nothing). Lines with no split are always valid.
   const allocationsValid = resolved.every((l) => allocationValid(l));
+  // A guest has no tier price: prices are never fetched, so every line reads
+  // "—". Sending them to sign in is the next step, not a dead button.
+  const needsSignIn = !signedIn;
+  // Prices still on the way (or failed) are NOT "no longer available": only a
+  // line missing from the listing, or unpriced once prices loaded fine, is.
+  const pricesLoading = signedIn && !pricesLoaded;
+  const pricesSettled = !isLoading && pricesLoaded && !pricesError;
   // Every line must have a resolved tier price before checkout — otherwise
   // the subtotal shown undercounts and place_order would price lines the
   // buyer never saw (audit 2026-09-13 P2).
-  const pricesReady = resolved.length > 0 && resolved.every((l) => l.lineTotalCents !== null);
-  // Lines that can't be bought any more (gone from the catalog or not priced for this tier).
-  const unavailable = isLoading ? [] : resolved.filter((l) => l.lineTotalCents === null);
+  const allPriced = resolved.length > 0 && resolved.every((l) => l.lineTotalCents !== null);
+  const unavailable = pricesSettled && signedIn ? resolved.filter((l) => l.lineTotalCents === null) : [];
+  const canCheckout = !needsSignIn && allPriced && allocationsValid;
 
   function checkout() {
-    if (!allocationsValid || !pricesReady) return;
+    if (needsSignIn) {
+      setOpen(false);
+      navigate('/auth/sign-in', { state: { from: '/checkout' } });
+      return;
+    }
+    if (!canCheckout) return;
     setOpen(false);
     navigate('/checkout');
   }
@@ -173,7 +191,7 @@ export function RealCartDrawer() {
                                   {t(l.item.ctiaLabel)}
                                   {l.item.color ? ` · ${l.item.color}` : ''}
                                 </p>
-                              ) : !isLoading ? (
+                              ) : pricesSettled ? (
                                 <p className="text-xs text-destructive">{t('No longer available — remove it to check out')}</p>
                               ) : null}
                             </div>
@@ -212,7 +230,7 @@ export function RealCartDrawer() {
                               </button>
                             </div>
                             <span className="font-mono text-sm font-semibold tabular-nums">
-                              {l.lineTotalCents === null ? '—' : formatUsd(l.lineTotalCents)}
+                              {l.lineTotalCents !== null ? formatUsd(l.lineTotalCents) : pricesLoading || isLoading ? '…' : '—'}
                             </span>
                           </div>
                           {l.item && (
@@ -235,10 +253,27 @@ export function RealCartDrawer() {
                     <span className="text-sm text-muted-foreground">{t('Subtotal')}</span>
                     <span className="font-mono text-xl font-semibold tabular-nums">{formatUsd(subtotalCents)}</span>
                   </div>
-                  <Button variant="primary" size="lg" className="w-full" onClick={checkout} disabled={!allocationsValid || !pricesReady}>
-                    {t('Review & place order')}
-                    <ArrowRight className="h-4 w-4" strokeWidth={2} />
-                  </Button>
+                  {/* Never a silent dead button: when it cannot advance, the reason
+                      is right under it (sign in, prices loading/failed, a line). */}
+                  {needsSignIn ? (
+                    <Button variant="primary" size="lg" className="w-full" onClick={checkout}>
+                      <LogIn className="h-4 w-4" strokeWidth={2} />
+                      {t('Sign in to see your prices and order')}
+                    </Button>
+                  ) : (
+                    <Button variant="primary" size="lg" className="w-full" onClick={checkout} disabled={!canCheckout}>
+                      {pricesLoading || isLoading ? t('Loading your prices…') : t('Review & place order')}
+                      {!(pricesLoading || isLoading) && <ArrowRight className="h-4 w-4" strokeWidth={2} />}
+                    </Button>
+                  )}
+                  {pricesError && (
+                    <p className="text-center text-xs text-destructive">
+                      {t('Could not load your prices.')}{' '}
+                      <button type="button" onClick={retryPrices} className="min-h-11 px-1 font-medium underline">
+                        {t('Try again')}
+                      </button>
+                    </p>
+                  )}
                   {!allocationsValid && (
                     <p className="text-center text-xs text-warning">{t('Finish allocating each line across locations to continue.')}</p>
                   )}

@@ -1939,6 +1939,11 @@ export const PT: Record<string, string> = {
   "Location name": "Nome do local",
   "Add its address later in Inventory → Locations.": "Adicione o endereço depois em Estoque → Locais.",
   "Add location": "Adicionar local",
+  "Sign in to see your prices and order": "Entre para ver seus preços e fazer o pedido",
+  "New capacity…": "Nova capacidade…",
+  "New capacity": "Nova capacidade",
+  "Saved as": "Salva como",
+  "Use this capacity": "Usar esta capacidade",
 };
 
 export const ES: Record<string, string> = {
@@ -3878,4 +3883,9 @@ export const ES: Record<string, string> = {
   "Location name": "Nombre de la ubicación",
   "Add its address later in Inventory → Locations.": "Agrega la dirección después en Inventario → Ubicaciones.",
   "Add location": "Agregar ubicación",
+  "Sign in to see your prices and order": "Inicia sesión para ver tus precios y hacer el pedido",
+  "New capacity…": "Nueva capacidad…",
+  "New capacity": "Nueva capacidad",
+  "Saved as": "Se guarda como",
+  "Use this capacity": "Usar esta capacidad",
 };

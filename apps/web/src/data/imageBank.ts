@@ -184,6 +184,33 @@ export function useKnownGrades() {
   });
 }
 
+/** Capacities and colors already used on variants, most used first — feeds the
+ * New product pickers so the same value is spelled the same way. */
+export function useKnownVariantValues() {
+  return useQuery({
+    queryKey: ['known-variant-values'],
+    staleTime: 10 * 60_000,
+    queryFn: async (): Promise<{ capacities: string[]; colors: string[] }> => {
+      const caps = new Map<string, number>();
+      const colors = new Map<string, number>();
+      // PostgREST caps a response at 1000 rows: page through (a few thousand variants).
+      for (let from = 0; from < 20_000; from += 1000) {
+        const { data, error } = await supabase.from('product_variants').select('capacity, color').order('id').range(from, from + 999);
+        if (error) throw new Error(error.message);
+        const rows = (data ?? []) as { capacity: string | null; color: string | null }[];
+        for (const r of rows) {
+          if (r.capacity) caps.set(r.capacity, (caps.get(r.capacity) ?? 0) + 1);
+          const c = r.color?.trim();
+          if (c && c !== '*') colors.set(c, (colors.get(c) ?? 0) + 1);
+        }
+        if (rows.length < 1000) break;
+      }
+      const byUse = (m: Map<string, number>) => [...m].sort((a, b) => b[1] - a[1]).map(([v]) => v);
+      return { capacities: byUse(caps), colors: byUse(colors) };
+    },
+  });
+}
+
 export function useActiveLocations() {
   return useQuery({
     queryKey: ['active-locations'],

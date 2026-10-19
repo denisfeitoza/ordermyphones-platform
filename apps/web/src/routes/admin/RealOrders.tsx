@@ -113,6 +113,8 @@ function ShipForm({ order, onDone }: { order: AdminOrder; onDone: () => void }) 
   const { t } = useI18n();
   const ship = useMarkShipped();
   const [carrier, setCarrier] = useState<string>('UPS');
+  const [otherCarrier, setOtherCarrier] = useState('');
+  const carrierValue = carrier === 'Other' && otherCarrier.trim() ? otherCarrier.trim() : carrier;
   const [tracking, setTracking] = useState('');
   const [note, setNote] = useState('');
   const [closeShortfalls, setCloseShortfalls] = useState(false);
@@ -147,7 +149,7 @@ function ShipForm({ order, onDone }: { order: AdminOrder; onDone: () => void }) 
       onSubmit={(e) => {
         e.preventDefault();
         ship.mutate(
-          { orderId: order.id, carrier, tracking: tracking.trim(), note: note.trim(), closeShortfalls: shortLines > 0 && closeShortfalls },
+          { orderId: order.id, carrier: carrierValue, tracking: tracking.trim(), note: note.trim(), closeShortfalls: shortLines > 0 && closeShortfalls },
           { onSuccess: onDone },
         );
       }}
@@ -169,6 +171,16 @@ function ShipForm({ order, onDone }: { order: AdminOrder; onDone: () => void }) 
           aria-label={t('Tracking number')}
         />
       </div>
+      {carrier === 'Other' && (
+        <input
+          value={otherCarrier}
+          onChange={(e) => setOtherCarrier(e.target.value)}
+          placeholder={t('Carrier name')}
+          maxLength={40}
+          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
+          aria-label={t('Carrier name')}
+        />
+      )}
       <input
         value={note}
         onChange={(e) => setNote(e.target.value)}

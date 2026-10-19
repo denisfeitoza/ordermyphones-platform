@@ -26,6 +26,7 @@ const KEY_CUSTOMER_STRINGS = [
   'Unlocked',
   'Locked',
   // storefront + cart
+  'Sign in to see your prices and order',
   'Add to cart',
   'Browse catalog',
   'Menu',
