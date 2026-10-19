@@ -16,9 +16,14 @@ export interface CommitStockImportArgs {
   /** File basename only — never a full path, never a real supplier legal name (D16). Caller sanitizes. */
   sourceLabel: string;
   headerFingerprint: string;
-  /** Accepted rows from the dry-run (validate.ts) — rejected rows are never sent. */
+  /** Accepted rows from the dry-run (validate.ts). */
   rows: NormalizedRow[];
   locationCode?: string;
+  /** Replace mode: the dry-run's rejected rows. Never imported — they only keep
+   * their variants from being zeroed and count toward the reject ratio. */
+  protectRows?: NormalizedRow[];
+  /** Replace mode: proceed even when more than 20% of the sheet was rejected. */
+  allowMassReplace?: boolean;
 }
 
 function toPayloadRow(row: NormalizedRow): CommitStockImportPayloadRow {
@@ -60,6 +65,8 @@ export async function commitStockImport(args: CommitStockImportArgs): Promise<Co
     p_header_fingerprint: args.headerFingerprint,
     p_rows: payloadRows,
     p_location_code: args.locationCode ?? null,
+    p_protect_rows: (args.protectRows ?? []).map(toPayloadRow),
+    p_allow_mass_replace: args.allowMassReplace ?? false,
   });
 
   if (error) throw error;

@@ -1410,6 +1410,10 @@ export const PT: Record<string, string> = {
   'lines': 'linhas',
   'The missing units will not be sent later.': 'As unidades que faltam não serão enviadas depois.',
   'This order has already shipped or closed, so it can no longer take stock. Close the shortfall instead.': 'Este pedido já foi enviado ou fechado e não pode mais receber estoque. Feche a falta.',
+  'rows were rejected. That often means the supplier changed the file format.': 'linhas foram recusadas. Isso costuma indicar que o fornecedor mudou o formato do arquivo.',
+  'Replace sets every item at this location that is not in the accepted rows to 0. Rejected rows keep their current stock.': 'Substituir zera todo item deste local que não está nas linhas aceitas. As linhas recusadas mantêm o estoque atual.',
+  'Cancel and check the file': 'Cancelar e conferir o arquivo',
+  'Replace anyway': 'Substituir mesmo assim',
 };
 
 export const ES: Record<string, string> = {
@@ -2820,4 +2824,8 @@ export const ES: Record<string, string> = {
   'lines': 'líneas',
   'The missing units will not be sent later.': 'Las unidades faltantes no se enviarán después.',
   'This order has already shipped or closed, so it can no longer take stock. Close the shortfall instead.': 'Este pedido ya se envió o se cerró y no puede recibir más stock. Cierra el faltante.',
+  'rows were rejected. That often means the supplier changed the file format.': 'filas fueron rechazadas. Eso suele indicar que el proveedor cambió el formato del archivo.',
+  'Replace sets every item at this location that is not in the accepted rows to 0. Rejected rows keep their current stock.': 'Reemplazar pone en 0 todo artículo de esta ubicación que no está en las filas aceptadas. Las filas rechazadas mantienen su stock actual.',
+  'Cancel and check the file': 'Cancelar y revisar el archivo',
+  'Replace anyway': 'Reemplazar de todos modos',
 };

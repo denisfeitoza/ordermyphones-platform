@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { AdminHeading } from '@/components/admin/parts';
+import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/i18n';
 import { detectImportFile, HEADER_CONFIDENCE_THRESHOLD, type DetectedSheet } from '@/lib/import/parse';
 import { mapColumns, CONFIDENCE_THRESHOLD, type CanonicalField } from '@/lib/import/map';
@@ -103,6 +104,8 @@ export default function ImportPage() {
   const [profileSaveWarning, setProfileSaveWarning] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Set when commit_stock_import refused a replace with >20% rejected rows. */
+  const [massReplace, setMassReplace] = useState<{ rejected: number; total: number } | null>(null);
 
   const suppliers = suppliersQuery.data ?? [];
   const locations = locationsQuery.data ?? [];
@@ -239,7 +242,7 @@ export default function ImportPage() {
     }
   }
 
-  async function handleCommit() {
+  async function handleCommit(allowMassReplace = false) {
     if (!detected || !dryRun || !supplierId) return;
     const supplier = suppliers.find((s) => s.id === supplierId);
     if (!supplier?.vendorCode) {
@@ -251,6 +254,7 @@ export default function ImportPage() {
     setProfileSaveWarning(null);
     try {
       const acceptedRows = dryRun.validated.filter((v) => v.accepted).map((v) => v.row);
+      const rejectedRows = dryRun.validated.filter((v) => !v.accepted).map((v) => v.row);
       // The RPC only ever sees accepted rows, so its own rows_total/rows_rejected
       // describe that accepted-only batch — capture the dry-run's true totals
       // and client-side rejects here, before they're overwritten by a later run.
@@ -265,7 +269,9 @@ export default function ImportPage() {
         sourceLabel: detected.fileName,
         headerFingerprint: detected.headerFingerprint,
         rows: acceptedRows,
-        ...(mode === 'replace_location' && locationCode ? { locationCode } : {}),
+        ...(mode === 'replace_location' && locationCode
+          ? { locationCode, protectRows: rejectedRows, allowMassReplace }
+          : {}),
       });
 
       // The import already committed at this point — a failure saving the
@@ -287,11 +293,19 @@ export default function ImportPage() {
       // storefront listing at once — drop every cached query rather than
       // chase each key (audit 2026-09-13 P2). Imports are rare and heavy.
       void queryClient.invalidateQueries();
+      setMassReplace(null);
       setCommitResult(result);
       setPreCommitInfo({ rowsInFile: dryRun.validated.length, clientRejects });
       setStep('commit');
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('Commit failed.'));
+      const msg = e instanceof Error ? e.message : String((e as { message?: string })?.message ?? '');
+      if (msg.includes('too_many_rejects')) {
+        // Server refused: >20% of the sheet was rejected. Ask before replacing.
+        const rejected = dryRun.validated.filter((v) => !v.accepted).length;
+        setMassReplace({ rejected, total: dryRun.validated.length });
+      } else {
+        setError(msg || t('Commit failed.'));
+      }
     } finally {
       setBusy(false);
     }
@@ -332,6 +346,22 @@ export default function ImportPage() {
         />
       )}
 
+      {massReplace && (
+        <div role="alert" className="space-y-3 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm">
+          <p>
+            <b>{massReplace.rejected}</b> {t('of')} <b>{massReplace.total}</b> {t('rows were rejected. That often means the supplier changed the file format.')}{' '}
+            {t('Replace sets every item at this location that is not in the accepted rows to 0. Rejected rows keep their current stock.')}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" disabled={busy} onClick={() => setMassReplace(null)}>
+              {t('Cancel and check the file')}
+            </Button>
+            <Button type="button" variant="primary" disabled={busy} onClick={() => void handleCommit(true)}>
+              {t('Replace anyway')}
+            </Button>
+          </div>
+        </div>
+      )}
       {step !== 'upload' && error && (
         <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">{error}</div>
       )}
@@ -341,7 +371,7 @@ export default function ImportPage() {
       )}
 
       {step === 'dryrun' && dryRun && (
-        <DryRunStep dryRun={dryRun} onBack={() => setStep(profileHit ? 'upload' : 'map')} onCommit={handleCommit} busy={busy} />
+        <DryRunStep dryRun={dryRun} onBack={() => setStep(profileHit ? 'upload' : 'map')} onCommit={() => void handleCommit()} busy={busy} />
       )}
 
       {step === 'commit' && commitResult && preCommitInfo && (
