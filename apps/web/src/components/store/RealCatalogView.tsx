@@ -171,7 +171,7 @@ export function RealCatalogView() {
             · {t('live tier pricing & inventory')}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
           <Button variant="outline" size="sm" className="lg:hidden" onClick={() => setMobileOpen(true)}>
             <SlidersHorizontal className="h-4 w-4" strokeWidth={2} />
             {t('Filters')}
@@ -185,7 +185,7 @@ export function RealCatalogView() {
             <ClipboardList className="h-4 w-4" strokeWidth={2} />
             <span className="hidden sm:inline">{t('Quick order')}</span>
           </Button>
-          <label className="relative">
+          <label className="relative min-w-0 flex-1 sm:flex-none">
             <span className="sr-only">{t('Search products')}</span>
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" strokeWidth={2} />
             <input
@@ -196,7 +196,7 @@ export function RealCatalogView() {
                 resetWindow();
               }}
               placeholder={t('Search iPhone, Galaxy, SKU…')}
-              className="h-9 w-40 rounded-full border border-border bg-background pl-9 pr-3 text-sm outline-none transition-colors focus:border-brand sm:w-64"
+              className="h-9 w-full rounded-full border border-border bg-background pl-9 pr-3 text-sm outline-none transition-colors focus:border-brand sm:w-64"
             />
           </label>
           <div className="hidden items-center rounded-full border border-border p-0.5 sm:inline-flex" role="group" aria-label={t('View')}>

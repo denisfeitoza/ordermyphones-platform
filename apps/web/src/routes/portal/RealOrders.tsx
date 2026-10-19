@@ -115,7 +115,7 @@ export function RealOrdersList() {
             <Link
               key={o.id}
               to={`/portal/orders/${o.id}`}
-              className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-border/70 hover:bg-muted/40"
+              className="flex min-w-0 items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-border/70 hover:bg-muted/40"
             >
               <div className="min-w-0">
                 <p className="font-mono text-sm font-semibold">
