@@ -193,8 +193,11 @@ export function RealCheckout() {
   // A failed price request is not "not priced": show a retry instead.
   const unpricedLines = pricesReady && !pricesError ? resolved.filter((l) => l.price === null).length : 0;
   const badSplitLines = resolved.filter((l) => !allocationValid(l)).length;
+  // place_order takes up to 500 order lines AFTER warehouse splits expand them.
+  const orderLineCount = useMemo(() => expandCartToOrderItems(lines).length, [lines]);
+  const tooManyLines = orderLineCount > 500;
   const canPlace =
-    resolved.length > 0 && pricesReady && !pricesError && unpricedLines === 0 && badSplitLines === 0 && checkoutMissing.length === 0;
+    resolved.length > 0 && pricesReady && !pricesError && unpricedLines === 0 && badSplitLines === 0 && !tooManyLines && checkoutMissing.length === 0;
   // One id per checkout attempt, stable while the cart is unchanged: a retry
   // after a dropped response returns the order already placed instead of a
   // duplicate (place_order is idempotent on p_client_ref).
@@ -427,6 +430,11 @@ export function RealCheckout() {
                   </button>
                 </p>
               )}
+              {tooManyLines && (
+                <p className="text-sm text-destructive">
+                  {t('One order takes up to 500 lines (each warehouse split counts as a line). This cart has')} {orderLineCount}. {t('Place part of it now and the rest in a second order.')}
+                </p>
+              )}
               {unpricedLines > 0 && (
                 <p className="text-sm text-destructive">{t('Some items are not priced for your tier. Remove them from the summary to continue.')}</p>
               )}
@@ -492,9 +500,9 @@ export function RealCheckout() {
                 {resolved.map((l) => (
                   <li key={l.variantId} className="flex items-center justify-between gap-2 py-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{l.item ? buildDisplayName(l.item) : t('Item')}</p>
+                      <p className="truncate text-sm font-medium">{l.item ? buildDisplayName(l.item) : t('No longer available')}</p>
                       <p className="text-xs text-muted-foreground">
-                        ×{l.qty}
+                        {l.item && `${t(l.item.ctiaLabel)}${l.item.color ? ` · ${l.item.color}` : ''} · `}×{l.qty}
                         {pricesReady && l.price === null && <span className="text-destructive"> · {t('Not priced for your tier')}</span>}
                         {!allocationValid(l) && <span className="text-destructive"> · {t('Split does not add up')}</span>}
                       </p>

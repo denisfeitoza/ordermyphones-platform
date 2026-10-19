@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, X, LayoutGrid, Rows3, ClipboardList } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -107,9 +107,11 @@ export function RealCatalogView() {
     }
   }
 
+  // Typing stays instant: the filter runs on a deferred copy of the query.
+  const deferredQ = useDeferredValue(q);
   const { filtered, counts } = useMemo(
-    () => computeFacetedCatalog(real.items, facets, q, sort),
-    [real.items, facets, q, sort],
+    () => computeFacetedCatalog(real.items, facets, deferredQ, sort),
+    [real.items, facets, deferredQ, sort],
   );
 
   // Grid browses by model (one card per model, options picked on /m/:slug);
@@ -193,7 +195,7 @@ export function RealCatalogView() {
             <ClipboardList className="h-4 w-4" strokeWidth={2} />
             <span className="hidden sm:inline">{t('Quick order')}</span>
           </Button>
-          <label className="relative min-w-0 flex-1 sm:flex-none">
+          <label className="relative order-first basis-full sm:order-none sm:basis-auto">
             <span className="sr-only">{t('Search products')}</span>
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" strokeWidth={2} />
             <input
@@ -204,14 +206,14 @@ export function RealCatalogView() {
                 resetWindow();
               }}
               placeholder={t('Search iPhone, Galaxy, SKU…')}
-              className="h-9 w-full rounded-full border border-border bg-background pl-9 pr-3 text-sm outline-none transition-colors focus:border-brand sm:w-64"
+              className="h-11 w-full rounded-full border border-border bg-background pl-9 pr-3 text-base outline-none transition-colors focus:border-brand sm:h-9 sm:w-64 sm:text-sm"
             />
           </label>
-          <div className="hidden items-center rounded-full border border-border p-0.5 sm:inline-flex" role="group" aria-label={t('View')}>
+          <div className="ml-auto inline-flex items-center rounded-full border border-border p-0.5 sm:ml-0" role="group" aria-label={t('View')}>
             <button
               type="button"
               onClick={() => selectView('grid')}
-              className={cn('grid h-8 w-8 place-items-center rounded-full transition-colors', view === 'grid' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground')}
+              className={cn('grid h-10 w-10 place-items-center rounded-full transition-colors sm:h-8 sm:w-8', view === 'grid' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground')}
               aria-label={t('Grid view')}
               aria-pressed={view === 'grid'}
             >
@@ -220,7 +222,7 @@ export function RealCatalogView() {
             <button
               type="button"
               onClick={() => selectView('table')}
-              className={cn('grid h-8 w-8 place-items-center rounded-full transition-colors', view === 'table' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground')}
+              className={cn('grid h-10 w-10 place-items-center rounded-full transition-colors sm:h-8 sm:w-8', view === 'table' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground')}
               aria-label={t('Table view')}
               aria-pressed={view === 'table'}
             >

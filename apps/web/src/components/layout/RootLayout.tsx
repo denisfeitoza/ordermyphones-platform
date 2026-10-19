@@ -3,6 +3,7 @@ import { Header } from '@/components/store/Header';
 import { Footer } from '@/components/store/Footer';
 import { CartDrawer } from '@/components/store/CartDrawer';
 import { RealCartDrawer } from '@/components/store/RealCartDrawer';
+import { CartToast } from '@/components/store/CartToast';
 import { TierPreviewPill } from '@/components/store/TierPreviewPill';
 import { ScrollToHash } from './ScrollToHash';
 
@@ -19,6 +20,7 @@ export default function RootLayout() {
       <Footer />
       <CartDrawer />
       <RealCartDrawer />
+      <CartToast />
       <TierPreviewPill />
     </div>
   );

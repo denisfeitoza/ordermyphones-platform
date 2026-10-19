@@ -76,7 +76,7 @@ export function RealModelDetail({ group }: { group: ModelGroup }) {
   const { t } = useI18n();
   const [params] = useSearchParams();
   const { signedIn, role } = useAuth();
-  const { add } = useRealCart();
+  const { addMany } = useRealCart();
   const { data: home } = useHomeContent();
   const trust = home?.benefits.enabled ? home.benefits.items.slice(0, 3) : [];
 
@@ -121,7 +121,7 @@ export function RealModelDetail({ group }: { group: ModelGroup }) {
   }
 
   function addToCart() {
-    for (const l of lines) add(l.offer.variantId, l.qty);
+    addMany(lines.map((l) => ({ variantId: l.offer.variantId, qty: l.qty })));
     setJustAdded(true);
     setTimeout(() => setJustAdded(false), 1400);
   }

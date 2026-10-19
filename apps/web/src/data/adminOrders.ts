@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { fetchAllPagesParallel } from '@/lib/supabasePaginate';
 import { carrierLabel } from './realCatalog';
 
 export type AdminOrderStatus = 'pending' | 'approved' | 'partially_approved' | 'rejected' | 'cancelled' | 'shipped';
@@ -91,9 +92,12 @@ function variantName(v: RawVariant | null): string {
 }
 
 async function fetchAdminOrders(): Promise<AdminOrder[]> {
-  const { data, error } = await supabase
-    .from('orders')
-    .select(
+  // Paged: past 1000 orders a single read silently dropped the oldest ones.
+  const data = await fetchAllPagesParallel<RawOrder>(
+    (from, to) =>
+      supabase
+        .from('orders')
+        .select(
       `id, status, tier_at_order, subtotal_cents, placed_at, decided_at, decision_reason, notes, shipping_address, is_test,
        shipped_at, tracking_carrier, tracking_number,
        customer:profiles!orders_customer_id_fkey(email, display_name),
@@ -102,10 +106,14 @@ async function fetchAdminOrders(): Promise<AdminOrder[]> {
          requested_location:stock_locations!order_items_requested_location_id_fkey(display_name),
          product_variants(sku, capacity, color, carrier, lock_status, products(make, model)))`,
     )
-    .order('placed_at', { ascending: false });
-  if (error) throw new Error(error.message);
+        .order('placed_at', { ascending: false })
+        .order('id')
+        .range(from, to) as unknown as PromiseLike<{ data: RawOrder[] | null; error: { message: string } | null }>,
+    500,
+    2,
+  );
 
-  return ((data ?? []) as unknown as RawOrder[]).map((o) => ({
+  return data.map((o) => ({
     id: o.id,
     status: o.status,
     tier: o.tier_at_order,

@@ -36,3 +36,30 @@ export async function fetchAllPages<T>(
   }
   return out;
 }
+
+/**
+ * Same result as fetchAllPages, but asks for `concurrency` pages at a time
+ * (the catalog is 6+ pages; one round trip after another cost seconds on a
+ * phone). Requires a stable `.order()` in fetchPage, or pages could overlap.
+ */
+export async function fetchAllPagesParallel<T>(
+  fetchPage: (from: number, to: number) => PromiseLike<PageResult<T>>,
+  pageSize = 1000,
+  concurrency = 4,
+): Promise<T[]> {
+  const out: T[] = [];
+  for (let from = 0; ; from += pageSize * concurrency) {
+    const wave = await Promise.all(
+      Array.from({ length: concurrency }, (_, k) => {
+        const start = from + k * pageSize;
+        return fetchPage(start, start + pageSize - 1);
+      }),
+    );
+    for (const { data, error } of wave) {
+      if (error) throw new Error(error.message);
+      const rows = data ?? [];
+      out.push(...rows);
+      if (rows.length < pageSize) return out;
+    }
+  }
+}

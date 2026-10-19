@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Minus, Plus, Trash2, X, ArrowRight, ShoppingBag, Smartphone } from 'lucide-react';
@@ -12,6 +12,7 @@ import { QtyInput, clampQty } from './QtyInput';
 import { Button } from '@/components/ui/Button';
 import { formatUsd } from '@/lib/format';
 import { useI18n } from '@/i18n';
+import { cn } from '@/lib/utils';
 
 interface ResolvedLine {
   variantId: string;
@@ -34,7 +35,8 @@ export function RealCartDrawer() {
   const { t } = useI18n();
   const source = useCatalogSource();
   const isReal = source === 'real';
-  const { open, setOpen, lines, unitCount, setQty, setAllocations, remove } = useRealCart();
+  const { open, setOpen, lines, unitCount, setQty, setAllocations, remove, clear } = useRealCart();
+  const [confirmClear, setConfirmClear] = useState(false);
   const { items, isLoading } = useRealCatalog(isReal && open);
   const locationSelection = useOrderLocationSelection();
   const navigate = useNavigate();
@@ -72,6 +74,8 @@ export function RealCartDrawer() {
   // the subtotal shown undercounts and place_order would price lines the
   // buyer never saw (audit 2026-09-13 P2).
   const pricesReady = resolved.length > 0 && resolved.every((l) => l.lineTotalCents !== null);
+  // Lines that can't be bought any more (gone from the catalog or not priced for this tier).
+  const unavailable = isLoading ? [] : resolved.filter((l) => l.lineTotalCents === null);
 
   function checkout() {
     if (!allocationsValid || !pricesReady) return;
@@ -104,10 +108,25 @@ export function RealCartDrawer() {
                 <h2 className="font-display text-lg font-semibold tracking-tight">{t('Your cart')}</h2>
                 {unitCount > 0 && (
                   <span className="font-mono text-sm text-muted-foreground">
-                    {unitCount} {unitCount === 1 ? t('unit') : t('units')}
+                    {lines.length} {lines.length === 1 ? t('line') : t('lines')} · {unitCount} {unitCount === 1 ? t('unit') : t('units')}
                   </span>
                 )}
               </div>
+              {lines.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirmClear) {
+                      clear();
+                      setConfirmClear(false);
+                    } else setConfirmClear(true);
+                  }}
+                  onBlur={() => setConfirmClear(false)}
+                  className={cn('ml-auto mr-1 min-h-11 rounded-full px-3 text-xs font-medium', confirmClear ? 'bg-destructive text-white' : 'text-muted-foreground hover:bg-muted')}
+                >
+                  {confirmClear ? t('Tap again to empty the cart') : t('Empty cart')}
+                </button>
+              )}
               <button
                 onClick={() => setOpen(false)}
                 className="-mr-1.5 grid h-11 w-11 place-items-center rounded-full hover:bg-muted"
@@ -149,7 +168,14 @@ export function RealCartDrawer() {
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <p className="truncate text-sm font-medium">{name}</p>
-                              {l.item?.color && <p className="text-xs text-muted-foreground">{l.item.color}</p>}
+                              {l.item ? (
+                                <p className="truncate text-xs text-muted-foreground">
+                                  {t(l.item.ctiaLabel)}
+                                  {l.item.color ? ` · ${l.item.color}` : ''}
+                                </p>
+                              ) : !isLoading ? (
+                                <p className="text-xs text-destructive">{t('No longer available — remove it to check out')}</p>
+                              ) : null}
                             </div>
                             <button
                               onClick={() => remove(l.variantId)}
@@ -215,6 +241,16 @@ export function RealCartDrawer() {
                   </Button>
                   {!allocationsValid && (
                     <p className="text-center text-xs text-warning">{t('Finish allocating each line across locations to continue.')}</p>
+                  )}
+                  {unavailable.length > 0 && (
+                    <div className="flex flex-wrap items-center justify-center gap-2 text-center text-xs text-destructive">
+                      <span>
+                        {unavailable.length} {unavailable.length === 1 ? t('line is no longer available.') : t('lines are no longer available.')}
+                      </span>
+                      <button type="button" onClick={() => unavailable.forEach((l) => remove(l.variantId))} className="min-h-11 rounded-full px-3 font-medium underline">
+                        {t('Remove them')}
+                      </button>
+                    </div>
                   )}
                   <p className="text-center text-xs text-muted-foreground">
                     {t('Stock is confirmed when our team approves your order — nothing is charged here.')}

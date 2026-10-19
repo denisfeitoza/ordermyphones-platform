@@ -396,7 +396,7 @@ export function RealOrderDetail() {
  */
 function ReorderButton({ lines }: { lines: RealOrderLine[] }) {
   const { t } = useI18n();
-  const { add } = useRealCart();
+  const { addMany } = useRealCart();
   // The catalog (~1.4 MB) loads only after the click, not on every order view.
   const [requested, setRequested] = useState(false);
   const { items, pricesReady, pricesError, isLoading, isError, retryPrices } = useRealCatalog(requested);
@@ -416,18 +416,16 @@ function ReorderButton({ lines }: { lines: RealOrderLine[] }) {
     const priced = new Set(items.filter((i) => i.priceCents !== null).map((i) => i.variantId));
     const qtyByVariant = new Map<string, number>();
     for (const l of lines) qtyByVariant.set(l.variantId, (qtyByVariant.get(l.variantId) ?? 0) + l.qtyRequested);
-    let added = 0;
+    const entries: { variantId: string; qty: number }[] = [];
     let skipped = 0;
     for (const [variantId, qty] of qtyByVariant) {
-      if (!priced.has(variantId) || qty <= 0) {
-        skipped++;
-        continue;
-      }
-      add(variantId, clampQty(qty));
-      added++;
+      if (!priced.has(variantId) || qty <= 0) skipped++;
+      else entries.push({ variantId, qty: clampQty(qty) });
     }
-    setResult({ added, skipped });
+    addMany(entries);
+    setResult({ added: entries.length, skipped });
   }
+
 
   return (
     <div className="flex flex-wrap items-center gap-3">

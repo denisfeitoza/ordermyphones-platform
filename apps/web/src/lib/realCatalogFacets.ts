@@ -77,15 +77,34 @@ function passesFacet(i: PricedRealListing, key: FacetKey, selected: Set<string>)
   return facetValues(i, key).some((v) => selected.has(v));
 }
 
-function passesSearch(i: PricedRealListing, needle: string): boolean {
-  if (!needle) return true;
-  const haystack = `${buildDisplayName(i)} ${i.make} ${i.sku} ${i.color ?? ''} ${i.ctiaLabel} ${carrierLabel(i.carrier)}`.toLowerCase();
-  return haystack.includes(needle);
+// Search text per listing, built once per object (the listing array is cached).
+const SEARCH_TEXT = new WeakMap<object, string>();
+export function listingSearchText(i: PricedRealListing): string {
+  let s = SEARCH_TEXT.get(i);
+  if (s === undefined) {
+    s = `${buildDisplayName(i)} ${i.make} ${i.sku} ${i.color ?? ''} ${i.ctiaLabel} ${carrierLabel(i.carrier)}`.toLowerCase();
+    SEARCH_TEXT.set(i, s);
+  }
+  return s;
+}
+
+/** "iphone 13 128" matches when every word appears somewhere, in any order. */
+export function searchWords(q: string): string[] {
+  return q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+}
+
+export function matchesWords(text: string, words: string[]): boolean {
+  for (const w of words) if (!text.includes(w)) return false;
+  return true;
+}
+
+function passesSearch(i: PricedRealListing, words: string[]): boolean {
+  return words.length === 0 || matchesWords(listingSearchText(i), words);
 }
 
 /** Passes search + every facet EXCEPT `exceptKey` (AND across axes). Used both
  * for the final filtered set (exceptKey = null) and for per-facet counts. */
-function passesAllExcept(i: PricedRealListing, facets: FacetState, needle: string, exceptKey: FacetKey | null): boolean {
+function passesAllExcept(i: PricedRealListing, facets: FacetState, needle: string[], exceptKey: FacetKey | null): boolean {
   if (!passesSearch(i, needle)) return false;
   for (const key of FACET_KEYS) {
     if (key === exceptKey) continue;
@@ -113,7 +132,7 @@ export function computeFacetedCatalog(
   q: string,
   sort: Sort,
 ): FacetedResult {
-  const needle = q.trim().toLowerCase();
+  const needle = searchWords(q);
 
   // Final filtered set (all axes applied).
   let filtered = items.filter((i) => passesAllExcept(i, facets, needle, null));

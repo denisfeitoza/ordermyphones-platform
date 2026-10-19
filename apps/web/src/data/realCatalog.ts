@@ -1,6 +1,7 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { fetchAllPages } from '@/lib/supabasePaginate';
+import { fetchAllPagesParallel } from '@/lib/supabasePaginate';
 import { useAuth } from '@/store/auth';
 import { useTier } from '@/store/tier';
 
@@ -76,7 +77,7 @@ interface RawPriceRow {
 const PAGE_SIZE = 500;
 
 export async function fetchCatalogListing(): Promise<RealListing[]> {
-  const rows = await fetchAllPages<RawCatalogListingRow>(
+  const rows = await fetchAllPagesParallel<RawCatalogListingRow>(
     (from, to) =>
       supabase
         .from('catalog_listing')
@@ -117,8 +118,8 @@ export async function fetchCatalogListing(): Promise<RealListing[]> {
  * permission-denied error, not an empty result. Callers gate with
  * `enabled: signedIn`. */
 async function fetchMyPrices(): Promise<Map<string, number>> {
-  const rows = await fetchAllPages<RawPriceRow>(
-    (from, to) => supabase.from('variant_price_for_me').select('variant_id, price_cents').range(from, to),
+  const rows = await fetchAllPagesParallel<RawPriceRow>(
+    (from, to) => supabase.from('variant_price_for_me').select('variant_id, price_cents').order('variant_id').range(from, to),
     PAGE_SIZE,
   );
   return new Map(rows.map((r) => [r.variant_id, r.price_cents]));
@@ -128,8 +129,8 @@ async function fetchMyPrices(): Promise<Map<string, number>> {
  * staff-readable prices table (admins have no own tier, so variant_price_for_me
  * returns nothing for them). Gated to staff by RLS. `tier` is the DB tier name. */
 async function fetchTierPrices(tier: string): Promise<Map<string, number>> {
-  const rows = await fetchAllPages<RawPriceRow>(
-    (from, to) => supabase.from('prices').select('variant_id, price_cents').eq('tier', tier).eq('visible', true).range(from, to),
+  const rows = await fetchAllPagesParallel<RawPriceRow>(
+    (from, to) => supabase.from('prices').select('variant_id, price_cents').eq('tier', tier).eq('visible', true).order('variant_id').range(from, to),
     PAGE_SIZE,
   );
   return new Map(rows.map((r) => [r.variant_id, r.price_cents]));
@@ -186,10 +187,13 @@ export function useRealCatalog(enabled = true): UseRealCatalogResult {
   const { query: priceQuery, previewTier, signedIn } = useTierPriceQuery(enabled);
 
   const prices = priceQuery.data;
-  const items: PricedRealListing[] = (listingQuery.data ?? []).map((l) => ({
-    ...l,
-    priceCents: prices?.get(l.variantId) ?? null,
-  }));
+  // Stable across renders: everything downstream (facets, grouping, the search
+  // text cache) memoizes on this array's identity.
+  const listing = listingQuery.data;
+  const items: PricedRealListing[] = useMemo(
+    () => (listing ?? []).map((l) => ({ ...l, priceCents: prices?.get(l.variantId) ?? null })),
+    [listing, prices],
+  );
 
   return {
     items,

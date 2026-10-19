@@ -63,9 +63,19 @@ function load(uid: string | null): RealCartLine[] {
   return [];
 }
 
+/** The last add, for the "added to cart" toast (id changes on every add). */
+export interface CartAddEvent {
+  id: number;
+  lines: number;
+  units: number;
+}
+
 interface RealCartContextValue {
   lines: RealCartLine[];
   add: (variantId: string, qty?: number) => void;
+  /** Add many lines at once (quick order, order again, model page) with one toast. */
+  addMany: (entries: { variantId: string; qty: number }[]) => void;
+  lastAdd: CartAddEvent | null;
   setQty: (variantId: string, qty: number) => void;
   setAllocations: (variantId: string, allocations: RealCartAllocation[] | undefined) => void;
   remove: (variantId: string) => void;
@@ -83,6 +93,7 @@ export function RealCartProvider({ children }: { children: ReactNode }) {
   const [uid, setUid] = useState<string | null>(null);
   const [lines, setLines] = useState<RealCartLine[]>(() => load(null));
   const [open, setOpen] = useState(false);
+  const [lastAdd, setLastAdd] = useState<CartAddEvent | null>(null);
 
   useEffect(() => {
     try {
@@ -117,7 +128,7 @@ export function RealCartProvider({ children }: { children: ReactNode }) {
         const merged = [...own];
         for (const l of anon) {
           const existing = merged.find((m) => m.variantId === l.variantId);
-          if (existing) existing.qty += l.qty;
+          if (existing) existing.qty = Math.min(MAX_LINE_QTY, existing.qty + l.qty);
           else merged.push({ variantId: l.variantId, qty: l.qty });
         }
         try {
@@ -138,17 +149,28 @@ export function RealCartProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  const add = useCallback((variantId: string, qty = 1) => {
-    const inc = Math.max(1, Math.floor(qty));
+  // Adding never opens the drawer (a wholesale buyer adds dozens of lines in a
+  // row); the CartToast shows what was added with a "View cart" shortcut.
+  const addMany = useCallback((entries: { variantId: string; qty: number }[]) => {
+    const clean = entries
+      .filter((e) => e.variantId && Number.isFinite(e.qty))
+      .map((e) => ({ variantId: e.variantId, qty: Math.min(MAX_LINE_QTY, Math.max(1, Math.floor(e.qty))) }));
+    if (clean.length === 0) return;
     setLines((prev) => {
-      const existing = prev.find((l) => l.variantId === variantId);
-      // Changing qty invalidates a prior per-location split (the sum must equal
-      // qty), so adding more units drops any existing allocation for this line.
-      if (existing) return prev.map((l) => (l.variantId === variantId ? { ...l, qty: Math.min(MAX_LINE_QTY, l.qty + inc), allocations: undefined } : l));
-      return [...prev, { variantId, qty: inc }];
+      const next = [...prev];
+      for (const e of clean) {
+        const i = next.findIndex((l) => l.variantId === e.variantId);
+        // Changing qty invalidates a prior per-location split (the sum must equal
+        // qty), so adding more units drops any existing allocation for this line.
+        if (i >= 0) next[i] = { ...next[i]!, qty: Math.min(MAX_LINE_QTY, next[i]!.qty + e.qty), allocations: undefined };
+        else next.push({ variantId: e.variantId, qty: e.qty });
+      }
+      return next;
     });
-    setOpen(true);
+    setLastAdd((p) => ({ id: (p?.id ?? 0) + 1, lines: clean.length, units: clean.reduce((s, e) => s + e.qty, 0) }));
   }, []);
+
+  const add = useCallback((variantId: string, qty = 1) => addMany([{ variantId, qty }]), [addMany]);
 
   const setQty = useCallback((variantId: string, qty: number) => {
     const next = Math.min(MAX_LINE_QTY, Math.floor(qty));
@@ -171,6 +193,8 @@ export function RealCartProvider({ children }: { children: ReactNode }) {
     () => ({
       lines,
       add,
+      addMany,
+      lastAdd,
       setQty,
       setAllocations,
       remove,
@@ -179,7 +203,7 @@ export function RealCartProvider({ children }: { children: ReactNode }) {
       open,
       setOpen,
     }),
-    [lines, add, setQty, setAllocations, remove, clear, open],
+    [lines, add, addMany, lastAdd, setQty, setAllocations, remove, clear, open],
   );
 
   return <RealCartContext.Provider value={value}>{children}</RealCartContext.Provider>;

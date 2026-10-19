@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { fetchAllPagesParallel } from '@/lib/supabasePaginate';
 import { useAuth } from '@/store/auth';
 import { carrierLabel } from './realCatalog';
 
@@ -95,22 +96,35 @@ function mapLine(r: RawItemRow): RealOrderLine {
  * my_order_items view scopes lines the same way). Lines are fetched via the
  * customer-safe display view — no cost/grade/supplier ever reaches the client. */
 async function fetchMyOrders(): Promise<RealOrder[]> {
-  const { data: orders, error } = await supabase
-    .from('orders')
-    .select('id, status, tier_at_order, subtotal_cents, placed_at, decided_at, decision_reason, notes, shipping_address, is_test, customer_id, shipped_at, tracking_carrier, tracking_number')
-    .order('placed_at', { ascending: false });
-  if (error) throw new Error(error.message);
-  const rows = (orders ?? []) as RawOrderRow[];
+  // Both reads page through everything: PostgREST stops at 1000 rows per
+  // request, so a buyer with several 200-line orders silently lost lines
+  // (and their totals). RLS already limits both to the caller's orders.
+  const rows = await fetchAllPagesParallel<RawOrderRow>(
+    (from, to) =>
+      supabase
+        .from('orders')
+        .select('id, status, tier_at_order, subtotal_cents, placed_at, decided_at, decision_reason, notes, shipping_address, is_test, customer_id, shipped_at, tracking_carrier, tracking_number')
+        .order('placed_at', { ascending: false })
+        .order('id')
+        .range(from, to),
+    1000,
+    2,
+  );
   if (rows.length === 0) return [];
 
-  const { data: items, error: itemErr } = await supabase
-    .from('my_order_items')
-    .select('id, order_id, variant_id, sku, make, model, capacity, color, carrier_code, lock_status, qty_requested, qty_approved, unit_price_cents')
-    .in('order_id', rows.map((o) => o.id));
-  if (itemErr) throw new Error(itemErr.message);
+  const items = await fetchAllPagesParallel<RawItemRow>(
+    (from, to) =>
+      supabase
+        .from('my_order_items')
+        .select('id, order_id, variant_id, sku, make, model, capacity, color, carrier_code, lock_status, qty_requested, qty_approved, unit_price_cents')
+        .order('id')
+        .range(from, to),
+    1000,
+    3,
+  );
 
   const byOrder = new Map<string, RealOrderLine[]>();
-  for (const it of (items ?? []) as RawItemRow[]) {
+  for (const it of items) {
     const list = byOrder.get(it.order_id) ?? [];
     list.push(mapLine(it));
     byOrder.set(it.order_id, list);

@@ -61,17 +61,26 @@ export function CartLineLocations({
     onChange(arr.length ? arr : undefined);
   }
 
-  // Greedy auto-distribute: fill the fullest locations until qty is met.
+  // Greedy auto-distribute: fill the fullest locations until qty is met. A
+  // quantity above total stock is allowed (staff confirm stock at approval),
+  // so whatever is left goes to the fullest location instead of leaving the
+  // split short and the checkout blocked.
   function autoFill() {
     let remaining = qty;
+    const sorted = [...locations].sort((a, b) => b.qty - a.qty);
     const arr: RealCartAllocation[] = [];
-    for (const loc of [...locations].sort((a, b) => b.qty - a.qty)) {
+    for (const loc of sorted) {
       if (remaining <= 0) break;
       const take = Math.min(remaining, loc.qty);
       if (take > 0) {
         arr.push({ locationId: loc.id, qty: take });
         remaining -= take;
       }
+    }
+    if (remaining > 0 && sorted[0]) {
+      const first = arr.find((a) => a.locationId === sorted[0]!.id);
+      if (first) first.qty += remaining;
+      else arr.push({ locationId: sorted[0].id, qty: remaining });
     }
     onChange(arr.length ? arr : undefined);
   }
@@ -110,12 +119,13 @@ export function CartLineLocations({
                       {loc.name} <span className="text-muted-foreground">({stock(loc.qty)})</span>
                     </span>
                     <input
-                      type="number"
-                      min={0}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={current.get(loc.id) ?? ''}
                       placeholder="0"
-                      onChange={(e) => setLoc(loc.id, parseInt(e.target.value, 10))}
-                      className="h-7 w-14 rounded-md border border-border bg-transparent px-2 text-center font-mono tabular-nums outline-none focus:border-brand [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+                      onChange={(e) => setLoc(loc.id, parseInt(e.target.value.replace(/\D/g, '') || '0', 10))}
+                      className="h-11 w-16 rounded-md border border-border bg-transparent px-2 text-center font-mono text-sm tabular-nums outline-none focus:border-brand sm:h-8"
                       aria-label={t('Quantity at') + ' ' + loc.name}
                     />
                   </div>
