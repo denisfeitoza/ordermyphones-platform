@@ -1427,6 +1427,7 @@ export const PT: Record<string, string> = {
   'A warehouse split does not add up to its quantity.': 'Uma divisão por armazém não soma a quantidade.',
   'Fix it in the cart': 'Corrigir no carrinho',
   'Split does not add up': 'Divisão não fecha',
+  'Could not load your prices.': 'Não foi possível carregar seus preços.',
 };
 
 export const ES: Record<string, string> = {
@@ -2854,4 +2855,5 @@ export const ES: Record<string, string> = {
   'A warehouse split does not add up to its quantity.': 'Una división por almacén no suma la cantidad.',
   'Fix it in the cart': 'Corregir en el carrito',
   'Split does not add up': 'La división no cuadra',
+  'Could not load your prices.': 'No se pudieron cargar tus precios.',
 };

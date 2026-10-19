@@ -1,17 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, ArrowRight, Check, ClipboardList, Minus, Pencil, Plus, Search, Trash2, Truck, X } from 'lucide-react';
-import {
-  useAdminOrders,
-  useVariantAvailability,
-  useApproveOrder,
-  useRejectOrder,
-  useEditOrder,
-  useMarkShipped,
-  type AdminOrder,
-  type AdminOrderStatus,
-  type ShippingAddress,
-} from '@/data/adminOrders';
+import { useAdminOrders, useVariantAvailability, useApproveOrder, useRejectOrder, useEditOrder, useMarkShipped, type AdminOrder, type AdminOrderStatus, type ShippingAddress, useOpenReconciliations } from '@/data/adminOrders';
 import { exportPickingSheetPdf } from '@/lib/export';
 import { useOrderEvents } from '@/data/orderEvents';
 import { useRealCatalog } from '@/data/realCatalog';
@@ -63,7 +53,11 @@ function ShipForm({ order, onDone }: { order: AdminOrder; onDone: () => void }) 
   // Same rules as mark_order_shipped: nothing approved → nothing to ship; any
   // line short → the open shortfalls must be closed explicitly on shipping.
   const approvedUnits = order.lines.reduce((s, l) => s + (l.qtyApproved ?? 0), 0);
-  const shortLines = order.lines.filter((l) => (l.qtyApproved ?? 0) < l.qtyRequested).length;
+  // Open reconciliation rows for this order's lines (a shortfall already
+  // closed in Reconciliation no longer needs the tick).
+  const { data: openRecon = [] } = useOpenReconciliations();
+  const lineIds = new Set(order.lines.map((l) => l.id));
+  const shortLines = openRecon.filter((r) => lineIds.has(r.orderItemId)).length;
   const errorText = (() => {
     if (!ship.isError) return null;
     const msg = (ship.error as Error).message;

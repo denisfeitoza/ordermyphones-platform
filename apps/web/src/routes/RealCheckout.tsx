@@ -44,6 +44,31 @@ function placeOrderError(t: (s: string) => string, message: string | undefined):
   return t('We could not place your order. Please try again.');
 }
 
+/** Random id (crypto.randomUUID where available — it is missing on older iOS). */
+function randomId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  const b = new Uint8Array(16);
+  crypto.getRandomValues(b);
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
+/** One place_order client ref per cart contents, stable across reloads of /checkout. */
+function checkoutRef(cartSignature: string): string {
+  const key = 'omp_checkout_ref_v1';
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(key) ?? 'null') as { sig: string; ref: string } | null;
+    if (saved && saved.sig === cartSignature) return saved.ref;
+    const ref = randomId();
+    sessionStorage.setItem(key, JSON.stringify({ sig: cartSignature, ref }));
+    return ref;
+  } catch {
+    return randomId();
+  }
+}
+
 function Field({ label, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   const { t } = useI18n();
   return (
@@ -71,7 +96,7 @@ export function RealCheckout() {
   const queryClient = useQueryClient();
   const { user, profile, role, loading: authLoading } = useAuth();
   const { lines, clear, remove, setOpen: openCart } = useRealCart();
-  const { items, pricesReady } = useRealCatalog(true);
+  const { items, pricesReady, pricesError, retryPrices } = useRealCatalog(true);
 
   const [phase, setPhase] = useState<Phase>('review');
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -138,15 +163,17 @@ export function RealCheckout() {
   // Same rules as the cart drawer (audit 2026-10-18): every line priced and
   // every warehouse split adding up to its quantity, or no order is placed —
   // otherwise the summary would show a total the order does not match.
-  const unpricedLines = pricesReady ? resolved.filter((l) => l.price === null).length : 0;
+  // A failed price request is not "not priced": show a retry instead.
+  const unpricedLines = pricesReady && !pricesError ? resolved.filter((l) => l.price === null).length : 0;
   const badSplitLines = resolved.filter((l) => !allocationValid(l)).length;
-  const canPlace = resolved.length > 0 && pricesReady && unpricedLines === 0 && badSplitLines === 0;
+  const canPlace = resolved.length > 0 && pricesReady && !pricesError && unpricedLines === 0 && badSplitLines === 0;
   // One id per checkout attempt, stable while the cart is unchanged: a retry
   // after a dropped response returns the order already placed instead of a
   // duplicate (place_order is idempotent on p_client_ref).
+  // Kept in sessionStorage per cart signature, so reloading a hung checkout
+  // reuses the same ref too.
   const cartSignature = JSON.stringify(lines);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- regenerate only when the cart contents change
-  const clientRef = useMemo(() => crypto.randomUUID(), [cartSignature]);
+  const clientRef = useMemo(() => checkoutRef(cartSignature), [cartSignature]);
   const liveUnitCount = lines.reduce((s, l) => s + l.qty, 0);
   const subtotalCents = placedSummary?.subtotalCents ?? liveSubtotalCents;
   const unitCount = placedSummary?.units ?? liveUnitCount;
@@ -337,6 +364,14 @@ export function RealCheckout() {
               )}
 
               {!pricesReady && resolved.length > 0 && <p className="text-sm text-muted-foreground">{t('Loading your prices…')}</p>}
+              {pricesError && (
+                <p className="text-sm text-destructive">
+                  {t('Could not load your prices.')}{' '}
+                  <button type="button" onClick={retryPrices} className="underline">
+                    {t('Try again')}
+                  </button>
+                </p>
+              )}
               {unpricedLines > 0 && (
                 <p className="text-sm text-destructive">{t('Some items are not priced for your tier. Remove them from the summary to continue.')}</p>
               )}
