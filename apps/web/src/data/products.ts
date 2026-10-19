@@ -1,12 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { attachProductImage, uploadToLibrary } from '@/data/imageBank';
 
 /**
  * Admin product content — the part of a product the import can't carry:
- * photo, description, publish switch (v1.0 plan S2). Products themselves
- * are created by the import; staff only enrich them here. RLS: products
- * staff write; storage bucket product-photos (public read, staff write).
- * 20260913160000_product_content.sql.
+ * photo, description, publish switch (v1.0 plan S2). Products come from the
+ * import or from create_product (imageBank.ts). Photos go through the image
+ * bank, so every upload is reusable. RLS: products staff write; storage
+ * bucket product-photos (public read, staff write).
  */
 
 export interface AdminProduct {
@@ -17,6 +18,8 @@ export interface AdminProduct {
   category: string;
   description: string | null;
   imageUrl: string | null;
+  /** The image shows another model of the family (labelled illustrative in the store). */
+  imageApprox: boolean;
   published: boolean;
   variantCount: number;
   createdAt: string;
@@ -30,17 +33,16 @@ interface RawProduct {
   category: string;
   description: string | null;
   image_url: string | null;
+  image_approx: boolean;
   published: boolean;
   created_at: string;
   product_variants: { count: number }[] | null;
 }
 
-export const PRODUCT_PHOTOS_BUCKET = 'product-photos';
-
 async function fetchAdminProducts(): Promise<AdminProduct[]> {
   const { data, error } = await supabase
     .from('products')
-    .select('id, make, model, model_number, category, description, image_url, published, created_at, product_variants(count)')
+    .select('id, make, model, model_number, category, description, image_url, image_approx, published, created_at, product_variants(count)')
     .order('make')
     .order('model');
   if (error) throw new Error(error.message);
@@ -52,6 +54,7 @@ async function fetchAdminProducts(): Promise<AdminProduct[]> {
     category: p.category,
     description: p.description,
     imageUrl: p.image_url,
+    imageApprox: p.image_approx,
     published: p.published,
     variantCount: p.product_variants?.[0]?.count ?? 0,
     createdAt: p.created_at,
@@ -65,7 +68,6 @@ export function useAdminProducts() {
 export interface ProductPatch {
   description?: string | null;
   published?: boolean;
-  image_url?: string | null;
 }
 
 export async function updateProduct(id: string, patch: ProductPatch): Promise<void> {
@@ -73,20 +75,11 @@ export async function updateProduct(id: string, patch: ProductPatch): Promise<vo
   if (error) throw new Error(error.message);
 }
 
-const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
-const PHOTO_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-
-/** Upload a photo to product-photos/<productId>/<ts>.<ext> and point the product at its public URL. */
-export async function uploadProductPhoto(productId: string, file: File): Promise<string> {
-  if (!PHOTO_TYPES.has(file.type)) throw new Error('Use a JPG, PNG or WebP image.');
-  if (file.size > MAX_PHOTO_BYTES) throw new Error('Photo must be 5 MB or smaller.');
-  const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
-  const path = `${productId}/${Date.now()}.${ext}`;
-  const { error: upErr } = await supabase.storage.from(PRODUCT_PHOTOS_BUCKET).upload(path, file, { upsert: true, contentType: file.type, cacheControl: '31536000' });
-  if (upErr) throw new Error(upErr.message);
-  const { data } = supabase.storage.from(PRODUCT_PHOTOS_BUCKET).getPublicUrl(path);
-  await updateProduct(productId, { image_url: data.publicUrl });
-  return data.publicUrl;
+/** Upload a photo of this exact model: it joins the image bank and becomes the product's image. */
+export async function uploadProductPhoto(product: Pick<AdminProduct, 'id' | 'make' | 'model'>, file: File): Promise<string> {
+  const asset = await uploadToLibrary(file, { make: product.make, model: product.model });
+  await attachProductImage(product.id, asset.id, 'exact');
+  return asset.url;
 }
 
 /** Invalidates admin + storefront caches: the listing view carries image/description/published. */
@@ -109,7 +102,16 @@ export function useUpdateProduct() {
 export function useUploadProductPhoto() {
   const invalidate = useInvalidateProducts();
   return useMutation({
-    mutationFn: ({ id, file }: { id: string; file: File }) => uploadProductPhoto(id, file),
+    mutationFn: ({ product, file }: { product: Pick<AdminProduct, 'id' | 'make' | 'model'>; file: File }) => uploadProductPhoto(product, file),
+    onSuccess: invalidate,
+  });
+}
+
+/** Use a bank image for a product ('exact' teaches the bank; 'approx' is labelled illustrative). */
+export function useAttachProductImage() {
+  const invalidate = useInvalidateProducts();
+  return useMutation({
+    mutationFn: ({ productId, assetId, mode }: { productId: string; assetId: string | null; mode: 'exact' | 'approx' }) => attachProductImage(productId, assetId, mode),
     onSuccess: invalidate,
   });
 }
@@ -148,21 +150,15 @@ export function useProductColors(productId: string) {
   return useQuery({ queryKey: ['admin-product-colors', productId], queryFn: () => fetchProductColors(productId), staleTime: 60_000 });
 }
 
-/** Upload a photo for one colour of a product (product_color_images). It wins over the model photo for that colour. */
-export async function uploadColorPhoto(productId: string, colorKey: string, file: File): Promise<string> {
-  if (!PHOTO_TYPES.has(file.type)) throw new Error('Use a JPG, PNG or WebP image.');
-  if (file.size > MAX_PHOTO_BYTES) throw new Error('Photo must be 5 MB or smaller.');
-  const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
-  const slug = colorKey.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'color';
-  const path = `${productId}/color-${slug}-${Date.now()}.${ext}`;
-  const { error: upErr } = await supabase.storage.from(PRODUCT_PHOTOS_BUCKET).upload(path, file, { upsert: true, contentType: file.type, cacheControl: '31536000' });
-  if (upErr) throw new Error(upErr.message);
-  const { data } = supabase.storage.from(PRODUCT_PHOTOS_BUCKET).getPublicUrl(path);
+/** Upload a photo for one colour of a product (product_color_images). It joins the image bank
+ * tagged with model and colour, and wins over the model photo for that colour. */
+export async function uploadColorPhoto(product: { id: string; make: string; model: string }, colorKey: string, file: File): Promise<string> {
+  const asset = await uploadToLibrary(file, { make: product.make, model: product.model, colorKey });
   const { error } = await supabase
     .from('product_color_images')
-    .upsert({ product_id: productId, color_key: colorKey, image_url: data.publicUrl, updated_at: new Date().toISOString() });
+    .upsert({ product_id: product.id, color_key: colorKey, image_url: asset.url, updated_at: new Date().toISOString() });
   if (error) throw new Error(error.message);
-  return data.publicUrl;
+  return asset.url;
 }
 
 export async function removeColorPhoto(productId: string, colorKey: string): Promise<void> {
@@ -178,10 +174,10 @@ function useInvalidateColors(productId: string) {
   };
 }
 
-export function useUploadColorPhoto(productId: string) {
-  const invalidate = useInvalidateColors(productId);
+export function useUploadColorPhoto(product: { id: string; make: string; model: string }) {
+  const invalidate = useInvalidateColors(product.id);
   return useMutation({
-    mutationFn: ({ colorKey, file }: { colorKey: string; file: File }) => uploadColorPhoto(productId, colorKey, file),
+    mutationFn: ({ colorKey, file }: { colorKey: string; file: File }) => uploadColorPhoto(product, colorKey, file),
     onSuccess: invalidate,
   });
 }

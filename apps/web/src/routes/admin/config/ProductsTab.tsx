@@ -1,7 +1,9 @@
 import { useMemo, useRef, useState } from 'react';
-import { Eye, EyeOff, ImagePlus, Search, Smartphone, Trash2, X } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Eye, EyeOff, ImagePlus, Plus, Search, Smartphone, Trash2, X } from 'lucide-react';
 import {
   useAdminProducts,
+  useAttachProductImage,
   useProductColors,
   useRemoveColorPhoto,
   useUpdateProduct,
@@ -14,13 +16,15 @@ import { Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
+import { ImagePicker } from './ImagePicker';
+import { NewProductPanel } from './NewProductPanel';
 
 /**
- * Admin → Inventory → Products (v1.0 plan S2 "CRUD de produto"): products are
- * created by the import; here staff add what a spreadsheet can't carry — a
- * photo, a description and a publish switch. Unpublished products vanish from
- * the storefront listing (catalog_listing filters on products.published)
- * without touching stock or prices.
+ * Admin → Inventory → Products: products come from the stock import or are
+ * created here by hand (NewProductPanel). Staff add what a spreadsheet can't
+ * carry — a photo from the image bank, a description and a publish switch.
+ * Unpublished products vanish from the storefront listing (catalog_listing
+ * filters on products.published) without touching stock or prices.
  */
 export default function ProductsTab() {
   const { t } = useI18n();
@@ -29,6 +33,7 @@ export default function ProductsTab() {
   const [query, setQuery] = useState('');
   const [onlyUnpublished, setOnlyUnpublished] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
 
   const rows = useMemo(() => {
     const all = q.data ?? [];
@@ -43,19 +48,36 @@ export default function ProductsTab() {
   const selected = useMemo(() => (q.data ?? []).find((p) => p.id === selectedId) ?? null, [q.data, selectedId]);
   const total = q.data?.length ?? 0;
   const unpublished = (q.data ?? []).filter((p) => !p.published).length;
-  const withPhoto = (q.data ?? []).filter((p) => !!p.imageUrl).length;
+  const withPhoto = (q.data ?? []).filter((p) => !!p.imageUrl && !p.imageApprox).length;
 
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm text-muted-foreground">
         <b className="text-foreground">{t('What this is')}:</b>{' '}
-        {t('Products arrive from the stock import. Here you add the photo, the description customers read, and switch a product off the storefront without touching stock or prices.')}
+        {t('Products arrive from the stock import, or you create one here. Add the photo, the description customers read, and switch a product off the storefront without touching stock or prices.')}
       </div>
+
+      {creating ? (
+        <NewProductPanel
+          onClose={() => setCreating(false)}
+          onCreated={(id) => {
+            setCreating(false);
+            setSelectedId(id);
+          }}
+        />
+      ) : (
+        <div className="flex justify-end">
+          <Button variant="brand" onClick={() => setCreating(true)}>
+            <Plus className="h-4 w-4" strokeWidth={2} />
+            {t('New product')}
+          </Button>
+        </div>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-3">
         {[
           { label: t('Products'), value: total },
-          { label: t('With photo'), value: withPhoto },
+          { label: t('With an exact image'), value: withPhoto },
           { label: t('Hidden from store'), value: unpublished },
         ].map((s) => (
           <div key={s.label} className="rounded-2xl border border-border bg-card p-4">
@@ -102,6 +124,7 @@ export default function ProductsTab() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">
                       {p.make} {p.model}
+                      {p.imageApprox && <span className="ml-2 rounded-full bg-amber-100 px-1.5 py-0.5 text-[0.65rem] font-semibold text-amber-900 dark:bg-amber-500/15 dark:text-amber-300">{t('Illustrative')}</span>}
                     </p>
                     <p className="truncate font-mono text-xs text-muted-foreground">
                       {p.modelNumber} · {p.variantCount} {p.variantCount === 1 ? t('variant') : t('variants')} · {p.category}
@@ -150,7 +173,8 @@ function ProductEditor({ product, onClose }: { product: AdminProduct; onClose: (
   const { t } = useI18n();
   const update = useUpdateProduct();
   const upload = useUploadProductPhoto();
-  const fileRef = useRef<HTMLInputElement>(null);
+  const attach = useAttachProductImage();
+  const qc = useQueryClient();
   const [description, setDescription] = useState(product.description ?? '');
   const dirty = description !== (product.description ?? '');
 
@@ -166,31 +190,23 @@ function ProductEditor({ product, onClose }: { product: AdminProduct; onClose: (
       <div className="space-y-5">
         <div>
           <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t('Photo')}</p>
-          <div className="flex items-center gap-4">
-            <Thumb url={product.imageUrl} alt={product.model} size="h-24 w-24" />
-            <div className="space-y-2">
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) upload.mutate({ id: product.id, file: f });
-                  e.target.value = '';
-                }}
-              />
-              <Button size="sm" variant="outline" disabled={upload.isPending} onClick={() => fileRef.current?.click()}>
-                <ImagePlus className="h-4 w-4" strokeWidth={2} />
-                {upload.isPending ? t('Uploading…') : product.imageUrl ? t('Replace photo') : t('Upload photo')}
-              </Button>
-              <p className="text-xs text-muted-foreground">{t('JPG, PNG or WebP · up to 5 MB · shown on every variant of this model.')}</p>
-              {upload.isError && <p className="text-xs text-destructive">{(upload.error as Error).message}</p>}
-            </div>
-          </div>
+          <ImagePicker
+            make={product.make}
+            model={product.model}
+            current={{ url: product.imageUrl, approx: product.imageApprox }}
+            busy={upload.isPending || attach.isPending}
+            error={upload.isError ? upload.error.message : attach.isError ? attach.error.message : null}
+            onPick={(pick) =>
+              attach.mutate(
+                { productId: product.id, assetId: pick.assetId, mode: pick.mode },
+                { onSuccess: () => void qc.invalidateQueries({ queryKey: ['image-suggestions'] }) },
+              )
+            }
+            onUpload={(file) => upload.mutate({ product, file }, { onSuccess: () => void qc.invalidateQueries({ queryKey: ['image-suggestions'] }) })}
+          />
         </div>
 
-        <ColorPhotos productId={product.id} model={product.model} />
+        <ColorPhotos product={product} />
 
         <label className="block">
           <span className="mb-2 block text-xs font-medium uppercase tracking-wide text-muted-foreground">{t('Description')}</span>
@@ -231,11 +247,12 @@ function ProductEditor({ product, onClose }: { product: AdminProduct; onClose: (
 }
 
 /** Per-colour photos: each wins over the model photo for variants of that colour. */
-function ColorPhotos({ productId, model }: { productId: string; model: string }) {
+function ColorPhotos({ product }: { product: AdminProduct }) {
   const { t } = useI18n();
-  const colors = useProductColors(productId);
-  const upload = useUploadColorPhoto(productId);
-  const remove = useRemoveColorPhoto(productId);
+  const model = product.model;
+  const colors = useProductColors(product.id);
+  const upload = useUploadColorPhoto(product);
+  const remove = useRemoveColorPhoto(product.id);
   const list = colors.data ?? [];
   if (colors.isLoading || list.length === 0) return null;
 
