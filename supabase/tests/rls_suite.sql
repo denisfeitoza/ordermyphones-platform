@@ -394,10 +394,9 @@ rollback;
 
 ------------------------------------------------------------------
 -- SECTION 3a — anon-role confidentiality + fail-closed masking check.
--- Confirms the `anon` grant this migration introduced on the five masking
--- views doesn't leak the base tables, while the masking views themselves
--- still work for a fully anonymous (unauthenticated) request — the
--- fail-closed property the migration's comments claim.
+-- Confirms anon cannot read the base tables and, since 2026-10-18
+-- (20261018200000_views_read_only.sql), cannot read or write the masking
+-- views either.
 ------------------------------------------------------------------
 begin;
 do $$
@@ -423,8 +422,22 @@ begin
 
   select count(*) into n from public.inventory; if n <> 0 then raise exception 'FAIL: anon read % inventory rows', n; end if;
 
-  select count(*) into n from public.suppliers_public where id = sup;
-  if n <> 1 then raise exception 'FAIL: anon could not read suppliers_public for a known-active row — anon grant on masking views regressed'; end if;
+  -- 2026-10-18: the *_public masking views are no longer anon-readable (the
+  -- web app uses none of them, and product_variants_public listed unpublished
+  -- variants). Anon must be refused outright, and must never write through
+  -- any of them (they were auto-updatable owner-rights views).
+  begin
+    select count(*) into n from public.suppliers_public where id = sup;
+    raise exception 'FAIL: anon can read suppliers_public again';
+  exception when insufficient_privilege then
+    null;
+  end;
+  begin
+    update public.inventory_public set qty = qty where true;
+    raise exception 'FAIL: anon can write through inventory_public';
+  exception when insufficient_privilege then
+    null;
+  end;
 end $$;
 rollback;
 
@@ -589,8 +602,10 @@ begin
   select count(*) into n from public.tiers;
   if n <> 4 then raise exception 'FAIL(4a): consumer saw % tiers rows, expected 4', n; end if;
 
+  -- 2026-10-18: vendor_grade_map is staff-only (it named the supplier file
+  -- format and internal grades); tiers stays the positive control above.
   select count(*) into n from public.vendor_grade_map where vendor_code = 'HYLA';
-  if n <> 14 then raise exception 'FAIL(4a): consumer saw % HYLA grade-map rows, expected 14', n; end if;
+  if n <> 0 then raise exception 'FAIL(4a): consumer read % vendor grade-map rows (staff-only since 2026-10-18)', n; end if;
 
   -- WHOLESALE: the resolver discriminates by tier, it does not merely restrict
   -- everyone to one hardcoded tier. Base table is staff-only (see above), so a
@@ -865,12 +880,10 @@ begin
   select count(*) into n from public.import_profiles where id = profile_id;
   if n <> 0 then raise exception 'FAIL(section6): customer read % import_profiles rows', n; end if;
 
-  -- POSITIVE (intentional exception): import_synonyms is read-all-
-  -- authenticated non-sensitive mapping metadata (T-02-03) — the customer
-  -- session CAN read it, but still reads 0 from the two sensitive tables
-  -- above.
+  -- import_synonyms is staff-only since 2026-10-18 (the storefront never
+  -- needed it; colour folding runs inside owner-rights views).
   select count(*) into n from public.import_synonyms where id = synonym_id;
-  if n <> 1 then raise exception 'FAIL(section6): customer could not read import_synonyms (%) — read-all-authenticated policy missing/misconfigured', n; end if;
+  if n <> 0 then raise exception 'FAIL(section6): customer read import_synonyms (%) — staff-only since 2026-10-18', n; end if;
 
   -- POSITIVE CONTROL: an admin identity reads >=1 from both sensitive
   -- tables without a permission error — proves the staff policies actually
