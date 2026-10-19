@@ -920,6 +920,25 @@ begin
   exception when insufficient_privilege then null;
   end;
 
+  -- Image bank and manual product creation are staff-only.
+  select count(*) into n from public.image_assets;
+  if n <> 0 then raise exception 'FAIL(section6): customer read % image_assets rows', n; end if;
+  if has_function_privilege('anon', 'public.create_product(jsonb)', 'execute')
+     or has_function_privilege('anon', 'public.suggest_product_images(text,text,text)', 'execute')
+     or has_function_privilege('authenticated', 'public.exact_image_asset(text)', 'execute') then
+    raise exception 'FAIL(section6): image bank / create_product executable by the wrong role';
+  end if;
+  begin
+    perform public.create_product('{}'::jsonb);
+    raise exception 'FAIL(section6): customer called create_product without staff_only';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.attach_product_image(gen_random_uuid(), null, 'exact');
+    raise exception 'FAIL(section6): customer called attach_product_image without staff_only';
+  exception when insufficient_privilege then null;
+  end;
+
   -- POSITIVE CONTROL: an admin identity reads >=1 from both sensitive
   -- tables without a permission error — proves the staff policies actually
   -- grant, not merely that nothing is readable by anyone.
