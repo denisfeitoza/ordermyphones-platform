@@ -110,7 +110,7 @@ export function RealCheckout() {
   const [orderId, setOrderId] = useState<string | null>(null);
   // Snapshot of what was ordered, taken BEFORE the cart is cleared so the
   // confirmation panel doesn't render "0 units" (audit 2026-09-13 P1-17).
-  const [placedSummary, setPlacedSummary] = useState<{ units: number; subtotalCents: number } | null>(null);
+  const [placedSummary, setPlacedSummary] = useState<{ units: number; subtotalCents: number; lines: typeof resolved } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<ShippingForm>({ street: '', city: '', state: '', zip: '', phone: '' });
   // Which saved address is chosen, or NEW to type one. null until the book loads.
@@ -213,6 +213,8 @@ export function RealCheckout() {
   const liveUnitCount = lines.reduce((s, l) => s + l.qty, 0);
   const subtotalCents = placedSummary?.subtotalCents ?? liveSubtotalCents;
   const unitCount = placedSummary?.units ?? liveUnitCount;
+  // After placing, the cart is empty: keep showing what was ordered.
+  const summaryLines = placedSummary?.lines ?? resolved;
 
   // Checkout is a signed-in customer surface: a guest with a stale cart goes to
   // sign-in (and comes back here); admin/staff in a tier lens cannot order.
@@ -296,7 +298,7 @@ export function RealCheckout() {
 
     const placed = data as { id?: string } | null;
     setOrderId(placed?.id ?? null);
-    setPlacedSummary({ units: liveUnitCount, subtotalCents: liveSubtotalCents });
+    setPlacedSummary({ units: liveUnitCount, subtotalCents: liveSubtotalCents, lines: resolved });
     clear();
     setPhase('done');
     // The portal's order list is cached for 30s with no focus refetch — make
@@ -550,11 +552,11 @@ export function RealCheckout() {
         <aside className="lg:sticky lg:top-28 lg:self-start">
           <div className="rounded-2xl border border-border p-5">
             <h2 className="mb-3 font-medium">{t('Order summary')}</h2>
-            {resolved.length === 0 ? (
+            {summaryLines.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t('Your order is being confirmed.')}</p>
             ) : (
               <ul className="divide-y divide-border">
-                {resolved.map((l) => (
+                {summaryLines.map((l) => (
                   <li key={l.variantId} className="flex items-center justify-between gap-2 py-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{l.item ? localizedDisplayName(l.item, t) : t('No longer available')}</p>

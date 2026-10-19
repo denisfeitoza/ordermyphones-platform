@@ -4,6 +4,9 @@ import { Plus, Trash2, X } from 'lucide-react';
 import { Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
 import { createProduct, uploadToLibrary, useActiveLocations, useKnownGrades, type NewProductInput } from '@/data/imageBank';
+import { createStockLocation, upsertVendorGrade } from '@/data/adminConfig';
+import { CTIA_GRADES, type CtiaGrade } from '@/lib/pricingSettings';
+import { useAuth } from '@/store';
 import { useAdminProducts } from '@/data/products';
 import { parseMoneyToCents } from '@/lib/money';
 import { ImagePicker, type PickedImage } from './ImagePicker';
@@ -50,6 +53,21 @@ const ERRORS: [string, string][] = [
 const inputCls = 'h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none transition-colors focus:border-brand';
 const labelCls = 'mb-1.5 block text-xs font-medium text-muted-foreground';
 
+/** Select value that opens the inline "create new" form instead of picking an option. */
+const NEW_OPTION = '__new__';
+
+/** "64 gb" / "64 GB" → "64GB", the spelling the rest of the catalog uses (SKUs embed it). */
+const normalizeCapacity = (s: string) => s.trim().replace(/^(\d+(?:\.\d+)?)\s*(gb|tb|mb)$/i, (_m, n: string, u: string) => `${n}${u.toUpperCase()}`);
+
+/** Location code from its name: "Miami 2" → "MIAMI-2" (stock_locations.code is unique). */
+const locationCode = (name: string) =>
+  name
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 16);
+
 let nextKey = 1;
 const blankVariant = (): VariantDraft => ({ key: nextKey++, capacity: '', color: '', grade: '', network: 'UNL', locationId: '', qty: '', cost: '' });
 
@@ -64,6 +82,12 @@ export function NewProductPanel({ onClose, onCreated }: { onClose: () => void; o
   const products = useAdminProducts();
   const grades = useKnownGrades();
   const locations = useActiveLocations();
+  // Grades and locations are admin-only writes (RLS on vendor_grade_map /
+  // stock_locations); staff keep the plain pick-from-list.
+  const { role } = useAuth();
+  const canCreate = role === 'admin';
+  const [newGrade, setNewGrade] = useState<{ forKey: number; name: string; ctia: CtiaGrade } | null>(null);
+  const [newLocation, setNewLocation] = useState<{ forKey: number; name: string } | null>(null);
   const makes = useMemo(() => [...new Set((products.data ?? []).map((p) => p.make))].sort(), [products.data]);
 
   const [make, setMake] = useState('');
@@ -100,7 +124,7 @@ export function NewProductPanel({ onClose, onCreated }: { onClose: () => void; o
         image_asset_id: image?.assetId ?? null,
         image_mode: image?.mode ?? 'exact',
         variants: variants.map((v) => ({
-          capacity: v.capacity.trim(),
+          capacity: normalizeCapacity(v.capacity),
           color: v.color.trim(),
           grade: v.grade,
           carrier: v.network,
@@ -117,6 +141,26 @@ export function NewProductPanel({ onClose, onCreated }: { onClose: () => void; o
       onCreated(id);
     },
   });
+
+  const addGrade = useMutation({
+    mutationFn: (g: { forKey: number; name: string; ctia: CtiaGrade }) => upsertVendorGrade({ vendor_code: 'OMP', vendor_grade: g.name, ctia: g.ctia }),
+    onSuccess: async (_d, g) => {
+      await qc.invalidateQueries({ queryKey: ['known-grades'] });
+      void qc.invalidateQueries({ queryKey: ['config-grade-map'] });
+      patch(g.forKey, { grade: g.name });
+      setNewGrade(null);
+    },
+  });
+  const addLocation = useMutation({
+    mutationFn: (l: { forKey: number; name: string }) => createStockLocation({ code: locationCode(l.name), display_name: l.name, region: null }),
+    onSuccess: async (row, l) => {
+      await qc.invalidateQueries({ queryKey: ['active-locations'] });
+      void qc.invalidateQueries({ queryKey: ['config-locations'] });
+      patch(l.forKey, { locationId: row.id });
+      setNewLocation(null);
+    },
+  });
+  const gradeTaken = !!newGrade && (grades.data ?? []).some((g) => g.grade.toUpperCase() === newGrade.name.trim().toUpperCase());
 
   async function upload(file: File) {
     setUploadError(null);
@@ -236,7 +280,7 @@ export function NewProductPanel({ onClose, onCreated }: { onClose: () => void; o
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   <label>
                     <span className={labelCls}>{t('Capacity')}</span>
-                    <input value={v.capacity} onChange={(e) => patch(v.key, { capacity: e.target.value })} placeholder="256GB" className={inputCls} maxLength={20} required />
+                    <input value={v.capacity} onChange={(e) => patch(v.key, { capacity: e.target.value })} onBlur={(e) => patch(v.key, { capacity: normalizeCapacity(e.target.value) })} placeholder="256GB" className={inputCls} maxLength={20} required />
                   </label>
                   <label>
                     <span className={labelCls}>{t('Color')}</span>
@@ -244,7 +288,17 @@ export function NewProductPanel({ onClose, onCreated }: { onClose: () => void; o
                   </label>
                   <label>
                     <span className={labelCls}>{t('Grade')}</span>
-                    <select value={v.grade} onChange={(e) => patch(v.key, { grade: e.target.value })} className={inputCls} required>
+                    <select
+                      value={v.grade}
+                      onChange={(e) => {
+                        if (e.target.value === NEW_OPTION) {
+                          addGrade.reset();
+                          setNewGrade({ forKey: v.key, name: '', ctia: 'A' });
+                        } else patch(v.key, { grade: e.target.value });
+                      }}
+                      className={inputCls}
+                      required
+                    >
                       <option value="" disabled>
                         {grades.isLoading ? t('Loading…') : t('Choose')}
                       </option>
@@ -253,6 +307,7 @@ export function NewProductPanel({ onClose, onCreated }: { onClose: () => void; o
                           {g.grade} · CTIA {g.ctia}
                         </option>
                       ))}
+                      {canCreate && <option value={NEW_OPTION}>+ {t('New grade…')}</option>}
                     </select>
                   </label>
                   <label>
@@ -270,13 +325,23 @@ export function NewProductPanel({ onClose, onCreated }: { onClose: () => void; o
                 <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-[2fr_1fr_1fr]">
                   <label className="col-span-2 sm:col-span-1">
                     <span className={labelCls}>{t('Opening stock at')}</span>
-                    <select value={v.locationId} onChange={(e) => patch(v.key, { locationId: e.target.value })} className={inputCls}>
+                    <select
+                      value={v.locationId}
+                      onChange={(e) => {
+                        if (e.target.value === NEW_OPTION) {
+                          addLocation.reset();
+                          setNewLocation({ forKey: v.key, name: '' });
+                        } else patch(v.key, { locationId: e.target.value });
+                      }}
+                      className={inputCls}
+                    >
                       <option value="">{t('No stock yet')}</option>
                       {(locations.data ?? []).map((l) => (
                         <option key={l.id} value={l.id}>
                           {l.name}
                         </option>
                       ))}
+                      {canCreate && <option value={NEW_OPTION}>+ {t('New location…')}</option>}
                     </select>
                   </label>
                   <label>
@@ -288,6 +353,82 @@ export function NewProductPanel({ onClose, onCreated }: { onClose: () => void; o
                     <input value={v.cost} onChange={(e) => patch(v.key, { cost: e.target.value })} inputMode="decimal" placeholder="0.00" disabled={!v.locationId} className={cn(inputCls, 'font-mono tabular-nums')} />
                   </label>
                 </div>
+                {newGrade?.forKey === v.key && (
+                  <div className="mt-2 space-y-2 rounded-xl bg-muted/40 p-3">
+                    <p className="text-xs font-medium">{t('New grade')}</p>
+                    <div className="grid grid-cols-[1fr_auto] gap-2">
+                      <input
+                        value={newGrade.name}
+                        onChange={(e) => setNewGrade({ ...newGrade, name: e.target.value })}
+                        placeholder="DLS A+"
+                        maxLength={30}
+                        autoFocus
+                        aria-label={t('Grade name')}
+                        className={inputCls}
+                      />
+                      <select value={newGrade.ctia} onChange={(e) => setNewGrade({ ...newGrade, ctia: e.target.value as CtiaGrade })} aria-label={t('CTIA grade')} className={cn(inputCls, 'w-28')}>
+                        {CTIA_GRADES.map((c) => (
+                          <option key={c} value={c}>
+                            CTIA {c}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{t('The CTIA grade decides how customers see this grade and how it is priced.')}</p>
+                    {gradeTaken && <p className="text-xs text-destructive">{t('This grade already exists. Pick it from the list.')}</p>}
+                    {addGrade.isError && <p className="text-xs text-destructive">{addGrade.error.message}</p>}
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="primary"
+                        className="min-h-11 sm:min-h-0"
+                        disabled={!newGrade.name.trim() || gradeTaken || addGrade.isPending}
+                        onClick={() => addGrade.mutate({ ...newGrade, name: newGrade.name.trim() })}
+                      >
+                        {addGrade.isPending ? t('Saving…') : t('Add grade')}
+                      </Button>
+                      <Button type="button" size="sm" variant="outline" className="min-h-11 sm:min-h-0" onClick={() => setNewGrade(null)} disabled={addGrade.isPending}>
+                        {t('Cancel')}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                {newLocation?.forKey === v.key && (
+                  <div className="mt-2 space-y-2 rounded-xl bg-muted/40 p-3">
+                    <p className="text-xs font-medium">{t('New location')}</p>
+                    <input
+                      value={newLocation.name}
+                      onChange={(e) => setNewLocation({ ...newLocation, name: e.target.value })}
+                      placeholder="Miami"
+                      maxLength={60}
+                      autoFocus
+                      aria-label={t('Location name')}
+                      className={inputCls}
+                    />
+                    {locationCode(newLocation.name) && (
+                      <p className="text-xs text-muted-foreground">
+                        {t('Code')}: <span className="font-mono">{locationCode(newLocation.name)}</span> · {t('Add its address later in Inventory → Locations.')}
+                      </p>
+                    )}
+                    {addLocation.isError && <p className="text-xs text-destructive">{addLocation.error.message}</p>}
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="primary"
+                        className="min-h-11 sm:min-h-0"
+                        disabled={!locationCode(newLocation.name) || addLocation.isPending}
+                        onClick={() => addLocation.mutate({ ...newLocation, name: newLocation.name.trim() })}
+                      >
+                        {addLocation.isPending ? t('Saving…') : t('Add location')}
+                      </Button>
+                      <Button type="button" size="sm" variant="outline" className="min-h-11 sm:min-h-0" onClick={() => setNewLocation(null)} disabled={addLocation.isPending}>
+                        {t('Cancel')}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </li>
             ))}
           </ul>

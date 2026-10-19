@@ -428,6 +428,25 @@ export function useMarkShipped() {
   });
 }
 
+/** Add or fix the carrier + tracking number of an order already shipped (RPC set_order_tracking). */
+export function useSetTracking() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ orderId, carrier, tracking }: { orderId: string; carrier: string; tracking: string }) => {
+      const { error } = await supabase.rpc('set_order_tracking', {
+        p_order_id: orderId,
+        p_carrier: carrier || null,
+        p_tracking: tracking || null,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: (_d, v) => {
+      void qc.invalidateQueries({ queryKey: ['admin-orders'] });
+      void qc.invalidateQueries({ queryKey: ['order-events', v.orderId] });
+    },
+  });
+}
+
 export function useRejectOrder() {
   const invalidate = useInvalidateOrderData();
   return useMutation({

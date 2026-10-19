@@ -26,7 +26,7 @@ const isInvalidPrice = (s: string) => s.trim() !== '' && parseMoneyToCents(s) ==
 
 function name(r: PricingBreakdownRow) {
   const lock = r.lock_status === 'unlocked' ? 'Unlocked' : 'Locked';
-  return `${r.model} · ${r.capacity}${r.color ? ' · ' + r.color : ''} · ${lock}`;
+  return `${r.make} ${r.model} · ${r.capacity}${r.color ? ' · ' + r.color : ''} · ${lock}`;
 }
 
 function WorkbenchRow({ row }: { row: PricingBreakdownRow }) {
@@ -135,16 +135,28 @@ function WorkbenchRow({ row }: { row: PricingBreakdownRow }) {
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <Button size="sm" variant="outline" onClick={() => fillFrom(row.avg_cost)} disabled={!row.avg_cost} title={row.avg_cost ? formatUsd(row.avg_cost) : undefined}>
-          <Wand2 className="h-3.5 w-3.5" strokeWidth={2} />
-          {t('Fill from average cost')}
-          {row.avg_cost ? <span className="font-mono text-xs text-muted-foreground">· {formatUsd(row.avg_cost)}</span> : null}
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => fillFrom(row.max_cost)} disabled={!row.max_cost} title={row.max_cost ? formatUsd(row.max_cost) : undefined}>
-          <Wand2 className="h-3.5 w-3.5" strokeWidth={2} />
-          {t('Fill from highest cost')}
-          {row.max_cost ? <span className="font-mono text-xs text-muted-foreground">· {formatUsd(row.max_cost)}</span> : null}
-        </Button>
+        {/* One location (or one cost) makes average and highest the same number:
+            show a single button instead of two that do the same thing. */}
+        {row.avg_cost !== null && row.avg_cost === row.max_cost ? (
+          <Button size="sm" variant="outline" className="min-h-11 sm:min-h-0" onClick={() => fillFrom(row.avg_cost)} title={formatUsd(row.avg_cost)}>
+            <Wand2 className="h-3.5 w-3.5" strokeWidth={2} />
+            {t('Fill from cost')}
+            <span className="font-mono text-xs text-muted-foreground">· {formatUsd(row.avg_cost)}</span>
+          </Button>
+        ) : (
+          <>
+            <Button size="sm" variant="outline" className="min-h-11 sm:min-h-0" onClick={() => fillFrom(row.avg_cost)} disabled={!row.avg_cost} title={row.avg_cost ? formatUsd(row.avg_cost) : undefined}>
+              <Wand2 className="h-3.5 w-3.5" strokeWidth={2} />
+              {t('Fill from average cost')}
+              {row.avg_cost ? <span className="font-mono text-xs text-muted-foreground">· {formatUsd(row.avg_cost)}</span> : null}
+            </Button>
+            <Button size="sm" variant="outline" className="min-h-11 sm:min-h-0" onClick={() => fillFrom(row.max_cost)} disabled={!row.max_cost} title={row.max_cost ? formatUsd(row.max_cost) : undefined}>
+              <Wand2 className="h-3.5 w-3.5" strokeWidth={2} />
+              {t('Fill from highest cost')}
+              {row.max_cost ? <span className="font-mono text-xs text-muted-foreground">· {formatUsd(row.max_cost)}</span> : null}
+            </Button>
+          </>
+        )}
         {invalid && <span className="text-xs text-destructive">{t('Type prices without thousands separators, e.g. 1299.00')}</span>}
         {saveError && <span className="text-xs text-destructive">{saveError}</span>}
         <Button size="sm" variant="primary" className="ml-auto" onClick={save} disabled={!dirty || invalid || saving || !canEdit} title={!canEdit ? t('Setting sell prices is admin-only.') : undefined}>

@@ -101,6 +101,17 @@ export function OrderTimeline({
   const shippedEvents = events.filter((e) => e.kind === 'shipped');
   for (const e of events) {
     if (e.kind === 'shipped' || e.kind === 'cancelled' || e.kind === 'placed_by_staff') continue; // shipped after the decision row; cancelled IS the decision row; placed_by_staff relabels the placed row
+    if (e.kind === 'tracking_updated') {
+      const c = e.changes.find((x) => x.type === 'tracking');
+      const via = [c?.carrier, c?.tracking].filter(Boolean).join(' · ');
+      rows.push({
+        key: e.id,
+        at: e.createdAt,
+        dot: <Dot tone="bg-sky-500 text-white" icon={Truck} />,
+        title: via ? `${t('Tracking updated')} · ${via}` : t('Tracking removed'),
+      });
+      continue;
+    }
     if (e.kind === 'paid' || e.kind === 'label_requested' || e.kind === 'label_received') {
       rows.push({
         key: e.id,

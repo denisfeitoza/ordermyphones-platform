@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, ArrowRight, Check, ClipboardList, Minus, Pencil, Plus, Search, Trash2, Truck, X } from 'lucide-react';
-import { useAdminOrders, useVariantAvailability, useApproveOrder, useRejectOrder, useEditOrder, useMarkShipped, useBulkOrderAction, type AdminOrder, type AdminOrderStatus, type ShippingAddress, type BulkResult, useOpenReconciliations } from '@/data/adminOrders';
+import { useAdminOrders, useVariantAvailability, useApproveOrder, useRejectOrder, useEditOrder, useMarkShipped, useSetTracking, useBulkOrderAction, type AdminOrder, type AdminOrderStatus, type ShippingAddress, type BulkResult, useOpenReconciliations } from '@/data/adminOrders';
 import { exportPickingSheetPdf } from '@/lib/export';
 import { useOrderEvents } from '@/data/orderEvents';
 import { useRealCatalog } from '@/data/realCatalog';
@@ -49,6 +49,64 @@ const FILTERS: { key: AdminOrderStatus | 'all'; label: string }[] = [
 ];
 
 const CARRIERS = ['UPS', 'FedEx', 'USPS', 'DHL', 'Other'] as const;
+
+/** Add or fix the carrier + tracking of an order already shipped (set_order_tracking). */
+function TrackingForm({ order, onDone }: { order: AdminOrder; onDone: () => void }) {
+  const { t } = useI18n();
+  const save = useSetTracking();
+  const known = (CARRIERS as readonly string[]).includes(order.trackingCarrier ?? '');
+  const [carrier, setCarrier] = useState<string>(order.trackingCarrier ? (known ? order.trackingCarrier : 'Other') : 'UPS');
+  const [otherCarrier, setOtherCarrier] = useState(known ? '' : (order.trackingCarrier ?? ''));
+  const [tracking, setTracking] = useState(order.trackingNumber ?? '');
+  const carrierValue = carrier === 'Other' && otherCarrier.trim() ? otherCarrier.trim() : carrier;
+  return (
+    <form
+      className="mt-2 space-y-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        save.mutate({ orderId: order.id, carrier: carrierValue, tracking: tracking.trim() }, { onSuccess: onDone });
+      }}
+    >
+      <div className="grid grid-cols-[110px_1fr] gap-2">
+        <select value={carrier} onChange={(e) => setCarrier(e.target.value)} className="min-h-11 rounded-lg border border-border bg-background px-2 text-sm text-foreground" aria-label={t('Carrier')}>
+          {CARRIERS.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+        <input
+          value={tracking}
+          onChange={(e) => setTracking(e.target.value)}
+          placeholder={t('Tracking number')}
+          maxLength={100}
+          autoFocus
+          className="min-h-11 rounded-lg border border-border bg-background px-3 font-mono text-sm text-foreground outline-none focus:border-brand"
+          aria-label={t('Tracking number')}
+        />
+      </div>
+      {carrier === 'Other' && (
+        <input
+          value={otherCarrier}
+          onChange={(e) => setOtherCarrier(e.target.value)}
+          placeholder={t('Carrier name')}
+          maxLength={40}
+          className="min-h-11 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none focus:border-brand"
+          aria-label={t('Carrier name')}
+        />
+      )}
+      {save.isError && <p className="text-destructive">{adminErrorMessage(t, (save.error as Error).message)}</p>}
+      <div className="flex gap-2">
+        <Button type="submit" size="sm" variant="primary" className="min-h-11 flex-1" disabled={save.isPending}>
+          {save.isPending ? t('Saving…') : t('Save tracking')}
+        </Button>
+        <Button type="button" size="sm" variant="outline" className="min-h-11" onClick={onDone} disabled={save.isPending}>
+          {t('Cancel')}
+        </Button>
+      </div>
+    </form>
+  );
+}
 
 /** Approved (or partially approved) → shipped, with the manual carrier + tracking the plan calls for (J2 step 5). */
 function ShipForm({ order, onDone }: { order: AdminOrder; onDone: () => void }) {
@@ -471,6 +529,7 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
   const [rejecting, setRejecting] = useState(false);
   const [editing, setEditing] = useState(false);
   const [shipping, setShipping] = useState(false);
+  const [editingTracking, setEditingTracking] = useState(false);
   const [reason, setReason] = useState('');
 
   const isPending = order.status === 'pending';
@@ -575,9 +634,20 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
                 <Truck className="h-3.5 w-3.5" strokeWidth={2} />
                 {t('Shipped')} {order.shippedAt ? formatDate(order.shippedAt, lang) : ''}
               </p>
-              {(order.trackingCarrier || order.trackingNumber) && (
-                <p className="mt-1 font-mono">{[order.trackingCarrier, order.trackingNumber].filter(Boolean).join(' · ')}</p>
+              {!editingTracking && (
+                <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
+                  {order.trackingCarrier || order.trackingNumber ? (
+                    <p className="font-mono">{[order.trackingCarrier, order.trackingNumber].filter(Boolean).join(' · ')}</p>
+                  ) : (
+                    <p>{t('No tracking number yet.')}</p>
+                  )}
+                  <button type="button" onClick={() => setEditingTracking(true)} className="-my-2 inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 font-medium underline-offset-2 hover:underline">
+                    <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
+                    {order.trackingNumber ? t('Edit tracking') : t('Add tracking')}
+                  </button>
+                </div>
               )}
+              {editingTracking && <TrackingForm order={order} onDone={() => setEditingTracking(false)} />}
               <TrackingTimeline orderId={order.id} carrier={order.trackingCarrier} trackingNumber={order.trackingNumber} className="mt-3" />
             </div>
           )}
