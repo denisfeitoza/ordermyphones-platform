@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/store/auth';
 import { carrierLabel } from './realCatalog';
@@ -138,4 +138,22 @@ async function fetchMyOrders(): Promise<RealOrder[]> {
 export function useMyOrders() {
   const { signedIn } = useAuth();
   return useQuery({ queryKey: ['my-orders'], queryFn: fetchMyOrders, enabled: signedIn });
+}
+
+/** cancel_order RPC: customers cancel their own pending orders; staff cancel
+ * pending/approved ones and the stock taken is put back. */
+export function useCancelOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ orderId, reason }: { orderId: string; reason?: string }) => {
+      const { error } = await supabase.rpc('cancel_order', { p_order_id: orderId, p_reason: reason?.trim() || null });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: (_d, v) => {
+      for (const key of ['my-orders', 'admin-orders', 'admin-summary', 'open-reconciliations', 'variant-availability', 'catalog-listing', 'admin-inventory']) {
+        void qc.invalidateQueries({ queryKey: [key] });
+      }
+      void qc.invalidateQueries({ queryKey: ['order-events', v.orderId] });
+    },
+  });
 }

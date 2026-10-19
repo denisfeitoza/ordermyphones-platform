@@ -1443,6 +1443,16 @@ export const PT: Record<string, string> = {
   'Before ordering, add to your account:': 'Antes de pedir, adicione à sua conta:',
   'You can place this order, but we approve it only after you add:': 'Você pode fazer este pedido, mas só aprovamos depois que você adicionar:',
   'Open settings': 'Abrir configurações',
+  'Cancel this order': 'Cancelar este pedido',
+  'Cancel this order? Our team has not approved it yet, so nothing was reserved.': 'Cancelar este pedido? Nossa equipe ainda não aprovou, então nada foi reservado.',
+  'Keep order': 'Manter pedido',
+  'Cancelling…': 'Cancelando…',
+  'Yes, cancel': 'Sim, cancelar',
+  'Could not cancel. The order may have been approved meanwhile — refresh the page.': 'Não foi possível cancelar. O pedido pode ter sido aprovado nesse meio-tempo — recarregue a página.',
+  'Cancel order': 'Cancelar pedido',
+  'Cancel this order? The approved units go back to stock and its open shortfalls close. The customer sees the cancellation.': 'Cancelar este pedido? As unidades aprovadas voltam ao estoque e as faltas em aberto fecham. O cliente vê o cancelamento.',
+  'Cancel this order? The customer sees the cancellation.': 'Cancelar este pedido? O cliente vê o cancelamento.',
+  'Reason (shown to the customer)': 'Motivo (o cliente vê)',
 };
 
 export const ES: Record<string, string> = {
@@ -2886,4 +2896,14 @@ export const ES: Record<string, string> = {
   'Before ordering, add to your account:': 'Antes de pedir, añade a tu cuenta:',
   'You can place this order, but we approve it only after you add:': 'Puedes hacer este pedido, pero solo lo aprobamos después de que añadas:',
   'Open settings': 'Abrir configuración',
+  'Cancel this order': 'Cancelar este pedido',
+  'Cancel this order? Our team has not approved it yet, so nothing was reserved.': '¿Cancelar este pedido? Nuestro equipo aún no lo aprobó, así que no se reservó nada.',
+  'Keep order': 'Mantener pedido',
+  'Cancelling…': 'Cancelando…',
+  'Yes, cancel': 'Sí, cancelar',
+  'Could not cancel. The order may have been approved meanwhile — refresh the page.': 'No se pudo cancelar. El pedido pudo haberse aprobado mientras tanto — recarga la página.',
+  'Cancel order': 'Cancelar pedido',
+  'Cancel this order? The approved units go back to stock and its open shortfalls close. The customer sees the cancellation.': '¿Cancelar este pedido? Las unidades aprobadas vuelven al stock y los faltantes abiertos se cierran. El cliente ve la cancelación.',
+  'Cancel this order? The customer sees the cancellation.': '¿Cancelar este pedido? El cliente ve la cancelación.',
+  'Reason (shown to the customer)': 'Motivo (lo ve el cliente)',
 };

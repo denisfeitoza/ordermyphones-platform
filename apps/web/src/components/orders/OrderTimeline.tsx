@@ -99,7 +99,7 @@ export function OrderTimeline({
   });
   const shippedEvents = events.filter((e) => e.kind === 'shipped');
   for (const e of events) {
-    if (e.kind === 'shipped') continue; // rendered after the decision row
+    if (e.kind === 'shipped' || e.kind === 'cancelled') continue; // shipped after the decision row; cancelled IS the decision row
     rows.push({
       key: e.id,
       at: e.createdAt,

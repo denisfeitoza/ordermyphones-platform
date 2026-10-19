@@ -13,6 +13,7 @@ import { formatDate, formatInt, formatUsd } from '@/lib/format';
 import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { parseMoneyToCents } from '@/lib/money';
+import { useCancelOrder } from '@/data/realOrders';
 import { isShortOrder, orderValueCents } from '@/lib/orderTotals';
 
 const STATUS_LABEL: Record<AdminOrderStatus, string> = {
@@ -438,6 +439,10 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
             )
           )}
 
+          {(isPending || order.status === 'approved' || order.status === 'partially_approved') && !rejecting && !editing && (
+            <AdminCancelOrder orderId={order.id} restoresStock={!isPending} />
+          )}
+
           {isPending && !rejecting && (
             <div className="space-y-2">
               <Button variant="outline" className="w-full" disabled={busy} onClick={() => setEditing(true)}>
@@ -736,6 +741,46 @@ function OrderEditor({ order, onDone }: { order: AdminOrder; onDone: () => void 
         </Button>
         <Button variant="outline" className="flex-1" disabled={edit.isPending} onClick={onDone}>
           {t('Cancel')}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/** Staff cancel: pending, approved or partially approved (not shipped). Puts
+ * back the stock the order took and closes its shortfalls (cancel_order). */
+function AdminCancelOrder({ orderId, restoresStock }: { orderId: string; restoresStock: boolean }) {
+  const { t } = useI18n();
+  const cancel = useCancelOrder();
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState('');
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="w-full text-center text-xs font-medium text-muted-foreground underline hover:text-destructive">
+        {t('Cancel order')}
+      </button>
+    );
+  }
+  return (
+    <div className="space-y-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-xs">
+      <p>
+        {restoresStock
+          ? t('Cancel this order? The approved units go back to stock and its open shortfalls close. The customer sees the cancellation.')
+          : t('Cancel this order? The customer sees the cancellation.')}
+      </p>
+      <input
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        placeholder={t('Reason (shown to the customer)')}
+        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
+      />
+      {cancel.isError && <p className="text-destructive">{(cancel.error as Error).message}</p>}
+      <div className="flex gap-2">
+        <Button size="sm" variant="outline" className="flex-1" disabled={cancel.isPending} onClick={() => setOpen(false)}>
+          {t('Keep order')}
+        </Button>
+        <Button size="sm" variant="primary" className="flex-1" disabled={cancel.isPending} onClick={() => cancel.mutate({ orderId, reason })}>
+          {cancel.isPending ? t('Cancelling…') : t('Yes, cancel')}
         </Button>
       </div>
     </div>

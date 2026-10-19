@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ShoppingBag, PackageCheck, Clock, XCircle, AlertTriangle, Ban, FileDown, FileText, Truck } from 'lucide-react';
-import { useMyOrders, type RealOrder, type RealOrderLine, type RealOrderStatus } from '@/data/realOrders';
+import { useCancelOrder, useMyOrders, type RealOrder, type RealOrderLine, type RealOrderStatus } from '@/data/realOrders';
 import { useAuth } from '@/store';
 import { useOrderEvents } from '@/data/orderEvents';
 import { OrderTimeline } from '@/components/orders/OrderTimeline';
@@ -225,6 +226,8 @@ export function RealOrderDetail() {
         </div>
       </div>
 
+      {order.status === 'pending' && <CancelPendingOrder orderId={order.id} />}
+
       {order.status === 'rejected' && order.decisionReason && (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
           <span className="font-medium">{t('Reason')}: </span>
@@ -348,5 +351,33 @@ export function RealOrderDetail() {
         </aside>
       </div>
     </motion.div>
+  );
+}
+
+/** Customer-side cancel of a still-pending order, with an in-page confirmation. */
+function CancelPendingOrder({ orderId }: { orderId: string }) {
+  const { t } = useI18n();
+  const cancel = useCancelOrder();
+  const [confirming, setConfirming] = useState(false);
+  if (!confirming) {
+    return (
+      <button type="button" onClick={() => setConfirming(true)} className="text-sm font-medium text-muted-foreground underline hover:text-destructive">
+        {t('Cancel this order')}
+      </button>
+    );
+  }
+  return (
+    <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm">
+      <span>{t('Cancel this order? Our team has not approved it yet, so nothing was reserved.')}</span>
+      <div className="flex gap-2">
+        <Button size="sm" variant="outline" disabled={cancel.isPending} onClick={() => setConfirming(false)}>
+          {t('Keep order')}
+        </Button>
+        <Button size="sm" variant="primary" disabled={cancel.isPending} onClick={() => cancel.mutate({ orderId })}>
+          {cancel.isPending ? t('Cancelling…') : t('Yes, cancel')}
+        </Button>
+      </div>
+      {cancel.isError && <p className="w-full text-xs text-destructive">{t('Could not cancel. The order may have been approved meanwhile — refresh the page.')}</p>}
+    </div>
   );
 }
