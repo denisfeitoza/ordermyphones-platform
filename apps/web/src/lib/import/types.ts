@@ -46,6 +46,8 @@ export interface RawImportRow {
   warehouseName?: string | null;
   /** Free-text composite description column, kept for content-inference/checksum use only. */
   description?: string | null;
+  /** 1-based row number in the spreadsheet, so rejects point at the line the owner can open. */
+  sheetRow?: number;
 }
 
 /**
@@ -106,6 +108,7 @@ export interface CommitStockImportPayloadRow {
   qty_raw: string;
   warehouse_code: string;
   warehouse_name: string | null;
+  sheet_row: number;
 }
 
 export interface CommitStockImportResult {
@@ -116,4 +119,7 @@ export interface CommitStockImportResult {
   movements_written: number;
   reject_reasons: Array<{ row: number; reason: string; type: 'reject' }>;
   warnings: Array<{ row: number; reason: string; type: 'warning' }>;
+  products_new: number;
+  products_new_no_image: number;
+  reprice_queued: number;
 }

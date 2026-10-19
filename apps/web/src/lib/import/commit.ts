@@ -42,45 +42,107 @@ function toPayloadRow(row: NormalizedRow): CommitStockImportPayloadRow {
     qty_raw: row.qty === null ? '' : row.qtyIsFloor ? `${row.qty}+` : String(row.qty),
     warehouse_code: row.warehouseCode,
     warehouse_name: row.warehouseName,
+    sheet_row: row.rowNumber,
   };
 }
 
+/** Merge rows per request. ~4k rows commit in ~2 s, far from the 8 s request limit. */
+export const MERGE_CHUNK_ROWS = 4000;
+/** Replace mode must see the whole location in one call; above this it would risk the 8 s limit. */
+export const REPLACE_MAX_ROWS = 8000;
+
+export interface CommitProgress {
+  phase: 'commit' | 'reprice';
+  done: number;
+  total: number;
+}
+
 /**
- * Calls commit_stock_import. Throws on any Postgres/RPC error (including the
- * 'not authorized' guard and the replace_location-without-location_code
- * guard) — callers surface the message, never swallow it.
+ * Commits the accepted rows. Merge mode sends them in chunks (each chunk is
+ * its own audited import run; merge writes target quantities, so re-running
+ * after a failed chunk is safe). Replace mode sends one call, capped at
+ * REPLACE_MAX_ROWS. Then drains the reprice queue with progress. Throws on
+ * any RPC error — callers surface the message.
  */
-export async function commitStockImport(args: CommitStockImportArgs): Promise<CommitStockImportResult> {
+export async function commitStockImport(args: CommitStockImportArgs, onProgress?: (p: CommitProgress) => void): Promise<CommitStockImportResult> {
   if (args.mode === 'replace_location' && !args.locationCode) {
     throw new Error('replace_location requires a locationCode');
   }
-
-  const payloadRows = args.rows.map(toPayloadRow);
-
-  const { data, error } = await supabase.rpc('commit_stock_import', {
-    p_supplier_id: args.supplierId,
-    p_vendor_code: args.vendorCode,
-    p_mode: args.mode,
-    p_source_label: args.sourceLabel,
-    p_header_fingerprint: args.headerFingerprint,
-    p_rows: payloadRows,
-    p_location_code: args.locationCode ?? null,
-    p_protect_rows: (args.protectRows ?? []).map(toPayloadRow),
-    p_allow_mass_replace: args.allowMassReplace ?? false,
-  });
-
-  if (error) throw error;
-
-  // Fold freshly-imported model names to their canonical form via the model-
-  // alias dictionary (#01). Best-effort: the import already committed, so a
-  // fold failure must never fail the import.
-  try {
-    await supabase.rpc('apply_model_aliases');
-  } catch {
-    /* non-fatal */
+  if (args.mode === 'replace_location' && args.rows.length > REPLACE_MAX_ROWS) {
+    throw new Error(`replace_too_large:${REPLACE_MAX_ROWS}`);
   }
 
-  return data as CommitStockImportResult;
+  const chunks: NormalizedRow[][] = [];
+  const size = args.mode === 'merge' ? MERGE_CHUNK_ROWS : Math.max(1, args.rows.length);
+  for (let i = 0; i < args.rows.length; i += size) chunks.push(args.rows.slice(i, i + size));
+  if (chunks.length === 0) chunks.push([]);
+
+  const total: CommitStockImportResult = {
+    import_run_id: '',
+    rows_total: 0,
+    rows_accepted: 0,
+    rows_rejected: 0,
+    movements_written: 0,
+    reject_reasons: [],
+    warnings: [],
+    products_new: 0,
+    products_new_no_image: 0,
+    reprice_queued: 0,
+  };
+  let sent = 0;
+  for (const [n, chunk] of chunks.entries()) {
+    onProgress?.({ phase: 'commit', done: sent, total: args.rows.length });
+    const { data, error } = await supabase.rpc('commit_stock_import', {
+      p_supplier_id: args.supplierId,
+      p_vendor_code: args.vendorCode,
+      p_mode: args.mode,
+      p_source_label: chunks.length > 1 ? `${args.sourceLabel} (${n + 1}/${chunks.length})` : args.sourceLabel,
+      p_header_fingerprint: args.headerFingerprint,
+      p_rows: chunk.map(toPayloadRow),
+      p_location_code: args.locationCode ?? null,
+      p_protect_rows: (args.protectRows ?? []).map(toPayloadRow),
+      p_allow_mass_replace: args.allowMassReplace ?? false,
+    });
+    if (error) {
+      throw Object.assign(new Error(sent > 0 ? `${error.message} (part ${n + 1}/${chunks.length}; ${sent} rows before it are already imported — re-running the same file is safe)` : error.message), {
+        details: error.details ?? null,
+      });
+    }
+    const r = data as CommitStockImportResult;
+    total.import_run_id ||= r.import_run_id;
+    total.rows_total += r.rows_total;
+    total.rows_accepted += r.rows_accepted;
+    total.rows_rejected += r.rows_rejected;
+    total.movements_written += r.movements_written;
+    total.reject_reasons.push(...r.reject_reasons);
+    total.warnings.push(...r.warnings);
+    total.products_new += r.products_new ?? 0;
+    total.products_new_no_image += r.products_new_no_image ?? 0;
+    total.reprice_queued += r.reprice_queued ?? 0;
+    sent += chunk.length;
+  }
+  onProgress?.({ phase: 'commit', done: sent, total: args.rows.length });
+
+  await drainRepriceQueue(total.reprice_queued, onProgress);
+  return total;
+}
+
+/**
+ * Reprices the variants the import touched, ~1.5k per call, reporting
+ * progress. If the tab closes midway, pg_cron finishes the queue within a
+ * minute — prices are never left stale for long.
+ */
+export async function drainRepriceQueue(queued: number, onProgress?: (p: CommitProgress) => void): Promise<void> {
+  if (queued <= 0) return;
+  let left = queued;
+  onProgress?.({ phase: 'reprice', done: 0, total: queued });
+  // Bounded loop: each call removes up to 1500 rows; the queue cannot refill from here.
+  for (let guard = 0; guard < 200 && left > 0; guard += 1) {
+    const { data, error } = await supabase.rpc('drain_reprice_queue', { p_limit: 1500 });
+    if (error) throw new Error(error.message);
+    left = Number(data ?? 0);
+    onProgress?.({ phase: 'reprice', done: Math.max(0, queued - left), total: queued });
+  }
 }
 
 /**

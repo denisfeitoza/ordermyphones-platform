@@ -19,6 +19,27 @@ import type { CarrierCode, NormalizedRow, RawImportRow, RejectReason, ValidatedR
 
 const VALID_CATEGORIES = new Set(['phones', 'accessories', 'wearables']);
 
+/** Owner sheets say "Smartphone", "Celular", "Watch"… fold them; blank means phones. */
+const CATEGORY_SYNONYMS: [RegExp, string][] = [
+  [/^(phones?|smart ?phones?|cell ?phones?|mobiles?|celular(es)?|telefones?|tel[eé]fonos?|iphones?|handsets?)$/, 'phones'],
+  [/^(wearables?|watch(es)?|smart ?watch(es)?|rel[oó]gios?|relojes?)$/, 'wearables'],
+  [/^(accessor(y|ies)|acess[oó]rios?|accesorios?|cases?|capas?|chargers?|carregadores?|cables?|cabos?|headphones?|earbuds?|airpods|audio|[aá]udio)$/, 'accessories'],
+];
+
+/** Normalized category, or null when it can't be recognized. */
+export function normalizeCategory(raw: unknown): { category: string | null; defaulted: boolean } {
+  const s = String(raw ?? '').trim().toLowerCase();
+  if (s === '') return { category: 'phones', defaulted: true };
+  if (VALID_CATEGORIES.has(s)) return { category: s, defaulted: false };
+  for (const [re, cat] of CATEGORY_SYNONYMS) if (re.test(s)) return { category: cat, defaulted: false };
+  return { category: null, defaulted: false };
+}
+
+/** A sheet without a model-number column still imports: the model name stands in, upper-cased. */
+export function deriveModelNumber(model: string): string {
+  return model.toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
 /**
  * Validates + normalizes one row. `rowNumber` is 1-based, matching the
  * server's row-numbering convention (jsonb_array_elements WITH ORDINALITY),
@@ -33,7 +54,11 @@ export function validateRow(
 
   const make = String(raw.make ?? '').trim();
   const model = String(raw.model ?? '').trim();
-  const modelNumber = String(raw.modelNumber ?? '').trim();
+  let modelNumber = String(raw.modelNumber ?? '').trim();
+  if (!modelNumber && model) {
+    modelNumber = deriveModelNumber(model);
+    warnings.push('model_number_derived');
+  }
   const capacityRaw = String(raw.capacity ?? '').trim();
   const warehouseCode = String(raw.warehouseCode ?? '').trim();
 
@@ -43,8 +68,10 @@ export function validateRow(
     rejectReason = 'missing_mandatory';
   }
 
-  const category = String(raw.category ?? '').trim().toLowerCase();
-  if (!rejectReason && !VALID_CATEGORIES.has(category)) {
+  const cat = normalizeCategory(raw.category);
+  const category = cat.category ?? String(raw.category ?? '').trim().toLowerCase();
+  if (cat.defaulted) warnings.push('category_defaulted');
+  if (!rejectReason && cat.category === null) {
     rejectReason = 'bad_category';
   }
 
@@ -107,7 +134,7 @@ export function validateRows(
   raws: RawImportRow[],
   options?: { carrierSynonyms?: Map<string, CarrierCode>; knownGrades?: Set<string> },
 ): ValidatedRow[] {
-  return raws.map((r, i) => validateRow(r, i + 1, options));
+  return raws.map((r, i) => validateRow(r, r.sheetRow ?? i + 1, options));
 }
 
 export interface DryRunSummary {

@@ -86,14 +86,19 @@ export interface DetectResult {
   candidates: Array<{ sheetName: string; headerRowIndex: number; confidence: number }>;
 }
 
+/** Key under which each parsed row keeps its 1-based spreadsheet row number. */
+export const SHEET_ROW_KEY = '__sheet_row';
+
 /** Parses raw file bytes and detects the data sheet + header row. */
 export function detectImportFile(data: ArrayBuffer | Uint8Array): DetectResult {
   const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
   const workbook = XLSX.read(bytes, { type: 'array', cellDates: false });
 
-  let best: DetectedSheet | null = null;
+  let bestPick: { sheetName: string; matrix: unknown[][]; r: number; confidence: number } | null = null;
   const candidates: DetectResult['candidates'] = [];
 
+  // Score every candidate header row first; build the row objects once, for
+  // the winner only (a 10k-row sheet used to be rebuilt per better candidate).
   for (const sheetName of workbook.SheetNames) {
     const sheet = workbook.Sheets[sheetName];
     if (!sheet) continue;
@@ -102,31 +107,30 @@ export function detectImportFile(data: ArrayBuffer | Uint8Array): DetectResult {
     const scanLimit = Math.min(HEADER_SCAN_ROWS, matrix.length);
 
     for (let r = 0; r < scanLimit; r += 1) {
-      const row = matrix[r] ?? [];
-      const confidence = scoreHeaderRow(row);
+      const confidence = scoreHeaderRow(matrix[r] ?? []);
       candidates.push({ sheetName, headerRowIndex: r, confidence });
-
-      if (!best || confidence > best.confidence) {
-        const headers = row.map((c, i) => {
-          const h = normalizeHeaderToken(c);
-          return h === '' ? `__col_${i}` : String(c).trim();
-        });
-        const dataRows = matrix.slice(r + 1);
-        const rows: Record<string, unknown>[] = dataRows
-          // Drop fully-blank rows (trailing sheet padding).
-          .filter((dr) => (dr ?? []).some((v) => v !== null && v !== undefined && String(v).trim() !== ''))
-          .map((dr) => {
-            const obj: Record<string, unknown> = {};
-            headers.forEach((h, i) => {
-              obj[h] = (dr ?? [])[i] ?? null;
-            });
-            return obj;
-          });
-
-        best = { sheetName, headerRowIndex: r, headers, confidence, rows };
-      }
+      if (!bestPick || confidence > bestPick.confidence) bestPick = { sheetName, matrix, r, confidence };
     }
   }
 
-  return { best, candidates };
+  if (!bestPick) return { best: null, candidates };
+
+  const { sheetName, matrix, r, confidence } = bestPick;
+  const headers = (matrix[r] ?? []).map((c, i) => {
+    const h = normalizeHeaderToken(c);
+    return h === '' ? `__col_${i}` : String(c).trim();
+  });
+  const rows: Record<string, unknown>[] = [];
+  for (let i = r + 1; i < matrix.length; i += 1) {
+    const dr = matrix[i] ?? [];
+    // Drop fully-blank rows (trailing sheet padding).
+    if (!dr.some((v) => v !== null && v !== undefined && String(v).trim() !== '')) continue;
+    const obj: Record<string, unknown> = { [SHEET_ROW_KEY]: i + 1 };
+    headers.forEach((h, c) => {
+      obj[h] = dr[c] ?? null;
+    });
+    rows.push(obj);
+  }
+
+  return { best: { sheetName, headerRowIndex: r, headers, confidence, rows }, candidates };
 }

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, CheckCircle2, TriangleAlert } from 'lucide-react';
+import { ArrowUpRight, CheckCircle2, ImageOff, TriangleAlert } from 'lucide-react';
 import { Panel, StatCard, Table, Td } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/i18n';
@@ -45,6 +45,31 @@ export function CommitStep({
           <TriangleAlert className="h-4 w-4 shrink-0 translate-y-0.5" strokeWidth={2} />
           <span>{t('The import committed successfully, but the mapping profile failed to save')} ({profileSaveWarning}) — {t('the next upload of this layout will need remapping.')}</span>
         </div>
+      )}
+
+      {result.products_new > 0 && (
+        <Panel>
+          <div className="flex flex-wrap items-center gap-3">
+            <ImageOff className="h-6 w-6 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+            <p className="min-w-0 flex-1 text-sm">
+              <b>{formatInt(result.products_new)}</b> {result.products_new === 1 ? t('new product') : t('new products')}
+              {result.products_new_no_image > 0 ? (
+                <>
+                  {' · '}
+                  <b className="text-destructive">{formatInt(result.products_new_no_image)}</b> {t('without an image of the exact model')}
+                </>
+              ) : (
+                <> · {t('all with an image')}</>
+              )}
+            </p>
+            <Link to="/admin/inventory/attention">
+              <Button size="sm" variant={result.products_new_no_image > 0 ? 'brand' : 'outline'}>
+                {t('Open Needs attention')}
+                <ArrowUpRight className="h-4 w-4" strokeWidth={2} />
+              </Button>
+            </Link>
+          </div>
+        </Panel>
       )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

@@ -7,6 +7,7 @@
  * authoritatively at commit time; nothing here is trusted for the write.
  */
 import type { CanonicalField } from './map';
+import { SHEET_ROW_KEY } from './parse';
 import type { CarrierCode, LockStatus, RawImportRow } from './types';
 
 const CARRIER_LABEL_TO_CODE: Record<string, CarrierCode> = {
@@ -164,5 +165,6 @@ export function projectRow(
     warehouseCode: asString(get('warehouse')),
     warehouseName: null,
     description: asString(get('description')),
+    ...(typeof row[SHEET_ROW_KEY] === 'number' ? { sheetRow: row[SHEET_ROW_KEY] as number } : {}),
   };
 }

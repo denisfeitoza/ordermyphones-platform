@@ -953,6 +953,15 @@ begin
   if has_function_privilege('authenticated', 'public.best_image_asset(text,text)', 'execute') then
     raise exception 'FAIL(section6): best_image_asset callable through the API';
   end if;
+  -- Reprice queue: the internal drain is not API-callable; the staff one refuses a customer.
+  if has_function_privilege('authenticated', 'public._drain_reprice_queue(integer)', 'execute') then
+    raise exception 'FAIL(section6): _drain_reprice_queue callable through the API';
+  end if;
+  begin
+    perform public.drain_reprice_queue(10);
+    raise exception 'FAIL(section6): customer called drain_reprice_queue without staff_only';
+  exception when insufficient_privilege then null;
+  end;
 
   -- POSITIVE CONTROL: an admin identity reads >=1 from both sensitive
   -- tables without a permission error — proves the staff policies actually

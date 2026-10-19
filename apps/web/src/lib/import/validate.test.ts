@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateRows, summarizeDryRun } from './validate';
+import { normalizeCategory, validateRow, validateRows, summarizeDryRun } from './validate';
 import { FIXTURE_ROWS, fixtureRowToRawImportRow } from './__fixtures__/hylaLikeWorkbook';
 
 const HYLA_KNOWN_GRADES = new Set(['TPS A+', 'TPS A', 'DLS AA+', 'DLS A+', 'DLS A', 'DLS B+', 'DLS B', 'TPS B+', 'TPS B-', 'TPS C+', 'TPS C-', 'DLS C', 'TPS D']);
@@ -120,5 +120,31 @@ describe('validateRow — mandatory field rejection', () => {
     ]);
     expect(result.accepted).toBe(false);
     expect(result.rejectReason).toBe('bad_qty');
+  });
+});
+
+describe('owner-made sheets', () => {
+  const base = { make: 'Apple', model: 'iPhone 15 Pro', capacity: '256GB', costRaw: '500', qtyRaw: '3', warehouseCode: 'TX1' };
+  it('folds category words and defaults a blank category to phones', () => {
+    expect(normalizeCategory('Smartphone')).toEqual({ category: 'phones', defaulted: false });
+    expect(normalizeCategory('Celulares')).toEqual({ category: 'phones', defaulted: false });
+    expect(normalizeCategory('Smart Watch')).toEqual({ category: 'wearables', defaulted: false });
+    expect(normalizeCategory('Acessórios')).toEqual({ category: 'accessories', defaulted: false });
+    expect(normalizeCategory('')).toEqual({ category: 'phones', defaulted: true });
+    expect(normalizeCategory('Tablets')).toEqual({ category: null, defaulted: false });
+  });
+  it('imports a row without model number or category, with warnings', () => {
+    const v = validateRow({ ...base, modelNumber: '', category: '' }, 7);
+    expect(v.accepted).toBe(true);
+    expect(v.row.modelNumber).toBe('IPHONE-15-PRO');
+    expect(v.row.category).toBe('phones');
+    expect(v.warnings).toEqual(expect.arrayContaining(['model_number_derived', 'category_defaulted']));
+  });
+  it('rejects an unknown category', () => {
+    expect(validateRow({ ...base, modelNumber: 'A1', category: 'Tablets' }, 1).rejectReason).toBe('bad_category');
+  });
+  it('numbers rows by their spreadsheet row', () => {
+    const [a, b] = validateRows([{ ...base, modelNumber: 'A1', sheetRow: 5 }, { ...base, modelNumber: 'A1', sheetRow: 9 }]);
+    expect([a!.row.rowNumber, b!.row.rowNumber]).toEqual([5, 9]);
   });
 });

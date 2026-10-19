@@ -11,7 +11,7 @@ import { validateRows } from '@/lib/import/validate';
 import { commitStockImport, computeHeaderFingerprint } from '@/lib/import/commit';
 import { fetchImportProfile, applyProfileColumnMap, saveImportProfile } from '@/lib/import/profile';
 import { CARRIER_CODES, type CarrierCode, type CommitStockImportResult } from '@/lib/import/types';
-import type { ImportMode } from '@/lib/import/commit';
+import type { CommitProgress, ImportMode } from '@/lib/import/commit';
 import { Stepper } from '@/components/admin/import/Stepper';
 import { UploadStep } from '@/components/admin/import/UploadStep';
 import { MapStep } from '@/components/admin/import/MapStep';
@@ -103,6 +103,7 @@ export default function ImportPage() {
   const [preCommitInfo, setPreCommitInfo] = useState<PreCommitInfo | null>(null);
   const [profileSaveWarning, setProfileSaveWarning] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<CommitProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
   /** Set when commit_stock_import refused a replace with >20% rejected rows. */
   const [massReplace, setMassReplace] = useState<{ rejected: number; total: number } | null>(null);
@@ -262,7 +263,8 @@ export default function ImportPage() {
         .filter((v) => !v.accepted)
         .map((v) => ({ row: v.row.rowNumber, reason: v.rejectReason ?? 'unknown' }));
 
-      const result = await commitStockImport({
+      const result = await commitStockImport(
+        {
         supplierId,
         vendorCode: supplier.vendorCode,
         mode,
@@ -272,7 +274,9 @@ export default function ImportPage() {
         ...(mode === 'replace_location' && locationCode
           ? { locationCode, protectRows: rejectedRows, allowMassReplace }
           : {}),
-      });
+        },
+        setProgress,
+      );
 
       // The import already committed at this point — a failure saving the
       // mapping profile is a non-fatal "remap next time" inconvenience, never
@@ -299,7 +303,9 @@ export default function ImportPage() {
       setStep('commit');
     } catch (e) {
       const msg = e instanceof Error ? e.message : String((e as { message?: string })?.message ?? '');
-      if (msg.includes('too_many_rejects')) {
+      if (msg.includes('replace_too_large')) {
+        setError(t('Replace mode takes up to 8,000 rows per file. Split the file by location, or use Merge.'));
+      } else if (msg.includes('too_many_rejects')) {
         // Server refused: >20% of the sheet was rejected. Ask before replacing.
         const rejected = dryRun.validated.filter((v) => !v.accepted).length;
         setMassReplace({ rejected, total: dryRun.validated.length });
@@ -308,6 +314,7 @@ export default function ImportPage() {
       }
     } finally {
       setBusy(false);
+      setProgress(null);
     }
   }
 
@@ -371,7 +378,7 @@ export default function ImportPage() {
       )}
 
       {step === 'dryrun' && dryRun && (
-        <DryRunStep dryRun={dryRun} onBack={() => setStep(profileHit ? 'upload' : 'map')} onCommit={() => void handleCommit()} busy={busy} />
+        <DryRunStep dryRun={dryRun} onBack={() => setStep(profileHit ? 'upload' : 'map')} onCommit={() => void handleCommit()} busy={busy} progress={progress} />
       )}
 
       {step === 'commit' && commitResult && preCommitInfo && (
