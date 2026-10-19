@@ -274,14 +274,14 @@ export default function ManualOrderPage() {
                 </label>
                 {customersQ.isLoading && <p className="text-sm text-muted-foreground">{t('Loading…')}</p>}
                 {customersQ.isError && <p className="text-sm text-destructive">{t('Could not load customers.')}</p>}
-                <div className="grid gap-1.5">
+                <div className="grid grid-cols-[minmax(0,1fr)] gap-1.5">
                   {customerMatches.map((c) => (
                     <button
                       key={c.id}
                       type="button"
                       onClick={() => chooseCustomer(c)}
                       disabled={!c.tier}
-                      className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-border px-3.5 py-2 text-left text-sm hover:bg-muted/50 disabled:opacity-50"
+                      className="flex min-h-11 w-full min-w-0 items-center justify-between gap-3 rounded-xl border border-border px-3.5 py-2 text-left text-sm hover:bg-muted/50 disabled:opacity-50"
                     >
                       <span className="min-w-0">
                         <span className="block truncate font-medium">{c.display_name ?? c.email}</span>
@@ -305,7 +305,7 @@ export default function ManualOrderPage() {
               <input value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder={t('Model, capacity, color or SKU')} className={cn(inputCls, 'pl-10')} disabled={!customer} />
             </label>
             {productMatches.length > 0 && (
-              <div className="grid max-h-72 gap-1.5 overflow-y-auto">
+              <div className="grid max-h-72 grid-cols-[minmax(0,1fr)] gap-1.5 overflow-y-auto">
                 {productMatches.map((l) => {
                   const price = prices?.get(l.variantId) ?? null;
                   return (
@@ -314,13 +314,13 @@ export default function ManualOrderPage() {
                       type="button"
                       onClick={() => addLine(l)}
                       disabled={price === null}
-                      className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-border px-3.5 py-2 text-left text-sm hover:bg-muted/50 disabled:opacity-50"
+                      className="flex min-h-11 w-full min-w-0 items-center justify-between gap-3 rounded-xl border border-border px-3.5 py-2 text-left text-sm hover:bg-muted/50 disabled:opacity-50"
                     >
                       <span className="min-w-0">
                         <span className="block truncate font-medium">{buildDisplayName(l)}</span>
                         <span className="block truncate text-xs text-muted-foreground">
                           {l.ctiaLabel}
-                          {l.color ? ` · ${l.color}` : ''} · {formatInt(l.totalQty)} {t('in stock')}
+                          {l.color ? ` · ${l.color}` : ''} · {formatInt(l.totalQty)} {t('in stock')} · <span className="font-mono">{l.sku}</span>
                         </span>
                       </span>
                       <span className="shrink-0 font-mono text-sm tabular-nums">{price === null ? t('No price') : formatUsd(price)}</span>
@@ -334,8 +334,9 @@ export default function ManualOrderPage() {
               <ul className="divide-y divide-border rounded-xl border border-border">
                 {resolved.map((l) => (
                   <li key={l.variantId} className="flex flex-wrap items-center gap-3 px-3.5 py-2.5">
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 basis-full sm:basis-0 sm:flex-1">
                       <p className="truncate text-sm font-medium">{l.item ? buildDisplayName(l.item) : t('Unavailable item')}</p>
+                      {l.item && <p className="truncate font-mono text-xs text-muted-foreground">{l.item.sku}</p>}
                       <p className={cn('text-xs', l.price === null ? 'text-destructive' : 'text-muted-foreground')}>
                         {l.price === null ? t('No price for this tier') : `${formatUsd(l.price)} ${t('each')}`}
                         {l.item && l.qty > l.item.totalQty ? ` · ${t('more than in stock')} (${formatInt(l.item.totalQty)})` : ''}
@@ -347,7 +348,7 @@ export default function ManualOrderPage() {
                       aria-label={t('Quantity')}
                       className="h-11 w-20 rounded-xl border border-border bg-background px-2 text-center font-mono text-sm tabular-nums outline-none focus:border-brand"
                     />
-                    <span className="w-24 text-right font-mono text-sm tabular-nums">{l.total === null ? '—' : formatUsd(l.total)}</span>
+                    <span className="ml-auto w-24 text-right font-mono text-sm tabular-nums">{l.total === null ? '—' : formatUsd(l.total)}</span>
                     <button type="button" onClick={() => setLines((prev) => prev.filter((x) => x.variantId !== l.variantId))} aria-label={t('Remove')} className="grid h-11 w-11 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-destructive">
                       <Trash2 className="h-4 w-4" strokeWidth={2} />
                     </button>
