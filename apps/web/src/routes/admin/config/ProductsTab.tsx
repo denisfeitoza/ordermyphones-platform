@@ -87,7 +87,7 @@ export default function ProductsTab() {
         ))}
       </div>
 
-      <div className={cn('grid gap-6', selected && 'lg:grid-cols-[1fr_380px]')}>
+      <div className={cn('grid gap-6 [&>*]:min-w-0', selected && 'lg:grid-cols-[1fr_380px]')}>
         <Panel title={t('Products')}>
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <label className="relative flex-1">
