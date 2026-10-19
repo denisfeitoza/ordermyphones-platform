@@ -13,6 +13,7 @@ import { formatInt, formatUsd, LOCALE_FOR } from '@/lib/format';
 import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { orderValueCents } from '@/lib/orderTotals';
+import { supabase } from '@/lib/supabase';
 
 const monthLabel = (m: string, lang: 'en' | 'pt' | 'es' = 'en') =>
   new Date(`${m}-01T00:00:00`).toLocaleDateString(LOCALE_FOR[lang], { month: 'short', year: '2-digit' });
@@ -87,9 +88,109 @@ function TestOrdersToggle({ hidden }: { hidden: number }) {
   );
 }
 
+interface MarginRow {
+  model: string;
+  units: number;
+  revenue_cents: number;
+  costed_revenue_cents: number;
+  cost_cents: number;
+  estimated_units: number;
+  uncosted_units: number;
+}
+
+/** Margin by model (RPC margin_by_model): revenue minus the unit cost recorded
+ * when stock left for each sold order. Units with no known cost are listed but
+ * kept out of the margin, so the % is never inflated by a missing cost. */
+function MarginByModel({ includeTest }: { includeTest: boolean }) {
+  const { t } = useI18n();
+  const q = useQuery({
+    queryKey: ['margin-by-model', includeTest],
+    queryFn: async (): Promise<MarginRow[]> => {
+      const { data, error } = await supabase.rpc('margin_by_model', { p_include_test: includeTest });
+      if (error) throw new Error(error.message);
+      return ((data ?? []) as MarginRow[]).map((r) => ({
+        ...r,
+        units: Number(r.units),
+        revenue_cents: Number(r.revenue_cents),
+        costed_revenue_cents: Number(r.costed_revenue_cents),
+        cost_cents: Number(r.cost_cents),
+        estimated_units: Number(r.estimated_units),
+        uncosted_units: Number(r.uncosted_units),
+      }));
+    },
+  });
+  const rows = q.data ?? [];
+  const tot = rows.reduce(
+    (a, r) => ({ rev: a.rev + r.costed_revenue_cents, cost: a.cost + r.cost_cents, est: a.est + r.estimated_units, unc: a.unc + r.uncosted_units }),
+    { rev: 0, cost: 0, est: 0, unc: 0 },
+  );
+  const pct = (rev: number, cost: number) => (rev > 0 ? `${(((rev - cost) / rev) * 100).toFixed(1)}%` : '—');
+
+  return (
+    <Section title="Margin by model">
+      {q.isLoading ? (
+        <p className="text-sm text-muted-foreground">{t('Loading…')}</p>
+      ) : q.isError ? (
+        <p className="text-sm text-destructive">{t('Could not load the margin report.')}</p>
+      ) : rows.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{t('No sold orders yet.')}</p>
+      ) : (
+        <div className="space-y-3">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[520px] text-sm">
+              <thead>
+                <tr className="text-left text-xs text-muted-foreground">
+                  <th className="py-2 font-medium">{t('Model')}</th>
+                  <th className="py-2 text-right font-medium">{t('Units')}</th>
+                  <th className="py-2 text-right font-medium">{t('Revenue')}</th>
+                  <th className="py-2 text-right font-medium">{t('Cost')}</th>
+                  <th className="py-2 text-right font-medium">{t('Margin')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {rows.map((r) => (
+                  <tr key={r.model}>
+                    <td className="py-2.5 font-medium">{r.model}</td>
+                    <td className="py-2.5 text-right font-mono tabular-nums">{formatInt(r.units)}</td>
+                    <td className="py-2.5 text-right font-mono tabular-nums">{formatUsd(r.revenue_cents, true)}</td>
+                    <td className="py-2.5 text-right font-mono tabular-nums text-muted-foreground">{formatUsd(r.cost_cents, true)}</td>
+                    <td className={cn('py-2.5 text-right font-mono tabular-nums', r.costed_revenue_cents - r.cost_cents < 0 && 'text-destructive')}>
+                      {formatUsd(r.costed_revenue_cents - r.cost_cents, true)}
+                      <span className="ml-1.5 text-xs text-muted-foreground">{pct(r.costed_revenue_cents, r.cost_cents)}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t border-border font-medium">
+                  <td className="py-2.5">{t('Total')}</td>
+                  <td />
+                  <td />
+                  <td className="py-2.5 text-right font-mono tabular-nums text-muted-foreground">{formatUsd(tot.cost, true)}</td>
+                  <td className={cn('py-2.5 text-right font-mono tabular-nums', tot.rev - tot.cost < 0 && 'text-destructive')}>
+                    {formatUsd(tot.rev - tot.cost, true)}
+                    <span className="ml-1.5 text-xs text-muted-foreground">{pct(tot.rev, tot.cost)}</span>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          {(tot.est > 0 || tot.unc > 0) && (
+            <p className="text-xs text-muted-foreground">
+              {tot.est > 0 && `${formatInt(tot.est)} ${t('units use today’s cost (approved before cost tracking).')} `}
+              {tot.unc > 0 && `${formatInt(tot.unc)} ${t('units have no known cost and are left out of the margin.')}`}
+            </p>
+          )}
+        </div>
+      )}
+    </Section>
+  );
+}
+
 /** Real-mode analytics derived entirely from the live order book (useAdminOrders).
- * No supplier/cost data — the order snapshot carries only model, qty, tier and
- * price. Fills in as orders flow; empty state shows until the first order. */
+ * Sales figures come from the order snapshot (model, qty, tier, price); the
+ * margin section reads costs server-side (margin_by_model). Fills in as orders
+ * flow; empty state shows until the first order. */
 function RealReports({ orders: allOrders }: { orders: AdminOrder[] }) {
   const { t, lang } = useI18n();
   const { includeTest } = useReportsIncludeTest();
@@ -207,11 +308,13 @@ function RealReports({ orders: allOrders }: { orders: AdminOrder[] }) {
           )}
         </Section>
 
+        <MarginByModel includeTest={includeTest} />
+
         <Section title="Coming in v1.1">
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>· {t('Date-range filters and drill-down')}</li>
             <li>· {t('CSV / XLSX export')}</li>
-            <li>· {t('Margin and sell-through by location')}</li>
+            <li>· {t('Sell-through by location')}</li>
           </ul>
         </Section>
       </div>

@@ -406,7 +406,6 @@ export const PT: Record<string, string> = {
   "Coming in v1.1": "Chegando na v1.1",
   "Date-range filters and drill-down": "Filtros por período e detalhamento",
   "CSV / XLSX export": "Exportação CSV / XLSX",
-  "Margin and sell-through by location": "Margem e giro por local",
   "Loading reports…": "Carregando relatórios…",
   "Inventory by location": "Estoque por local",
   "At risk": "Em risco",
@@ -1534,6 +1533,14 @@ export const PT: Record<string, string> = {
   'Placing…': 'Enviando…',
   'Place order for customer': 'Fazer pedido pelo cliente',
   'Export quote (CSV)': 'Exportar orçamento (CSV)',
+  'Margin by model': 'Margem por modelo',
+  'Could not load the margin report.': 'Não foi possível carregar o relatório de margem.',
+  'No sold orders yet.': 'Ainda não há pedidos vendidos.',
+  'Revenue': 'Receita',
+  'Margin': 'Margem',
+  'units use today’s cost (approved before cost tracking).': 'unidades usam o custo de hoje (aprovadas antes do registro de custo).',
+  'units have no known cost and are left out of the margin.': 'unidades não têm custo conhecido e ficam fora da margem.',
+  'Sell-through by location': 'Giro de estoque por local',
 };
 
 export const ES: Record<string, string> = {
@@ -1940,7 +1947,6 @@ export const ES: Record<string, string> = {
   "Coming in v1.1": "Próximamente en v1.1",
   "Date-range filters and drill-down": "Filtros por rango de fechas y desglose",
   "CSV / XLSX export": "Exportación CSV / XLSX",
-  "Margin and sell-through by location": "Margen y rotación por ubicación",
   "Loading reports…": "Cargando informes…",
   "Inventory by location": "Inventario por ubicación",
   "At risk": "En riesgo",
@@ -3068,4 +3074,12 @@ export const ES: Record<string, string> = {
   'Placing…': 'Enviando…',
   'Place order for customer': 'Hacer pedido por el cliente',
   'Export quote (CSV)': 'Exportar cotización (CSV)',
+  'Margin by model': 'Margen por modelo',
+  'Could not load the margin report.': 'No se pudo cargar el informe de margen.',
+  'No sold orders yet.': 'Aún no hay pedidos vendidos.',
+  'Revenue': 'Ingresos',
+  'Margin': 'Margen',
+  'units use today’s cost (approved before cost tracking).': 'unidades usan el costo de hoy (aprobadas antes del registro de costo).',
+  'units have no known cost and are left out of the margin.': 'unidades no tienen costo conocido y quedan fuera del margen.',
+  'Sell-through by location': 'Rotación de stock por ubicación',
 };
