@@ -138,14 +138,20 @@ async function fetchAdminOrders(): Promise<AdminOrder[]> {
 }
 
 export function useAdminOrders() {
-  return useQuery({ queryKey: ['admin-orders'], queryFn: fetchAdminOrders });
+  // The queue must notice new orders without a reload (no realtime channel yet).
+  return useQuery({ queryKey: ['admin-orders'], queryFn: fetchAdminOrders, refetchInterval: 30_000, refetchOnWindowFocus: true });
 }
 
 /** Live total balance per variant, summed across locations from the inventory
  * cache (staff-readable). Used to show "available NOW" on the approval screen. */
 async function fetchAvailability(variantIds: string[]): Promise<Map<string, number>> {
   if (variantIds.length === 0) return new Map();
-  const { data, error } = await supabase.from('inventory').select('variant_id, qty').in('variant_id', variantIds);
+  // Active locations only: approve_order never deducts from an inactive one.
+  const { data, error } = await supabase
+    .from('inventory')
+    .select('variant_id, qty, stock_locations!inner(active)')
+    .in('variant_id', variantIds)
+    .eq('stock_locations.active', true);
   if (error) throw new Error(error.message);
   const m = new Map<string, number>();
   for (const row of (data ?? []) as { variant_id: string; qty: number }[]) {
@@ -171,6 +177,12 @@ export interface ReconciliationRow {
   sku: string;
   shortfallQty: number;
   createdAt: string;
+  /** Context for deciding Fulfill vs Close. */
+  orderId: string | null;
+  orderStatus: AdminOrderStatus | null;
+  customer: string | null;
+  /** Units on hand for this variant across ACTIVE locations (what Fulfill can take). */
+  onHand: number;
 }
 
 interface RawRecon {
@@ -180,6 +192,10 @@ interface RawRecon {
   shortfall_qty: number;
   created_at: string;
   product_variants: RawVariant | null;
+  order_items: {
+    order_id: string;
+    orders: { status: AdminOrderStatus; customer: { email: string | null; display_name: string | null } | null } | null;
+  } | null;
 }
 
 async function fetchOpenReconciliations(): Promise<ReconciliationRow[]> {
@@ -187,12 +203,29 @@ async function fetchOpenReconciliations(): Promise<ReconciliationRow[]> {
     .from('reconciliation_queue')
     .select(
       `id, order_item_id, variant_id, shortfall_qty, created_at,
-       product_variants(sku, capacity, color, carrier, lock_status, products(make, model))`,
+       product_variants(sku, capacity, color, carrier, lock_status, products(make, model)),
+       order_items(order_id, orders(status, customer:profiles!orders_customer_id_fkey(email, display_name)))`,
     )
     .eq('status', 'open')
     .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
-  return ((data ?? []) as unknown as RawRecon[]).map((r) => ({
+  const rows = (data ?? []) as unknown as RawRecon[];
+
+  // Stock Fulfill could use right now (active locations only, like resolve_reconciliation).
+  const variantIds = [...new Set(rows.map((r) => r.variant_id))];
+  const onHand = new Map<string, number>();
+  if (variantIds.length) {
+    const { data: inv, error: invErr } = await supabase
+      .from('inventory')
+      .select('variant_id, qty, stock_locations!inner(active)')
+      .in('variant_id', variantIds)
+      .eq('stock_locations.active', true)
+      .gt('qty', 0);
+    if (invErr) throw new Error(invErr.message);
+    for (const r of (inv ?? []) as { variant_id: string; qty: number }[]) onHand.set(r.variant_id, (onHand.get(r.variant_id) ?? 0) + r.qty);
+  }
+
+  return rows.map((r) => ({
     id: r.id,
     orderItemId: r.order_item_id,
     variantId: r.variant_id,
@@ -200,6 +233,10 @@ async function fetchOpenReconciliations(): Promise<ReconciliationRow[]> {
     sku: r.product_variants?.sku ?? '',
     shortfallQty: r.shortfall_qty,
     createdAt: r.created_at,
+    orderId: r.order_items?.order_id ?? null,
+    orderStatus: r.order_items?.orders?.status ?? null,
+    customer: r.order_items?.orders?.customer?.email ?? r.order_items?.orders?.customer?.display_name ?? null,
+    onHand: onHand.get(r.variant_id) ?? 0,
   }));
 }
 
@@ -216,6 +253,7 @@ function useInvalidateOrderData() {
     qc.invalidateQueries({ queryKey: ['variant-availability'] });
     qc.invalidateQueries({ queryKey: ['open-reconciliations'] });
     qc.invalidateQueries({ queryKey: ['my-orders'] });
+    qc.invalidateQueries({ queryKey: ['admin-pending-count'] });
   };
 }
 
@@ -327,5 +365,20 @@ export function useResolveReconciliation() {
       return data as { deducted: number; remaining_shortfall: number };
     },
     onSuccess: invalidate,
+  });
+}
+
+/** Pending orders waiting for a decision — drives the nav badge (polled). */
+export function usePendingOrderCount(enabled = true) {
+  return useQuery({
+    queryKey: ['admin-pending-count'],
+    enabled,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+    queryFn: async () => {
+      const { count, error } = await supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'pending');
+      if (error) throw new Error(error.message);
+      return count ?? 0;
+    },
   });
 }

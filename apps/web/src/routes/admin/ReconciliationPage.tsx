@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useOpenReconciliations, useResolveReconciliation } from '@/data/adminOrders';
 import { AdminHeading, Panel } from '@/components/admin/parts';
 import { Button } from '@/components/ui/Button';
@@ -16,6 +18,8 @@ export default function ReconciliationPage() {
   const { data: rows, isLoading, isError } = useOpenReconciliations();
   const resolve = useResolveReconciliation();
   const list = rows ?? [];
+  const [confirmClose, setConfirmClose] = useState<string | null>(null);
+  const [result, setResult] = useState<string | null>(null);
 
   return (
     <div className="space-y-6">
@@ -24,6 +28,12 @@ export default function ReconciliationPage() {
       <div className="rounded-2xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm text-muted-foreground">
         <b className="text-foreground">{t('What is this?')}</b> {t('When you approve an order the system deducts live stock. If there wasn’t enough on hand, the missing units land here as a')} <b className="text-foreground">{t('shortfall')}</b>{t('. When more stock arrives, hit')} <b className="text-foreground">{t('Fulfill')}</b> {t('to complete those units; or')} <b className="text-foreground">{t('Close shortfall')}</b> {t('to close the shortfall and leave the order partially filled. Nothing is charged — this only tracks what’s owed.')}
       </div>
+
+      {result && (
+        <p role="status" className="rounded-2xl border border-success/30 bg-success/5 px-4 py-3 text-sm">
+          {result}
+        </p>
+      )}
 
       {resolve.isError && (
         <p className="rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
@@ -50,7 +60,19 @@ export default function ReconciliationPage() {
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{r.name}</p>
                 <p className="mt-0.5 font-mono text-xs text-muted-foreground">
-                  {r.sku} · opened {formatDate(r.createdAt, lang)}
+                  {r.sku} · {t('opened')} {formatDate(r.createdAt, lang)}
+                </p>
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                  {r.orderId && (
+                    <Link to="/admin/orders" className="font-mono hover:underline">
+                      {r.orderId.slice(0, 8).toUpperCase()}
+                    </Link>
+                  )}
+                  {r.customer && <> · {r.customer}</>}
+                  {' · '}
+                  <span className={r.onHand > 0 ? 'text-success' : ''}>
+                    {formatInt(r.onHand)} {t('on hand')}
+                  </span>
                 </p>
               </div>
               <div className="flex items-center gap-3">
@@ -61,21 +83,42 @@ export default function ReconciliationPage() {
                   <Button
                     variant="primary"
                     size="md"
-                    disabled={resolve.isPending}
-                    title={t('Ship the missing units now that stock has arrived')}
-                    onClick={() => resolve.mutate({ id: r.id, action: 'fulfill' })}
+                    disabled={resolve.isPending || r.onHand === 0 || r.orderStatus === 'shipped'}
+                    title={r.onHand === 0 ? t('No stock on hand for this item yet') : t('Ship the missing units now that stock has arrived')}
+                    onClick={() =>
+                      resolve.mutate(
+                        { id: r.id, action: 'fulfill' },
+                        { onSuccess: (d) => setResult(`${r.sku}: ${t('fulfilled')} ${d.deducted}, ${t('still short')} ${d.remaining_shortfall}`) },
+                      )
+                    }
                   >
                     {t('Fulfill')}
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="md"
-                    disabled={resolve.isPending}
-                    title={t('Close it — the order stays partially filled')}
-                    onClick={() => resolve.mutate({ id: r.id, action: 'cancel' })}
-                  >
-                    {t('Close shortfall')}
-                  </Button>
+                  {confirmClose === r.id ? (
+                    <Button
+                      variant="outline"
+                      size="md"
+                      disabled={resolve.isPending}
+                      onClick={() =>
+                        resolve.mutate(
+                          { id: r.id, action: 'cancel' },
+                          { onSuccess: () => { setConfirmClose(null); setResult(`${r.sku}: ${t('shortfall closed')}`); } },
+                        )
+                      }
+                    >
+                      {t('Confirm close')}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="md"
+                      disabled={resolve.isPending}
+                      title={t('Close it — the order stays partially filled')}
+                      onClick={() => setConfirmClose(r.id)}
+                    >
+                      {t('Close shortfall')}
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>

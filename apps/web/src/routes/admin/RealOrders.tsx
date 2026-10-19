@@ -13,6 +13,8 @@ import { formatDate, formatInt, formatUsd } from '@/lib/format';
 import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { parseMoneyToCents } from '@/lib/money';
+import { adminErrorMessage } from '@/lib/adminErrors';
+import { supabase } from '@/lib/supabase';
 import { useCancelOrder } from '@/data/realOrders';
 import { isShortOrder, orderValueCents } from '@/lib/orderTotals';
 
@@ -141,6 +143,36 @@ function ShipForm({ order, onDone }: { order: AdminOrder; onDone: () => void }) 
   );
 }
 
+/**
+ * One picking row per (line, warehouse) the stock actually came from: approval
+ * and reconciliation fulfils can split a line across warehouses, while
+ * order_items.location_id only keeps the first one. Reads the order's ledger
+ * movements (net of any cancel), falling back to the line's location.
+ */
+async function pickingDocWithDraws(order: AdminOrder) {
+  const doc = pickingDoc(order);
+  const { data, error } = await supabase
+    .from('stock_movements')
+    .select('variant_id, delta, location:stock_locations(display_name)')
+    .eq('ref_type', 'orders')
+    .eq('ref_id', order.id);
+  if (error || !data?.length) return doc;
+  const taken = new Map<string, Map<string, number>>();
+  for (const m of data as unknown as { variant_id: string; delta: number; location: { display_name: string } | null }[]) {
+    const byLoc = taken.get(m.variant_id) ?? new Map<string, number>();
+    const loc = m.location?.display_name ?? '—';
+    byLoc.set(loc, (byLoc.get(loc) ?? 0) - m.delta);
+    taken.set(m.variant_id, byLoc);
+  }
+  const lines = order.lines.flatMap((l) => {
+    const byLoc = taken.get(l.variantId);
+    const draws = byLoc ? [...byLoc.entries()].filter(([, q]) => q > 0) : [];
+    if (!draws.length) return (l.qtyApproved ?? 0) > 0 ? [{ sku: l.sku, name: l.name, qty: l.qtyApproved ?? 0, location: l.locationName }] : [];
+    return draws.map(([location, qty]) => ({ sku: l.sku, name: l.name, qty, location }));
+  });
+  return { ...doc, lines };
+}
+
 function pickingDoc(order: AdminOrder) {
   const a = order.shippingAddress;
   return {
@@ -166,6 +198,8 @@ export function StatusChip({ status }: { status: AdminOrderStatus }) {
   );
 }
 
+const ORDERS_PAGE = 50;
+
 /** Real-mode admin order queue. Master list + detail panel with Approve /
  * Reject, live per-line availability, and post-approval approved/short summary. */
 export function RealAdminOrders() {
@@ -173,11 +207,18 @@ export function RealAdminOrders() {
   const { data: orders, isLoading, isError } = useAdminOrders();
   const [filter, setFilter] = useState<AdminOrderStatus | 'all'>('pending');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [shown, setShown] = useState(ORDERS_PAGE);
 
-  const list = useMemo(() => {
+  const filtered = useMemo(() => {
     const all = orders ?? [];
-    return filter === 'all' ? all : all.filter((o) => o.status === filter);
-  }, [orders, filter]);
+    const byStatus = filter === 'all' ? all : all.filter((o) => o.status === filter);
+    const q = query.trim().toLowerCase();
+    if (!q) return byStatus;
+    // Order number (any part of the id), customer e-mail or name.
+    return byStatus.filter((o) => `${o.id} ${o.customerEmail ?? ''} ${o.customerName ?? ''}`.toLowerCase().includes(q));
+  }, [orders, filter, query]);
+  const list = filtered.slice(0, shown);
 
   const selected = (orders ?? []).find((o) => o.id === selectedId) ?? null;
 
@@ -192,7 +233,10 @@ export function RealAdminOrders() {
               <button
                 key={f.key}
                 type="button"
-                onClick={() => setFilter(f.key)}
+                onClick={() => {
+                  setFilter(f.key);
+                  setShown(ORDERS_PAGE);
+                }}
                 className={cn(
                   'whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
                   filter === f.key ? 'border-foreground bg-foreground text-background' : 'border-border text-muted-foreground hover:bg-muted',
@@ -214,6 +258,20 @@ export function RealAdminOrders() {
       ) : (
         <div className="grid gap-6 lg:grid-cols-[1fr_420px] [&>*]:min-w-0">
           <div className="space-y-2">
+            <label className="relative block">
+              <span className="sr-only">{t('Search orders')}</span>
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" strokeWidth={2} />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setShown(ORDERS_PAGE);
+                }}
+                placeholder={t('Search by order number, e-mail or name')}
+                className="h-11 w-full rounded-xl border border-border bg-background pl-9 pr-3 text-sm outline-none focus:border-brand"
+              />
+            </label>
             {list.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-border py-12 text-center text-sm text-muted-foreground">
                 {t('No orders in this status.')}
@@ -241,6 +299,11 @@ export function RealAdminOrders() {
                   </div>
                 </button>
               ))
+            )}
+            {filtered.length > list.length && (
+              <Button variant="outline" className="w-full" onClick={() => setShown((n) => n + ORDERS_PAGE)}>
+                {t('Show more')} ({filtered.length - list.length})
+              </Button>
             )}
           </div>
 
@@ -382,7 +445,7 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
 
           {canFulfil && !shipping && (
             <div className="space-y-2">
-              <Button variant="outline" className="w-full" onClick={() => void exportPickingSheetPdf(pickingDoc(order))}>
+              <Button variant="outline" className="w-full" onClick={() => void pickingDocWithDraws(order).then(exportPickingSheetPdf)}>
                 <ClipboardList className="h-4 w-4" strokeWidth={2} />
                 {t('Picking sheet (PDF)')}
               </Button>
@@ -434,7 +497,7 @@ function OrderDetailPanel({ order, onClose }: { order: AdminOrder; onClose: () =
           ) : (
             (approve.isError || reject.isError) && (
               <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                {(approve.error as Error)?.message ?? (reject.error as Error)?.message ?? t('Action failed.')}
+                {adminErrorMessage(t, (approve.error as Error)?.message ?? (reject.error as Error)?.message)}
               </p>
             )
           )}
@@ -581,9 +644,22 @@ function OrderEditor({ order, onDone }: { order: AdminOrder; onDone: () => void 
         locationId: null,
         name: `${v.model} · ${v.capacity}`,
         qtyStr: '1',
-        priceStr: ((v.priceCents ?? 0) / 100).toString(),
+        priceStr: v.priceCents ? (v.priceCents / 100).toString() : '',
       },
     ]);
+    // Staff have no own tier price; fill the ORDER's tier price from prices.
+    if (!v.priceCents) {
+      void supabase
+        .from('prices')
+        .select('price_cents')
+        .eq('variant_id', v.variantId)
+        .eq('tier', order.tier)
+        .maybeSingle()
+        .then(({ data }) => {
+          const cents = (data as { price_cents: number } | null)?.price_cents;
+          if (cents) setLines((ls) => ls.map((l) => (l.variantId === v.variantId && l.priceStr === '' ? { ...l, priceStr: (cents / 100).toString() } : l)));
+        });
+    }
     setAddQuery('');
   }
 
@@ -774,7 +850,7 @@ function AdminCancelOrder({ orderId, restoresStock }: { orderId: string; restore
         placeholder={t('Reason (shown to the customer)')}
         className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
       />
-      {cancel.isError && <p className="text-destructive">{(cancel.error as Error).message}</p>}
+      {cancel.isError && <p className="text-destructive">{adminErrorMessage(t, (cancel.error as Error).message)}</p>}
       <div className="flex gap-2">
         <Button size="sm" variant="outline" className="flex-1" disabled={cancel.isPending} onClick={() => setOpen(false)}>
           {t('Keep order')}

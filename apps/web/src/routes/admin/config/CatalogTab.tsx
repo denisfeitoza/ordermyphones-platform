@@ -123,6 +123,8 @@ export default function CatalogTab() {
   const qtyQ = useSetting<QtyDisplay>('catalog_qty_display', 'exact');
   const featuredQ = useSetting<Featured>('catalog_featured', { skus: [], models: [] });
   const [goLiveOpen, setGoLiveOpen] = useState(false);
+  const [demoOpen, setDemoOpen] = useState(false);
+  const [demoTyped, setDemoTyped] = useState('');
 
   const save = useMutation({
     mutationFn: ({ key, value }: { key: string; value: unknown }) => setAppSetting(key, value),
@@ -162,7 +164,7 @@ export default function CatalogTab() {
             </div>
           </div>
           {isLive ? (
-            <Button variant="outline" size="sm" disabled={save.isPending || !canEdit} onClick={() => save.mutate({ key: 'catalog_source', value: 'mock' })}>
+            <Button variant="outline" size="sm" disabled={save.isPending || !canEdit} onClick={() => setDemoOpen(true)}>
               {t('Switch back to demo')}
             </Button>
           ) : (
@@ -172,6 +174,36 @@ export default function CatalogTab() {
             </Button>
           )}
         </div>
+        {isLive && demoOpen && (
+          // Same weight as going live: customers lose the real catalog at once.
+          <div role="alert" className="mt-4 space-y-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
+            <p>{t('Customers will immediately see the demo catalog instead of real stock and prices, and cannot order real items. Type DEMO to confirm.')}</p>
+            <input
+              value={demoTyped}
+              onChange={(e) => setDemoTyped(e.target.value)}
+              aria-label={t('Type DEMO to confirm')}
+              className="h-11 w-full max-w-xs rounded-xl border border-border bg-background px-3 font-mono text-sm uppercase outline-none focus:border-brand"
+            />
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" disabled={save.isPending} onClick={() => { setDemoOpen(false); setDemoTyped(''); }}>
+                {t('Cancel')}
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={save.isPending || demoTyped.trim().toUpperCase() !== 'DEMO'}
+                onClick={() =>
+                  save.mutate(
+                    { key: 'catalog_source', value: 'mock' },
+                    { onSuccess: () => { setDemoOpen(false); setDemoTyped(''); } },
+                  )
+                }
+              >
+                {t('Switch back to demo')}
+              </Button>
+            </div>
+          </div>
+        )}
         <MutationError error={save.error} />
       </section>
 

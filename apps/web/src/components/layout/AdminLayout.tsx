@@ -1,11 +1,12 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { BarChart3, BookOpen, Bot, Boxes, FilePlus2, Flag, LayoutDashboard, LogOut, PackageSearch, Receipt, ScrollText, Settings, Tag, UploadCloud, Users } from 'lucide-react';
+import { BarChart3, BookOpen, Boxes, FilePlus2, Flag, LayoutDashboard, LogOut, PackageSearch, Receipt, Settings, Tag, UploadCloud, Users } from 'lucide-react';
 import { useAuth, useTier } from '@/store';
 import { TIERS } from '@/data/tiers';
 import { Logo } from '@/components/store/Logo';
 import { LangSwitch, useI18n } from '@/i18n';
 import { PulseDot } from '@/components/store/SyncHeartbeat';
 import { cn } from '@/lib/utils';
+import { usePendingOrderCount } from '@/data/adminOrders';
 
 // Every shipping tab carries a `beta` badge for v1 (owner-facing signal that
 // the console is live but still hardening); only genuinely not-yet-built tabs
@@ -21,8 +22,6 @@ const NAV = [
   { to: '/admin/prices', label: 'Prices', icon: Tag, beta: true },
   { to: '/admin/pricing-flags', label: 'Flag queue', icon: Flag, beta: true },
   { to: '/admin/reports', label: 'Reports', icon: BarChart3, beta: true },
-  { to: '/admin/api-logs', label: 'API logs', icon: ScrollText, soon: true },
-  { to: '/admin/ai', label: 'AI & bots', icon: Bot, soon: true },
   { to: '/admin/config', label: 'Settings', icon: Settings, beta: true },
   { to: '/admin/manual', label: 'Manual', icon: BookOpen },
 ] as const;
@@ -31,6 +30,7 @@ export default function AdminLayout() {
   const { user, signOut } = useAuth();
   const { startPreview } = useTier();
   const { t } = useI18n();
+  const { data: pendingCount = 0 } = usePendingOrderCount();
   const navigate = useNavigate();
 
   function viewStoreAs(code: string) {
@@ -100,6 +100,14 @@ export default function AdminLayout() {
               >
                 <l.icon className="h-4 w-4" strokeWidth={2} />
                 {t(l.label)}
+                {l.to === '/admin/orders' && pendingCount > 0 && (
+                  <span
+                    className="grid h-5 min-w-5 place-items-center rounded-full bg-brand px-1.5 font-mono text-[0.7rem] font-semibold text-white"
+                    aria-label={`${pendingCount} ${t('pending')}`}
+                  >
+                    {pendingCount}
+                  </span>
+                )}
                 {'soon' in l && l.soon && (
                   <span className="ml-auto rounded-full bg-brand/10 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-brand">soon</span>
                 )}

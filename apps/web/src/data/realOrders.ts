@@ -150,7 +150,7 @@ export function useCancelOrder() {
       if (error) throw new Error(error.message);
     },
     onSuccess: (_d, v) => {
-      for (const key of ['my-orders', 'admin-orders', 'admin-summary', 'open-reconciliations', 'variant-availability', 'catalog-listing', 'admin-inventory']) {
+      for (const key of ['my-orders', 'admin-orders', 'admin-pending-count', 'admin-summary', 'open-reconciliations', 'variant-availability', 'catalog-listing', 'admin-inventory']) {
         void qc.invalidateQueries({ queryKey: [key] });
       }
       void qc.invalidateQueries({ queryKey: ['order-events', v.orderId] });

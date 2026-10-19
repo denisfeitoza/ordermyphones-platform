@@ -171,6 +171,11 @@ export default function InventoryPage() {
   const { t } = useI18n();
   const query = useQuery({ queryKey: ['admin-inventory'], queryFn: fetchInventory });
   const rows = query.data ?? [];
+  const [search, setSearch] = useState('');
+  const needle = search.trim().toLowerCase();
+  const shownRows = needle
+    ? rows.filter((r) => `${r.make} ${r.model} ${r.modelNumber} ${r.sku} ${r.capacity} ${r.color ?? ''} ${r.locationName}`.toLowerCase().includes(needle))
+    : rows;
 
   const capped = rows.length >= ROW_LIMIT;
   const skuCount = new Set(rows.map((r) => r.sku)).size;
@@ -239,9 +244,19 @@ export default function InventoryPage() {
             <StatCard label={t('SKUs tracked')} value={formatInt(skuCount)} sub={capped ? t('of loaded rows') : ''} />
             <StatCard label={t('Units available')} value={formatInt(totalUnits)} sub={`${t('all locations')}${capSuffix}`} live />
             <StatCard label={t('Low stock')} value={formatInt(low)} accent={low > 0 ? 'text-warning' : ''} sub={`${t('≤ 20 units')}${capSuffix}`} />
-            <StatCard label={t('Out of stock')} value={formatInt(out)} accent={out > 0 ? 'text-destructive' : ''} sub={`${t('this location')}${capSuffix}`} />
+            <StatCard label={t('Out of stock')} value={formatInt(out)} accent={out > 0 ? 'text-destructive' : ''} sub={`${t('location balances at 0')}${capSuffix}`} />
           </div>
 
+          <label className="relative block">
+            <span className="sr-only">{t('Search inventory')}</span>
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('Search model, SKU, color or location')}
+              className="h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm outline-none focus:border-brand"
+            />
+          </label>
           <Table
             minWidth={960}
             columns={[
@@ -256,7 +271,7 @@ export default function InventoryPage() {
               { key: 'status', label: t('Status') },
             ]}
           >
-            {rows.map((r) => {
+            {shownRows.map((r) => {
               const st = status(r.qty);
               return (
                 <tr key={r.id} className="transition-colors hover:bg-muted/40">
